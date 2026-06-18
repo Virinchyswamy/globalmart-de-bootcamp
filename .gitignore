@@ -1,0 +1,19 @@
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment files — never commit secrets
+.env
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Databricks Connect local config
+.databricks/
+databricks.yml
