@@ -1,0 +1,2001 @@
+OrderId,Return_reason
+OR-120832,Delayed delivery
+OR-044117,Incorrect item shipped
+OR-051191,Incorrect item shipped
+OR-122191,Changed mind
+OR-018018,Poor customer service
+OR-100342,Better price found elsewhere
+OR-047996,Damaged item
+OR-050176,Delayed delivery
+OR-016373,Damaged item
+OR-078718,No longer needed
+OR-010453,Delayed delivery
+OR-110299,Received wrong quantity
+OR-031112,Received wrong quantity
+OR-008050,Product no longer wanted
+OR-107909,Better price found elsewhere
+OR-029721,Product no longer wanted
+OR-074885,Received wrong quantity
+OR-078998,Damaged item
+OR-035984,Better price found elsewhere
+OR-023065,Changed mind
+OR-072231,Poor customer service
+OR-049082,Received wrong quantity
+OR-088392,Received wrong quantity
+OR-088363,Item not as described
+OR-021835,No longer needed
+OR-076109,Better price found elsewhere
+OR-032633,Incorrect item shipped
+OR-021711,Changed mind
+OR-082865,Product no longer wanted
+OR-088167,Changed mind
+OR-085902,Poor customer service
+OR-091285,Received wrong quantity
+OR-052275,Changed mind
+OR-062825,No longer needed
+OR-044470,Delayed delivery
+OR-065748,Item not as described
+OR-061443,Item not as described
+OR-029957,Item not as described
+OR-043930,Damaged item
+OR-114768,Item not as described
+OR-082625,Delayed delivery
+OR-025441,Damaged item
+OR-123240,Incorrect item shipped
+OR-125748,Changed mind
+OR-020112,Poor customer service
+OR-076132,Poor customer service
+OR-089323,No longer needed
+OR-123783,Received wrong quantity
+OR-092653,Product no longer wanted
+OR-120164,Item not as described
+OR-055394,Damaged item
+OR-113725,Poor customer service
+OR-015599,Item not as described
+OR-100110,Received wrong quantity
+OR-008595,Product no longer wanted
+OR-105613,No longer needed
+OR-065693,Better price found elsewhere
+OR-015365,Item not as described
+OR-066379,Damaged item
+OR-098105,Incorrect item shipped
+OR-083888,Better price found elsewhere
+OR-098675,Better price found elsewhere
+OR-097607,Delayed delivery
+OR-037752,Item not as described
+OR-031883,Product no longer wanted
+OR-105300,Damaged item
+OR-024717,Changed mind
+OR-122721,Received wrong quantity
+OR-119022,Poor customer service
+OR-034172,Damaged item
+OR-015781,Item not as described
+OR-108835,Incorrect item shipped
+OR-021111,Delayed delivery
+OR-039178,No longer needed
+OR-055280,Delayed delivery
+OR-115142,Poor customer service
+OR-063724,Received wrong quantity
+OR-073707,Received wrong quantity
+OR-115931,Better price found elsewhere
+OR-041779,Better price found elsewhere
+OR-112383,Delayed delivery
+OR-120741,Better price found elsewhere
+OR-016951,Incorrect item shipped
+OR-038106,Damaged item
+OR-123814,Changed mind
+OR-124997,Damaged item
+OR-015480,Item not as described
+OR-029807,Damaged item
+OR-000947,Received wrong quantity
+OR-020992,Changed mind
+OR-049293,Damaged item
+OR-115419,Product no longer wanted
+OR-034089,Damaged item
+OR-112186,Damaged item
+OR-049375,Received wrong quantity
+OR-043300,Damaged item
+OR-108352,Received wrong quantity
+OR-109266,Item not as described
+OR-050336,Better price found elsewhere
+OR-080160,Better price found elsewhere
+OR-002135,Changed mind
+OR-110918,No longer needed
+OR-114886,Item not as described
+OR-070469,Delayed delivery
+OR-018161,Item not as described
+OR-059412,Changed mind
+OR-092354,Changed mind
+OR-114352,Incorrect item shipped
+OR-099362,Item not as described
+OR-084116,Product no longer wanted
+OR-026960,Poor customer service
+OR-027426,Incorrect item shipped
+OR-024494,Incorrect item shipped
+OR-042886,Better price found elsewhere
+OR-100915,Changed mind
+OR-064281,Product no longer wanted
+OR-020017,No longer needed
+OR-122563,Received wrong quantity
+OR-042064,No longer needed
+OR-029451,No longer needed
+OR-120085,Poor customer service
+OR-117790,Changed mind
+OR-093581,Received wrong quantity
+OR-001697,Damaged item
+OR-054820,Changed mind
+OR-023357,Incorrect item shipped
+OR-057693,Better price found elsewhere
+OR-079093,No longer needed
+OR-034073,Damaged item
+OR-095157,Poor customer service
+OR-030018,Incorrect item shipped
+OR-007818,Received wrong quantity
+OR-063798,No longer needed
+OR-011658,Item not as described
+OR-034934,Damaged item
+OR-059304,Incorrect item shipped
+OR-013540,Incorrect item shipped
+OR-110700,No longer needed
+OR-068092,Received wrong quantity
+OR-117607,Item not as described
+OR-084137,Incorrect item shipped
+OR-042897,No longer needed
+OR-043094,Product no longer wanted
+OR-075356,Changed mind
+OR-097066,Poor customer service
+OR-057091,Damaged item
+OR-020115,Better price found elsewhere
+OR-027209,Incorrect item shipped
+OR-084657,No longer needed
+OR-089603,Product no longer wanted
+OR-026586,Poor customer service
+OR-110948,Delayed delivery
+OR-060375,Delayed delivery
+OR-101153,Damaged item
+OR-045500,Incorrect item shipped
+OR-036017,Better price found elsewhere
+OR-079733,Delayed delivery
+OR-109463,Received wrong quantity
+OR-086831,Damaged item
+OR-010911,Item not as described
+OR-059429,Damaged item
+OR-037123,Received wrong quantity
+OR-080226,Product no longer wanted
+OR-125992,Damaged item
+OR-116146,Changed mind
+OR-008639,Poor customer service
+OR-023071,Delayed delivery
+OR-059383,Received wrong quantity
+OR-032872,Product no longer wanted
+OR-114029,No longer needed
+OR-061397,No longer needed
+OR-111427,Item not as described
+OR-002252,Delayed delivery
+OR-050530,Delayed delivery
+OR-052737,Changed mind
+OR-091311,No longer needed
+OR-038925,Received wrong quantity
+OR-080552,Item not as described
+OR-081454,Damaged item
+OR-095598,Product no longer wanted
+OR-051754,Poor customer service
+OR-092339,No longer needed
+OR-115796,Changed mind
+OR-018380,Delayed delivery
+OR-100941,Delayed delivery
+OR-100598,Product no longer wanted
+OR-100530,Changed mind
+OR-125845,Product no longer wanted
+OR-052491,Better price found elsewhere
+OR-123611,No longer needed
+OR-002520,Damaged item
+OR-093268,Product no longer wanted
+OR-123397,Incorrect item shipped
+OR-050649,Damaged item
+OR-028719,Product no longer wanted
+OR-081711,Received wrong quantity
+OR-000773,Product no longer wanted
+OR-096028,Received wrong quantity
+OR-073188,Poor customer service
+OR-007532,Product no longer wanted
+OR-057093,Item not as described
+OR-030454,Delayed delivery
+OR-025627,No longer needed
+OR-104526,Delayed delivery
+OR-017769,Damaged item
+OR-066775,Received wrong quantity
+OR-026529,Item not as described
+OR-030146,Delayed delivery
+OR-022919,Incorrect item shipped
+OR-018843,Better price found elsewhere
+OR-016381,Damaged item
+OR-072371,Poor customer service
+OR-081683,No longer needed
+OR-091102,Better price found elsewhere
+OR-115993,Product no longer wanted
+OR-040512,Incorrect item shipped
+OR-037900,Product no longer wanted
+OR-039530,Poor customer service
+OR-116912,Received wrong quantity
+OR-115722,Changed mind
+OR-039555,Better price found elsewhere
+OR-072322,Product no longer wanted
+OR-059120,Poor customer service
+OR-113516,Delayed delivery
+OR-009347,Delayed delivery
+OR-065055,No longer needed
+OR-017531,No longer needed
+OR-029774,No longer needed
+OR-083177,Poor customer service
+OR-088464,Incorrect item shipped
+OR-115142,Incorrect item shipped
+OR-003643,No longer needed
+OR-076140,No longer needed
+OR-086517,Damaged item
+OR-028309,Poor customer service
+OR-102542,Received wrong quantity
+OR-034772,No longer needed
+OR-037173,Delayed delivery
+OR-024299,Item not as described
+OR-113839,Received wrong quantity
+OR-106788,Changed mind
+OR-038689,Changed mind
+OR-107428,Damaged item
+OR-047535,Damaged item
+OR-075521,Product no longer wanted
+OR-079386,Changed mind
+OR-001236,Poor customer service
+OR-050135,Poor customer service
+OR-017240,Changed mind
+OR-100489,Received wrong quantity
+OR-119048,Item not as described
+OR-079229,Item not as described
+OR-079167,Item not as described
+OR-055620,Incorrect item shipped
+OR-078720,Item not as described
+OR-087998,Changed mind
+OR-089879,Poor customer service
+OR-116816,No longer needed
+OR-082612,Item not as described
+OR-029798,Damaged item
+OR-062920,Product no longer wanted
+OR-047200,Incorrect item shipped
+OR-103952,Product no longer wanted
+OR-045722,Better price found elsewhere
+OR-102015,Received wrong quantity
+OR-110920,Delayed delivery
+OR-024740,Poor customer service
+OR-037061,Incorrect item shipped
+OR-065921,Incorrect item shipped
+OR-088079,Item not as described
+OR-022643,Incorrect item shipped
+OR-118042,Product no longer wanted
+OR-059520,Delayed delivery
+OR-108013,No longer needed
+OR-108409,Item not as described
+OR-011176,Item not as described
+OR-072257,Damaged item
+OR-022648,Damaged item
+OR-123771,Better price found elsewhere
+OR-031636,Received wrong quantity
+OR-002763,Damaged item
+OR-017093,No longer needed
+OR-125938,Better price found elsewhere
+OR-084075,Item not as described
+OR-044225,Changed mind
+OR-056010,Better price found elsewhere
+OR-062616,No longer needed
+OR-091069,Poor customer service
+OR-027672,Incorrect item shipped
+OR-053430,Product no longer wanted
+OR-097356,No longer needed
+OR-064637,Incorrect item shipped
+OR-052752,Item not as described
+OR-011871,Better price found elsewhere
+OR-081650,Item not as described
+OR-071281,Delayed delivery
+OR-091331,Received wrong quantity
+OR-063703,Better price found elsewhere
+OR-109922,Item not as described
+OR-119147,Product no longer wanted
+OR-073865,Delayed delivery
+OR-022712,Better price found elsewhere
+OR-116208,Changed mind
+OR-096070,Damaged item
+OR-016152,Item not as described
+OR-063776,Changed mind
+OR-092898,Incorrect item shipped
+OR-121695,Delayed delivery
+OR-023923,Received wrong quantity
+OR-044282,Product no longer wanted
+OR-082951,Incorrect item shipped
+OR-104417,Product no longer wanted
+OR-024457,Delayed delivery
+OR-068943,Changed mind
+OR-095785,Incorrect item shipped
+OR-045972,Incorrect item shipped
+OR-090627,Better price found elsewhere
+OR-124060,Changed mind
+OR-085139,Product no longer wanted
+OR-040448,Incorrect item shipped
+OR-009004,No longer needed
+OR-052992,Poor customer service
+OR-077398,Better price found elsewhere
+OR-065589,Changed mind
+OR-111739,Incorrect item shipped
+OR-079599,Incorrect item shipped
+OR-073261,Received wrong quantity
+OR-099170,Damaged item
+OR-035083,Delayed delivery
+OR-036377,Better price found elsewhere
+OR-048640,Delayed delivery
+OR-077020,Poor customer service
+OR-097173,Received wrong quantity
+OR-097630,Damaged item
+OR-084612,Item not as described
+OR-007593,Poor customer service
+OR-105459,Product no longer wanted
+OR-087555,Better price found elsewhere
+OR-116787,Received wrong quantity
+OR-115260,Changed mind
+OR-003211,No longer needed
+OR-016705,Delayed delivery
+OR-088298,Item not as described
+OR-029416,Delayed delivery
+OR-100699,Product no longer wanted
+OR-012107,Incorrect item shipped
+OR-009044,Delayed delivery
+OR-015299,Item not as described
+OR-019821,No longer needed
+OR-014207,Delayed delivery
+OR-005378,Poor customer service
+OR-109050,Damaged item
+OR-000391,Damaged item
+OR-027130,Changed mind
+OR-088213,Received wrong quantity
+OR-092069,Better price found elsewhere
+OR-001825,Changed mind
+OR-088915,No longer needed
+OR-068755,Delayed delivery
+OR-063334,Damaged item
+OR-110278,Incorrect item shipped
+OR-124022,Better price found elsewhere
+OR-057703,Poor customer service
+OR-008653,Delayed delivery
+OR-036636,No longer needed
+OR-035169,Incorrect item shipped
+OR-087916,Incorrect item shipped
+OR-011071,Changed mind
+OR-040506,Delayed delivery
+OR-094337,Better price found elsewhere
+OR-061699,Delayed delivery
+OR-002867,No longer needed
+OR-096142,No longer needed
+OR-053690,Item not as described
+OR-091527,No longer needed
+OR-018096,Changed mind
+OR-029439,Better price found elsewhere
+OR-063897,Delayed delivery
+OR-084187,Item not as described
+OR-006686,Changed mind
+OR-095748,Delayed delivery
+OR-114861,Changed mind
+OR-099754,Received wrong quantity
+OR-075491,Damaged item
+OR-027587,No longer needed
+OR-002404,Changed mind
+OR-099786,Changed mind
+OR-075081,Poor customer service
+OR-074863,Delayed delivery
+OR-068252,Poor customer service
+OR-058047,Item not as described
+OR-117789,Better price found elsewhere
+OR-032694,Changed mind
+OR-048237,Item not as described
+OR-049249,Damaged item
+OR-107796,Damaged item
+OR-049783,Incorrect item shipped
+OR-108649,Incorrect item shipped
+OR-075079,Item not as described
+OR-114315,Delayed delivery
+OR-019108,Received wrong quantity
+OR-029429,No longer needed
+OR-033247,Delayed delivery
+OR-077921,Incorrect item shipped
+OR-018101,Product no longer wanted
+OR-108686,Better price found elsewhere
+OR-010537,Received wrong quantity
+OR-001853,Received wrong quantity
+OR-103330,No longer needed
+OR-012076,Item not as described
+OR-062775,Poor customer service
+OR-069005,Product no longer wanted
+OR-053344,Better price found elsewhere
+OR-050057,No longer needed
+OR-070504,Damaged item
+OR-034346,Poor customer service
+OR-031058,No longer needed
+OR-043852,No longer needed
+OR-112965,Better price found elsewhere
+OR-118242,Better price found elsewhere
+OR-078873,No longer needed
+OR-100171,Item not as described
+OR-046862,Better price found elsewhere
+OR-007372,Better price found elsewhere
+OR-025071,Damaged item
+OR-123001,No longer needed
+OR-010192,Delayed delivery
+OR-087029,Better price found elsewhere
+OR-049051,Product no longer wanted
+OR-049083,Changed mind
+OR-116299,Incorrect item shipped
+OR-093204,Delayed delivery
+OR-125877,Changed mind
+OR-060169,Item not as described
+OR-121130,Damaged item
+OR-103889,Incorrect item shipped
+OR-093087,Received wrong quantity
+OR-103187,Poor customer service
+OR-007332,Incorrect item shipped
+OR-104039,Poor customer service
+OR-087659,Better price found elsewhere
+OR-064887,Product no longer wanted
+OR-087487,No longer needed
+OR-042048,Damaged item
+OR-013716,No longer needed
+OR-075244,Item not as described
+OR-051277,Delayed delivery
+OR-076496,Damaged item
+OR-115145,Poor customer service
+OR-079253,Incorrect item shipped
+OR-051506,No longer needed
+OR-078059,Product no longer wanted
+OR-116505,Product no longer wanted
+OR-012190,Damaged item
+OR-098683,Delayed delivery
+OR-085568,Damaged item
+OR-123288,Product no longer wanted
+OR-108160,Poor customer service
+OR-115166,Changed mind
+OR-055538,Damaged item
+OR-086726,Item not as described
+OR-055983,Poor customer service
+OR-122727,Product no longer wanted
+OR-089014,Changed mind
+OR-024663,Incorrect item shipped
+OR-023875,Item not as described
+OR-102760,Poor customer service
+OR-030471,Item not as described
+OR-090655,Changed mind
+OR-119688,Delayed delivery
+OR-030691,Received wrong quantity
+OR-093794,No longer needed
+OR-097410,Received wrong quantity
+OR-115816,Delayed delivery
+OR-120581,Poor customer service
+OR-115302,Received wrong quantity
+OR-021468,Delayed delivery
+OR-011672,Product no longer wanted
+OR-041424,No longer needed
+OR-111871,No longer needed
+OR-086601,Received wrong quantity
+OR-022258,Item not as described
+OR-037778,No longer needed
+OR-056544,Received wrong quantity
+OR-059634,Product no longer wanted
+OR-092009,No longer needed
+OR-122756,No longer needed
+OR-114649,Received wrong quantity
+OR-123713,Poor customer service
+OR-103017,Product no longer wanted
+OR-055252,Received wrong quantity
+OR-068608,Product no longer wanted
+OR-025933,Product no longer wanted
+OR-064559,Product no longer wanted
+OR-008995,No longer needed
+OR-081899,No longer needed
+OR-024554,Item not as described
+OR-074876,Poor customer service
+OR-025713,Received wrong quantity
+OR-107699,Damaged item
+OR-096749,Delayed delivery
+OR-090202,Incorrect item shipped
+OR-095612,Better price found elsewhere
+OR-044005,Better price found elsewhere
+OR-103267,Item not as described
+OR-003869,Poor customer service
+OR-105908,Item not as described
+OR-057398,Better price found elsewhere
+OR-098499,Product no longer wanted
+OR-066269,Incorrect item shipped
+OR-039963,Changed mind
+OR-112480,Item not as described
+OR-053741,No longer needed
+OR-087085,Damaged item
+OR-090422,Incorrect item shipped
+OR-044389,Delayed delivery
+OR-021129,Item not as described
+OR-076822,Better price found elsewhere
+OR-104294,Item not as described
+OR-065246,Delayed delivery
+OR-047285,Received wrong quantity
+OR-007945,Product no longer wanted
+OR-091521,Product no longer wanted
+OR-100559,Item not as described
+OR-070164,Delayed delivery
+OR-104593,No longer needed
+OR-074255,Incorrect item shipped
+OR-062801,Poor customer service
+OR-040414,Changed mind
+OR-100865,Item not as described
+OR-036591,Product no longer wanted
+OR-111294,No longer needed
+OR-078851,Item not as described
+OR-030125,Damaged item
+OR-088742,Incorrect item shipped
+OR-062865,No longer needed
+OR-028306,Changed mind
+OR-060518,Incorrect item shipped
+OR-029801,Item not as described
+OR-018929,No longer needed
+OR-023509,Poor customer service
+OR-016282,Delayed delivery
+OR-062606,Product no longer wanted
+OR-078410,No longer needed
+OR-019771,Item not as described
+OR-080896,Damaged item
+OR-093947,Item not as described
+OR-057008,Product no longer wanted
+OR-061781,Poor customer service
+OR-095450,Damaged item
+OR-002399,Changed mind
+OR-014908,Item not as described
+OR-115926,Changed mind
+OR-111813,No longer needed
+OR-030975,No longer needed
+OR-093861,Changed mind
+OR-033314,Received wrong quantity
+OR-083750,Received wrong quantity
+OR-061416,Received wrong quantity
+OR-023246,Received wrong quantity
+OR-073011,No longer needed
+OR-015436,Better price found elsewhere
+OR-076363,Received wrong quantity
+OR-112918,Product no longer wanted
+OR-077104,Changed mind
+OR-055382,Received wrong quantity
+OR-120037,Received wrong quantity
+OR-099220,Item not as described
+OR-018116,Incorrect item shipped
+OR-050008,Better price found elsewhere
+OR-100273,No longer needed
+OR-026241,Incorrect item shipped
+OR-046821,Delayed delivery
+OR-076045,Incorrect item shipped
+OR-059625,Delayed delivery
+OR-124112,Delayed delivery
+OR-004376,Damaged item
+OR-052333,Received wrong quantity
+OR-084381,Product no longer wanted
+OR-035570,Poor customer service
+OR-063427,Better price found elsewhere
+OR-072348,No longer needed
+OR-021782,Poor customer service
+OR-010146,Damaged item
+OR-111167,No longer needed
+OR-101863,Incorrect item shipped
+OR-123303,Damaged item
+OR-051366,Changed mind
+OR-001067,Product no longer wanted
+OR-115102,Product no longer wanted
+OR-076835,Damaged item
+OR-013865,Better price found elsewhere
+OR-113269,Delayed delivery
+OR-087342,Incorrect item shipped
+OR-116646,Delayed delivery
+OR-033052,Changed mind
+OR-037842,Better price found elsewhere
+OR-001102,Poor customer service
+OR-058660,Changed mind
+OR-092681,Incorrect item shipped
+OR-025297,Incorrect item shipped
+OR-112823,Changed mind
+OR-102679,Changed mind
+OR-088575,Poor customer service
+OR-015523,Poor customer service
+OR-017669,Incorrect item shipped
+OR-124352,Delayed delivery
+OR-015028,Changed mind
+OR-043414,Damaged item
+OR-004096,Delayed delivery
+OR-034554,Received wrong quantity
+OR-040843,Delayed delivery
+OR-055332,Poor customer service
+OR-057842,Better price found elsewhere
+OR-091003,Damaged item
+OR-059313,Poor customer service
+OR-054320,Better price found elsewhere
+OR-074712,Delayed delivery
+OR-055104,Product no longer wanted
+OR-105131,Changed mind
+OR-102625,Better price found elsewhere
+OR-021826,Delayed delivery
+OR-085212,Poor customer service
+OR-002863,Product no longer wanted
+OR-052268,Damaged item
+OR-089305,Product no longer wanted
+OR-084066,Incorrect item shipped
+OR-026084,Item not as described
+OR-100163,Item not as described
+OR-091734,Received wrong quantity
+OR-004789,Product no longer wanted
+OR-036119,Damaged item
+OR-005900,Product no longer wanted
+OR-097895,Received wrong quantity
+OR-117253,Product no longer wanted
+OR-057041,Received wrong quantity
+OR-123421,Product no longer wanted
+OR-043116,Changed mind
+OR-104052,Poor customer service
+OR-019834,Delayed delivery
+OR-100863,Better price found elsewhere
+OR-001075,Incorrect item shipped
+OR-115934,Damaged item
+OR-045577,Better price found elsewhere
+OR-121756,Delayed delivery
+OR-036795,Damaged item
+OR-051103,Better price found elsewhere
+OR-116543,Delayed delivery
+OR-001944,Delayed delivery
+OR-080436,Received wrong quantity
+OR-019334,Poor customer service
+OR-123528,Damaged item
+OR-074244,Incorrect item shipped
+OR-008401,Received wrong quantity
+OR-025354,Changed mind
+OR-070010,Item not as described
+OR-034720,No longer needed
+OR-020187,Received wrong quantity
+OR-012396,Changed mind
+OR-049221,Damaged item
+OR-060813,Incorrect item shipped
+OR-039205,Better price found elsewhere
+OR-114795,Item not as described
+OR-064830,Incorrect item shipped
+OR-041002,No longer needed
+OR-101929,Delayed delivery
+OR-051329,Item not as described
+OR-119021,Changed mind
+OR-016994,Received wrong quantity
+OR-070533,Delayed delivery
+OR-038558,No longer needed
+OR-059075,Damaged item
+OR-087453,Product no longer wanted
+OR-101755,Incorrect item shipped
+OR-005076,Damaged item
+OR-104868,Item not as described
+OR-022386,Damaged item
+OR-086534,Item not as described
+OR-067919,Incorrect item shipped
+OR-082103,Changed mind
+OR-116879,Damaged item
+OR-027738,Poor customer service
+OR-106098,Poor customer service
+OR-106634,No longer needed
+OR-026077,Poor customer service
+OR-000268,Item not as described
+OR-023766,Product no longer wanted
+OR-015265,No longer needed
+OR-071617,Poor customer service
+OR-097392,Received wrong quantity
+OR-026707,Changed mind
+OR-123195,Changed mind
+OR-075475,No longer needed
+OR-065018,Delayed delivery
+OR-107510,Item not as described
+OR-116292,Delayed delivery
+OR-031483,Product no longer wanted
+OR-039109,Damaged item
+OR-099575,Product no longer wanted
+OR-059081,Poor customer service
+OR-027125,Item not as described
+OR-029185,Incorrect item shipped
+OR-023756,Product no longer wanted
+OR-108870,Item not as described
+OR-007532,No longer needed
+OR-110811,Received wrong quantity
+OR-026154,Item not as described
+OR-116021,No longer needed
+OR-123346,Incorrect item shipped
+OR-004993,Incorrect item shipped
+OR-120004,Poor customer service
+OR-063073,Product no longer wanted
+OR-077813,Received wrong quantity
+OR-032898,Item not as described
+OR-006000,Item not as described
+OR-007767,Item not as described
+OR-083170,Incorrect item shipped
+OR-046980,Received wrong quantity
+OR-049294,Received wrong quantity
+OR-040451,Changed mind
+OR-058879,Poor customer service
+OR-039727,No longer needed
+OR-006334,Received wrong quantity
+OR-093831,Better price found elsewhere
+OR-094867,Received wrong quantity
+OR-044722,Incorrect item shipped
+OR-037843,Better price found elsewhere
+OR-027522,No longer needed
+OR-091427,Incorrect item shipped
+OR-097305,Better price found elsewhere
+OR-052542,Item not as described
+OR-108906,No longer needed
+OR-019889,Damaged item
+OR-061811,Delayed delivery
+OR-095411,Changed mind
+OR-115558,Item not as described
+OR-010785,Incorrect item shipped
+OR-110480,Item not as described
+OR-085533,Incorrect item shipped
+OR-123066,No longer needed
+OR-052974,Incorrect item shipped
+OR-082055,Received wrong quantity
+OR-000175,Delayed delivery
+OR-066369,Incorrect item shipped
+OR-038213,Incorrect item shipped
+OR-104753,Item not as described
+OR-038841,No longer needed
+OR-082805,Changed mind
+OR-075989,Poor customer service
+OR-003078,Poor customer service
+OR-089039,Product no longer wanted
+OR-095976,Product no longer wanted
+OR-096718,Item not as described
+OR-054864,Item not as described
+OR-111385,Product no longer wanted
+OR-040641,Better price found elsewhere
+OR-076761,Received wrong quantity
+OR-091714,Incorrect item shipped
+OR-005972,Damaged item
+OR-099333,Changed mind
+OR-063487,Item not as described
+OR-052564,Item not as described
+OR-079332,Incorrect item shipped
+OR-119035,Damaged item
+OR-084978,No longer needed
+OR-058680,Product no longer wanted
+OR-093813,Product no longer wanted
+OR-049020,Delayed delivery
+OR-047073,Delayed delivery
+OR-065353,Received wrong quantity
+OR-097337,Product no longer wanted
+OR-120431,Product no longer wanted
+OR-111402,Poor customer service
+OR-052389,Product no longer wanted
+OR-021059,Better price found elsewhere
+OR-014218,Changed mind
+OR-074741,Received wrong quantity
+OR-008079,Poor customer service
+OR-079401,Received wrong quantity
+OR-065609,Changed mind
+OR-077069,Received wrong quantity
+OR-051341,Incorrect item shipped
+OR-059556,Incorrect item shipped
+OR-074555,Delayed delivery
+OR-032779,Better price found elsewhere
+OR-076620,No longer needed
+OR-020194,No longer needed
+OR-054370,Product no longer wanted
+OR-090699,Received wrong quantity
+OR-108095,Poor customer service
+OR-030959,Delayed delivery
+OR-018573,Poor customer service
+OR-033865,Poor customer service
+OR-065201,Item not as described
+OR-101941,Changed mind
+OR-108745,No longer needed
+OR-052794,No longer needed
+OR-094317,Changed mind
+OR-100858,Product no longer wanted
+OR-125497,Changed mind
+OR-011377,Poor customer service
+OR-039321,Item not as described
+OR-101905,Poor customer service
+OR-041637,Better price found elsewhere
+OR-044356,Better price found elsewhere
+OR-074482,Changed mind
+OR-073251,No longer needed
+OR-123647,Changed mind
+OR-094775,Incorrect item shipped
+OR-111419,Item not as described
+OR-075691,Poor customer service
+OR-075738,Received wrong quantity
+OR-070566,Item not as described
+OR-120255,Product no longer wanted
+OR-006441,Changed mind
+OR-113012,Poor customer service
+OR-086068,Changed mind
+OR-074857,Better price found elsewhere
+OR-123065,No longer needed
+OR-024802,Better price found elsewhere
+OR-085951,Delayed delivery
+OR-033089,Changed mind
+OR-052029,Received wrong quantity
+OR-121329,Delayed delivery
+OR-107419,Delayed delivery
+OR-047934,Product no longer wanted
+OR-094606,Better price found elsewhere
+OR-116809,Received wrong quantity
+OR-055316,Damaged item
+OR-122591,Item not as described
+OR-111600,Changed mind
+OR-054048,Received wrong quantity
+OR-003405,Poor customer service
+OR-023272,Changed mind
+OR-070579,Damaged item
+OR-048982,Poor customer service
+OR-119068,Item not as described
+OR-006657,Delayed delivery
+OR-017648,Incorrect item shipped
+OR-017000,Damaged item
+OR-009531,Damaged item
+OR-046898,Delayed delivery
+OR-068811,Delayed delivery
+OR-009084,Item not as described
+OR-039957,Better price found elsewhere
+OR-071485,Better price found elsewhere
+OR-085019,Product no longer wanted
+OR-076491,No longer needed
+OR-075359,Received wrong quantity
+OR-033478,Changed mind
+OR-028506,No longer needed
+OR-068908,Item not as described
+OR-078174,Damaged item
+OR-119399,Received wrong quantity
+OR-017439,Changed mind
+OR-083970,Received wrong quantity
+OR-122937,Changed mind
+OR-046436,Product no longer wanted
+OR-008018,Incorrect item shipped
+OR-005475,Received wrong quantity
+OR-112037,Damaged item
+OR-028073,Poor customer service
+OR-106725,Poor customer service
+OR-032281,No longer needed
+OR-068733,Item not as described
+OR-025077,Received wrong quantity
+OR-086897,Poor customer service
+OR-107328,Product no longer wanted
+OR-101027,Product no longer wanted
+OR-010677,Product no longer wanted
+OR-027570,Incorrect item shipped
+OR-047663,Item not as described
+OR-088575,Better price found elsewhere
+OR-034339,Item not as described
+OR-100390,No longer needed
+OR-005609,Incorrect item shipped
+OR-097577,Poor customer service
+OR-095682,No longer needed
+OR-100511,No longer needed
+OR-022073,Delayed delivery
+OR-036642,Item not as described
+OR-083603,Damaged item
+OR-104516,Delayed delivery
+OR-009200,Changed mind
+OR-043538,Incorrect item shipped
+OR-050808,No longer needed
+OR-067179,Damaged item
+OR-083670,Product no longer wanted
+OR-110349,Poor customer service
+OR-015962,Incorrect item shipped
+OR-092915,No longer needed
+OR-015784,Changed mind
+OR-036874,Poor customer service
+OR-032083,Damaged item
+OR-087637,Received wrong quantity
+OR-032371,Received wrong quantity
+OR-008292,Item not as described
+OR-064979,Item not as described
+OR-018875,Received wrong quantity
+OR-008087,Received wrong quantity
+OR-046229,Delayed delivery
+OR-074258,Item not as described
+OR-079373,No longer needed
+OR-105577,Incorrect item shipped
+OR-068973,Product no longer wanted
+OR-054711,No longer needed
+OR-029913,Product no longer wanted
+OR-004149,Delayed delivery
+OR-009414,Poor customer service
+OR-067700,No longer needed
+OR-105960,Better price found elsewhere
+OR-020392,No longer needed
+OR-119914,Damaged item
+OR-046402,Product no longer wanted
+OR-012850,Product no longer wanted
+OR-123719,Changed mind
+OR-105900,Delayed delivery
+OR-125745,No longer needed
+OR-049175,Received wrong quantity
+OR-003879,No longer needed
+OR-083000,Damaged item
+OR-087941,Damaged item
+OR-009335,Poor customer service
+OR-091918,Product no longer wanted
+OR-013090,Better price found elsewhere
+OR-055120,Better price found elsewhere
+OR-003287,Product no longer wanted
+OR-058786,No longer needed
+OR-010981,Delayed delivery
+OR-117602,Delayed delivery
+OR-102929,Incorrect item shipped
+OR-121842,No longer needed
+OR-023750,Incorrect item shipped
+OR-049473,Better price found elsewhere
+OR-005359,Poor customer service
+OR-121687,Incorrect item shipped
+OR-097414,Received wrong quantity
+OR-064284,Delayed delivery
+OR-010556,Product no longer wanted
+OR-095666,Damaged item
+OR-073214,Received wrong quantity
+OR-044130,No longer needed
+OR-010325,Damaged item
+OR-076198,Incorrect item shipped
+OR-024248,Item not as described
+OR-063302,Better price found elsewhere
+OR-122263,Poor customer service
+OR-002287,Changed mind
+OR-121903,Damaged item
+OR-009774,Damaged item
+OR-075315,Incorrect item shipped
+OR-039086,Changed mind
+OR-124695,Product no longer wanted
+OR-084840,Received wrong quantity
+OR-118565,Changed mind
+OR-124511,Product no longer wanted
+OR-081517,Incorrect item shipped
+OR-047531,Damaged item
+OR-001665,Better price found elsewhere
+OR-054389,Damaged item
+OR-089145,Poor customer service
+OR-056020,No longer needed
+OR-074336,No longer needed
+OR-083310,Damaged item
+OR-016683,Received wrong quantity
+OR-058920,Poor customer service
+OR-025265,Product no longer wanted
+OR-051702,Better price found elsewhere
+OR-074177,Item not as described
+OR-057299,Item not as described
+OR-036695,Incorrect item shipped
+OR-080737,Damaged item
+OR-047894,Delayed delivery
+OR-029805,Better price found elsewhere
+OR-112790,Poor customer service
+OR-095078,Item not as described
+OR-101485,Damaged item
+OR-043229,Received wrong quantity
+OR-000229,No longer needed
+OR-036253,Received wrong quantity
+OR-095831,Incorrect item shipped
+OR-011894,Received wrong quantity
+OR-038162,Damaged item
+OR-053428,Better price found elsewhere
+OR-080138,Poor customer service
+OR-048805,Incorrect item shipped
+OR-114572,Better price found elsewhere
+OR-031448,Delayed delivery
+OR-059673,Received wrong quantity
+OR-043178,Received wrong quantity
+OR-086472,Received wrong quantity
+OR-061179,Incorrect item shipped
+OR-097160,No longer needed
+OR-031868,No longer needed
+OR-016635,Better price found elsewhere
+OR-048775,Incorrect item shipped
+OR-088546,Delayed delivery
+OR-077389,Product no longer wanted
+OR-106208,Product no longer wanted
+OR-095054,Received wrong quantity
+OR-017581,Received wrong quantity
+OR-048478,No longer needed
+OR-044703,Changed mind
+OR-016874,Incorrect item shipped
+OR-097108,Product no longer wanted
+OR-118893,Changed mind
+OR-085874,Delayed delivery
+OR-029855,Better price found elsewhere
+OR-096929,Poor customer service
+OR-014178,Received wrong quantity
+OR-004088,Incorrect item shipped
+OR-022545,Changed mind
+OR-059986,Poor customer service
+OR-085375,Product no longer wanted
+OR-023570,Damaged item
+OR-105379,Incorrect item shipped
+OR-110441,Changed mind
+OR-106267,Damaged item
+OR-119351,Incorrect item shipped
+OR-071735,Item not as described
+OR-117416,Item not as described
+OR-011658,No longer needed
+OR-125295,Poor customer service
+OR-041210,Changed mind
+OR-083334,Better price found elsewhere
+OR-048233,Item not as described
+OR-063225,No longer needed
+OR-071878,Product no longer wanted
+OR-045612,Changed mind
+OR-002863,Changed mind
+OR-008564,Product no longer wanted
+OR-067343,Better price found elsewhere
+OR-042460,Changed mind
+OR-007604,Delayed delivery
+OR-116100,No longer needed
+OR-085719,Incorrect item shipped
+OR-075023,Incorrect item shipped
+OR-039040,Damaged item
+OR-006033,No longer needed
+OR-087909,Delayed delivery
+OR-106536,Item not as described
+OR-062038,Item not as described
+OR-107842,Poor customer service
+OR-114226,Changed mind
+OR-027098,Product no longer wanted
+OR-008246,Damaged item
+OR-010790,Incorrect item shipped
+OR-005566,Poor customer service
+OR-002622,Delayed delivery
+OR-088832,Received wrong quantity
+OR-017823,Received wrong quantity
+OR-034898,Incorrect item shipped
+OR-032861,Better price found elsewhere
+OR-067018,Damaged item
+OR-082037,Damaged item
+OR-041159,Better price found elsewhere
+OR-037388,Delayed delivery
+OR-089908,Damaged item
+OR-066807,No longer needed
+OR-124243,Product no longer wanted
+OR-053197,Damaged item
+OR-010524,Received wrong quantity
+OR-119490,Changed mind
+OR-119711,Item not as described
+OR-066099,No longer needed
+OR-113732,Product no longer wanted
+OR-051090,Incorrect item shipped
+OR-121953,Better price found elsewhere
+OR-091888,Better price found elsewhere
+OR-002425,Incorrect item shipped
+OR-033088,Poor customer service
+OR-013913,Item not as described
+OR-024522,Damaged item
+OR-075034,Product no longer wanted
+OR-101454,Delayed delivery
+OR-101450,Delayed delivery
+OR-015570,Product no longer wanted
+OR-104698,No longer needed
+OR-012580,Delayed delivery
+OR-040375,Damaged item
+OR-035228,Poor customer service
+OR-117001,No longer needed
+OR-006922,Received wrong quantity
+OR-001554,Item not as described
+OR-065944,Item not as described
+OR-069312,Poor customer service
+OR-023148,Product no longer wanted
+OR-068041,Item not as described
+OR-021983,Item not as described
+OR-017012,Incorrect item shipped
+OR-019307,Poor customer service
+OR-060398,Item not as described
+OR-056853,Received wrong quantity
+OR-096447,No longer needed
+OR-017145,Better price found elsewhere
+OR-059143,Poor customer service
+OR-096669,Delayed delivery
+OR-074462,Changed mind
+OR-096239,Poor customer service
+OR-029829,Damaged item
+OR-115111,Damaged item
+OR-113954,Damaged item
+OR-088638,Changed mind
+OR-025897,Better price found elsewhere
+OR-092255,No longer needed
+OR-001949,Damaged item
+OR-021073,No longer needed
+OR-012460,Product no longer wanted
+OR-120056,Incorrect item shipped
+OR-030861,No longer needed
+OR-072980,Received wrong quantity
+OR-103383,Received wrong quantity
+OR-112332,Changed mind
+OR-121666,No longer needed
+OR-078139,Changed mind
+OR-095211,Item not as described
+OR-063667,Poor customer service
+OR-034652,Poor customer service
+OR-100604,Received wrong quantity
+OR-122528,Product no longer wanted
+OR-043884,Delayed delivery
+OR-086037,Better price found elsewhere
+OR-073087,Damaged item
+OR-005766,Damaged item
+OR-054114,Damaged item
+OR-074308,Poor customer service
+OR-030830,Better price found elsewhere
+OR-020603,Received wrong quantity
+OR-083731,Delayed delivery
+OR-029342,Better price found elsewhere
+OR-055451,Incorrect item shipped
+OR-028844,Received wrong quantity
+OR-040297,Damaged item
+OR-039433,No longer needed
+OR-101161,Received wrong quantity
+OR-007800,Better price found elsewhere
+OR-047134,Received wrong quantity
+OR-101997,Received wrong quantity
+OR-026147,Delayed delivery
+OR-115201,Product no longer wanted
+OR-110375,Better price found elsewhere
+OR-019408,Better price found elsewhere
+OR-067902,Item not as described
+OR-044995,Damaged item
+OR-092534,Better price found elsewhere
+OR-006964,Better price found elsewhere
+OR-070880,Better price found elsewhere
+OR-081835,Incorrect item shipped
+OR-110034,No longer needed
+OR-004113,Received wrong quantity
+OR-024558,Item not as described
+OR-036637,Damaged item
+OR-005241,Delayed delivery
+OR-089661,Changed mind
+OR-034257,Incorrect item shipped
+OR-085047,Item not as described
+OR-014947,Incorrect item shipped
+OR-092481,Damaged item
+OR-033987,No longer needed
+OR-035494,No longer needed
+OR-115894,Changed mind
+OR-075760,No longer needed
+OR-106233,Delayed delivery
+OR-046759,Item not as described
+OR-116911,Changed mind
+OR-029055,Better price found elsewhere
+OR-010015,No longer needed
+OR-100813,No longer needed
+OR-081442,Item not as described
+OR-101022,Damaged item
+OR-062320,Damaged item
+OR-001222,Product no longer wanted
+OR-009658,Incorrect item shipped
+OR-093395,Damaged item
+OR-082910,Item not as described
+OR-103001,Received wrong quantity
+OR-108930,Poor customer service
+OR-065178,Delayed delivery
+OR-053034,Item not as described
+OR-080730,Delayed delivery
+OR-037101,Delayed delivery
+OR-055108,Poor customer service
+OR-074585,Incorrect item shipped
+OR-089829,No longer needed
+OR-015133,Better price found elsewhere
+OR-066283,No longer needed
+OR-014324,Item not as described
+OR-105229,Product no longer wanted
+OR-011483,Damaged item
+OR-105258,Better price found elsewhere
+OR-063159,No longer needed
+OR-056383,Incorrect item shipped
+OR-061931,Changed mind
+OR-049652,Incorrect item shipped
+OR-009343,No longer needed
+OR-031342,Changed mind
+OR-072600,Item not as described
+OR-020596,No longer needed
+OR-116720,Delayed delivery
+OR-109364,Item not as described
+OR-036355,Received wrong quantity
+OR-111149,Incorrect item shipped
+OR-078102,Received wrong quantity
+OR-054142,No longer needed
+OR-023108,Changed mind
+OR-088258,No longer needed
+OR-059134,Poor customer service
+OR-014996,Poor customer service
+OR-012451,Damaged item
+OR-013280,Changed mind
+OR-037918,Received wrong quantity
+OR-111586,Poor customer service
+OR-106428,Poor customer service
+OR-034111,Better price found elsewhere
+OR-101288,Received wrong quantity
+OR-076760,Changed mind
+OR-074047,Better price found elsewhere
+OR-041634,Damaged item
+OR-041471,Product no longer wanted
+OR-118646,Changed mind
+OR-110037,Incorrect item shipped
+OR-075049,Better price found elsewhere
+OR-040292,Received wrong quantity
+OR-035592,Incorrect item shipped
+OR-017608,Received wrong quantity
+OR-095688,Damaged item
+OR-024453,Damaged item
+OR-041216,Poor customer service
+OR-071520,Better price found elsewhere
+OR-057683,Poor customer service
+OR-076467,No longer needed
+OR-030020,Delayed delivery
+OR-101751,Damaged item
+OR-005549,Incorrect item shipped
+OR-107089,No longer needed
+OR-106307,Changed mind
+OR-053661,Product no longer wanted
+OR-054974,No longer needed
+OR-097317,Item not as described
+OR-001280,Item not as described
+OR-043537,Product no longer wanted
+OR-103875,Delayed delivery
+OR-115936,Better price found elsewhere
+OR-051271,Delayed delivery
+OR-118958,Product no longer wanted
+OR-003938,Damaged item
+OR-024349,No longer needed
+OR-110176,Better price found elsewhere
+OR-119676,Item not as described
+OR-119300,Incorrect item shipped
+OR-118427,Damaged item
+OR-021434,Item not as described
+OR-058888,Product no longer wanted
+OR-114541,Poor customer service
+OR-039434,Poor customer service
+OR-002002,No longer needed
+OR-020990,Poor customer service
+OR-111299,Product no longer wanted
+OR-010393,Item not as described
+OR-052661,Product no longer wanted
+OR-008881,Item not as described
+OR-079633,Product no longer wanted
+OR-075425,Delayed delivery
+OR-120443,Incorrect item shipped
+OR-051410,Product no longer wanted
+OR-025129,Received wrong quantity
+OR-011265,Product no longer wanted
+OR-103149,Better price found elsewhere
+OR-057693,No longer needed
+OR-050312,Changed mind
+OR-031683,Poor customer service
+OR-000318,Item not as described
+OR-113587,Item not as described
+OR-107480,Delayed delivery
+OR-032901,Poor customer service
+OR-026362,Better price found elsewhere
+OR-095510,Better price found elsewhere
+OR-010317,Incorrect item shipped
+OR-059423,Incorrect item shipped
+OR-088684,Product no longer wanted
+OR-103799,Received wrong quantity
+OR-057548,Better price found elsewhere
+OR-020449,Poor customer service
+OR-097787,Product no longer wanted
+OR-081731,Received wrong quantity
+OR-031715,Delayed delivery
+OR-091846,Poor customer service
+OR-069962,Damaged item
+OR-068747,Item not as described
+OR-031418,No longer needed
+OR-121296,Product no longer wanted
+OR-106866,Better price found elsewhere
+OR-032113,Incorrect item shipped
+OR-045357,Poor customer service
+OR-069347,Product no longer wanted
+OR-100633,Received wrong quantity
+OR-114333,Incorrect item shipped
+OR-104751,Delayed delivery
+OR-056760,Delayed delivery
+OR-021487,Product no longer wanted
+OR-090896,No longer needed
+OR-073997,Poor customer service
+OR-124078,Damaged item
+OR-031746,Better price found elsewhere
+OR-043972,Received wrong quantity
+OR-066064,Damaged item
+OR-033492,Delayed delivery
+OR-022021,Received wrong quantity
+OR-066295,Damaged item
+OR-079099,Incorrect item shipped
+OR-019686,Incorrect item shipped
+OR-115218,Poor customer service
+OR-075143,No longer needed
+OR-120182,Poor customer service
+OR-083619,Poor customer service
+OR-055280,Better price found elsewhere
+OR-125703,Poor customer service
+OR-110562,Poor customer service
+OR-034048,Better price found elsewhere
+OR-046119,Damaged item
+OR-005166,Item not as described
+OR-107002,Product no longer wanted
+OR-107560,Better price found elsewhere
+OR-085856,Poor customer service
+OR-080558,Received wrong quantity
+OR-046767,Poor customer service
+OR-025218,Changed mind
+OR-023248,Damaged item
+OR-062638,Received wrong quantity
+OR-058471,No longer needed
+OR-050886,Better price found elsewhere
+OR-033431,Better price found elsewhere
+OR-086432,No longer needed
+OR-094243,Item not as described
+OR-114456,Poor customer service
+OR-046903,Poor customer service
+OR-066698,Item not as described
+OR-050830,No longer needed
+OR-089776,Item not as described
+OR-060757,Incorrect item shipped
+OR-119835,Poor customer service
+OR-014331,Better price found elsewhere
+OR-040511,Received wrong quantity
+OR-098872,Delayed delivery
+OR-040749,Changed mind
+OR-035412,Poor customer service
+OR-028165,Better price found elsewhere
+OR-116187,Incorrect item shipped
+OR-025573,Incorrect item shipped
+OR-033454,Received wrong quantity
+OR-095768,Changed mind
+OR-019545,Product no longer wanted
+OR-022770,Product no longer wanted
+OR-100039,Delayed delivery
+OR-054539,Damaged item
+OR-095676,Delayed delivery
+OR-102462,Product no longer wanted
+OR-050273,Poor customer service
+OR-067100,Damaged item
+OR-027201,Incorrect item shipped
+OR-118392,Damaged item
+OR-055089,Better price found elsewhere
+OR-106994,Poor customer service
+OR-004841,Better price found elsewhere
+OR-036452,Product no longer wanted
+OR-054445,Received wrong quantity
+OR-063493,Poor customer service
+OR-116175,Better price found elsewhere
+OR-068832,Product no longer wanted
+OR-020563,Delayed delivery
+OR-028601,No longer needed
+OR-043982,Changed mind
+OR-116899,Damaged item
+OR-108049,No longer needed
+OR-045934,Better price found elsewhere
+OR-081979,Product no longer wanted
+OR-109067,Received wrong quantity
+OR-017987,Changed mind
+OR-085928,No longer needed
+OR-024684,Delayed delivery
+OR-058152,Damaged item
+OR-078271,Product no longer wanted
+OR-080768,Poor customer service
+OR-112354,Received wrong quantity
+OR-043941,No longer needed
+OR-028574,Better price found elsewhere
+OR-014458,No longer needed
+OR-017148,Item not as described
+OR-093543,Incorrect item shipped
+OR-071670,Poor customer service
+OR-116769,Incorrect item shipped
+OR-106555,Changed mind
+OR-020026,Item not as described
+OR-071890,Damaged item
+OR-117121,Product no longer wanted
+OR-091408,Incorrect item shipped
+OR-124386,Incorrect item shipped
+OR-096363,Received wrong quantity
+OR-020034,Received wrong quantity
+OR-028453,Incorrect item shipped
+OR-036987,Incorrect item shipped
+OR-007623,Better price found elsewhere
+OR-114292,No longer needed
+OR-065062,Product no longer wanted
+OR-003919,Damaged item
+OR-009620,Better price found elsewhere
+OR-023992,No longer needed
+OR-089762,Poor customer service
+OR-031159,Item not as described
+OR-078092,Delayed delivery
+OR-059415,Received wrong quantity
+OR-030012,Better price found elsewhere
+OR-110186,Item not as described
+OR-027441,Delayed delivery
+OR-017980,Received wrong quantity
+OR-034473,Item not as described
+OR-029287,Incorrect item shipped
+OR-033529,No longer needed
+OR-114328,Item not as described
+OR-010208,Item not as described
+OR-020892,Better price found elsewhere
+OR-097016,Delayed delivery
+OR-083666,Better price found elsewhere
+OR-118833,Changed mind
+OR-043941,Incorrect item shipped
+OR-050718,Incorrect item shipped
+OR-084375,Damaged item
+OR-022705,Better price found elsewhere
+OR-042681,Received wrong quantity
+OR-049751,Item not as described
+OR-089776,Changed mind
+OR-066918,Poor customer service
+OR-043314,No longer needed
+OR-049028,Item not as described
+OR-097365,Poor customer service
+OR-048780,Received wrong quantity
+OR-123522,Changed mind
+OR-016455,Received wrong quantity
+OR-095713,Better price found elsewhere
+OR-029076,Received wrong quantity
+OR-042497,Changed mind
+OR-056080,Damaged item
+OR-086453,Received wrong quantity
+OR-064579,Better price found elsewhere
+OR-048854,Better price found elsewhere
+OR-124945,Item not as described
+OR-038112,Damaged item
+OR-041445,Better price found elsewhere
+OR-036905,Product no longer wanted
+OR-058199,Item not as described
+OR-024512,Poor customer service
+OR-091719,Better price found elsewhere
+OR-084937,No longer needed
+OR-017445,Product no longer wanted
+OR-065380,Received wrong quantity
+OR-028798,Better price found elsewhere
+OR-115800,Poor customer service
+OR-039568,Better price found elsewhere
+OR-121114,Item not as described
+OR-036586,Delayed delivery
+OR-119822,Damaged item
+OR-058321,Item not as described
+OR-073363,Damaged item
+OR-105778,Poor customer service
+OR-070471,No longer needed
+OR-051299,Poor customer service
+OR-001342,Incorrect item shipped
+OR-089330,Changed mind
+OR-027107,Incorrect item shipped
+OR-054841,Better price found elsewhere
+OR-090036,Better price found elsewhere
+OR-103319,Better price found elsewhere
+OR-074466,Changed mind
+OR-101022,Incorrect item shipped
+OR-030886,Incorrect item shipped
+OR-064430,Incorrect item shipped
+OR-069300,Poor customer service
+OR-058431,Better price found elsewhere
+OR-026969,Changed mind
+OR-120188,Received wrong quantity
+OR-067015,Poor customer service
+OR-078446,Product no longer wanted
+OR-009957,Damaged item
+OR-068929,Delayed delivery
+OR-017486,No longer needed
+OR-032919,Better price found elsewhere
+OR-025635,Item not as described
+OR-027452,Product no longer wanted
+OR-052340,Received wrong quantity
+OR-005638,Delayed delivery
+OR-000373,Delayed delivery
+OR-044554,Item not as described
+OR-079252,Delayed delivery
+OR-058569,No longer needed
+OR-107018,Poor customer service
+OR-106905,Item not as described
+OR-041430,Product no longer wanted
+OR-108403,Delayed delivery
+OR-118505,Delayed delivery
+OR-107743,Better price found elsewhere
+OR-056322,Better price found elsewhere
+OR-011426,Better price found elsewhere
+OR-030099,No longer needed
+OR-049430,Changed mind
+OR-008103,Changed mind
+OR-019536,Product no longer wanted
+OR-065967,Incorrect item shipped
+OR-013633,Product no longer wanted
+OR-009466,Delayed delivery
+OR-084823,Poor customer service
+OR-049936,Incorrect item shipped
+OR-089919,Item not as described
+OR-120823,Item not as described
+OR-025548,Product no longer wanted
+OR-073205,Changed mind
+OR-002715,Received wrong quantity
+OR-089150,Delayed delivery
+OR-051693,Delayed delivery
+OR-081334,Changed mind
+OR-086327,No longer needed
+OR-059116,Item not as described
+OR-035470,Changed mind
+OR-051941,No longer needed
+OR-087263,Damaged item
+OR-089848,Received wrong quantity
+OR-015360,Item not as described
+OR-067409,Damaged item
+OR-020554,Product no longer wanted
+OR-016144,Poor customer service
+OR-088557,Poor customer service
+OR-009522,Delayed delivery
+OR-050451,Damaged item
+OR-057839,Incorrect item shipped
+OR-040545,Delayed delivery
+OR-054313,Delayed delivery
+OR-086704,Product no longer wanted
+OR-037750,Item not as described
+OR-046562,Delayed delivery
+OR-099576,Product no longer wanted
+OR-083546,Damaged item
+OR-107962,Item not as described
+OR-057311,No longer needed
+OR-084281,Better price found elsewhere
+OR-089356,Changed mind
+OR-057221,Product no longer wanted
+OR-061280,No longer needed
+OR-042124,Changed mind
+OR-013374,Product no longer wanted
+OR-000068,Product no longer wanted
+OR-075689,Changed mind
+OR-043324,Product no longer wanted
+OR-071002,Item not as described
+OR-024339,Received wrong quantity
+OR-059704,Changed mind
+OR-041476,Product no longer wanted
+OR-122690,Received wrong quantity
+OR-023890,No longer needed
+OR-001576,Damaged item
+OR-053469,Product no longer wanted
+OR-032238,Received wrong quantity
+OR-061790,Incorrect item shipped
+OR-062171,Received wrong quantity
+OR-036570,No longer needed
+OR-095557,Product no longer wanted
+OR-040319,Item not as described
+OR-008128,No longer needed
+OR-122333,Incorrect item shipped
+OR-120765,Received wrong quantity
+OR-029230,No longer needed
+OR-078000,Received wrong quantity
+OR-050637,Item not as described
+OR-022307,Delayed delivery
+OR-113545,Product no longer wanted
+OR-014651,Product no longer wanted
+OR-035567,Received wrong quantity
+OR-089122,Product no longer wanted
+OR-042558,Better price found elsewhere
+OR-105485,Damaged item
+OR-048633,Poor customer service
+OR-084661,Changed mind
+OR-076457,Poor customer service
+OR-092813,Received wrong quantity
+OR-106354,Incorrect item shipped
+OR-118812,Item not as described
+OR-104786,Product no longer wanted
+OR-091319,Item not as described
+OR-087021,Better price found elsewhere
+OR-006940,Product no longer wanted
+OR-001093,No longer needed
+OR-091471,Product no longer wanted
+OR-119786,Product no longer wanted
+OR-122118,Better price found elsewhere
+OR-041442,Item not as described
+OR-022569,Damaged item
+OR-058331,Item not as described
+OR-071629,Better price found elsewhere
+OR-034915,Delayed delivery
+OR-079817,Item not as described
+OR-071552,Damaged item
+OR-031778,Product no longer wanted
+OR-112618,Damaged item
+OR-067572,Product no longer wanted
+OR-118082,Received wrong quantity
+OR-120594,Product no longer wanted
+OR-101047,No longer needed
+OR-047567,Changed mind
+OR-105492,Damaged item
+OR-083205,Changed mind
+OR-039351,Better price found elsewhere
+OR-034480,Delayed delivery
+OR-000762,Item not as described
+OR-087750,Item not as described
+OR-098275,Received wrong quantity
+OR-066308,Delayed delivery
+OR-028699,No longer needed
+OR-112021,Item not as described
+OR-055410,Received wrong quantity
+OR-105958,Delayed delivery
+OR-019679,Item not as described
+OR-013165,Product no longer wanted
+OR-126040,Incorrect item shipped
+OR-109370,No longer needed
+OR-016663,Item not as described
+OR-106383,Poor customer service
+OR-057570,Product no longer wanted
+OR-118940,Item not as described
+OR-091355,Product no longer wanted
+OR-025271,Product no longer wanted
+OR-033536,Better price found elsewhere
+OR-059062,Damaged item
+OR-012415,Received wrong quantity
+OR-034207,Received wrong quantity
+OR-120688,Item not as described
+OR-009070,Changed mind
+OR-123068,Item not as described
+OR-116891,Product no longer wanted
+OR-090756,Incorrect item shipped
+OR-065122,Delayed delivery
+OR-073706,Poor customer service
+OR-106083,Poor customer service
+OR-085817,Item not as described
+OR-045445,Damaged item
+OR-081774,Product no longer wanted
+OR-060516,Poor customer service
+OR-112346,Better price found elsewhere
+OR-086582,Changed mind
+OR-120601,Delayed delivery
+OR-092161,Changed mind
+OR-046434,Incorrect item shipped
+OR-011961,Poor customer service
+OR-112575,Item not as described
+OR-110833,Damaged item
+OR-029205,Item not as described
+OR-114338,Product no longer wanted
+OR-063806,Product no longer wanted
+OR-086103,Poor customer service
+OR-122040,Incorrect item shipped
+OR-071207,Received wrong quantity
+OR-036031,Product no longer wanted
+OR-091447,Delayed delivery
+OR-069389,Incorrect item shipped
+OR-084089,Poor customer service
+OR-106718,Damaged item
+OR-032242,Changed mind
+OR-013779,Product no longer wanted
+OR-119530,No longer needed
+OR-098217,Item not as described
+OR-096128,Changed mind
+OR-116149,Item not as described
+OR-057709,Changed mind
+OR-117977,No longer needed
+OR-038171,Poor customer service
+OR-086478,Damaged item
+OR-078756,Better price found elsewhere
+OR-048260,Incorrect item shipped
+OR-028274,Incorrect item shipped
+OR-123480,Damaged item
+OR-115971,Better price found elsewhere
+OR-073906,Product no longer wanted
+OR-102622,Changed mind
+OR-118023,Poor customer service
+OR-013879,Incorrect item shipped
+OR-085251,Poor customer service
+OR-029866,Poor customer service
+OR-025130,Incorrect item shipped
+OR-124867,Changed mind
+OR-065332,Product no longer wanted
+OR-000781,Better price found elsewhere
+OR-082195,Delayed delivery
+OR-015348,Received wrong quantity
+OR-025465,Poor customer service
+OR-037273,Better price found elsewhere
+OR-064495,Better price found elsewhere
+OR-057117,Poor customer service
+OR-020707,Changed mind
+OR-090421,Received wrong quantity
+OR-112197,Incorrect item shipped
+OR-059922,Better price found elsewhere
+OR-001530,Incorrect item shipped
+OR-118042,Changed mind
+OR-053750,Delayed delivery
+OR-012559,Changed mind
+OR-017271,Better price found elsewhere
+OR-076214,No longer needed
+OR-058902,Product no longer wanted
+OR-019551,Changed mind
+OR-055614,Item not as described
+OR-016832,Product no longer wanted
+OR-006988,Product no longer wanted
+OR-091670,Poor customer service
+OR-054856,Incorrect item shipped
+OR-050434,Damaged item
+OR-031802,Product no longer wanted
+OR-030591,Poor customer service
+OR-031170,Product no longer wanted
+OR-029769,Delayed delivery
+OR-016019,Received wrong quantity
+OR-051946,Received wrong quantity
+OR-068150,Poor customer service
+OR-078836,Incorrect item shipped
+OR-003941,Item not as described
+OR-031222,Product no longer wanted
+OR-092264,Received wrong quantity
+OR-096044,Incorrect item shipped
+OR-098082,Item not as described
+OR-077001,Poor customer service
+OR-024237,Item not as described
+OR-013409,Product no longer wanted
+OR-024394,No longer needed
+OR-101988,Changed mind
+OR-090757,Poor customer service
+OR-000272,Damaged item
+OR-085233,Delayed delivery
+OR-037985,Poor customer service
+OR-036043,Received wrong quantity
+OR-013144,Changed mind
+OR-093405,Delayed delivery
+OR-109858,Damaged item
+OR-042914,Better price found elsewhere
+OR-024416,Product no longer wanted
+OR-037935,Received wrong quantity
+OR-015757,Product no longer wanted
+OR-115314,Damaged item
+OR-065645,Better price found elsewhere
+OR-120924,Incorrect item shipped
+OR-056144,Poor customer service
+OR-027937,Item not as described
+OR-119697,Incorrect item shipped
+OR-044455,Product no longer wanted
+OR-092215,Delayed delivery
+OR-049945,Incorrect item shipped
+OR-066410,Better price found elsewhere
+OR-053855,Better price found elsewhere
+OR-067214,Better price found elsewhere
+OR-104876,Damaged item
+OR-007692,Poor customer service
+OR-074651,No longer needed
+OR-100690,Product no longer wanted
+OR-091260,Item not as described
+OR-011556,Damaged item
+OR-107875,Changed mind
+OR-094249,Incorrect item shipped
+OR-070398,Item not as described
+OR-087064,Product no longer wanted
+OR-111619,Item not as described
+OR-048389,Poor customer service
+OR-115803,Better price found elsewhere
+OR-055430,Changed mind
+OR-109676,Received wrong quantity
+OR-059810,Damaged item
+OR-085537,No longer needed
+OR-045838,Damaged item
+OR-043698,Damaged item
+OR-080436,Damaged item
+OR-084369,Better price found elsewhere
+OR-056914,Item not as described
+OR-010637,Received wrong quantity
+OR-114194,Item not as described
+OR-084466,No longer needed
+OR-064661,Product no longer wanted
+OR-126055,Better price found elsewhere
+OR-092311,Item not as described
+OR-020631,Item not as described
+OR-124215,Received wrong quantity
+OR-125270,Better price found elsewhere
+OR-098170,Item not as described
+OR-087575,Delayed delivery
+OR-033253,Incorrect item shipped
+OR-091383,Product no longer wanted
+OR-011221,No longer needed
+OR-111984,Delayed delivery
+OR-004851,No longer needed
+OR-100424,Incorrect item shipped
+OR-046725,Poor customer service
+OR-055731,Poor customer service
+OR-124727,Item not as described
+OR-084769,Received wrong quantity
+OR-054216,Better price found elsewhere
+OR-056007,Product no longer wanted
+OR-116989,Incorrect item shipped
+OR-115725,Incorrect item shipped
+OR-070424,Item not as described
+OR-022404,Poor customer service
+OR-065280,Poor customer service
+OR-057994,Received wrong quantity
+OR-109615,Damaged item
+OR-001838,Poor customer service
+OR-003254,Item not as described
+OR-125760,Damaged item
+OR-088693,Poor customer service
+OR-096042,No longer needed
+OR-028072,Poor customer service
+OR-044682,Better price found elsewhere
+OR-009951,Incorrect item shipped
+OR-001103,Item not as described
+OR-109063,Better price found elsewhere
+OR-026501,Changed mind
+OR-018775,Delayed delivery
+OR-042284,Better price found elsewhere
+OR-056697,Delayed delivery
+OR-115322,Item not as described
+OR-109883,Poor customer service
+OR-093207,Incorrect item shipped
+OR-045825,Changed mind
+OR-031832,Item not as described
+OR-016415,Damaged item
+OR-017333,Incorrect item shipped
+OR-069738,Product no longer wanted
+OR-055853,Changed mind
+OR-104369,Received wrong quantity
+OR-009785,Received wrong quantity
+OR-122619,Changed mind
+OR-075334,Better price found elsewhere
+OR-060159,Poor customer service
+OR-004321,Product no longer wanted
+OR-009891,Poor customer service
+OR-066457,Better price found elsewhere
+OR-003536,Incorrect item shipped
+OR-109379,Changed mind
+OR-087500,No longer needed
+OR-107860,Delayed delivery
+OR-074005,Item not as described
+OR-061644,Received wrong quantity
+OR-029783,Item not as described
+OR-042348,Poor customer service
+OR-063842,Delayed delivery
+OR-012333,Incorrect item shipped
+OR-124830,No longer needed
+OR-050537,Item not as described
+OR-028319,Delayed delivery
+OR-097128,Changed mind
+OR-104343,Poor customer service
+OR-022980,Product no longer wanted
+OR-032201,Damaged item
+OR-118050,Item not as described
+OR-049249,Incorrect item shipped
+OR-072505,Poor customer service
+OR-092832,Item not as described
+OR-060175,Product no longer wanted
+OR-039972,Received wrong quantity
+OR-099509,Incorrect item shipped
+OR-028687,Received wrong quantity
+OR-051334,No longer needed
+OR-001416,Poor customer service
+OR-045529,No longer needed
+OR-062086,Incorrect item shipped
+OR-070792,Poor customer service
+OR-009711,Incorrect item shipped
+OR-064867,No longer needed
+OR-122396,Delayed delivery
+OR-080962,Product no longer wanted
+OR-081335,Changed mind
+OR-084424,Damaged item
+OR-124871,Poor customer service
+OR-118711,Better price found elsewhere
+OR-006219,Delayed delivery
+OR-100264,Item not as described
+OR-103809,Incorrect item shipped
+OR-076986,No longer needed
+OR-048603,Better price found elsewhere
+OR-043517,Damaged item
+OR-097295,Delayed delivery
+OR-017686,Product no longer wanted
+OR-033593,No longer needed
+OR-107664,Item not as described
+OR-061914,Poor customer service
+OR-020297,Delayed delivery
+OR-004344,Changed mind
+OR-018699,Changed mind
+OR-082904,Product no longer wanted
+OR-062106,Product no longer wanted
+OR-119255,No longer needed
+OR-038515,Item not as described
+OR-113583,Received wrong quantity
+OR-051287,Incorrect item shipped
+OR-015144,Item not as described
+OR-017857,Poor customer service
+OR-059097,Poor customer service
+OR-019046,No longer needed
+OR-016278,Damaged item
+OR-062617,Better price found elsewhere
+OR-021370,Delayed delivery
+OR-082344,No longer needed
+OR-000358,Poor customer service
+OR-036056,Better price found elsewhere
+OR-025716,Delayed delivery
+OR-046644,Better price found elsewhere
+OR-106081,Better price found elsewhere
+OR-054797,Product no longer wanted
+OR-023522,Damaged item
+OR-028575,Better price found elsewhere
+OR-049217,Changed mind
+OR-033391,Poor customer service
+OR-101465,Delayed delivery
+OR-116432,Received wrong quantity
+OR-120188,Received wrong quantity
+OR-036984,Item not as described
+OR-034185,Delayed delivery
+OR-055891,Delayed delivery
+OR-044045,Damaged item
+OR-082613,Item not as described
+OR-007862,Poor customer service
+OR-015282,Poor customer service
+OR-122552,Damaged item
+OR-027693,Received wrong quantity
+OR-014400,Item not as described
+OR-047500,Item not as described
+OR-086197,Received wrong quantity
+OR-028089,Item not as described
+OR-051472,Delayed delivery
+OR-115574,Received wrong quantity
+OR-003405,Product no longer wanted
+OR-107399,Delayed delivery
+OR-040623,Item not as described
+OR-067064,Incorrect item shipped
+OR-070802,Incorrect item shipped
+OR-121301,Poor customer service
+OR-007150,No longer needed
+OR-104269,Better price found elsewhere
+OR-099421,Delayed delivery
+OR-093764,Incorrect item shipped
+OR-089479,Item not as described
+OR-111928,Item not as described
+OR-089197,Better price found elsewhere
+OR-012657,Incorrect item shipped
+OR-088454,Product no longer wanted
+OR-104035,Product no longer wanted
+OR-117411,Delayed delivery
+OR-112772,Better price found elsewhere
+OR-122035,Item not as described
+OR-026744,Changed mind
+OR-025800,Received wrong quantity
+OR-011932,No longer needed
+OR-032386,Received wrong quantity
+OR-055771,No longer needed
+OR-008900,Better price found elsewhere
+OR-005731,Delayed delivery
+OR-028609,Item not as described
+OR-014418,Changed mind
+OR-053410,Better price found elsewhere
+OR-074544,Product no longer wanted
+OR-053425,Item not as described
+OR-114610,Damaged item
+OR-053282,Poor customer service
+OR-070071,Delayed delivery
+OR-086981,Delayed delivery
+OR-054769,Poor customer service
+OR-118169,No longer needed
+OR-022763,Product no longer wanted
+OR-043952,Incorrect item shipped
+OR-060744,Better price found elsewhere
+OR-008589,Received wrong quantity
+OR-066888,No longer needed
+OR-084029,Item not as described
+OR-107807,Received wrong quantity
+OR-025313,Changed mind
+OR-106730,Item not as described
+OR-027211,Better price found elsewhere
+OR-055669,Received wrong quantity
+OR-020758,Delayed delivery
+OR-117793,Received wrong quantity
+OR-083361,Damaged item
+OR-097699,No longer needed
+OR-042607,Received wrong quantity
+OR-084669,Item not as described
+OR-074822,Delayed delivery
+OR-010629,Delayed delivery
+OR-114222,Poor customer service
+OR-083020,Item not as described
+OR-103345,Delayed delivery
+OR-080095,Received wrong quantity
+OR-106622,Item not as described
+OR-030355,No longer needed
+OR-086540,Changed mind
+OR-042434,Better price found elsewhere
+OR-036622,Item not as described
+OR-007099,Incorrect item shipped
+OR-029043,Delayed delivery
+OR-012724,No longer needed
+OR-066384,Poor customer service

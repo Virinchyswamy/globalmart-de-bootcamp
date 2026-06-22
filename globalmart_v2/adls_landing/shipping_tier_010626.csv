@@ -1,0 +1,6 @@
+ShippingTierID,TierName,Cost (Rs)
+SHP-001,Standard,100
+SHP-002,Express,200
+SHP-003,Overnight,450
+SHP-004,In-store Pickup,0
+SHP-005,Local Delivery,50

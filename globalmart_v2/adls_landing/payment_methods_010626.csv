@@ -1,0 +1,6 @@
+PaymentMethodID,MethodName
+PM-001,Credit Card
+PM-002,UPI
+PM-003,Debit Card
+PM-004,Net Banking
+PM-005,Cash-on-Delivery
