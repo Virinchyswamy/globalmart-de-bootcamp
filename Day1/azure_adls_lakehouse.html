@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Azure Cloud, ADLS Gen2 &amp; Lakehouse</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  /* ── story box ── */
+  .story-box {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* ── service grid ── */
+  .service-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px;
+  }
+  .service-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 14px 16px; font-size: 12px; line-height: 1.6;
+  }
+  .service-card .svc-name { font-size: 13px; font-weight: 700; color: #1f3864; margin-bottom: 4px; }
+  .service-card .svc-tag {
+    display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    padding: 1px 7px; border-radius: 4px; color: #fff; margin-bottom: 6px;
+    background: #0d9488;
+  }
+  .service-card .svc-tag.secondary { background: #6b7280; }
+  .service-card .svc-tag.highlight { background: #1f3864; }
+
+  /* ── before/after ── */
+  .before-after { display: flex; gap: 16px; margin-top: 10px; }
+  .ba-card { flex: 1; border-radius: 10px; padding: 16px 18px; }
+  .before { background: #f3f4f6; border: 1px solid #d1d5db; }
+  .after  { background: #ecfdf5; border: 1px solid #a7f3d0; }
+  .ba-card .tag {
+    display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .04em; padding: 2px 8px; border-radius: 4px; color: #fff; margin-bottom: 10px;
+  }
+  .before .tag { background: #6b7280; }
+  .after .tag  { background: #047857; }
+  .ba-card ul  { margin-left: 18px; font-size: 12.5px; line-height: 1.8; color: #374151; }
+
+  /* ── hierarchy diagram ── */
+  .hierarchy-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 24px 28px; margin-top: 10px; font-size: 12.5px; font-family: monospace;
+    line-height: 1.9; color: #374151;
+  }
+  .hierarchy-wrap .comment { color: #6b7280; font-style: italic; }
+
+  /* ── comparison table ── */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th {
+    background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600;
+  }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .yes { color: #047857; font-weight: 600; }
+  .no  { color: #b91c1c; font-weight: 600; }
+  .med { color: #b45309; font-weight: 600; }
+
+  /* ── pipeline flow ── */
+  .pipeline-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 28px 32px; margin-top: 10px; overflow-x: auto;
+  }
+  .pipeline { display: flex; align-items: center; gap: 0; min-width: 900px; }
+  .pipe-node {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: 14px 16px; border-radius: 10px; min-width: 130px;
+  }
+  .pipe-node .pn-label { font-size: 12px; font-weight: 700; margin-top: 6px; color: #1f2937; }
+  .pipe-node .pn-sub   { font-size: 10px; color: #6b7280; margin-top: 3px; line-height: 1.3; }
+  .pipe-arrow { font-size: 22px; color: #9ca3af; padding: 0 4px; flex-shrink: 0; }
+
+  .node-postgres { background: #eff6ff; border: 1.5px solid #93c5fd; }
+  .node-adls     { background: #f0fdf4; border: 1.5px solid #86efac; }
+  .node-tool     { background: #f5f3ff; border: 1.5px solid #c4b5fd; }
+  .node-bronze   { background: #fff7ed; border: 1.5px solid #fdba74; }
+  .node-silver   { background: #f8fafc; border: 1.5px solid #94a3b8; }
+  .node-gold     { background: #fefce8; border: 1.5px solid #fde047; }
+
+  /* ── callout ── */
+  .callout {
+    background: #1f3864; color: #fff; border-radius: 8px;
+    padding: 12px 16px; font-size: 12.5px; line-height: 1.6; margin-top: 14px;
+  }
+  .callout b { color: #fde68a; }
+
+  .legend {
+    margin-top: 26px; font-size: 11.5px; color: #6b7280;
+    border-top: 1px solid #e5e7eb; padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Azure Cloud, ADLS Gen2 &amp; Lakehouse Architecture</h1>
+  <div class="subtitle">ILT 2 &nbsp;|&nbsp; Day 1 &nbsp;|&nbsp; 60 min &nbsp;|&nbsp; Beginner &nbsp;|&nbsp; Tags: azure, adls, lakehouse, storage</div>
+
+  <!-- ───────────── WHY AZURE ───────────── -->
+  <h2>1. Why Azure Cloud?</h2>
+  <div class="story-box">
+    <p>GlobalMart's data pipeline runs on <b>Microsoft Azure</b> — Microsoft's cloud computing platform. Instead of buying and managing physical servers, Azure lets you rent exactly the compute and storage you need, pay only for what you use, and scale in minutes.</p>
+    <p>For a Data Engineer at GlobalMart, two Azure services are the foundation of everything: <b>ADLS Gen2</b> (where data lives) and <b>Azure Databricks</b> (where data gets processed).</p>
+  </div>
+
+  <!-- ───────────── KEY SERVICES ───────────── -->
+  <h2>2. Key Azure Services for Data Engineering</h2>
+  <div class="service-grid">
+    <div class="service-card">
+      <div class="svc-tag highlight">We use this</div>
+      <div class="svc-name">ADLS Gen2</div>
+      Stores raw and processed files (CSV, Parquet, Delta). The "hard drive" of the pipeline. Very cheap at scale.
+    </div>
+    <div class="service-card">
+      <div class="svc-tag highlight">We use this</div>
+      <div class="svc-name">Azure Databricks</div>
+      Processes data with Apache Spark. Runs notebooks, pipelines, SQL queries, and Workflows on the cluster.
+    </div>
+    <div class="service-card">
+      <div class="svc-tag secondary">Reference</div>
+      <div class="svc-name">Azure Key Vault</div>
+      Stores secrets safely — passwords, storage keys, connection strings. In production you never hardcode secrets.
+    </div>
+    <div class="service-card">
+      <div class="svc-tag secondary">Reference</div>
+      <div class="svc-name">Azure Data Factory</div>
+      Moves data between systems via GUI-based ETL pipelines. Databricks Workflows replaces ADF for us.
+    </div>
+    <div class="service-card">
+      <div class="svc-tag secondary">Reference</div>
+      <div class="svc-name">Azure SQL Database</div>
+      Managed relational database. Not where we store Lakehouse data, but useful for control/metadata tables.
+    </div>
+    <div class="service-card">
+      <div class="svc-tag secondary">Reference</div>
+      <div class="svc-name">Azure Monitor</div>
+      Logs, alerts, and pipeline health. Used in production to detect failures and trigger SLA notifications.
+    </div>
+  </div>
+
+  <!-- ───────────── ADLS GEN2 ───────────── -->
+  <h2>3. ADLS Gen2 — The Storage Foundation</h2>
+  <p><b>ADLS Gen2</b> (Azure Data Lake Storage Generation 2) is cloud file storage optimised for big-data analytics. It stores any format — CSV, JSON, Parquet, Delta — cheaply and at massive scale, and connects natively with Databricks via the <code>abfss://</code> protocol.</p>
+
+  <div class="before-after">
+    <div class="ba-card before">
+      <span class="tag">Blob Storage</span>
+      <ul>
+        <li>Flat key-value store (fake folder prefixes)</li>
+        <li>No real folder hierarchy</li>
+        <li>No folder-level permissions</li>
+        <li>Slower analytics access</li>
+        <li>Default when you create a storage account</li>
+      </ul>
+    </div>
+    <div class="ba-card after">
+      <span class="tag">ADLS Gen2</span>
+      <ul>
+        <li>True hierarchical folder structure</li>
+        <li>Folder-level access control (RBAC + ACLs)</li>
+        <li>Optimised for Spark / Databricks analytics</li>
+        <li>10–100× faster than Blob for large reads</li>
+        <li>Enabled by turning on <b>Hierarchical Namespace</b></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>GlobalMart's Storage Structure</h3>
+  <div class="hierarchy-wrap">
+    Storage Account: <b>amazonprojectadls</b><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;Container: <b>amazon-data</b><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">── raw landing zone (CSV files, as uploaded)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;raw/<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;customers.csv<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;orders.csv &nbsp; order_items.csv &nbsp; products.csv &nbsp; ...<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">── Bronze Delta tables (raw ingested, never modified)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bronze/<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;customers/ &nbsp; orders/ &nbsp; order_items/ &nbsp; ...<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">── Silver Delta tables (cleaned, validated)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;silver/<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dim_customer/ &nbsp; dim_product/ &nbsp; ...<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">── Gold Delta tables (business-ready, fact_sales)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gold/<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fact_sales/ &nbsp; dim_date/ &nbsp; ...
+  </div>
+
+  <!-- ───────────── DW vs DL vs LAKEHOUSE ───────────── -->
+  <h2>4. Data Warehouse vs Data Lake vs Lakehouse</h2>
+  <p>Three different ways organisations store and query data. GlobalMart uses the <b>Lakehouse</b> model.</p>
+
+  <table class="compare-table">
+    <tr>
+      <th>Feature</th>
+      <th>Data Warehouse</th>
+      <th>Data Lake</th>
+      <th>Lakehouse (GlobalMart)</th>
+    </tr>
+    <tr>
+      <td><b>Storage Cost</b></td>
+      <td class="no">High</td>
+      <td class="yes">Very Low</td>
+      <td class="yes">Very Low (ADLS)</td>
+    </tr>
+    <tr>
+      <td><b>Data Types</b></td>
+      <td class="no">Structured only</td>
+      <td class="yes">Any format</td>
+      <td class="yes">Any format</td>
+    </tr>
+    <tr>
+      <td><b>ACID Transactions</b></td>
+      <td class="yes">Yes</td>
+      <td class="no">No</td>
+      <td class="yes">Yes — via Delta Lake</td>
+    </tr>
+    <tr>
+      <td><b>Schema Enforcement</b></td>
+      <td class="yes">Yes (rigid)</td>
+      <td class="no">No</td>
+      <td class="yes">Yes (flexible)</td>
+    </tr>
+    <tr>
+      <td><b>UPDATE / DELETE rows</b></td>
+      <td class="yes">Yes</td>
+      <td class="no">No</td>
+      <td class="yes">Yes — via Delta MERGE</td>
+    </tr>
+    <tr>
+      <td><b>Query Performance</b></td>
+      <td class="yes">High</td>
+      <td class="no">Low</td>
+      <td class="yes">High — Delta statistics + Z-order</td>
+    </tr>
+    <tr>
+      <td><b>ML / AI Ready</b></td>
+      <td class="no">No</td>
+      <td class="yes">Yes</td>
+      <td class="yes">Yes</td>
+    </tr>
+    <tr>
+      <td><b>Real-world Examples</b></td>
+      <td>Snowflake, Synapse</td>
+      <td>Raw S3 / ADLS</td>
+      <td>Databricks Lakehouse + ADLS</td>
+    </tr>
+  </table>
+
+  <!-- ───────────── GLOBALMART PIPELINE ───────────── -->
+  <h2>5. How ADLS Fits Into the GlobalMart Pipeline</h2>
+  <p>Data enters from two sources, lands in ADLS, and flows through Bronze → Silver → Gold using Databricks tools.</p>
+
+  <div class="pipeline-wrap">
+    <div class="pipeline">
+      <div class="pipe-node node-postgres">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#1e40af" stroke-width="1.6">
+          <ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>
+        </svg>
+        <div class="pn-label">Supabase Postgres</div>
+        <div class="pn-sub">orders, order_items</div>
+      </div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-node node-tool">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#7c3aed" stroke-width="1.5">
+          <circle cx="4" cy="6" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="20" cy="9" r="2"/>
+          <circle cx="7" cy="15" r="2"/><circle cx="17" cy="16" r="2"/>
+          <path d="M4 6C8 2 8 2 12 4M12 4C16 6 16 6 20 9M4 6C4 10 4 10 7 15M7 15C12 17 12 17 17 16"/>
+        </svg>
+        <div class="pn-label">Lakeflow Connect</div>
+        <div class="pn-sub">CDC — continuous</div>
+      </div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-node node-bronze">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3 L21 19 H3 Z" fill="#b45309" opacity="0.85"/></svg>
+        <div class="pn-label">Bronze Layer</div>
+        <div class="pn-sub">amazon-data/bronze/</div>
+      </div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-node node-silver">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3 L21 19 H3 Z" fill="#94a3b8" opacity="0.9"/></svg>
+        <div class="pn-label">Silver Layer</div>
+        <div class="pn-sub">amazon-data/silver/</div>
+      </div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-node node-gold">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3 L21 19 H3 Z" fill="#ca8a04" opacity="0.9"/></svg>
+        <div class="pn-label">Gold — fact_sales</div>
+        <div class="pn-sub">amazon-data/gold/</div>
+      </div>
+    </div>
+    <div style="margin-top:20px;">
+    <div class="pipeline">
+      <div class="pipe-node node-adls">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#15803d" stroke-width="1.6">
+          <path d="M3 6h6l2 2h10v11H3z"/>
+        </svg>
+        <div class="pn-label">ADLS File Drops</div>
+        <div class="pn-sub">products, customers, payments…</div>
+      </div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-node node-tool">
+        <svg viewBox="0 0 24 24" width="26" height="26">
+          <path d="M4 4h16l-6 8v6l-4 2v-8z" fill="#16a34a" opacity="0.85"/>
+        </svg>
+        <div class="pn-label">Autoloader</div>
+        <div class="pn-sub">incremental file pickup</div>
+      </div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-node node-adls">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#15803d" stroke-width="1.6">
+          <rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10M7 13h6"/>
+        </svg>
+        <div class="pn-label">raw/ landing</div>
+        <div class="pn-sub">amazon-data/raw/</div>
+      </div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-node node-bronze">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3 L21 19 H3 Z" fill="#b45309" opacity="0.85"/></svg>
+        <div class="pn-label">Bronze Layer</div>
+        <div class="pn-sub">same destination</div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>One container, four folders.</b> GlobalMart uses a single ADLS container (<code>amazon-data</code>) with <code>raw/</code>, <code>bronze/</code>, <code>silver/</code>, and <code>gold/</code> subfolders. The Databricks path format is:<br>
+    <code style="color:#e5e7eb;">abfss://amazon-data@amazonprojectadls.dfs.core.windows.net/bronze/orders/</code>
+  </div>
+
+  <!-- ───────────── CONNECTING DATABRICKS ───────────── -->
+  <h2>6. Connecting Databricks to ADLS — Three Methods</h2>
+
+  <table class="compare-table">
+    <tr>
+      <th>Method</th>
+      <th>Security</th>
+      <th>When to use</th>
+      <th>Code needed</th>
+    </tr>
+    <tr>
+      <td><b>Storage Account Key</b></td>
+      <td class="no">Low (full access)</td>
+      <td>Learning / dev environments</td>
+      <td><code>spark.conf.set("fs.azure.account.key…", key)</code></td>
+    </tr>
+    <tr>
+      <td><b>SAS Token</b></td>
+      <td class="med">Medium (time-limited)</td>
+      <td>Sharing temporary access</td>
+      <td>Use SAS token in the path or spark.conf</td>
+    </tr>
+    <tr>
+      <td><b>Unity Catalog External Location</b></td>
+      <td class="yes">Highest</td>
+      <td>Production — team setups</td>
+      <td>No <code>spark.conf.set</code> needed — UC manages auth</td>
+    </tr>
+  </table>
+
+  <p style="margin-top:12px;"><b>For this bootcamp</b> we use the Storage Account Key method. In a real production system you would use Unity Catalog External Locations so that no key ever appears in notebook code.</p>
+
+  <div class="legend">
+    Day 1 ILT 2 — Pairs with <b>Day1_ILT2_Azure_Cloud_ADLS_Lakehouse.ipynb</b>. The hands-on exercise that follows has students create their own ADLS storage account, upload the 10 GlobalMart CSV files, and connect Databricks using the storage key.
+  </div>
+
+</div>
+</body>
+</html>

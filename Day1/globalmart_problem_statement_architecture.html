@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GlobalMart — Problem Statement &amp; Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  /* ── story box ── */
+  .story-box {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* ── 5 problems grid ── */
+  .problems-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+  }
+  .problem-card {
+    background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+    padding: 12px 14px; font-size: 12px; color: #7f1d1d; line-height: 1.5;
+  }
+  .problem-card .num {
+    display: inline-block; width: 20px; height: 20px; border-radius: 50%;
+    background: #dc2626; color: #fff; font-size: 11px; font-weight: 700;
+    text-align: center; line-height: 20px; margin-bottom: 6px;
+  }
+  .problem-card b { color: #450a0a; }
+  .trust-line {
+    margin-top: 12px; font-size: 13px; font-weight: 600; color: #7f1d1d;
+    background: #fff1f2; border: 1px dashed #fca5a5; border-radius: 8px;
+    padding: 10px 14px;
+  }
+
+  /* ── why databricks: before/after ── */
+  .before-after { display: flex; gap: 16px; }
+  .ba-card { flex: 1; border-radius: 10px; padding: 16px 18px; }
+  .before { background: #f3f4f6; border: 1px solid #d1d5db; }
+  .after { background: #ecfdf5; border: 1px solid #a7f3d0; }
+  .ba-card .tag {
+    display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .04em; padding: 2px 8px; border-radius: 4px; color: #fff; margin-bottom: 10px;
+  }
+  .before .tag { background: #6b7280; }
+  .after .tag { background: #047857; }
+  .ba-card ul { margin-left: 18px; font-size: 12.5px; line-height: 1.8; color: #374151; }
+
+  /* ── icon-style architecture diagram ── */
+  .icon-diagram-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 32px 28px; margin-top: 10px; overflow-x: auto;
+  }
+  .icon-flow { display: flex; align-items: center; gap: 16px; min-width: 1120px; }
+  .icon-flow-col { display: flex; flex-direction: column; gap: 26px; justify-content: center; }
+  .source-row { display: flex; align-items: center; gap: 10px; }
+  .icon-node {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    width: 100px; text-align: center;
+  }
+  .icon-node .icon-label { font-size: 11px; color: #1f2937; font-weight: 600; line-height: 1.3; }
+  .icon-node .icon-sub { font-size: 9px; color: #6b7280; line-height: 1.3; }
+  .icon-arrow { color: #9ca3af; font-size: 20px; flex-shrink: 0; }
+  .icon-arrow-lg { color: #9ca3af; font-size: 28px; flex-shrink: 0; }
+
+  .platform-box {
+    border: 2px solid #1f2937; border-radius: 16px; padding: 26px 28px 18px; position: relative;
+  }
+  .platform-label {
+    position: absolute; top: -11px; left: 20px; background: #fff; padding: 0 8px;
+    font-size: 11px; font-weight: 700; color: #1f2937; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .platform-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px 30px;
+  }
+
+  .diagram-note {
+    margin-top: 16px; font-size: 11.5px; color: #6b7280; font-style: italic;
+    border-top: 1px dashed #d1d5db; padding-top: 10px;
+  }
+  .fact-callout {
+    margin-top: 14px; background: #1f3864; color: #fff; border-radius: 8px;
+    padding: 12px 16px; font-size: 12.5px; line-height: 1.6;
+  }
+  .fact-callout b { color: #fde68a; }
+
+  /* ── fact_sales spotlight ── */
+  .spotlight {
+    background: #1f3864; color: #fff; border-radius: 12px; padding: 22px 26px; margin-top: 6px;
+  }
+  .spotlight h3 { font-size: 16px; margin-bottom: 10px; color: #fde68a; }
+  .spotlight-grid { display: flex; gap: 20px; }
+  .spotlight-col { flex: 1; font-size: 12.5px; line-height: 1.7; color: #e5e7eb; }
+  .spotlight-col b { color: #fff; }
+  .spotlight-col ul { margin-left: 16px; }
+  .spotlight-note {
+    margin-top: 14px; font-size: 12.5px; line-height: 1.6; color: #fde68a;
+    background: rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 14px;
+  }
+
+  .legend {
+    margin-top: 26px; font-size: 11.5px; color:#6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>GlobalMart — Problem Statement &amp; Architecture</h1>
+  <div class="subtitle">Azure Databricks &nbsp;|&nbsp; 3 Weeks &nbsp;|&nbsp; 13 Days &nbsp;|&nbsp; 2 Assessments &nbsp;|&nbsp; Simple-language version for session delivery</div>
+
+  <!-- ───────────── THE STORY ───────────── -->
+  <h2>1. The Story</h2>
+  <div class="story-box">
+    <p>GlobalMart started as a small e-commerce player and grew fast — both in physical retail stores and online. As it grew, every team started asking the same question: <i>"What does the data say?"</i> But getting a straight answer became harder and harder.</p>
+    <p>Different teams pulled numbers from different places — and the numbers didn't match. Stakeholders stopped trusting reports. Decisions slowed down. What was supposed to make GlobalMart faster and smarter was instead creating friction.</p>
+  </div>
+
+  <!-- ───────────── 5 PROBLEMS ───────────── -->
+  <h2>2. The 5 Problems</h2>
+  <div class="problems-grid">
+    <div class="problem-card"><span class="num">1</span><br><b>Data Silos</b><br>No single source of truth. Orders in one system, products/customers in files dropped into storage.</div>
+    <div class="problem-card"><span class="num">2</span><br><b>Inconsistency &amp; Quality</b><br>Same customer, three spellings. Missing values. Numbers that don't reconcile.</div>
+    <div class="problem-card"><span class="num">3</span><br><b>Access Control &amp; Compliance</b><br>No clear rules on who should see what. Either everyone sees everything, or no one sees what they need.</div>
+    <div class="problem-card"><span class="num">4</span><br><b>Complex Transformations</b><br>Every team writes their own scripts to clean the same data, over and over.</div>
+    <div class="problem-card"><span class="num">5</span><br><b>Unclear Origin &amp; Redundancy</b><br>Nobody can say where a number came from or when it was refreshed. Same data copied five places.</div>
+  </div>
+  <div class="trust-line">Result: nobody trusts the data, so nobody uses it the way it was meant to be used.</div>
+
+  <!-- ───────────── WHY DATABRICKS ───────────── -->
+  <h2>3. Why Databricks?</h2>
+  <div class="before-after">
+    <div class="ba-card before">
+      <span class="tag">Before</span>
+      <p style="margin-bottom:8px;">Data was shattered across separate tools — every handoff was a chance for something to break or go stale.</p>
+      <ul>
+        <li>One tool to store files</li>
+        <li>A different tool to schedule jobs</li>
+        <li>Another tool just for reporting</li>
+        <li>Manual email alerts for anything operational</li>
+        <li>No shared rulebook on access</li>
+      </ul>
+    </div>
+    <div class="ba-card after">
+      <span class="tag">After</span>
+      <p style="margin-bottom:8px;">Databricks replaces the scattered toolbox with <b>one platform</b> that does it all, on the same copy of the data.</p>
+      <ul>
+        <li>Ingestion (Lakeflow Connect + Autoloader)</li>
+        <li>Storage &amp; transformation (Delta Lake, Bronze/Silver/Gold)</li>
+        <li>Scheduling (Workflows)</li>
+        <li>Governance (Unity Catalog)</li>
+        <li>Reporting &amp; self-serve Q&amp;A (Genie)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ───────────── ARCHITECTURE ───────────── -->
+  <h2>4. The Architecture — What We're Building</h2>
+  <p>Two real sources, the way GlobalMart actually has them today. (A REST API and a graph database are explored separately on Day 3 as patterns you'll meet in other projects — they don't feed this pipeline.)</p>
+
+  <div class="icon-diagram-wrap">
+    <div class="icon-flow">
+
+      <!-- ───── sources (stacked: Postgres CDC on top, ADLS files below) ───── -->
+      <div class="icon-flow-col">
+        <div class="source-row">
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#1f2937" stroke-width="1.6">
+              <ellipse cx="12" cy="5" rx="8" ry="3"/>
+              <path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/>
+              <path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>
+            </svg>
+            <div class="icon-label">Postgres (Supabase)</div>
+            <div class="icon-sub">orders, order_items</div>
+          </div>
+          <div class="icon-arrow">&#8594;</div>
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#16a34a" stroke-width="1.6">
+              <circle cx="4" cy="6" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="20" cy="9" r="2"/>
+              <circle cx="7" cy="15" r="2"/><circle cx="17" cy="16" r="2"/>
+              <path d="M4 6C8 2 8 2 12 4M12 4C16 6 16 6 20 9M4 6C4 10 4 10 7 15M7 15C12 17 12 17 17 16"/>
+            </svg>
+            <div class="icon-label">Lakeflow Connect</div>
+            <div class="icon-sub">CDC, continuous</div>
+          </div>
+          <div class="icon-arrow">&#8594;</div>
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#4338ca" stroke-width="1.6">
+              <rect x="2" y="7" width="14" height="10" rx="3"/>
+              <rect x="9" y="3" width="14" height="10" rx="3" fill="#eef2ff"/>
+              <path d="M19 6.5v3M21 8h-4" stroke-width="1.3"/>
+            </svg>
+            <div class="icon-label">Ingestion Pipeline</div>
+            <div class="icon-sub">Streaming Tables &middot; CDC + SCD tracking</div>
+          </div>
+        </div>
+
+        <div class="source-row">
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#1f2937" stroke-width="1.6">
+              <path d="M3 6h6l2 2h10v11H3z"/>
+            </svg>
+            <div class="icon-label">ADLS File Drops</div>
+            <div class="icon-sub">products, customers, address, payments</div>
+          </div>
+          <div class="icon-arrow">&#8594;</div>
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="30" height="30">
+              <path d="M4 4h16l-6 8v6l-4 2v-8z" fill="#16a34a" opacity="0.85"/>
+            </svg>
+            <div class="icon-label">Autoloader</div>
+            <div class="icon-sub">incremental, schema evolution</div>
+          </div>
+          <div class="icon-arrow">&#8594;</div>
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="34" height="34">
+              <rect x="2" y="3" width="20" height="6" rx="2" fill="#0d9488"/>
+              <rect x="2" y="9" width="20" height="6" rx="2" fill="#14b8a6"/>
+              <rect x="2" y="15" width="20" height="6" rx="2" fill="#5eead4"/>
+            </svg>
+            <div class="icon-label">ADLS Storage</div>
+            <div class="icon-sub">raw landing zone</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="icon-arrow-lg">&#8594;</div>
+
+      <!-- ───── Databricks platform box ───── -->
+      <div class="platform-box">
+        <span class="platform-label">Azure Databricks Lakehouse</span>
+        <div class="platform-grid">
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#1f2937" stroke-width="1.6">
+              <path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/>
+              <path d="M18 4v4h-4M6 20v-4h4"/>
+            </svg>
+            <div class="icon-label">Workflows</div>
+          </div>
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#1f2937" stroke-width="1.6">
+              <circle cx="12" cy="5" r="2.2"/><circle cx="5" cy="18" r="2.2"/><circle cx="19" cy="18" r="2.2"/>
+              <path d="M12 7.2V12M12 12L6.5 16M12 12L17.5 16"/>
+            </svg>
+            <div class="icon-label">SQL Warehouse</div>
+          </div>
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="28" height="28">
+              <path d="M12 3 L21 19 H3 Z" fill="#ff6f3c" opacity="0.9"/>
+              <path d="M12 9 L17 19 H7 Z" fill="#ffffff"/>
+            </svg>
+            <div class="icon-label">Databricks</div>
+          </div>
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3 L21 19 H3 Z" fill="#b45309" opacity="0.85"/></svg>
+            <div class="icon-label">Bronze Lake</div>
+          </div>
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3 L21 19 H3 Z" fill="#94a3b8" opacity="0.9"/></svg>
+            <div class="icon-label">Silver Lake</div>
+          </div>
+          <div class="icon-node">
+            <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3 L21 19 H3 Z" fill="#ca8a04" opacity="0.9"/></svg>
+            <div class="icon-label">Gold Lake</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="icon-arrow-lg">&#8594;</div>
+
+      <!-- ───── output ───── -->
+      <div class="icon-flow-col">
+        <div class="icon-node" style="width:120px;">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#1f2937" stroke-width="1.6">
+            <path d="M4 5h16v10H9l-4 4V5z"/>
+            <path d="M11.4 8.6l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="#1f2937" stroke="none"/>
+          </svg>
+          <div class="icon-label">fact_sales via Genie</div>
+        </div>
+      </div>
+
+      <div class="icon-arrow-lg">&#8594;</div>
+
+      <div class="icon-flow-col">
+        <div class="icon-node" style="width:130px;">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#1f2937" stroke-width="1.6">
+            <circle cx="12" cy="8" r="3.2"/>
+            <path d="M5 20c0-4 3-6 7-6s7 2 7 6"/>
+          </svg>
+          <div class="icon-label">DC Manager / Warehouse Manager</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="diagram-note">Day 3 side-exploration only (not shown above): REST API + GraphDB (Cypher) — useful patterns, not part of this build.</div>
+  </div>
+
+  <div class="fact-callout">
+    <b>fact_sales</b> is the deliverable downstream teams actually asked for — one trusted table answering "what sold, when, to whom, for how much." Everything upstream (CDC, Autoloader, Bronze, Silver, dimensional model) exists to make this one table correct and current. Workflows keeps it refreshed on schedule, Unity Catalog governs who can see it, and Genie is what replaces the old "manual email alert" — a stakeholder asks a question and gets a trusted answer immediately.
+  </div>
+
+  <!-- ───────────── FACT_SALES SPOTLIGHT ───────────── -->
+  <h2>5. fact_sales — The Business Requirement</h2>
+  <div class="spotlight">
+    <h3>Why this table is the point of the whole pipeline</h3>
+    <div class="spotlight-grid">
+      <div class="spotlight-col">
+        <b>Grain:</b> one row per order line item<br><br>
+        <b>Measures:</b>
+        <ul>
+          <li>quantity</li>
+          <li>unit_price</li>
+          <li>line_total</li>
+        </ul>
+      </div>
+      <div class="spotlight-col">
+        <b>Connects to:</b>
+        <ul>
+          <li>dim_customer — who bought it</li>
+          <li>dim_product — what was sold</li>
+          <li>dim_date — when</li>
+          <li>dim_address — where it shipped</li>
+          <li>dim_payment_method — how it was paid for</li>
+        </ul>
+      </div>
+      <div class="spotlight-col">
+        <b>Answers the business problem:</b>
+        <ul>
+          <li>Single source of truth for "what sold" (fixes Problem #1)</li>
+          <li>Built on validated Silver data (fixes Problem #2)</li>
+          <li>Governed access via Unity Catalog (fixes Problem #3)</li>
+          <li>Refreshed automatically by Workflows (fixes Problem #4)</li>
+          <li>Lineage traces every number back to its source (fixes Problem #5)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="spotlight-note">Same idea as last year's "Inventory Mail Alerts → DC/Warehouse Manager" — except now it's a governed, always-current table that Genie can answer questions from directly, not a one-off email.</div>
+  </div>
+
+  <!-- ───────────── ROADMAP ───────────── -->
+  <h2>6. The 13-Day Journey</h2>
+  <p>Bring the data in (Lakeflow Connect + Autoloader) &nbsp;&rarr;&nbsp; clean and validate it (Silver) &nbsp;&rarr;&nbsp; model it properly (star schema, so fact_sales makes business sense) &nbsp;&rarr;&nbsp; build Gold &nbsp;&rarr;&nbsp; make it refresh automatically as new data arrives (incremental + SCD) &nbsp;&rarr;&nbsp; automate and monitor the whole pipeline (Workflows) &nbsp;&rarr;&nbsp; lock it down with proper access control (Unity Catalog) &nbsp;&rarr;&nbsp; let stakeholders ask questions of it directly (Genie).</p>
+
+  <div class="legend">
+    Continuity note: same GlobalMart story and 5 problems as last year. What's new this year: Postgres CDC formalized via <b>Lakeflow Connect</b>, a dedicated dimensional-modeling day, incremental loading + SCD patterns, full Workflows orchestration, and Genie as the trust-closing deliverable — all in service of one governed <b>fact_sales</b> table.
+  </div>
+
+</div>
+</body>
+</html>
