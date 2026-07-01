@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Intro to Databricks for Data Engineers</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  /* ── platform cards ── */
+  .platform-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .platform-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 18px; font-size: 12.5px; line-height: 1.7;
+  }
+  .platform-card .icon { font-size: 22px; margin-bottom: 6px; display: block; }
+  .platform-card strong { display: block; color: #1f3864; font-size: 13px; margin-bottom: 4px; }
+
+  /* ── cluster diagram ── */
+  .cluster-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace;
+    line-height: 2; color: #374151;
+  }
+  .cluster-wrap .driver  { color: #1f3864; font-weight: 700; }
+  .cluster-wrap .worker  { color: #0369a1; font-weight: 700; }
+  .cluster-wrap .dim     { color: #9ca3af; }
+  .cluster-wrap .storage { color: #059669; font-weight: 700; }
+
+  /* ── notebook anatomy ── */
+  .nb-wrap {
+    background: #1e293b; color: #e2e8f0; border-radius: 12px;
+    padding: 20px 24px; margin-top: 10px; font-size: 12px; line-height: 1.9; font-family: monospace;
+  }
+  .nb-wrap .cell-md   { color: #fde68a; }
+  .nb-wrap .cell-py   { color: #86efac; }
+  .nb-wrap .cell-sql  { color: #7dd3fc; }
+  .nb-wrap .cell-out  { color: #94a3b8; }
+  .nb-wrap .cell-tag  { font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-right: 6px; }
+  .nb-wrap .tag-md  { background: #a16207; color: #fefce8; }
+  .nb-wrap .tag-py  { background: #166534; color: #f0fdf4; }
+  .nb-wrap .tag-sql { background: #1e3a8a; color: #eff6ff; }
+
+  /* ── code block ── */
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px;
+    padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.8;
+    margin-top: 10px; overflow-x: auto;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+
+  /* ── transformation table ── */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; }
+
+  /* ── spark vs pandas callout ── */
+  .vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+  .vs-card {
+    background: #fff; border-radius: 10px; padding: 16px 18px; font-size: 12.5px; line-height: 1.7;
+    border: 1.5px solid #e5e7eb;
+  }
+  .vs-card h3 { margin-bottom: 8px; }
+  .vs-card ul { margin-left: 16px; color: #374151; }
+  .vs-pandas { border-top: 4px solid #94a3b8; }
+  .vs-spark  { border-top: 4px solid #1f3864; }
+  .vs-pandas h3 { color: #475569; }
+  .vs-spark  h3 { color: #1f3864; }
+
+  /* ── adls connection box ── */
+  .conn-box {
+    background: #f0f4ff; border: 1px solid #bfdbfe; border-radius: 10px;
+    padding: 16px 20px; font-size: 12.5px; line-height: 1.8; margin-top: 10px;
+  }
+
+  /* ── day in context ── */
+  .day-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+  .day-table th { background: #374151; color: #fff; padding: 8px 12px; text-align: left; }
+  .day-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
+  .now { background: #fef9c3 !important; font-weight: 600; }
+
+  .legend {
+    margin-top: 26px; font-size: 11.5px; color: #6b7280;
+    border-top: 1px solid #e5e7eb; padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Intro to Databricks for Data Engineers + PySpark &amp; Spark SQL</h1>
+  <div class="subtitle">ILT 4 &nbsp;|&nbsp; Day 1 (7 Jul 2026) &nbsp;|&nbsp; 60 min ILT + 60 min Hands-on &nbsp;|&nbsp; Beginner &nbsp;|&nbsp; Tags: databricks, pyspark, spark-sql, dataframe, ADLS</div>
+
+  <!-- ───────────── WHAT IS DATABRICKS? ───────────── -->
+  <h2>1. What is Databricks?</h2>
+  <p>Databricks is a cloud platform built on top of Apache Spark. It gives Data Engineers a managed environment to run large-scale data processing jobs — with notebooks, clusters, Delta Lake, and job scheduling all in one place. GlobalMart uses it to build and run the full Bronze → Silver → Gold pipeline.</p>
+
+  <div class="platform-grid">
+    <div class="platform-card">
+      <span class="icon">📓</span>
+      <strong>Notebooks</strong>
+      Interactive cells mixing code (Python, SQL, Scala) and text. Where you write and test your pipeline logic. Shared with your team.
+    </div>
+    <div class="platform-card">
+      <span class="icon">⚡</span>
+      <strong>Clusters</strong>
+      A group of VMs that run your code in parallel. You create one, attach it to your notebook, and Spark distributes your job automatically.
+    </div>
+    <div class="platform-card">
+      <span class="icon">🏔️</span>
+      <strong>Delta Lake</strong>
+      The storage format for every table in the pipeline. Parquet files + a transaction log = ACID, time travel, streaming + batch.
+    </div>
+    <div class="platform-card">
+      <span class="icon">📁</span>
+      <strong>Unity Catalog</strong>
+      Central metadata store. Controls who can access which table, column, or row. Tracks lineage from ADLS raw file to Gold table.
+    </div>
+    <div class="platform-card">
+      <span class="icon">⚙️</span>
+      <strong>Workflows</strong>
+      Scheduled multi-task pipelines (DAGs). Replaces Airflow for simple orchestration. Runs your ingestion → Silver → Gold chain on a timer.
+    </div>
+    <div class="platform-card">
+      <span class="icon">💬</span>
+      <strong>Genie</strong>
+      Natural-language Q&amp;A interface on top of Gold tables. Business users ask questions in plain English — no SQL required.
+    </div>
+  </div>
+
+  <!-- ───────────── CLUSTER ARCHITECTURE ───────────── -->
+  <h2>2. Cluster Architecture — Driver + Workers</h2>
+  <p>Every Spark job runs on a cluster. The <b>driver</b> is the brain (plans the job, tracks progress). The <b>workers</b> are the hands (process partitions of data in parallel). Both read from and write to ADLS — the data never fully moves into the cluster.</p>
+
+  <div class="cluster-wrap">
+    Your Notebook Code<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+    <span class="driver">Driver Node</span>&nbsp;&nbsp;<span class="dim">(plans the job, builds execution plan, tracks task completion)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;↓ distributes partitions<br>
+    <span class="worker">Worker Node 1</span>&nbsp;&nbsp;<span class="dim">(processes rows 1–1M)</span>&nbsp;&nbsp;&nbsp;&nbsp;reads/writes ↔ <span class="storage">ADLS</span><br>
+    <span class="worker">Worker Node 2</span>&nbsp;&nbsp;<span class="dim">(processes rows 1M–2M)</span>&nbsp;&nbsp;reads/writes ↔ <span class="storage">ADLS</span><br>
+    <span class="worker">Worker Node 3</span>&nbsp;&nbsp;<span class="dim">(processes rows 2M–3M)</span>&nbsp;&nbsp;reads/writes ↔ <span class="storage">ADLS</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;↓ results back to driver<br>
+    Output (displayed in notebook / written to Delta table)
+  </div>
+
+  <p style="margin-top:12px;">Adding more workers = faster processing on large datasets. A 100 GB file that takes 10 min on 2 workers may take 3 min on 6 workers.</p>
+
+  <!-- ───────────── NOTEBOOKS ───────────── -->
+  <h2>3. Databricks Notebooks — Cell Types &amp; Magic Commands</h2>
+
+  <div class="nb-wrap">
+    <span class="cell-tag tag-md">%md</span><span class="cell-md">## Section heading — plain markdown, renders as text</span><br>
+    <br>
+    <span class="cell-tag tag-py">Python</span><span class="cell-py">df = spark.read.format("csv").option("header", "true").load(raw_path)</span><br>
+    <span class="cell-out">↳ DataFrame [order_id, customer_id, status, …]  ← result shown below cell</span><br>
+    <br>
+    <span class="cell-tag tag-sql">%sql</span><span class="cell-sql">SELECT status, COUNT(*) FROM bronze.orders GROUP BY status</span><br>
+    <span class="cell-out">↳ Table output rendered inline</span><br>
+    <br>
+    <span class="cell-tag tag-py">Python</span><span class="cell-py">spark.sql("SELECT COUNT(*) FROM bronze.customers").show()</span><br>
+    <span class="cell-out">↳ You can mix SQL inside Python using spark.sql()</span>
+  </div>
+
+  <p style="margin-top:12px;">You can switch languages per cell using <code>%python</code>, <code>%sql</code>, <code>%scala</code>, or <code>%md</code>. Within a Python cell, use <code>spark.sql("...")</code> to run SQL and get back a DataFrame.</p>
+
+  <!-- ───────────── PYSPARK VS PANDAS ───────────── -->
+  <h2>4. PySpark vs Pandas — Key Differences</h2>
+  <div class="vs-grid">
+    <div class="vs-card vs-pandas">
+      <h3>pandas</h3>
+      <ul>
+        <li>Runs on a single machine</li>
+        <li>Data lives in memory (RAM limit)</li>
+        <li>Good for datasets under ~1 GB</li>
+        <li>Lazy? No — executes immediately</li>
+        <li>Familiar Python syntax</li>
+      </ul>
+    </div>
+    <div class="vs-card vs-spark">
+      <h3>PySpark (Spark DataFrame)</h3>
+      <ul>
+        <li>Runs on a cluster (distributed)</li>
+        <li>Data lives in ADLS, not RAM</li>
+        <li>Handles TB-scale data</li>
+        <li>Lazy — builds a plan, executes only on an action</li>
+        <li>Similar API to pandas — <code>.select()</code>, <code>.filter()</code>, <code>.groupBy()</code></li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:12px;">Lazy evaluation means writing <code>df.filter(df.status == "pending")</code> does NOT run anything — it just adds a step to the plan. The plan executes when you call an <b>action</b> like <code>.show()</code>, <code>.count()</code>, or <code>.write</code>.</p>
+
+  <!-- ───────────── PYSPARK OPERATIONS ───────────── -->
+  <h2>5. Essential PySpark Operations</h2>
+
+  <h3>Reading Data</h3>
+  <div class="code-block">
+<span class="cmt"># Read a CSV from ADLS</span><br>
+df = (<br>
+&nbsp;&nbsp;spark.read<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">format</span>(<span class="str">"csv"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">option</span>(<span class="str">"header"</span>, <span class="str">"true"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">option</span>(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">load</span>(raw_path + <span class="str">"customers.csv"</span>)<br>
+)<br>
+<br>
+<span class="cmt"># Read a Delta table</span><br>
+df = spark.read.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">load</span>(bronze_path + <span class="str">"orders/"</span>)<br>
+<span class="cmt"># or using Unity Catalog table name:</span><br>
+df = spark.read.<span class="fn">table</span>(<span class="str">"bronze.orders"</span>)
+  </div>
+
+  <h3>Transformations (build the plan — no data moved yet)</h3>
+  <table class="compare-table">
+    <tr><th>Operation</th><th>Code</th><th>What it does</th></tr>
+    <tr><td><b>select</b></td><td><code>df.select("order_id", "status")</code></td><td>Keep only these columns</td></tr>
+    <tr><td><b>filter / where</b></td><td><code>df.filter(df.status == "pending")</code></td><td>Keep rows matching condition</td></tr>
+    <tr><td><b>withColumn</b></td><td><code>df.withColumn("year", year("order_date"))</code></td><td>Add or overwrite a column</td></tr>
+    <tr><td><b>drop</b></td><td><code>df.drop("internal_flag")</code></td><td>Remove a column</td></tr>
+    <tr><td><b>groupBy + agg</b></td><td><code>df.groupBy("status").agg(count("*"))</code></td><td>Aggregate rows by group</td></tr>
+    <tr><td><b>join</b></td><td><code>df.join(other, "customer_id", "left")</code></td><td>Join two DataFrames</td></tr>
+    <tr><td><b>distinct</b></td><td><code>df.distinct()</code></td><td>Remove duplicate rows</td></tr>
+    <tr><td><b>orderBy</b></td><td><code>df.orderBy("order_date", ascending=False)</code></td><td>Sort rows</td></tr>
+    <tr><td><b>dropna</b></td><td><code>df.dropna(subset=["customer_id"])</code></td><td>Remove rows with nulls</td></tr>
+    <tr><td><b>fillna</b></td><td><code>df.fillna({"status": "unknown"})</code></td><td>Replace nulls with a value</td></tr>
+  </table>
+
+  <h3>Actions (trigger execution)</h3>
+  <div class="code-block">
+df.<span class="fn">show</span>(<span class="num">5</span>)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># print first 5 rows</span><br>
+df.<span class="fn">count</span>()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># total row count</span><br>
+df.<span class="fn">printSchema</span>()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># column names and data types</span><br>
+df.<span class="fn">display</span>()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># Databricks-specific: interactive table output</span>
+  </div>
+
+  <!-- ───────────── WRITING DATA ───────────── -->
+  <h2>6. Writing to Delta (Bronze / Silver / Gold)</h2>
+
+  <div class="code-block">
+<span class="cmt"># Write as Delta — Full Load (overwrite)</span><br>
+df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">save</span>(bronze_path + <span class="str">"payment_methods/"</span>)<br>
+<br>
+<span class="cmt"># Write as Delta — Incremental Load (append)</span><br>
+df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">save</span>(bronze_path + <span class="str">"customers/"</span>)<br>
+<br>
+<span class="cmt"># Write and register in Unity Catalog (recommended)</span><br>
+df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">saveAsTable</span>(<span class="str">"bronze.payment_methods"</span>)
+  </div>
+
+  <!-- ───────────── SPARK SQL ───────────── -->
+  <h2>7. Spark SQL — SQL on Delta Tables</h2>
+  <p>Once a DataFrame is written as a Delta table and registered in Unity Catalog, you can query it directly using SQL. This is the same SQL syntax analysts already know — but running on Spark across a distributed cluster.</p>
+
+  <div class="code-block">
+<span class="cmt">-- In a %sql cell:</span><br>
+<span class="kw">SELECT</span> status, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> order_count<br>
+<span class="kw">FROM</span> bronze.orders<br>
+<span class="kw">GROUP BY</span> status<br>
+<span class="kw">ORDER BY</span> order_count <span class="kw">DESC</span>;<br>
+<br>
+<span class="cmt">-- Time travel: query a previous version of a Delta table</span><br>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> bronze.orders <span class="kw">VERSION AS OF</span> <span class="num">1</span>;<br>
+<br>
+<span class="cmt">-- DESCRIBE HISTORY: see all versions of a Delta table</span><br>
+DESCRIBE HISTORY bronze.orders;
+  </div>
+
+  <p style="margin-top:12px;">Use <code>spark.sql("...")</code> inside a Python cell to run SQL and get back a PySpark DataFrame — then you can chain more transformations on the result.</p>
+
+  <!-- ───────────── CONNECT TO ADLS ───────────── -->
+  <h2>8. Connecting to ADLS from Databricks</h2>
+  <div class="conn-box">
+    <b>GlobalMart storage account:</b> <code>amazonprojectadls</code>&nbsp;&nbsp;|&nbsp;&nbsp;<b>Container:</b> <code>amazon-data</code><br><br>
+    <b>Step 1</b> — Set the storage key in Spark config (once per session):<br>
+    <code>spark.conf.set("fs.azure.account.key.amazonprojectadls.dfs.core.windows.net", storage_key)</code><br><br>
+    <b>Step 2</b> — Build the base path:<br>
+    <code>base_path = "abfss://amazon-data@amazonprojectadls.dfs.core.windows.net"</code><br><br>
+    <b>Step 3</b> — Read / write using that path:<br>
+    <code>df = spark.read.format("csv").option("header","true").load(base_path + "/raw/customers.csv")</code>
+  </div>
+
+  <!-- ───────────── TODAY IN CONTEXT ───────────── -->
+  <h2>9. Day 1 Schedule — Where You Are Now</h2>
+  <table class="day-table">
+    <tr><th>Time</th><th>Session</th><th>Type</th></tr>
+    <tr><td>9:30–11:00</td><td>Databricks Problem Statement (GlobalMart)</td><td>ILT</td></tr>
+    <tr><td>11:00–12:00</td><td>Azure Cloud, ADLS Gen2 &amp; Lakehouse</td><td>ILT</td></tr>
+    <tr><td>11:00–1:00</td><td>Medallion Architecture &amp; Delta Lake</td><td>ILT</td></tr>
+    <tr><td>1:00–2:00</td><td>Lunch</td><td>—</td></tr>
+    <tr class="now"><td>2:00–3:00</td><td>Intro to Databricks + PySpark &amp; Spark SQL ← YOU ARE HERE</td><td>ILT</td></tr>
+    <tr><td>3:00–4:00</td><td>Hands-on: Data wrangling with PySpark &amp; Spark SQL + Work with ADLS</td><td>Hands-on</td></tr>
+    <tr><td>4:00–5:30</td><td>Tredence Internal Sessions</td><td>—</td></tr>
+  </table>
+
+  <h3 style="margin-top:18px;">Hands-on (3:00 PM): What You Will Do</h3>
+  <p>Using the GlobalMart datasets already in ADLS:</p>
+  <ol style="margin-left:20px;font-size:13px;line-height:2;">
+    <li>Connect to ADLS using the storage key</li>
+    <li>Read <code>customers.csv</code> from <code>raw/</code> into a PySpark DataFrame</li>
+    <li>Explore the schema — <code>printSchema()</code>, <code>show()</code>, <code>count()</code></li>
+    <li>Run 3 transformations: <code>select</code>, <code>filter</code>, <code>withColumn</code></li>
+    <li>Write the result as a Delta table to <code>bronze/customers/</code></li>
+    <li>Query it with <code>%sql SELECT * FROM ...</code> to verify it landed correctly</li>
+  </ol>
+
+  <div class="legend">
+    Day 1 ILT 4 — Pairs with <b>Day1_ILT4_Intro_Databricks_Ingestion_Patterns.ipynb</b>. Ingestion tools (Lakeflow Connect and Autoloader) are covered in depth on Day 2 and Day 3.
+  </div>
+
+</div>
+</body>
+</html>
