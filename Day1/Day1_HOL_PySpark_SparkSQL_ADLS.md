@@ -1,70 +1,48 @@
-# Day 1 HOL — PySpark & Spark SQL with ADLS
+---
+name: Day 1 HOL — PySpark & Spark SQL with ADLS
+content_type: Project
+overview: GlobalMart is a fast-growing e-commerce company that needs a reliable data platform to power its analytics. In this hands-on exercise, you will set up Azure Data Lake Storage Gen2 from scratch, upload a real GlobalMart customer dataset, connect your Databricks workspace to ADLS using a storage access key, and explore the data using PySpark and Spark SQL. By the end, you will have a cleaned Bronze Delta table ready for further processing.
+learning_objectives:
+  - Create an Azure Storage Account with ADLS Gen2 (Hierarchical Namespace) enabled
+  - Upload a CSV dataset to a structured folder hierarchy in ADLS
+  - Connect Azure Databricks to ADLS using a storage access key
+  - Explore and transform a DataFrame using PySpark and Spark SQL
+  - Write a cleaned DataFrame to a Bronze Delta table
+prerequisites:
+  - Access to an Azure subscription (provided by your instructor)
+  - A Databricks workspace already created (provided by your instructor)
+  - Completed Day 1 ILT 4 — Intro to Databricks + PySpark & Spark SQL
+duration: 60 minutes
+level: Beginner
+industries:
+  - e-commerce
+tags:
+  - azure (tool)
+  - databricks (tool)
+  - spark (tool)
+  - sql (tool)
+  - data-storage (skill)
+  - data-wrangling (skill)
+  - data-quality (skill)
+  - approach (skill)
+---
 
-## Content Type
-Project
+---
 
-## Overview
+## Scenario 1 — Working with Azure
 
-GlobalMart is a fast-growing e-commerce company that needs a reliable data platform to power its analytics. In this hands-on exercise, you will set up Azure Data Lake Storage Gen2 from scratch, upload a real GlobalMart customer dataset, connect your Databricks workspace to ADLS using a storage access key, and explore the data using PySpark and Spark SQL. By the end, you will have a cleaned Bronze Delta table ready for further processing.
-
-## Learning Objectives
-- Create an Azure Storage Account with ADLS Gen2 (Hierarchical Namespace) enabled
-- Upload a CSV dataset to a structured folder hierarchy in ADLS
-- Connect Azure Databricks to ADLS using a storage access key
-- Explore and transform a DataFrame using PySpark and Spark SQL
-- Write a cleaned DataFrame to a Bronze Delta table
-
-## Prerequisites
-- Access to an Azure subscription (provided by your instructor)
-- A Databricks workspace already created (provided by your instructor)
-- Completed Day 1 ILT 4 — Intro to Databricks + PySpark & Spark SQL
-
-## Duration of Completion
-60 minutes
-
-## Level
-Beginner
-
-## Industries
-- e-commerce
-
-## Tags
-- azure (tool)
-- databricks (tool)
-- spark (tool)
-- sql (tool)
-- data-storage (skill)
-- data-wrangling (skill)
-- data-quality (skill)
-- approach (skill)
-
-## Scenarios
-
-### Working with Azure
-
-#### Overview
-Before you can use data in Databricks, it needs to live somewhere in the cloud. In this scenario, you will create your own Azure Data Lake Storage Gen2 account from scratch, set up the folder structure GlobalMart uses, and upload the customer dataset.
+**Overview:** Before you can use data in Databricks, it needs to live somewhere in the cloud. In this scenario you will create your own Azure Data Lake Storage Gen2 account, set up the folder structure GlobalMart uses, and upload the customer dataset.
 
 **Outcome:** A storage account with `customers_010626.csv` sitting at `amazon-data/raw/customers/`, ready to be read by Databricks.
 
-#### Level
-beginner
+---
 
-#### Industries
-- e-commerce
+## Input 1
 
-#### Tags
-- azure (tool)
-- data-storage (skill)
-- cloud-management (skill)
-
-#### Scenario Inputs
-
-##### Input 1
 **Type:** Text
 
 >[!IMPORTANT]
->Ensure you download the dataset below before proceeding.
+>Ensure you download the dataset below before proceeding with the hands-on.
 
 **Dataset:** customers_010626.csv — 6,666 GlobalMart customer records, 8 columns: CustomerID, FirstName, LastName, Email, PhoneNumber, DateOfBirth, RegistrationDate, PreferredPaymentMethodID
 
@@ -72,13 +50,15 @@ beginner
 
 **Tags**
 
+---
 
-##### Input 2
+## Input 2
+
 **Type:** Text
 
 ### Instructions: Create Your Azure Storage Account
 
-Follow these steps carefully. This is your first time setting up cloud storage, so read each step before clicking.
+Follow these steps carefully. This is your first time setting up cloud storage — read each step before clicking.
 
 1. Go to **https://portal.azure.com** and sign in with the Azure credentials provided by your instructor.
 
@@ -97,7 +77,7 @@ Follow these steps carefully. This is your first time setting up cloud storage, 
 5. Click the **Advanced** tab at the top of the form.
 
 6. Under **Data Lake Storage Gen2**, check the box next to **Enable hierarchical namespace**.
-   > This is the key step. It turns a regular Blob storage account into ADLS Gen2. Without it, Databricks cannot use the `abfss://` protocol.
+   > This is the critical step — it turns a regular Blob storage account into ADLS Gen2. Without it, Databricks cannot use the `abfss://` protocol.
 
 7. Leave all other settings as default.
 
@@ -107,12 +87,12 @@ Follow these steps carefully. This is your first time setting up cloud storage, 
 
 10. Click **Go to resource**.
 
-**Outcome:** You now have an ADLS Gen2 storage account ready to use.
-
 **Tags**
 
+---
 
-##### Input 3
+## Input 3
+
 **Type:** Short Answer
 
 **Question:** What is the exact name of the storage account you created?
@@ -123,11 +103,13 @@ Follow these steps carefully. This is your first time setting up cloud storage, 
 - azure (tool)
 - data-storage (skill)
 
+---
 
-##### Input 4
+## Input 4
+
 **Type:** Text
 
-### Instructions: Create Container and Upload the Dataset
+### Instructions: Create Container, Folder Structure, and Upload the Dataset
 
 You are now inside your storage account. Follow these steps to create the folder structure and upload the file.
 
@@ -154,8 +136,10 @@ You are now inside your storage account. Follow these steps to create the folder
 
 **Tags**
 
+---
 
-##### Input 5
+## Input 5
+
 **Type:** File Upload
 
 **Question:** Take a screenshot of the Azure Storage Browser showing `customers_010626.csv` inside the `raw/customers/` folder. Upload your screenshot here.
@@ -169,8 +153,10 @@ You are now inside your storage account. Follow these steps to create the folder
 **Tags**
 - azure (tool)
 
+---
 
-##### Input 6
+## Input 6
+
 **Type:** Text
 
 ### Instructions: Find Your Storage Access Key
@@ -192,8 +178,10 @@ To connect Databricks to your storage account, you need the Storage Account Acce
 
 **Tags**
 
+---
 
-##### Input 7
+## Input 7
+
 **Type:** Short Answer
 
 **Question:** Where exactly in the Azure Portal did you find the storage access key? Describe the navigation path (for example: "Left menu → Security + networking → Access keys").
@@ -204,8 +192,10 @@ To connect Databricks to your storage account, you need the Storage Account Acce
 - azure (tool)
 - cloud-management (skill)
 
+---
 
-##### Input 8
+## Input 8
+
 **Type:** File Upload
 
 **Question:** Take a screenshot of the Access Keys page. Before uploading, blur or cover the actual key value — do not share your real key. We just want to confirm you found the right page.
@@ -219,8 +209,10 @@ To connect Databricks to your storage account, you need the Storage Account Acce
 **Tags**
 - azure (tool)
 
+---
 
-##### Input 9
+## Input 9
+
 **Type:** Choice
 
 **Question:** Which protocol does Databricks use to read files from ADLS Gen2?
@@ -241,8 +233,10 @@ abfss:// (Azure Blob File System Secure) is the ADLS Gen2 native protocol. The p
 - azure (tool)
 - data-storage (skill)
 
+---
 
-##### Input 10
+## Input 10
+
 **Type:** Short Answer
 
 **Question:** Write the full `abfss://` path to your `raw/customers/` folder using your own storage account name.
@@ -257,8 +251,10 @@ Example: `abfss://amazon-data@globalmartvirincy.dfs.core.windows.net/raw/custome
 - azure (tool)
 - data-storage (skill)
 
+---
 
-##### Input 11
+## Input 11
+
 **Type:** Text
 
 ### Instructions: Connect Databricks to ADLS
@@ -291,12 +287,14 @@ print(f"Bronze path: {bronze_path}")
 
 4. Press **Shift + Enter** to run the cell.
 
-5. If you see `Connection successful!` printed below the cell, you are ready to continue.
+5. If you see `Connection successful!` printed below the cell, you are ready for Scenario 2.
 
 **Tags**
 
+---
 
-##### Input 12
+## Input 12
+
 **Type:** File Upload
 
 **Question:** Take a screenshot of your Databricks notebook showing the setup cell output with "Connection successful!" printed. Upload it here.
@@ -310,33 +308,20 @@ print(f"Bronze path: {bronze_path}")
 **Tags**
 - databricks (tool)
 
+---
 
-### Data Wrangling with PySpark & Spark SQL
+## Scenario 2 — Data Wrangling with PySpark & Spark SQL
 
-#### Overview
-With the customer data now in ADLS and Databricks connected, you will explore the dataset, answer business questions using Spark SQL, apply PySpark transformations, and finally write a cleaned version of the data to a Bronze Delta table.
+**Overview:** With the customer data in ADLS and Databricks connected, you will explore the dataset, answer business questions using Spark SQL, apply PySpark transformations, and write cleaned data to a Bronze Delta table.
 
 **Outcome:** A cleaned Bronze Delta table at `bronze/customers/` with trimmed strings and a new `LoyaltyTier` column.
 
 > Continue working in the same notebook you created in Scenario 1. Add new cells below the setup cell for each question.
 
-#### Level
-beginner
+---
 
-#### Industries
-- e-commerce
+## Input 13
 
-#### Tags
-- databricks (tool)
-- spark (tool)
-- sql (tool)
-- data-wrangling (skill)
-- data-quality (skill)
-- data-storage (skill)
-
-#### Scenario Inputs
-
-##### Input 1
 **Type:** Text
 
 ### Phase A — Understand the Data
@@ -358,8 +343,10 @@ customers_df.show(5, truncate=False)
 
 **Tags**
 
+---
 
-##### Input 2
+## Input 14
+
 **Type:** Short Answer
 
 **Question:** How many rows are in the dataset? List all 8 column names and their data types as detected by Spark (e.g. `CustomerID: StringType`).
@@ -370,8 +357,10 @@ customers_df.show(5, truncate=False)
 - data-understanding (skill)
 - data-wrangling (skill)
 
+---
 
-##### Input 3
+## Input 15
+
 **Type:** Choice
 
 **Question:** What does `.option("inferSchema", "true")` do when reading a CSV file?
@@ -392,22 +381,24 @@ Without inferSchema, Spark reads every column as a String. With inferSchema=True
 - data-understanding (skill)
 - approach (skill)
 
+---
 
-##### Input 4
+## Input 16
+
 **Type:** Text
 
 ### Phase B — Spark SQL
 
-First, register the DataFrame as a temporary SQL view so you can query it with standard SQL:
+First, register the DataFrame as a temporary SQL view:
 
 ```python
 customers_df.createOrReplaceTempView("customers")
 print("Temp view 'customers' registered.")
 ```
 
-Now answer the following business questions using Spark SQL. You can use either a `%sql` cell or `spark.sql("...")` in a Python cell.
+Now answer the following business questions using Spark SQL (use `spark.sql("...")` or a `%sql` cell).
 
-**Business Question 1 — Payment Methods:**
+**Payment method distribution:**
 
 ```sql
 SELECT PreferredPaymentMethodID,
@@ -419,8 +410,10 @@ ORDER BY customer_count DESC
 
 **Tags**
 
+---
 
-##### Input 5
+## Input 17
+
 **Type:** Short Answer
 
 **Question:** Which payment method has the highest number of customers? How many customers prefer it? Paste your query output.
@@ -431,11 +424,13 @@ ORDER BY customer_count DESC
 - sql (tool)
 - data-wrangling (skill)
 
+---
 
-##### Input 6
+## Input 18
+
 **Type:** Code
 
-**Question:** Write a Spark SQL query to find how many customers registered in each year. Sort results from most recent year to oldest. Hint: Use the `YEAR()` function.
+**Question:** Write a Spark SQL query to find how many customers registered in each year. Sort results from most recent year to oldest. Hint: Use the `YEAR()` function on the `RegistrationDate` column.
 
 **Language:** sql
 
@@ -446,8 +441,10 @@ ORDER BY customer_count DESC
 - data-wrangling (skill)
 - data-wrangling / group-by-aggregate (skill)
 
+---
 
-##### Input 7
+## Input 19
+
 **Type:** Short Answer
 
 **Question:** In which year did the most customers register? How many registered that year?
@@ -458,8 +455,10 @@ ORDER BY customer_count DESC
 - sql (tool)
 - data-wrangling (skill)
 
+---
 
-##### Input 8
+## Input 20
+
 **Type:** Code
 
 **Question:** Write a Spark SQL query to count customers born between 1 January 1990 and 31 December 1999. Hint: Use `WHERE DateOfBirth BETWEEN 'YYYY-MM-DD' AND 'YYYY-MM-DD'`.
@@ -473,8 +472,10 @@ ORDER BY customer_count DESC
 - data-wrangling / filter (skill)
 - data-wrangling / date-processing (skill)
 
+---
 
-##### Input 9
+## Input 21
+
 **Type:** Choice
 
 **Question:** Which Spark SQL function correctly extracts the year from a date column?
@@ -489,19 +490,19 @@ ORDER BY customer_count DESC
 - YEAR(column)
 
 **Solution:**
-YEAR() is a standard SQL function supported in both Spark SQL and most SQL databases. It takes a date or timestamp column and returns the integer year value. Example: `YEAR(RegistrationDate)` returns 2021 for a date of 2021-06-01.
+YEAR() is a standard SQL function supported in both Spark SQL and most SQL databases. It takes a date or timestamp column and returns the integer year value. Example: YEAR(RegistrationDate) returns 2021 for a date of 2021-06-15.
 
 **Tags**
 - sql (tool)
 - approach (skill)
 
+---
 
-##### Input 10
+## Input 22
+
 **Type:** Text
 
 ### Phase C — PySpark Transformations
-
-Use the PySpark DataFrame API for the following tasks.
 
 **Task 1 — Filter and Add Age Column:**
 
@@ -509,7 +510,7 @@ Use the PySpark DataFrame API for the following tasks.
 from pyspark.sql.functions import col, year, floor, datediff, current_date, when, trim, length
 from pyspark.sql.functions import min as spark_min, max as spark_max, avg
 
-# Filter: customers who registered 2020 or later
+# Filter customers who registered 2020 or later
 recent_customers = customers_df.filter(year(col("RegistrationDate")) >= 2020)
 print(f"Customers registered 2020 or later: {recent_customers.count()}")
 
@@ -527,8 +528,10 @@ customers_with_age.agg(
 
 **Tags**
 
+---
 
-##### Input 11
+## Input 23
+
 **Type:** Short Answer
 
 **Question:** How many customers registered in 2020 or later? What is the age of the youngest customer? The oldest?
@@ -540,11 +543,13 @@ customers_with_age.agg(
 - data-wrangling / filter (skill)
 - data-wrangling / date-processing (skill)
 
+---
 
-##### Input 12
+## Input 24
+
 **Type:** Code
 
-**Question:** Add a `LoyaltyTier` column to classify customers: registered before 2010 → "Gold", 2010–2019 → "Silver", 2020 or later → "Bronze". Use PySpark's `when / otherwise`. Then count customers in each tier.
+**Question:** Add a `LoyaltyTier` column to classify customers based on their registration date: registered before 2010 → "Gold", 2010–2019 → "Silver", 2020 or later → "Bronze". Use PySpark's `when / otherwise`. Then count customers in each tier using `groupBy`.
 
 **Language:** python
 
@@ -555,13 +560,15 @@ customers_with_age.agg(
 - data-wrangling / dataframe-processing (skill)
 - approach (skill)
 
+---
 
-##### Input 13
+## Input 25
+
 **Type:** Text
 
 ### Phase C — Data Quality Fix
 
-The dataset has a data quality issue: some `FirstName` values have trailing spaces (e.g. `"Ahana "` instead of `"Ahana"`). Fix this using PySpark's `trim()` function:
+The dataset has a data quality issue: some `FirstName` values have trailing spaces (e.g. `"Ahana "` instead of `"Ahana"`). Identify and fix this:
 
 ```python
 # Find rows with trailing/leading spaces in FirstName
@@ -581,11 +588,13 @@ customers_clean.select("CustomerID", "FirstName", "Email").show(5, truncate=Fals
 
 **Tags**
 
+---
 
-##### Input 14
+## Input 26
+
 **Type:** Short Answer
 
-**Question:** How many rows had trailing or leading spaces in `FirstName`? Why is it important to fix this before writing to the Silver layer?
+**Question:** How many rows had trailing or leading spaces in `FirstName`? Why is it important to fix this before writing data to the Silver layer?
 
 **Template:** null
 
@@ -593,13 +602,15 @@ customers_clean.select("CustomerID", "FirstName", "Email").show(5, truncate=Fals
 - data-quality (skill)
 - data-wrangling (skill)
 
+---
 
-##### Input 15
+## Input 27
+
 **Type:** Text
 
 ### Phase D — Write to Bronze
 
-Write your cleaned DataFrame to the Bronze layer as a Delta table. Use `overwrite` mode so you can safely re-run this cell:
+Write your cleaned DataFrame to the Bronze layer as a Delta table. Use `overwrite` mode so you can safely re-run this cell without creating duplicates:
 
 ```python
 customers_clean.write \
@@ -617,8 +628,10 @@ bronze_df.show(3, truncate=False)
 
 **Tags**
 
+---
 
-##### Input 16
+## Input 28
+
 **Type:** File Upload
 
 **Question:** Take a screenshot of your Databricks notebook showing the Bronze table write output and the verified row count. Upload it here.
@@ -633,30 +646,34 @@ bronze_df.show(3, truncate=False)
 - databricks (tool)
 - data-storage (skill)
 
+---
 
-##### Input 17
+## Input 29
+
 **Type:** Choice
 
-**Question:** New customer files will arrive tomorrow. You want to ADD the new customers to the Bronze table without deleting the existing ones. Which write mode should you use?
+**Question:** GlobalMart's data engineering team wants to add new customer records that arrive every day to the Bronze table, preserving all historical data. Which of the following commands should they use?
 
 **Options:**
 - df.write.mode("overwrite").format("delta").save(bronze_path)
 - df.write.mode("append").format("delta").save(bronze_path)
-- df.write.mode("merge").format("delta").save(bronze_path)
 - df.write.mode("replace").format("delta").save(bronze_path)
+- df.write.mode("insert").format("delta").save(bronze_path)
 
 **Correct Options:**
 - df.write.mode("append").format("delta").save(bronze_path)
 
 **Solution:**
-`overwrite` deletes everything at the destination path and writes fresh data. `append` adds new rows on top of existing data without touching what is already there. Use `overwrite` for small reference tables that are fully refreshed. Use `append` for tables that grow over time, like new daily customer files arriving each day.
+`overwrite` deletes everything at the destination path and writes fresh data. `append` adds new rows on top of existing data without touching what is already there. Use `overwrite` for small reference tables that are fully refreshed. Use `append` for tables that grow over time, like new daily customer files.
 
 **Tags**
 - data-storage (skill)
 - approach (skill)
 
+---
 
-##### Input 18
+## Input 30
+
 **Type:** File Upload
 
 **Question:** Upload your completed Databricks notebook (.ipynb file). Before uploading, replace your real storage account key with the placeholder `YOUR_STORAGE_ACCOUNT_KEY` in the setup cell.
