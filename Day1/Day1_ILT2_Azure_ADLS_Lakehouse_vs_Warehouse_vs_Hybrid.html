@@ -27,11 +27,58 @@
     padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
 
-  /* ── service grid ── */
-  .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+  /* ── definition card ── */
+  .def-card {
+    background: #1f3864; color: #fff; border-radius: 12px;
+    padding: 22px 28px; margin: 12px 0; line-height: 1.8; font-size: 13.5px;
+  }
+  .def-card .def-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .08em; color: #93c5fd; margin-bottom: 6px; }
+  .def-card b { color: #fde68a; }
+
+  /* ── on-prem vs cloud ── */
+  .onprem-vs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+  .onprem-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 18px; font-size: 12.5px; line-height: 1.75;
+  }
+  .onprem-card .oc-label {
+    display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    padding: 2px 9px; border-radius: 4px; color: #fff; margin-bottom: 10px;
+  }
+  .oc-bad  { background: #6b7280; }
+  .oc-good { background: #0369a1; }
+  .onprem-card ul { margin-left: 16px; color: #374151; }
+  .onprem-card li { margin-bottom: 4px; }
+
+  /* ── advantage cards ── */
+  .adv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .adv-card {
+    background: #fff; border-radius: 10px; padding: 18px 18px; font-size: 12.5px;
+    line-height: 1.7; border-top: 4px solid;
+  }
+  .adv-card .adv-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+  .adv-card .adv-title { font-size: 13px; font-weight: 700; color: #1f3864; margin-bottom: 6px; }
+  .adv-card .adv-key { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase;
+    letter-spacing: .05em; margin-top: 8px; }
+  .adv-1 { border-color: #0369a1; }
+  .adv-2 { border-color: #059669; }
+  .adv-3 { border-color: #7c3aed; }
+  .adv-4 { border-color: #b45309; }
+  .adv-5 { border-color: #dc2626; }
+  .adv-6 { border-color: #0d9488; }
+
+  /* ── service grid (full) ── */
+  .svc-section { margin-top: 18px; }
+  .svc-category {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+    color: #6b7280; margin: 18px 0 8px; padding-left: 2px;
+    border-left: 3px solid #1f3864; padding-left: 8px;
+  }
+  .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .service-card {
     background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
-    padding: 14px 16px; font-size: 12px; line-height: 1.6;
+    padding: 14px 16px; font-size: 12px; line-height: 1.65;
   }
   .service-card .svc-name { font-size: 13px; font-weight: 700; color: #1f3864; margin-bottom: 4px; }
   .service-card .svc-tag {
@@ -39,8 +86,9 @@
     padding: 1px 7px; border-radius: 4px; color: #fff; margin-bottom: 6px;
     background: #0d9488;
   }
-  .service-card .svc-tag.secondary { background: #6b7280; }
+  .service-card .svc-tag.secondary  { background: #6b7280; }
   .service-card .svc-tag.highlight  { background: #1f3864; }
+  .service-card .svc-tag.day2plus   { background: #7c3aed; }
 
   /* ── 3-arch cards ── */
   .arch-trio { display: flex; gap: 14px; margin-top: 10px; }
@@ -152,6 +200,29 @@
   .methods-table th { background: #374151; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
   .methods-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
 
+  /* ── info box ── */
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+
+  /* ── cloud model cards ── */
+  .model-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .model-card {
+    background: #fff; border-radius: 10px; padding: 16px 18px; font-size: 12.5px;
+    line-height: 1.7; border: 1px solid #e5e7eb;
+  }
+  .model-card .model-label {
+    display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #fff; padding: 3px 10px; border-radius: 4px;
+    margin-bottom: 8px; width: fit-content;
+  }
+  .model-card strong { color: #1f3864; font-size: 13px; display: block; margin-bottom: 4px; }
+  .ml-iaas { background: #1e40af; }
+  .ml-paas { background: #059669; }
+  .ml-saas { background: #7c3aed; }
+
   .legend {
     margin-top: 26px; font-size: 11.5px; color: #6b7280;
     border-top: 1px solid #e5e7eb; padding-top: 12px;
@@ -162,49 +233,261 @@
 <div class="canvas">
 
   <h1>Azure Cloud, ADLS Gen2 &amp; Lakehouse vs Warehouse vs Hybrid</h1>
-  <div class="subtitle">ILT 2 &nbsp;|&nbsp; Day 1 (7 Jul 2026) &nbsp;|&nbsp; 60 min &nbsp;|&nbsp; Beginner &nbsp;|&nbsp; Tags: azure, adls, lakehouse, data-warehouse, hybrid-architecture</div>
+  <div class="subtitle">ILT 2 &nbsp;|&nbsp; Day 1 &nbsp;|&nbsp; 90 min &nbsp;|&nbsp; Beginner &nbsp;|&nbsp; Tags: azure, cloud-computing, adls, lakehouse, data-warehouse, hybrid-architecture</div>
 
-  <!-- ───────────── WHY AZURE ───────────── -->
-  <h2>1. Why Azure Cloud?</h2>
-  <div class="story-box">
-    <p>GlobalMart's pipeline runs on <b>Microsoft Azure</b>. Instead of buying physical servers, Azure lets you rent exactly the compute and storage you need, pay only for what you use, and scale in minutes. Two Azure services are the foundation of everything: <b>ADLS Gen2</b> (where data lives) and <b>Azure Databricks</b> (where data gets processed).</p>
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 1 — WHAT IS CLOUD COMPUTING
+  ═══════════════════════════════════════════════════ -->
+  <h2>1. What is Cloud Computing?</h2>
+
+  <div class="def-card">
+    <div class="def-label">Definition</div>
+    <b>Cloud computing</b> is the delivery of computing services — servers, storage, databases, networking, software, and analytics — over the internet ("the cloud"), on demand, with pay-as-you-go pricing.<br><br>
+    Instead of owning and maintaining physical hardware in a data center, you <b>rent capacity from a cloud provider</b> (Microsoft Azure, AWS, Google Cloud) and scale instantly based on demand.
   </div>
 
-  <div class="service-grid" style="margin-top:14px;">
-    <div class="service-card">
-      <div class="svc-tag highlight">We use this</div>
-      <div class="svc-name">ADLS Gen2</div>
-      Cloud file storage optimised for analytics. All raw, Bronze, Silver, and Gold data lives here. Very cheap at scale.
+  <h3>On-Premises vs Cloud</h3>
+  <p>Before cloud, every company had to buy and manage its own servers. Here is what that looked like, compared to cloud:</p>
+
+  <div class="onprem-vs">
+    <div class="onprem-card">
+      <span class="oc-label oc-bad">On-Premises (Traditional)</span>
+      <ul>
+        <li>Buy servers upfront — huge capital expenditure (CapEx)</li>
+        <li>Takes 3–6 months to provision new hardware</li>
+        <li>Pay for full capacity even when idle</li>
+        <li>Your team manages hardware, networking, cooling</li>
+        <li>Hard to scale — buy more servers for every traffic spike</li>
+        <li>Single location — natural disaster = data loss</li>
+        <li>Security patches, OS upgrades are your responsibility</li>
+        <li>No built-in AI/ML tools — you build everything from scratch</li>
+      </ul>
     </div>
-    <div class="service-card">
-      <div class="svc-tag highlight">We use this</div>
-      <div class="svc-name">Azure Databricks</div>
-      Processes data with Apache Spark. Runs notebooks, pipelines, SQL queries, and scheduled Workflows on the cluster.
-    </div>
-    <div class="service-card">
-      <div class="svc-tag secondary">Reference</div>
-      <div class="svc-name">Azure Key Vault</div>
-      Stores secrets safely — passwords, storage keys. In production you never hardcode secrets in notebooks.
-    </div>
-    <div class="service-card">
-      <div class="svc-tag secondary">Reference</div>
-      <div class="svc-name">Azure Data Factory</div>
-      GUI-based ETL orchestration. Databricks Workflows replaces it for our pipeline scheduling.
-    </div>
-    <div class="service-card">
-      <div class="svc-tag secondary">Reference</div>
-      <div class="svc-name">Azure Synapse Analytics</div>
-      Microsoft's managed Data Warehouse service. Useful to understand as a DW comparison point.
-    </div>
-    <div class="service-card">
-      <div class="svc-tag secondary">Reference</div>
-      <div class="svc-name">Azure Monitor</div>
-      Logs, alerts, and pipeline health. Used in production to detect failures and trigger SLA notifications.
+    <div class="onprem-card">
+      <span class="oc-label oc-good">Cloud (Azure)</span>
+      <ul>
+        <li>No hardware to buy — pure operating expenditure (OpEx)</li>
+        <li>Provision resources in minutes with a few clicks</li>
+        <li>Pay only for what you use — scale to zero when idle</li>
+        <li>Microsoft manages hardware, networking, power, cooling</li>
+        <li>Scale up or down instantly — handle any traffic spike</li>
+        <li>Geo-redundant replication — data survives regional outages</li>
+        <li>Managed services handle OS patches, updates automatically</li>
+        <li>300+ built-in services including AI, ML, IoT, analytics</li>
+      </ul>
     </div>
   </div>
 
-  <!-- ───────────── ADLS GEN2 ───────────── -->
-  <h2>2. ADLS Gen2 — The Storage Foundation</h2>
+  <h3>Three Cloud Service Models</h3>
+  <div class="model-grid">
+    <div class="model-card">
+      <span class="model-label ml-iaas">IaaS</span>
+      <strong>Infrastructure as a Service</strong>
+      You rent raw compute, storage, and networking. You still install and manage the OS, middleware, and apps.
+      <br><br>
+      <b>Examples:</b> Azure Virtual Machines, Azure Virtual Network, Azure Blob Storage
+    </div>
+    <div class="model-card">
+      <span class="model-label ml-paas">PaaS</span>
+      <strong>Platform as a Service</strong>
+      Microsoft manages the infrastructure AND the platform. You just deploy your code or data pipelines.
+      <br><br>
+      <b>Examples:</b> Azure Databricks, Azure App Service, Azure SQL Database, ADLS Gen2
+    </div>
+    <div class="model-card">
+      <span class="model-label ml-saas">SaaS</span>
+      <strong>Software as a Service</strong>
+      Fully managed software delivered via browser. You just use it — no servers, no installs, no patches.
+      <br><br>
+      <b>Examples:</b> Microsoft 365, Power BI, Salesforce, GitHub
+    </div>
+  </div>
+
+  <div class="info-box">
+    <b>For GlobalMart's pipeline:</b> We use <b>PaaS services</b> almost entirely — Azure Databricks (data processing) and ADLS Gen2 (storage). Microsoft manages the infrastructure; we focus on writing data pipelines.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 2 — ADVANTAGES OF CLOUD
+  ═══════════════════════════════════════════════════ -->
+  <h2>2. Six Key Advantages of Cloud Computing</h2>
+
+  <div class="adv-grid">
+    <div class="adv-card adv-1">
+      <span class="adv-icon">💰</span>
+      <div class="adv-title">Cost Efficiency</div>
+      No upfront server purchases (CapEx → OpEx). Pay only for what you use — per second, per GB, per query.
+      GlobalMart's ADLS storage costs fractions of a cent per GB per month.
+      <div class="adv-key">CapEx eliminated · Pay-as-you-go · No idle cost</div>
+    </div>
+    <div class="adv-card adv-2">
+      <span class="adv-icon">⚡</span>
+      <div class="adv-title">Elasticity &amp; Scalability</div>
+      Scale compute up for year-end sales rush, scale down to zero overnight. Databricks clusters spin up in 4 minutes and auto-terminate when idle.
+      On-prem would require buying servers months in advance for that spike.
+      <div class="adv-key">Auto-scale · No capacity planning · Instant provisioning</div>
+    </div>
+    <div class="adv-card adv-3">
+      <span class="adv-icon">🛡️</span>
+      <div class="adv-title">High Availability &amp; Reliability</div>
+      Azure provides 99.9%–99.99% SLA uptime guarantees backed by Microsoft. Data is automatically replicated across multiple data centers (LRS, ZRS, GRS options).
+      <div class="adv-key">SLA guarantees · Geo-redundancy · Auto failover</div>
+    </div>
+    <div class="adv-card adv-4">
+      <span class="adv-icon">🌏</span>
+      <div class="adv-title">Global Reach</div>
+      Azure has 60+ regions worldwide. Deploy data pipelines close to your users for low latency.
+      GlobalMart can serve Southeast Asian customers from a Singapore data center with millisecond response.
+      <div class="adv-key">60+ regions · Edge locations · Low latency globally</div>
+    </div>
+    <div class="adv-card adv-5">
+      <span class="adv-icon">🔐</span>
+      <div class="adv-title">Enterprise Security</div>
+      Built-in encryption at rest and in transit. Microsoft holds compliance certifications: ISO 27001, SOC 2, HIPAA, GDPR, PCI-DSS.
+      Azure handles physical security, DDoS protection, and intrusion detection.
+      <div class="adv-key">Encryption everywhere · Compliance certs · Zero-trust model</div>
+    </div>
+    <div class="adv-card adv-6">
+      <span class="adv-icon">🚀</span>
+      <div class="adv-title">Speed of Innovation</div>
+      300+ managed services — AI, ML, IoT, analytics, messaging — available on day one. No months of infra setup. Teams can prototype a new data pipeline in hours instead of procuring hardware over weeks.
+      <div class="adv-key">300+ services · No infra management · Weekly new features</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 3 — AZURE SERVICES
+  ═══════════════════════════════════════════════════ -->
+  <h2>3. Azure Services for Data Engineering</h2>
+  <p>Azure has 300+ services. Below are the ones most relevant to Data Engineering, organised by category. The services marked <b>"We use this"</b> are part of GlobalMart's pipeline in this bootcamp.</p>
+
+  <div class="svc-section">
+
+    <div class="svc-category">Storage &amp; Data</div>
+    <div class="service-grid">
+      <div class="service-card">
+        <div class="svc-tag highlight">We use this</div>
+        <div class="svc-name">ADLS Gen2</div>
+        Azure Data Lake Storage Gen2 — cloud file storage optimised for analytics. Stores CSV, Parquet, Delta at massive scale for fractions of a cent per GB. All raw, Bronze, Silver, Gold data lives here.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Blob Storage</div>
+        General-purpose object storage. ADLS Gen2 is built on top of Blob Storage with the Hierarchical Namespace layer added. Used for backups, images, documents, cold data.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure SQL Database</div>
+        Fully managed relational database (SQL Server engine). Used for OLTP transactional systems. In GlobalMart's case, the OLTP source is Supabase Postgres (external), not Azure SQL.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Cosmos DB</div>
+        Globally distributed NoSQL database — JSON documents, key-value, graph models. Used for product catalogs, session data, real-time event stores. Not used in this pipeline.
+      </div>
+    </div>
+
+    <div class="svc-category">Compute &amp; Processing</div>
+    <div class="service-grid">
+      <div class="service-card">
+        <div class="svc-tag highlight">We use this</div>
+        <div class="svc-name">Azure Databricks</div>
+        Managed Apache Spark platform — runs PySpark notebooks, scheduled Workflows, SQL queries, and ML models. The brain of GlobalMart's data pipeline. Clusters auto-scale and terminate automatically.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Virtual Machines</div>
+        Rent a virtual computer in the cloud. You install whatever you want — Linux or Windows. Good for custom workloads but you manage the OS, patching, and scaling yourself.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Functions</div>
+        Serverless compute — run small pieces of code in response to events (file upload, HTTP request, timer). No server to manage. Great for lightweight triggers and microservices.
+      </div>
+    </div>
+
+    <div class="svc-category">Data Integration &amp; Pipelines</div>
+    <div class="service-grid">
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Data Factory (ADF)</div>
+        GUI-based ETL/ELT orchestration tool. Connect 90+ data sources, build visual pipelines, schedule runs. In modern architectures, Databricks Workflows replaces ADF for complex transformations.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Event Hubs</div>
+        High-throughput real-time data streaming — ingest millions of events per second (clickstreams, IoT, logs). Acts like a managed Kafka. Used when you need real-time streaming into the Lakehouse.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Service Bus</div>
+        Enterprise messaging queue — reliable async communication between services. Ensures messages are not lost if the receiver is temporarily down. Different from Event Hubs (guaranteed delivery vs streaming).
+      </div>
+    </div>
+
+    <div class="svc-category">Analytics &amp; Reporting</div>
+    <div class="service-grid">
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Synapse Analytics</div>
+        Microsoft's managed Data Warehouse service — SQL pools for fast analytical queries over structured data. The "DW side" of a Hybrid architecture. Understanding it helps explain WHY the Lakehouse replaces it.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Stream Analytics</div>
+        Real-time SQL queries over streaming data from Event Hubs or IoT Hub. Write SQL and it runs continuously on the incoming stream. Results go to ADLS, Power BI, or databases.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Microsoft Fabric</div>
+        Microsoft's newest unified analytics platform (2024). Combines Data Factory, Synapse, Power BI into one SaaS product. Built on OneLake (similar to ADLS). Future-direction for the Microsoft data stack.
+      </div>
+    </div>
+
+    <div class="svc-category">Security &amp; Governance</div>
+    <div class="service-grid">
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Key Vault</div>
+        Stores secrets safely — storage keys, database passwords, API tokens, TLS certificates. In production, notebooks never hardcode credentials. They fetch secrets from Key Vault at runtime using managed identity.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Microsoft Entra ID (AAD)</div>
+        Microsoft's identity platform — user authentication, service-to-service auth, RBAC policies. Controls who can access which Azure resource. Databricks Unity Catalog integrates directly with Entra ID.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Policy &amp; Defender</div>
+        Azure Policy enforces compliance rules across all resources (e.g. "all storage accounts must have encryption enabled"). Microsoft Defender for Cloud scans for security vulnerabilities and misconfigurations.
+      </div>
+    </div>
+
+    <div class="svc-category">Monitoring &amp; Operations</div>
+    <div class="service-grid">
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Monitor</div>
+        Collects logs, metrics, and traces from all Azure services. Used to alert on pipeline failures, high latency, or resource exhaustion. Integrates with Databricks to track job run times and errors.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Log Analytics</div>
+        Query workspace for logs from all Azure resources using KQL (Kusto Query Language). Used to investigate incidents, build dashboards of pipeline health, and set up proactive alerts.
+      </div>
+      <div class="service-card">
+        <div class="svc-tag secondary">Reference</div>
+        <div class="svc-name">Azure Cost Management</div>
+        Track cloud spending in real time, set budgets, identify waste. Essential for Data Engineers — a forgotten running cluster can cost hundreds of dollars per day if not auto-terminated.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 4 — ADLS GEN2
+  ═══════════════════════════════════════════════════ -->
+  <h2>4. ADLS Gen2 — The Storage Foundation</h2>
   <p><b>Azure Data Lake Storage Gen2</b> is cloud file storage optimised for big-data analytics. It stores any format — CSV, JSON, Parquet, Delta — cheaply at massive scale, and connects natively with Databricks via the <code>abfss://</code> protocol.</p>
 
   <div class="before-after">
@@ -215,25 +498,59 @@
         <li>No real folder hierarchy — no folder-level permissions</li>
         <li>Slower for analytics workloads</li>
         <li>Default when you create a storage account</li>
+        <li>Uses <code>wasbs://</code> protocol in Spark</li>
       </ul>
     </div>
     <div class="ba-card after">
       <span class="tag">ADLS Gen2</span>
       <ul>
-        <li>True hierarchical folder structure</li>
+        <li>True hierarchical folder structure (same as a real file system)</li>
         <li>Folder-level access control (RBAC + ACLs)</li>
         <li>Optimised for Spark / Databricks analytics — 10–100× faster reads</li>
         <li>Enabled by turning on <b>Hierarchical Namespace</b> in the storage account</li>
+        <li>Uses <code>abfss://</code> (Azure Blob File System Secure) protocol</li>
       </ul>
     </div>
   </div>
+
+  <h3>Key ADLS Gen2 Features</h3>
+  <table class="methods-table" style="margin-top:10px;">
+    <tr>
+      <th>Feature</th>
+      <th>Details</th>
+    </tr>
+    <tr>
+      <td><b>Storage tiers</b></td>
+      <td>Hot (frequent access, highest cost), Cool (infrequent, lower cost), Archive (rarely accessed, cheapest). Move data between tiers via lifecycle policies.</td>
+    </tr>
+    <tr>
+      <td><b>Redundancy options</b></td>
+      <td>LRS (3 copies in one data center), ZRS (3 copies across availability zones), GRS (copies in two regions), RA-GRS (read access from second region).</td>
+    </tr>
+    <tr>
+      <td><b>Encryption</b></td>
+      <td>All data encrypted at rest by default using 256-bit AES. You can use Microsoft-managed keys or your own keys from Azure Key Vault (BYOK).</td>
+    </tr>
+    <tr>
+      <td><b>Access control</b></td>
+      <td>RBAC roles at container or storage account level. POSIX-style ACLs at file and folder level. Unity Catalog manages access from Databricks without exposing storage keys.</td>
+    </tr>
+    <tr>
+      <td><b>Soft delete</b></td>
+      <td>Deleted files can be recovered within a configurable retention period (up to 365 days). Critical for GDPR right-to-erasure requests and accidental deletion recovery.</td>
+    </tr>
+    <tr>
+      <td><b>Versioning</b></td>
+      <td>Keep previous versions of every file. If data is accidentally overwritten, promote the previous version back to current.</td>
+    </tr>
+  </table>
 
   <h3>GlobalMart's ADLS Structure</h3>
   <div class="hierarchy-wrap">
     Storage Account: <b>amazonprojectadls</b><br>
     &nbsp;&nbsp;&nbsp;&nbsp;Container: <b>amazon-data</b><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">── raw landing zone (CSV files from upstream systems)</span><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;raw/ &nbsp;&nbsp;&nbsp;&nbsp;customers.csv &nbsp; orders.csv &nbsp; products.csv &nbsp; ...<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;raw/ &nbsp;&nbsp;&nbsp;&nbsp;customers/ &nbsp; orders/ &nbsp; products/ &nbsp; ...<br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">── Bronze: raw data converted to Delta, never modified</span><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bronze/ &nbsp;&nbsp;customers/ &nbsp; orders/ &nbsp; order_items/ &nbsp; ...<br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">── Silver: cleaned, validated, deduplicated Delta tables</span><br>
@@ -242,8 +559,10 @@
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gold/ &nbsp;&nbsp;&nbsp;&nbsp;fact_sales/ &nbsp; dim_date/ &nbsp; dim_address/ &nbsp; ...
   </div>
 
-  <!-- ───────────── THREE APPROACHES ───────────── -->
-  <h2>3. Three Ways to Store and Query Data at Scale</h2>
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 5 — THREE APPROACHES
+  ═══════════════════════════════════════════════════ -->
+  <h2>5. Three Ways to Store and Query Data at Scale</h2>
   <p>Before choosing a Lakehouse, most organisations tried one of three approaches. Understanding what each one is — and why the Hybrid model was painful — explains why the Lakehouse architecture exists.</p>
 
   <div class="arch-trio">
@@ -253,10 +572,11 @@
       <ul>
         <li>Structured, schema-on-write data only</li>
         <li>ACID transactions — UPDATE, DELETE, MERGE</li>
-        <li>Very fast SQL queries</li>
-        <li>High storage cost (proprietary format)</li>
+        <li>Very fast SQL queries with statistics + indexing</li>
+        <li>High storage cost (proprietary columnar format)</li>
         <li>Cannot store raw files, JSON, images, ML features</li>
         <li>Hard to work with for ML/AI teams</li>
+        <li>ETL must transform data before loading</li>
       </ul>
       <br>
       <b>Examples:</b> Snowflake, Azure Synapse, Redshift, BigQuery
@@ -267,6 +587,7 @@
       <ul>
         <li>Store anything — CSV, JSON, images, logs, Parquet</li>
         <li>Very cheap (object storage like ADLS or S3)</li>
+        <li>Schema-on-read — define structure at query time</li>
         <li>No schema enforcement — data quality degrades fast</li>
         <li>No ACID — no UPDATE or DELETE on files</li>
         <li>Slow to query — no statistics, no indexing</li>
@@ -281,18 +602,21 @@
       <ul>
         <li>Data Lake holds raw + ML data</li>
         <li>Data Warehouse holds clean business data</li>
-        <li>ETL pipelines move data between the two</li>
-        <li>Data is duplicated in both systems</li>
+        <li>Nightly ETL pipelines move data between the two</li>
+        <li>Same data stored twice — pay for both systems</li>
         <li>Two sets of infrastructure, two access controls</li>
         <li>Data freshness lag — batch ETL runs overnight</li>
+        <li>ML and analytics teams see different versions of data</li>
       </ul>
       <br>
       <b>Examples:</b> ADLS + Synapse Analytics side by side
     </div>
   </div>
 
-  <!-- ───────────── WHY HYBRID IS PAINFUL ───────────── -->
-  <h2>4. The Hybrid Problem — Why It Does Not Work Well</h2>
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 6 — WHY HYBRID FAILS
+  ═══════════════════════════════════════════════════ -->
+  <h2>6. The Hybrid Problem — Why It Does Not Work Well</h2>
   <p>Most large companies still run a Hybrid today. The diagram below shows exactly why it creates pain for Data Engineers and Business teams.</p>
 
   <div class="hybrid-wrap">
@@ -312,11 +636,14 @@
     &nbsp;&nbsp;<span class="pain">✗</span>&nbsp; ML team and analytics team see different numbers<br>
     &nbsp;&nbsp;<span class="pain">✗</span>&nbsp; ETL pipeline failure = DW is stale for 24h<br>
     &nbsp;&nbsp;<span class="pain">✗</span>&nbsp; Two governance systems — who can see what?<br>
-    &nbsp;&nbsp;<span class="pain">✗</span>&nbsp; No DELETE in the lake — GDPR requests are a nightmare
+    &nbsp;&nbsp;<span class="pain">✗</span>&nbsp; No DELETE in the lake — GDPR requests are a nightmare<br>
+    &nbsp;&nbsp;<span class="pain">✗</span>&nbsp; Schema changes break both systems independently
   </div>
 
-  <!-- ───────────── LAKEHOUSE ───────────── -->
-  <h2>5. The Lakehouse — One Platform for Everything</h2>
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 7 — LAKEHOUSE
+  ═══════════════════════════════════════════════════ -->
+  <h2>7. The Lakehouse — One Platform for Everything</h2>
   <p>The <b>Lakehouse</b> combines cheap lake storage (ADLS) with Data Warehouse features (ACID, schema, fast queries) by adding a transaction layer — <b>Delta Lake</b> — directly on top of the files. One system replaces both.</p>
 
   <div class="lh-wrap">
@@ -335,8 +662,10 @@
     <span class="hl">Unity Catalog</span> governs access for everyone in one place
   </div>
 
-  <!-- ───────────── 4-WAY COMPARISON ───────────── -->
-  <h2>6. Full Comparison — Data Warehouse vs Data Lake vs Hybrid vs Lakehouse</h2>
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 8 — FULL COMPARISON
+  ═══════════════════════════════════════════════════ -->
+  <h2>8. Full Comparison — Data Warehouse vs Data Lake vs Hybrid vs Lakehouse</h2>
 
   <table class="compare-table">
     <tr>
@@ -424,6 +753,13 @@
       <td class="col-lh yes">Yes — Delta log</td>
     </tr>
     <tr>
+      <td><b>GDPR compliance</b></td>
+      <td class="col-dw yes">Yes (UPDATE/DELETE)</td>
+      <td class="col-dl no">Hard — can't delete rows in files</td>
+      <td class="col-hybrid med">DW side only</td>
+      <td class="col-lh yes">Yes — Delta MERGE/DELETE</td>
+    </tr>
+    <tr>
       <td><b>Real-world examples</b></td>
       <td class="col-dw">Snowflake, Synapse, Redshift</td>
       <td class="col-dl">Raw ADLS / S3</td>
@@ -434,8 +770,10 @@
 
   <p style="margin-top:12px;"><b>One-sentence takeaway:</b> The Lakehouse gives you the low cost and flexibility of a Data Lake with the reliability and performance of a Data Warehouse — in one system, with no duplication.</p>
 
-  <!-- ───────────── GLOBALMART PIPELINE ───────────── -->
-  <h2>7. GlobalMart's Lakehouse Pipeline</h2>
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 9 — GLOBALMART PIPELINE
+  ═══════════════════════════════════════════════════ -->
+  <h2>9. GlobalMart's Lakehouse Pipeline</h2>
   <p>Data enters from two sources and flows through ADLS using Bronze → Silver → Gold. Every layer is a Delta table — cheap storage, ACID, queryable with SQL or PySpark.</p>
 
   <div class="pipeline-wrap">
@@ -506,8 +844,10 @@
     <code>abfss://amazon-data@amazonprojectadls.dfs.core.windows.net/bronze/orders/</code>
   </div>
 
-  <!-- ───────────── CONNECTING DATABRICKS ───────────── -->
-  <h2>8. Connecting Databricks to ADLS</h2>
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 10 — CONNECTING DATABRICKS
+  ═══════════════════════════════════════════════════ -->
+  <h2>10. Connecting Databricks to ADLS</h2>
   <table class="methods-table">
     <tr>
       <th>Method</th>
@@ -528,17 +868,23 @@
       <td>SAS token in spark.conf or path</td>
     </tr>
     <tr>
+      <td><b>Service Principal (OAuth)</b></td>
+      <td class="med">Medium — app identity</td>
+      <td>CI/CD pipelines, automation</td>
+      <td><code>spark.conf.set("fs.azure.account.auth.type.{account}", "OAuth")</code></td>
+    </tr>
+    <tr>
       <td><b>Unity Catalog External Location</b></td>
       <td class="yes">Highest — managed identity</td>
       <td>Production</td>
-      <td>No spark.conf needed — Unity Catalog manages auth</td>
+      <td>No spark.conf needed — Unity Catalog manages auth transparently</td>
     </tr>
   </table>
 
-  <p style="margin-top:12px;"><b>This bootcamp</b> uses the Storage Account Key for simplicity. In production, Unity Catalog External Locations are the standard — no key in code.</p>
+  <p style="margin-top:12px;"><b>This bootcamp</b> uses the Storage Account Key for simplicity. In production, Unity Catalog External Locations with managed identity are the standard — no keys ever in code.</p>
 
   <div class="legend">
-    Day 1 ILT 2 — Pairs with <b>Day1_ILT2_Azure_Cloud_ADLS_Lakehouse.ipynb</b>. Hands-on: connect to ADLS using the storage key, verify the container structure, and read raw CSV files into a PySpark DataFrame.
+    Day 1 ILT 2 — Pairs with <b>Day1_ILT2_Azure_ADLS_Lakehouse_vs_Warehouse_vs_Hybrid.ipynb</b>. Hands-on: connect to ADLS using the storage key, verify the container structure, and read raw CSV files into a PySpark DataFrame.
   </div>
 
 </div>
