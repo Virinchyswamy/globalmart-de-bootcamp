@@ -1,0 +1,17 @@
+FIRST CODE CELL INDEX: 4
+keys: ['cell_type', 'execution_count', 'metadata', 'outputs', 'source']
+type of source: <class 'list'>
+num source lines: 13
+  LINE: '# ─── Scratch schema setup — isolates this demo from the real gbmart catalog ───\n'
+  LINE: 'spark.sql("CREATE SCHEMA IF NOT EXISTS main.scd_demo")\n'
+  LINE: '\n'
+  LINE: '# SHALLOW CLONE: independent transaction log, shares data files with the source.\n'
+  LINE: '# Writes/MERGEs against the clone below never touch gbmart.bronze/silver directly.\n'
+  LINE: 'spark.sql("CREATE OR REPLACE TABLE main.scd_demo.bronze_customers SHALLOW CLONE gbmart.bronze.customers")\n'
+execution_count: None
+outputs: []
+metadata: {}
+
+markdown source type: <class 'list'>
+markdown source len: 19
+first 3 md lines: ["'# Day 10 — ILT 1: Implementing SCD Type 1 & Type 2 using MERGE\\n'", "'\\n'", "'**GlobalMart Data Engineering Bootcamp**\\n'"]

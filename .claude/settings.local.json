@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Read(//c/Yvirinchy/Chennai_batch/day 8/**)",
+      "Read(//c/Yvirinchy/Chennai_batch/Day 8/**)",
+      "Read(//c/Yvirinchy/Chennai_batch/day 8/Analyzing Customer Reviews at GlobalMart/**)",
+      "Read(//c/Yvirinchy/Chennai_batch/day 8/Flexible Filtering and Analysis of Sales with Functions/**)",
+      "Read(//c/Yvirinchy/Chennai_batch/day 8/Vendor Performance Analysis and Ranking Framework/**)",
+      "Bash(ls \"c:/Yvirinchy/Chennai_batch/day 7/\")",
+      "Read(//c/Yvirinchy/Chennai_batch/day 7/**)"
     ]
   }
 }
