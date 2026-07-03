@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 11 ILT1 — DLQ, Replay Strategy and Operational Readiness</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  /* ── meta row ── */
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge {
+    background: #e0e7ff; color: #3730a3; font-size: 11.5px;
+    padding: 4px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+  .badge.red    { background: #fee2e2; color: #991b1b; }
+
+  /* ── info cards ── */
+  .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 18px; font-size: 12.5px; line-height: 1.8;
+  }
+  .card strong { display: block; color: #1f3864; font-size: 13px; margin-bottom: 6px; }
+
+  /* ── code block ── */
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px;
+    padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9;
+    margin-top: 10px; overflow-x: auto; white-space: pre;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+  .code-block .var { color: #e2e8f0; }
+
+  /* ── tables ── */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .compare-table .ok   { color: #059669; font-weight: 700; }
+  .compare-table .warn { color: #b45309; font-weight: 700; }
+  .compare-table .no   { color: #9ca3af; }
+
+  /* ── runbook / path style box ── */
+  .path-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 20px 24px; margin-top: 10px; font-size: 12.5px;
+    line-height: 1.9; color: #374151;
+  }
+
+  /* ── checklist ── */
+  .checklist {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 20px 24px; margin-top: 10px; font-size: 13px; line-height: 2.1;
+  }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .arrow { color: #1e40af; font-weight: 700; margin-right: 6px; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { color: #374151; }
+
+  /* ── phase pill ── */
+  .phase-pill {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px; margin-right: 8px;
+  }
+  .pill-a { background: #dbeafe; color: #1e40af; }
+  .pill-b { background: #d1fae5; color: #065f46; }
+  .pill-c { background: #fef3c7; color: #92400e; }
+  .pill-d { background: #ede9fe; color: #5b21b6; }
+  .pill-e { background: #fee2e2; color: #991b1b; }
+
+  /* ── highlight boxes ── */
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .warn-box {
+    background: #fff7ed; border-left: 4px solid #f59e0b;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .fix-box {
+    background: #ecfdf5; border-left: 4px solid #10b981;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 11 — ILT 1: DLQ, Replay Strategy and Operational Readiness (Runbooks, SLAs)</h1>
+  <p class="subtitle">GlobalMart Data Engineering Bootcamp &nbsp;|&nbsp; Instructor-Led Training &nbsp;|&nbsp; Day 11, 10:30 AM – 12:00 PM</p>
+
+  <div class="meta-row">
+    <span class="badge blue">90 minutes</span>
+    <span class="badge orange">ILT — includes a live coded demo, not just concepts</span>
+    <span class="badge green">Writes only to your practice schema</span>
+    <span class="badge">Builds on Day 5, Day 9, Day 10</span>
+  </div>
+
+  <div class="warn-box">
+    <strong>Where this session writes data:</strong> every write in the live demo targets your own personal practice schema (<code>main.YOUR_SCHEMA</code>) — never <code>gbmart.silver</code> or <code>gbmart.gold</code>. The only contact with the shared <code>gbmart</code> catalog is a <strong>read-only</strong> sample pulled from <code>gbmart.bronze.customers</code>. No job, pipeline, cluster, or SQL warehouse is created or started by this notebook, and no real alert (email/Slack/PagerDuty) is ever sent — the SLA check below is print/log only.
+  </div>
+
+  <!-- ═══════════════════════ PART 1 — WHAT A DLQ IS ═══════════════════════ -->
+  <h2><span class="phase-pill pill-a">Part 1</span>What a DLQ Is, and Why</h2>
+  <p>Every pipeline eventually meets a row it cannot process: malformed JSON from an API, a schema mismatch after an upstream change, a business-rule violation, a null in a field a downstream step assumes is always populated. Three ways to handle that row:</p>
+
+  <table class="compare-table">
+    <tr><th>Approach</th><th>What happens</th><th>Why it's a problem</th></tr>
+    <tr><td><strong>Crash the batch</strong></td><td>One bad row raises an exception; the whole job fails</td><td class="warn">Every other good row in the batch is blocked too</td></tr>
+    <tr><td><strong>Silently drop it</strong></td><td>The bad row is filtered and never written anywhere</td><td class="warn">Disappears with no record it ever existed</td></tr>
+    <tr><td><strong>Route it to a DLQ</strong></td><td>Written as-is to a separate table, tagged with why and when</td><td class="ok">Good rows keep flowing; the bad row is inspectable and replayable</td></tr>
+  </table>
+
+  <p>A <strong>Dead-Letter Queue (DLQ)</strong> is that third option — a Delta table that exists purely to catch anything that fails processing, for any reason, anywhere in the pipeline. It's called a "queue" because the intent is to <em>drain</em> it: every row that lands there is expected to eventually be replayed or explicitly written off, not to live there forever.</p>
+
+  <h3>DLQ vs. Day 5's Quarantine Table — Same Mechanism, Different Scope</h3>
+  <p>Day 5 built <code>gbmart.silver.customers_quarantine</code> — structurally identical to a DLQ. What differs is <em>scope</em>:</p>
+  <table class="compare-table">
+    <tr><th></th><th>Day 5's Quarantine</th><th>This Session's DLQ</th></tr>
+    <tr><td>Trigger</td><td>Rows failing a specific <strong>DQ scan's</strong> rules (<code>_dq_issue</code>)</td><td><strong>Anything</strong> that fails <strong>any</strong> processing step, anywhere</td></tr>
+    <tr><td>Framing</td><td>"Is this row valid data?" — a DQ question</td><td>"Did this row survive processing?" — an operational question</td></tr>
+    <tr><td>Where it plugs in</td><td>One Bronze → Silver transformation, once</td><td>Any stage — ingestion, transform, Gold aggregation, an API call</td></tr>
+    <tr><td>What happens next</td><td class="warn">Mostly stays put for human review</td><td class="ok">Designed to be <strong>replayed</strong> — draining it is the point</td></tr>
+  </table>
+  <div class="info-box">Quarantine is a DLQ used for exactly one purpose (a DQ scan). A DLQ is the general pattern quarantine is one instance of — this session builds the general version, plus the piece Day 5 didn't need: a working <strong>replay</strong> function.</div>
+
+  <!-- ═══════════════════════ PART 2 — REPLAY STRATEGY ═══════════════════════ -->
+  <h2><span class="phase-pill pill-b">Part 2</span>Replay Strategy: Getting Rows Back Out Safely</h2>
+  <p>A DLQ that never drains is just an expensive way to lose data slowly. The dangerous part is <em>how</em> you get rows back out: if replay re-runs the transformation and blindly <strong>appends</strong> the result, running it twice (or retrying after a partial failure) writes the row twice — and a <code>fact_sales</code>-style aggregate downstream quietly becomes wrong.</p>
+
+  <table class="compare-table">
+    <tr><th>Step</th><th>What it does</th><th>Why it's safe to re-run</th></tr>
+    <tr><td>1</td><td>Read all rows currently in the DLQ table</td><td>Reading never has side effects</td></tr>
+    <tr><td>2</td><td>Apply the fix (default value, corrected business rule)</td><td>Deterministic — same input, same output, every time</td></tr>
+    <tr><td>3</td><td><code>MERGE</code> the fixed rows into the processed table <strong>by natural key</strong></td><td>Re-running the same <code>MERGE</code> with the same key can't create a second row</td></tr>
+    <tr><td>4</td><td>Remove the replayed rows from the DLQ (<code>MERGE ... WHEN MATCHED THEN DELETE</code>)</td><td>Once gone from the DLQ, a second replay call finds nothing left to do</td></tr>
+  </table>
+  <p>Step 3 makes replay safe; step 4 makes it idempotent end-to-end — call the replay function once or ten times in a row, same outcome. This is the exact idempotency principle Day 9/Day 10 already taught for incremental loading, just sourced from a DLQ table instead of a change feed.</p>
+
+  <div class="info-box"><strong>Not every DLQ row is auto-replayable.</strong> Some failures need a human decision first (is this bad data, or a business rule that needs writing?); some can't be fixed at all (no usable key to write back with). A mature replay strategy separates "safe to replay on a schedule" from "needs a human to look at it" — don't build a replay function that blindly "fixes" everything just because it's sitting in the DLQ.</div>
+
+  <!-- ═══════════════════════ PART 3 — RUNBOOKS ═══════════════════════ -->
+  <h2><span class="phase-pill pill-c">Part 3</span>Runbooks: Turning Tribal Knowledge Into a Checklist</h2>
+  <p>A runbook is a written, step-by-step "if this breaks, do this" document for a specific pipeline failure — so whoever is on call, not just the person who built the pipeline, can follow it under pressure. Below is a real one for GlobalMart's actual CDC pipeline, <code>orders_data_ingestion_cdc</code> (Lakeflow Connect, query-based on <code>updated_at</code> — Day 2).</p>
+
+  <div class="path-wrap">
+    <strong style="color:#1f3864;">Runbook: <code>orders_data_ingestion_cdc</code> failed / didn't run overnight</strong><br>
+    <span style="color:#6b7280;">Symptom: <code>gbmart.bronze.orders</code>/<code>order_items</code> row counts haven't moved, or the pipeline shows a failed/skipped run.</span>
+
+    <div style="margin-top:14px;"><span class="phase-pill pill-a">1. Detect</span> Pipeline run history in the Jobs/Pipelines UI; Day 9 HOL 2-style verification (row counts, <code>MAX(updated_at)</code>, <code>DESCRIBE HISTORY</code>)</div>
+    <div style="margin-top:10px;"><span class="phase-pill pill-b">2. Triage</span> Credential/auth expiry (<code>ecomprojectscredentials</code>) → source connectivity → schema drift (Day 3) → cursor (<code>updated_at</code>) nulls/clock-skew → warehouse/cluster startup issue — cheapest checks first</div>
+    <div style="margin-top:10px;"><span class="phase-pill pill-c">3. Fix</span> Apply the fix for whichever root cause step 2 found; manually trigger a re-run from the Databricks UI (a real click in the workspace — not automated by this notebook)</div>
+    <div style="margin-top:10px;"><span class="phase-pill pill-d">4. Confirm</span> Re-run step 1's checks; this session's SLA check against the real last-write timestamp should now show <strong>MET</strong>; check whether any rows need <strong>replay</strong> as a side effect</div>
+    <div style="margin-top:10px;"><span class="phase-pill pill-e">5. Close out</span> Log the incident (what broke, root cause, fix, downtime); if it's a new failure mode, add it to step 2 — a runbook that doesn't grow after every incident stops being useful</div>
+  </div>
+
+  <div class="fix-box">The pattern generalizes. Every pipeline in this course — Autoloader sources, Silver MERGE jobs, a Gold refresh — deserves the same shape: symptom, detect, triage (cheapest checks first), fix, confirm, close out. Write the shell once; fill in pipeline-specific checks per pipeline.</div>
+
+  <!-- ═══════════════════════ PART 4 — SLAs ═══════════════════════ -->
+  <h2><span class="phase-pill pill-d">Part 4</span>SLAs: Defining and Measuring "Fresh Enough"</h2>
+  <p>A pipeline SLA here means one thing: <strong>how stale is too stale?</strong> GlobalMart's two ingestion patterns justify two different freshness targets:</p>
+
+  <table class="compare-table">
+    <tr><th>Source</th><th>Ingestion pattern</th><th>A reasonable freshness SLA</th><th>How you'd measure it</th></tr>
+    <tr><td><code>orders</code> / <code>order_items</code></td><td>Query-based CDC on <code>updated_at</code> (<code>orders_data_ingestion_cdc</code>)</td><td class="ok">Within <strong>2 hours</strong></td><td><code>current_timestamp()</code> vs. <code>MAX(updated_at)</code>, or the pipeline's own last-run time</td></tr>
+    <tr><td><code>customers</code>, <code>products</code>, <code>addresses</code>, <code>payments</code>, <code>payment_methods</code></td><td>ADLS Autoloader — file-drop batch, roughly daily</td><td class="ok">Within <strong>24 hours</strong></td><td><code>DESCRIBE HISTORY</code> — timestamp of the most recent Bronze commit</td></tr>
+  </table>
+
+  <div class="info-box"><strong>Freshness SLA &ne; "did the pipeline succeed."</strong> A pipeline can exit green with nothing to fail on — because no new file arrived at all — and still be a day stale. Measuring freshness directly (as the function below does) catches that; watching only for job failures does not.</div>
+  <div class="warn-box">The SLA check built in this session is <strong>print/log only</strong> — no email, Slack webhook, or PagerDuty call. Wiring a real alert on top is an orchestration-layer concern (Databricks Workflows' own notification settings) — out of scope here, and exactly the "don't trigger real systems" boundary this course holds everywhere.</div>
+
+  <!-- ═══════════════════════ PART 5 — LIVE CODED DEMO ═══════════════════════ -->
+  <h2><span class="phase-pill pill-e">Part 5</span>Live Coded Demo — Build, Break, Route, Replay, Check</h2>
+  <p>The matching <code>.ipynb</code> runs all of this for real, against a small read-only sample of <code>gbmart.bronze.customers</code> and your own practice schema. Key excerpts:</p>
+
+  <table class="compare-table">
+    <tr><th>Step</th><th>What it does</th></tr>
+    <tr><td>Setup</td><td><code>CREATE OR REPLACE TABLE</code> for both practice tables (not <code>IF NOT EXISTS</code>) — resets them empty every run, so <b>Run All</b> twice never doubles the counts</td></tr>
+    <tr><td>1</td><td>Read a stable, ordered 30-row sample from <code>gbmart.bronze.customers</code> — read-only</td></tr>
+    <tr><td>2</td><td>Deliberately corrupt 2 rows' email and 2 rows' phone number, chosen <strong>by position</strong>, not by ID</td></tr>
+    <tr><td>3</td><td>Classify: first-matching-rule-wins priority chain (same style as Day 5), tagging a <code>_failure_reason</code></td></tr>
+    <tr><td>4</td><td>Split and write — success rows to <code>customers_processed</code>, failures to <code>customers_dlq</code>, both tagged with reason/timestamp</td></tr>
+    <tr><td>5–6</td><td><code>replay_dlq()</code> — fix by reason, <code>MERGE</code> upsert into processed, merge-delete out of the DLQ. Called twice: 2nd call finds 0 rows pending</td></tr>
+    <tr><td>7</td><td>Verify — <code>processed</code> table shows both <code>direct</code> and <code>replay</code> rows, replayed ones still carrying their original failure reason</td></tr>
+    <tr><td>8–9</td><td><code>check_sla()</code> — demonstrated once <strong>MET</strong>, once <strong>BREACHED</strong>, for both source types, plus a bonus real-signal check via <code>DESCRIBE HISTORY</code></td></tr>
+  </table>
+
+  <div class="code-block">
+<span class="cmt"># CREATE OR REPLACE, not IF NOT EXISTS -- makes "Run All" twice land on the same result</span><br>
+<span class="var">PRACTICE_SCHEMA</span> = <span class="str">"main.YOUR_SCHEMA"</span>&nbsp;&nbsp;<span class="cmt"># ← replace with a schema you own</span><br>
+<span class="var">spark</span>.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"CREATE SCHEMA IF NOT EXISTS {PRACTICE_SCHEMA}"</span>)<br>
+<br>
+<span class="var">spark</span>.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"""CREATE OR REPLACE TABLE {PROCESSED_TABLE} ( ... ) USING DELTA"""</span>)<br>
+<span class="var">spark</span>.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"""CREATE OR REPLACE TABLE {DLQ_TABLE} ( ... ) USING DELTA"""</span>)
+  </div>
+
+  <div class="code-block">
+<span class="cmt"># Inject by POSITION in the sample, not by a hardcoded CustomerID value</span><br>
+<span class="var">sample_ids</span> = [<span class="var">r</span>.<span class="var">CustomerID</span> <span class="kw">for</span> <span class="var">r</span> <span class="kw">in</span> <span class="var">sample_df</span>.<span class="fn">select</span>(<span class="str">"CustomerID"</span>).<span class="fn">collect</span>()]<br>
+<span class="var">BAD_EMAIL_IDS</span> = <span class="var">sample_ids</span>[<span class="num">4</span>:<span class="num">6</span>]&nbsp;&nbsp;<span class="cmt"># 2 rows -> null email</span><br>
+<span class="var">BAD_PHONE_IDS</span> = <span class="var">sample_ids</span>[<span class="num">19</span>:<span class="num">21</span>]&nbsp;<span class="cmt"># 2 rows -> unrecognized phone shape</span>
+  </div>
+
+  <div class="code-block">
+<span class="cmt"># Replay: fix by reason, upsert by key -- never a blind append</span><br>
+(<span class="var">processed_tbl</span>.<span class="fn">alias</span>(<span class="str">"tgt"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">merge</span>(<span class="var">fixed_df</span>.<span class="fn">alias</span>(<span class="str">"src"</span>), <span class="str">"tgt.customer_id = src.customer_id"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">whenMatchedUpdateAll</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">whenNotMatchedInsertAll</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">execute</span>()<br>
+)<br>
+<br>
+<span class="cmt"># Drain the DLQ -- merge-delete the same keys just replayed</span><br>
+(<span class="var">dlq_tbl</span>.<span class="fn">alias</span>(<span class="str">"tgt"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">merge</span>(<span class="var">fixed_df</span>.<span class="fn">select</span>(<span class="str">"customer_id"</span>).<span class="fn">alias</span>(<span class="str">"src"</span>), <span class="str">"tgt.customer_id = src.customer_id"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">whenMatchedDelete</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">execute</span>()<br>
+)
+  </div>
+
+  <div class="code-block">
+<span class="kw">def</span> <span class="fn">check_sla</span>(<span class="var">source_name</span>, <span class="var">last_success_ts</span>, <span class="var">freshness_target_hours</span>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># print/log only -- no email, Slack, or PagerDuty call, by design</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">hours_since</span> = (<span class="var">datetime</span>.<span class="fn">now</span>() - <span class="var">last_success_ts</span>).<span class="fn">total_seconds</span>() / <span class="num">3600</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">status</span> = <span class="str">"MET"</span> <span class="kw">if</span> <span class="var">hours_since</span> &lt;= <span class="var">freshness_target_hours</span> <span class="kw">else</span> <span class="str">"BREACHED"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="kw">f</span><span class="str">"SLA status: {status}  ({hours_since:.2f}h since last success, target &lt;= {freshness_target_hours}h)"</span>)
+  </div>
+
+  <!-- ═══════════════════════ KEY TAKEAWAYS ═══════════════════════ -->
+  <h2>Key Takeaways</h2>
+  <div class="checklist">
+    <div class="line"><span class="arrow">→</span><span class="label">A <strong>DLQ</strong> is the general-purpose safety net for "this row failed processing" — independent of <em>why</em>. Day 5's quarantine is one specific instance of this same mechanism.</span></div>
+    <div class="line"><span class="arrow">→</span><span class="label"><strong>Route, don't crash or drop.</strong> Capture the row, the reason, and a timestamp — inspectable and recoverable beats invisible.</span></div>
+    <div class="line"><span class="arrow">→</span><span class="label"><strong>Replay must be idempotent</strong> — a key-based <code>MERGE</code> plus removing the row from the DLQ is what makes "replay twice" match "replay once," the same idempotency principle from Day 9/Day 10.</span></div>
+    <div class="line"><span class="arrow">→</span><span class="label">Not every DLQ row is auto-replayable — some need a human decision first.</span></div>
+    <div class="line"><span class="arrow">→</span><span class="label"><strong>SLAs measure freshness, not success</strong> — a pipeline can exit cleanly and still be stale.</span></div>
+    <div class="line"><span class="arrow">→</span><span class="label"><strong>Runbooks</strong> turn tribal on-call knowledge into a checklist anyone can follow under pressure — write them before the first incident, grow them after every real one.</span></div>
+  </div>
+
+  <!-- ═══════════════════════ TRY IT YOURSELF ═══════════════════════ -->
+  <h2>Try It Yourself</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">☐</span><span class="label">Run the notebook top to bottom, then run it again — confirm the counts come out identical both times</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Call <code>replay_dlq()</code> a third time and confirm it prints <code>Nothing to replay.</code></span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Change a <code>timedelta(hours=...)</code> value in the SLA demo and watch <strong>MET</strong> flip to <strong>BREACHED</strong></span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Add a third failure rule of your own (e.g., null <code>PreferredPaymentMethodID</code>) and trace it through the DLQ table</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Sketch a runbook for a different GlobalMart pipeline you know, using this session's template</span></div>
+  </div>
+
+</div>
+</body>
+</html>

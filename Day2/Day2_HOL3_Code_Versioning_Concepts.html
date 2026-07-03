@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 2 HOL 3 — Code Versioning: Databricks Repos + GitHub</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; background: #f4f6f8; color: #1f2937; padding: 32px; }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 { font-size: 17px; color: #1f3864; margin: 34px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge { background: #e0e7ff; color: #3730a3; font-size: 11.5px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+
+  .code-block { background: #1e293b; color: #e2e8f0; border-radius: 10px; padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9; margin-top: 10px; overflow-x: auto; }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .var { color: #e2e8f0; }
+
+  .phase-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 20px; margin-right: 8px; }
+  .pill-a { background: #dbeafe; color: #1e40af; }
+  .pill-b { background: #d1fae5; color: #065f46; }
+  .pill-c { background: #fef3c7; color: #92400e; }
+  .pill-d { background: #ede9fe; color: #5b21b6; }
+  .pill-e { background: #fee2e2; color: #991b1b; }
+
+  .checklist { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 22px 26px; margin-top: 10px; font-size: 13px; line-height: 2.2; }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { min-width: 280px; color: #374151; }
+
+  .warn-box { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 2 — HOL 3: Code Versioning — Databricks Repos + GitHub</h1>
+  <p class="subtitle">GlobalMart Data Engineering Bootcamp &nbsp;|&nbsp; Set Up the Repo You'll Use for the Rest of the Bootcamp</p>
+
+  <div class="meta-row">
+    <span class="badge blue">2 hours</span>
+    <span class="badge green">Follows ILT 3</span>
+    <span class="badge">Output: GitHub repo + dev branch + 1 real commit</span>
+  </div>
+
+  <h2><span class="phase-pill pill-a">Phase A</span> Create Your GitHub Repository</h2>
+  <div class="code-block">
+1. github.com → + New repository → name: <span class="str">globalmart-lakehouse</span> → Private → Add README<br>
+2. Settings → Developer Settings → Personal Access Tokens → Tokens (classic)<br>
+3. Generate new token → scope: <span class="str">repo</span> → COPY IT NOW (you cannot see it again)
+  </div>
+
+  <h2><span class="phase-pill pill-b">Phase B</span> Connect GitHub to Databricks</h2>
+  <div class="code-block">
+1. Databricks → username → Settings → Linked Accounts → Git Integration → GitHub<br>
+2. Paste Personal Access Token + GitHub username → Save<br>
+3. Repos → Add Repo → paste: <span class="str">https://github.com/YOUR_USERNAME/globalmart-lakehouse</span>
+  </div>
+  <div class="info-box">Verify: your repo appears in Databricks under Repos, with a README.md inside it.</div>
+
+  <h2><span class="phase-pill pill-c">Phase C</span> Create Your <code>dev</code> Branch</h2>
+  <div class="code-block">
+Git button → Create Branch → name: <span class="str">dev</span> → switch to it
+  </div>
+
+  <h2><span class="phase-pill pill-d">Phase D</span> Build the Shared Config Notebook</h2>
+  <p>One <code>config/setup</code> notebook every future notebook calls with <code>%run</code> — using the External Location pattern from HOL 1, not a hardcoded key.</p>
+  <div class="code-block">
+<span class="cmt"># config/setup — no storage key anywhere in this notebook or in git history</span><br>
+<span class="var">STORAGE_ACCOUNT_NAME</span> = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span>&nbsp;&nbsp;<span class="cmt"># ← your storage account from Day 1</span><br>
+<span class="var">CONTAINER_NAME</span>        = <span class="str">"amazon-data"</span><br>
+<br>
+<span class="cmt"># No spark.conf.set() — your External Location from HOL 1 already covers this</span><br>
+<span class="var">BASE_PATH</span>   = <span class="cmt">f"abfss://{CONTAINER_NAME}@{STORAGE_ACCOUNT_NAME}.dfs.core.windows.net"</span><br>
+<span class="var">BRONZE_PATH</span> = <span class="cmt">f"{BASE_PATH}/raw"</span><br>
+<span class="var">GBMART_CATALOG</span> = <span class="str">"gbmart"</span>&nbsp;&nbsp;<span class="cmt"># the shared catalog, referenced by name — no path needed</span>
+  </div>
+
+  <h2><span class="phase-pill pill-e">Phase E</span> Commit and Push</h2>
+  <div class="code-block">
+1. Git button → config/setup.ipynb shows as changed<br>
+2. Stage the file<br>
+3. Commit message: <span class="str">"Add shared ADLS config notebook using External Location auth"</span><br>
+4. Commit → Push<br>
+5. github.com → your repo → dev branch → confirm the file is there
+  </div>
+  <div class="warn-box">⚠️ Personal Access Tokens are entered once in the Databricks UI (Phase B) — never paste one into a notebook cell.</div>
+
+  <h2>Submission Checklist</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">☐</span><span class="label">GitHub repo created: globalmart-lakehouse (Private)</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Personal Access Token saved in Databricks Git Integration</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Repo cloned into Databricks under Repos</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">dev branch created and confirmed active</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">config/setup notebook created — no storage key in it</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Committed with a clear message, pushed to GitHub</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Confirmed config/setup.ipynb appears under the dev branch on GitHub</span></div>
+  </div>
+
+</div>
+</body>
+</html>

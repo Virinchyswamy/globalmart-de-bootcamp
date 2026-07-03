@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 2 ILT 3 — Code Versioning: Databricks Repos + GitHub</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; background: #f4f6f8; color: #1f2937; padding: 32px; }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 { font-size: 17px; color: #1f3864; margin: 34px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge { background: #e0e7ff; color: #3730a3; font-size: 11.5px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+
+  .code-block { background: #1e293b; color: #e2e8f0; border-radius: 10px; padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9; margin-top: 10px; overflow-x: auto; }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .var { color: #e2e8f0; }
+
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .good { color: #047857; font-weight: 600; }
+  .bad  { color: #b91c1c; font-weight: 600; }
+
+  .flow-wrap { background: #1e293b; color: #e2e8f0; border-radius: 12px; padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace; line-height: 1.9; }
+  .flow-wrap .dim { color: #64748b; }
+  .flow-wrap .hl { color: #7dd3fc; font-weight: 700; }
+
+  .branch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+  .branch-card { background: #fff; border-radius: 10px; padding: 14px 16px; font-size: 12px; line-height: 1.65; border-top: 4px solid; }
+  .branch-card strong { display: block; font-size: 13px; color: #1f3864; margin-bottom: 4px; }
+  .b-dev  { border-color: #1e40af; }
+  .b-test { border-color: #d97706; }
+  .b-prod { border-color: #b91c1c; }
+
+  .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 2 — ILT 3: Code Versioning — Databricks Repos + GitHub</h1>
+  <p class="subtitle">GlobalMart Data Engineering Bootcamp &nbsp;|&nbsp; Why and How Every Notebook Gets Version-Controlled</p>
+
+  <div class="meta-row">
+    <span class="badge blue">90 minutes</span>
+    <span class="badge green">Mostly conceptual + live demo</span>
+    <span class="badge">Leads into HOL 3</span>
+  </div>
+
+  <h2>Why Data Engineers Need Version Control</h2>
+  <p>Monday's notebook works. Tuesday you add a column. Wednesday the pipeline breaks — and you overwrote Monday's working version. Or: two engineers edit the same notebook, one save wins, the other's work vanishes.</p>
+  <table class="compare-table">
+    <tr><th>Problem</th><th>How Version Control Fixes It</th></tr>
+    <tr><td>Accidentally broke working code</td><td>Roll back to any previous version instantly</td></tr>
+    <tr><td>Two engineers editing the same file</td><td>Merge changes safely, see who changed what</td></tr>
+    <tr><td>Need to audit what changed</td><td>Full history of every change ever made</td></tr>
+    <tr><td>Deploying to production safely</td><td>Test in dev/test branch before touching prod</td></tr>
+  </table>
+
+  <h2>Git Basics — 6 Concepts</h2>
+  <table class="compare-table">
+    <tr><th>Concept</th><th>Simple Meaning</th></tr>
+    <tr><td>Repository</td><td>A folder that tracks every change to every file inside it</td></tr>
+    <tr><td>Branch</td><td>A separate copy of the code you can work on safely</td></tr>
+    <tr><td>Commit</td><td>Save a snapshot of your current changes with a message</td></tr>
+    <tr><td>Push</td><td>Upload your commits from Databricks to GitHub</td></tr>
+    <tr><td>Pull</td><td>Download the latest changes from GitHub into Databricks</td></tr>
+    <tr><td>Merge</td><td>Combine changes from one branch into another</td></tr>
+  </table>
+
+  <h2>The Dev → Test → Prod Branch Strategy</h2>
+  <div class="branch-grid">
+    <div class="branch-card b-dev"><strong>dev</strong>Individual engineers. New features, bug fixes, experiments. Sample/test data.</div>
+    <div class="branch-card b-test"><strong>test</strong>QA / team review. Integration testing, data quality checks. Full data, read-only.</div>
+    <div class="branch-card b-prod"><strong>prod</strong>Automated pipelines only. The final, approved, live pipeline. Live production data.</div>
+  </div>
+  <div class="info-box">Code only moves forward: <strong>dev → test → prod</strong>. Never backwards. Never edit prod directly.</div>
+
+  <h2>Databricks Repos — Connecting GitHub</h2>
+  <div class="flow-wrap">
+GitHub.com &nbsp;<span class="dim">(create repo, generate Personal Access Token)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+Databricks → Settings → Linked Accounts → Git Integration<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│ <span class="dim">(paste token + username)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+Databricks → Repos → Add Repo → paste GitHub URL<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+<span class="hl">Every notebook created here is now Git-tracked</span>
+  </div>
+
+  <h2>The Daily Git Workflow</h2>
+  <div class="code-block">
+<span class="cmt"># Every day, in order:</span><br>
+1. Pull latest changes &nbsp;<span class="cmt"># get teammates' work</span><br>
+2. Confirm you're on the dev branch<br>
+3. Write your code<br>
+4. Commit &nbsp;<span class="cmt"># Stage → write message → Commit</span><br>
+5. Push &nbsp;<span class="cmt"># now it's safe in GitHub</span>
+  </div>
+  <table class="compare-table" style="margin-top:10px;">
+    <tr><th>Bad message</th><th>Good message</th></tr>
+    <tr><td class="bad"><code>update</code></td><td class="good"><code>Add null check for customer email in silver layer</code></td></tr>
+    <tr><td class="bad"><code>fix</code></td><td class="good"><code>Fix date format in orders table from MM/DD to YYYY-MM-DD</code></td></tr>
+  </table>
+
+  <h2>Shared Config Pattern (No Storage Key)</h2>
+  <div class="code-block">
+<span class="cmt"># config/setup — uses the External Location from HOL 1, not a raw key</span><br>
+<span class="var">STORAGE_ACCOUNT_NAME</span> = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span><br>
+<span class="var">BASE_PATH</span> = <span class="cmt">f"abfss://amazon-data@{STORAGE_ACCOUNT_NAME}.dfs.core.windows.net"</span><br>
+<br>
+<span class="cmt"># In any other notebook:</span><br>
+<span class="kw">%run</span> ../config/setup
+  </div>
+  <div class="info-box">One place to change the storage account name → every notebook that calls <code>%run ../config/setup</code> picks it up. No key ever appears in git history.</div>
+
+  <h2>Recap</h2>
+  <table class="compare-table">
+    <tr><td>Git vs GitHub</td><td>Git = tool on your machine. GitHub = website that stores the repo online.</td></tr>
+    <tr><td>Dev → Test → Prod</td><td>Code only moves forward, never skip a stage, never edit prod directly</td></tr>
+    <tr><td>Databricks Repos</td><td>Built-in GitHub integration — notebooks are tracked automatically</td></tr>
+  </table>
+
+</div>
+</body>
+</html>

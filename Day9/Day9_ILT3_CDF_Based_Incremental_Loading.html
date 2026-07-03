@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 9 ILT3 — CDF-Based Incremental Loading</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; background: #f4f6f8; color: #1f2937; padding: 32px; }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 { font-size: 17px; color: #1f3864; margin: 34px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge { background: #e0e7ff; color: #3730a3; font-size: 11.5px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+  .code-block { background: #1e293b; color: #e2e8f0; border-radius: 10px; padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9; margin-top: 10px; overflow-x: auto; white-space: pre; }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+  .code-block .var { color: #e2e8f0; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .warn-box { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .path-wrap { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace; line-height: 2.1; color: #374151; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 9 — ILT 3: CDF-Based Incremental Loading (Bronze to Silver via MERGE)</h1>
+  <p class="subtitle">GlobalMart Data Engineering Bootcamp &nbsp;|&nbsp; Instructor Reference</p>
+
+  <div class="meta-row">
+    <span class="badge blue">90 minutes</span>
+    <span class="badge green">Enables real CDF on real gbmart tables — safe, idempotent</span>
+    <span class="badge orange">Zero extra compute cost (metadata change only)</span>
+  </div>
+
+  <h2>Why CDF, Not Just Reading The Whole Table Again</h2>
+  <div class="code-block">
+<span class="cmt">Without CDF:  Silver reads all 126,000+ orders every run  ->  slow, expensive, gets worse over time</span><br>
+<span class="cmt">With CDF:     Silver reads only the ~800 rows that changed  ->  fast, cheap, constant cost</span>
+  </div>
+  <p>CDF is a Delta Lake table property. Once enabled, every INSERT/UPDATE/DELETE is automatically recorded as a row-level event — Delta does it as part of the transaction, no separate logging code.</p>
+
+  <h2>What CDF Records</h2>
+  <table class="compare-table">
+    <tr><th>Column</th><th>Description</th></tr>
+    <tr><td><code>_change_type</code></td><td><code>insert</code>, <code>update_preimage</code>, <code>update_postimage</code>, or <code>delete</code></td></tr>
+    <tr><td><code>_commit_version</code></td><td>Delta table version the change happened in</td></tr>
+    <tr><td><code>_commit_timestamp</code></td><td>When the change was committed</td></tr>
+  </table>
+  <div class="info-box">An UPDATE produces <strong>two</strong> CDF rows — old values (<code>update_preimage</code>) and new values (<code>update_postimage</code>). Filter out <code>update_preimage</code> when you only want "what does this row look like now."</div>
+
+  <h2>Enabling CDF — Bronze</h2>
+  <div class="path-wrap">
+    Bronze Delta Tables (CDF enabled)<br>
+    &nbsp;&nbsp;gbmart.bronze.customers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;- CDF ON<br>
+    &nbsp;&nbsp;gbmart.bronze.orders&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;- skipped, Lakeflow Connect owns this via updated_at cursor<br>
+    &nbsp;&nbsp;gbmart.bronze.order_items&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;- skipped, same reason<br>
+    &nbsp;&nbsp;gbmart.bronze.products&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;- CDF ON<br>
+    &nbsp;&nbsp;gbmart.bronze.addresses&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;- CDF ON<br>
+    &nbsp;&nbsp;gbmart.bronze.payments&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;- CDF ON<br>
+    &nbsp;&nbsp;gbmart.bronze.payment_methods&nbsp; &lt;- CDF ON<br>
+    &nbsp;&nbsp;gbmart.bronze.returns&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;- CDF ON
+  </div>
+  <p>Then the same rollout across all 8 <code>gbmart.silver.*</code> tables — not needed by today's Gold build (full overwrite), but kept ready for later at zero cost now.</p>
+
+  <h2>Reading a Change Feed</h2>
+  <div class="code-block">
+<span class="var">spark</span>.<span class="fn">read</span>.<span class="fn">format</span>(<span class="str">"delta"</span>)<br>
+&nbsp;&nbsp;.<span class="fn">option</span>(<span class="str">"readChangeFeed"</span>, <span class="str">"true"</span>)<br>
+&nbsp;&nbsp;.<span class="fn">option</span>(<span class="str">"startingVersion"</span>, <span class="var">last_processed_version</span> + <span class="num">1</span>)<br>
+&nbsp;&nbsp;.<span class="fn">table</span>(<span class="str">"gbmart.bronze.products"</span>)
+  </div>
+
+  <h2>The Bronze → Silver MERGE Pattern</h2>
+  <table class="compare-table">
+    <tr><th>Step</th><th>What it does</th></tr>
+    <tr><td>1</td><td>Find last Bronze version Silver already processed (control table — same idea as ILT 2, tracking a version number instead of a timestamp)</td></tr>
+    <tr><td>2</td><td>Read Bronze's CDF starting from <code>last_version + 1</code></td></tr>
+    <tr><td>3</td><td>Drop <code>update_preimage</code> rows</td></tr>
+    <tr><td>4</td><td>Apply Day 5's cleaning/standardization to just this changed set</td></tr>
+    <tr><td>5</td><td><code>MERGE</code> into Silver</td></tr>
+    <tr><td>6</td><td>Record the new last-processed version</td></tr>
+  </table>
+  <div class="info-box">Same six-step shape as ILT 2's watermark loader — read only what's new, process, write, advance the marker. CDF just uses a Delta version number as the marker instead of a business timestamp.</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 12 ILT 2 — Introduction to Genie &amp; Semantic Layer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  /* ── meta row ── */
+  .meta-row {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px;
+  }
+  .badge {
+    background: #e0e7ff; color: #3730a3; font-size: 11.5px;
+    padding: 4px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+  .badge.red    { background: #fee2e2; color: #991b1b; }
+
+  /* ── story box (shared course visual system — HOW_TO_USE_THIS_COURSE.html / Day6 ILT3) ── */
+  .story-box {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 18px 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* ── info cards ── */
+  .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 18px; font-size: 12.5px; line-height: 1.8;
+  }
+  .card strong { display: block; color: #1f3864; font-size: 13px; margin-bottom: 6px; }
+  .card-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+
+  /* ── code block ── */
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px;
+    padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9;
+    margin-top: 10px; overflow-x: auto;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+  .code-block .var { color: #e2e8f0; }
+
+  /* ── tables ── */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .compare-table .ok { color: #059669; font-weight: 700; }
+  .compare-table .warn { color: #b45309; font-weight: 700; }
+
+  /* ── path diagram ── */
+  .path-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace;
+    line-height: 2.1; color: #374151;
+  }
+  .path-wrap .container { color: #0369a1; font-weight: 700; }
+  .path-wrap .folder    { color: #059669; font-weight: 700; }
+  .path-wrap .file      { color: #7c3aed; font-weight: 700; }
+  .path-wrap .bronze    { color: #b45309; font-weight: 700; }
+  .path-wrap .gold      { color: #ca8a04; font-weight: 700; }
+  .path-wrap .dim       { color: #9ca3af; }
+
+  /* ── star diagram ── */
+  .star-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace;
+    line-height: 2.1; color: #374151; text-align: center; overflow-x: auto;
+  }
+  .star-wrap .fact { color: #1f3864; font-weight: 700; }
+  .star-wrap .dimname { color: #0d9488; font-weight: 700; }
+
+  /* ── checklist ── */
+  .checklist {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 13px; line-height: 2.2;
+  }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .blank { color: #9ca3af; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { min-width: 280px; color: #374151; }
+
+  /* ── phase pill ── */
+  .phase-pill {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px; margin-right: 8px;
+  }
+  .pill-a { background: #dbeafe; color: #1e40af; }
+  .pill-b { background: #d1fae5; color: #065f46; }
+  .pill-c { background: #fef3c7; color: #92400e; }
+  .pill-d { background: #ede9fe; color: #5b21b6; }
+
+  /* ── highlight boxes ── */
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .warn-box {
+    background: #fff7ed; border-left: 4px solid #f59e0b;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .fix-box {
+    background: #ecfdf5; border-left: 4px solid #10b981;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+
+  /* ── schedule row ── */
+  .schedule { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 10px; }
+  .sched-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 12px 14px; font-size: 12px; line-height: 1.7;
+  }
+  .sched-card .time { color: #6b7280; font-size: 11px; }
+  .sched-card.active { background: #1f3864; color: #fff; }
+  .sched-card.active .time { color: #93c5fd; }
+
+  .legend {
+    margin-top: 26px; font-size: 11.5px; color:#6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 12 — ILT 2: Introduction to Genie &amp; Semantic Layer</h1>
+  <p class="subtitle">GlobalMart Data Engineering Bootcamp &nbsp;|&nbsp; Standalone Module &nbsp;|&nbsp; Concept + Real Semantic-Layer Code</p>
+
+  <div class="meta-row">
+    <span class="badge blue">120 minutes</span>
+    <span class="badge green">Day 12 · ILT 2</span>
+    <span class="badge">11:00 AM – 1:00 PM</span>
+    <span class="badge orange">Standalone module</span>
+    <span class="badge red">Genie Space setup: UI-driven, deferred</span>
+  </div>
+
+  <div class="story-box">
+    <p>This session teaches what Databricks <b>Genie</b> is and what a <b>semantic layer</b> is, then does the part of the work that is genuinely scriptable: preparing table and column comments so a future Genie Space — and any human analyst — can make sense of <code>fact_sales</code>. Setting up the actual Genie Space is a UI-driven exercise in the Databricks workspace, covered in a separate, later hands-on session against the real <code>gbmart</code> Gold layer — not here.</p>
+  </div>
+
+  <!-- ═══════════════════════ SECTION 1 ═══════════════════════ -->
+  <h2>1. What Is Databricks Genie?</h2>
+  <p><b>Genie</b> is a Databricks AI/BI feature that lets a business user type a plain-English question — <i>"What was our revenue by category last month?"</i> — against a curated <b>Genie Space</b>, and get back a generated SQL query plus a tabular/plotted answer. No SQL is written by the person asking.</p>
+
+  <div class="card-row">
+    <div class="card">
+      <strong>1. Ask</strong>
+      A business user types a natural-language question into the Genie chat UI. No SQL, no join logic — plain English.
+    </div>
+    <div class="card">
+      <strong>2. Genie interprets</strong>
+      Genie's LLM reads the Genie Space's metadata — table/column names, comments, sample questions — to work out which tables, columns, and joins answer it.
+    </div>
+    <div class="card">
+      <strong>3. SQL + answer</strong>
+      Genie generates SQL, runs it against a warehouse, and returns the result — usually alongside the SQL itself, so it can be checked.
+    </div>
+  </div>
+
+  <p style="margin-top:14px;">A <b>Genie Space</b> is a scoped, curated subset of a catalog — specific tables/views, instructions, sample questions, example SQL — deliberately narrower than "the whole catalog," so the LLM is not guessing across hundreds of unrelated tables.</p>
+
+  <div class="info-box">
+    <b>Be honest about the boundary:</b> a Genie Space is set up entirely by clicking through the Databricks workspace UI — Catalog Explorer → Genie → New Space, selecting tables, writing instructions, adding sample questions — <b>not by running code in a notebook.</b> The matching hands-on, <i>"Set Up Genie on Gold Layer — Descriptions + Natural Language Queries,"</i> is a separate, later session done live in the workspace UI against the real <code>gbmart</code> Gold layer. Nothing in this session's notebook creates a Genie Space.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 2 ═══════════════════════ -->
+  <h2>2. What a Semantic Layer Is, and Why Genie Needs One</h2>
+  <p>Two raw facts about <code>gbmart.gold.fact_sales</code>: a column named <code>Sales_amount</code> (type <code>decimal</code>), and a column named <code>Actual_price</code> (type <code>decimal</code>). To an LLM — or a brand-new analyst — those names alone answer none of the questions that matter.</p>
+
+  <table class="compare-table">
+    <tr><th></th><th>Without a semantic layer</th><th>With a semantic layer</th></tr>
+    <tr><td><code>Sales_amount</code></td><td class="warn">Just a decimal column. Safe to SUM? Pre- or post-discount? Unknown.</td><td class="ok">"Revenue in INR for this order line item — quantity times discounted price. Safe to SUM."</td></tr>
+    <tr><td><code>Actual_price</code></td><td class="warn">Just a decimal column. Looks summable like any other number.</td><td class="ok">"Original list price per unit, in INR. Non-additive — never SUM directly across products."</td></tr>
+  </table>
+
+  <p style="margin-top:12px;"><b>A semantic layer is the metadata that answers these questions before anyone has to ask</b> — table comments, column comments, certified views with business-friendly names, unambiguous column names, and sample questions registered against a Genie Space. None of it changes what the data <i>is</i>. All of it changes whether the schema is <i>usable</i> by something that has never seen your business before.</p>
+
+  <!-- ═══════════════════════ SECTION 3 ═══════════════════════ -->
+  <h2>3. What Makes a Good Semantic Layer for Genie</h2>
+  <table class="compare-table">
+    <tr><th>Ingredient</th><th>What it looks like</th><th>GlobalMart example</th></tr>
+    <tr><td>Clear table comments</td><td>Plain business language: what the table represents, its grain</td><td>"One row per order line item — GlobalMart's core sales fact table"</td></tr>
+    <tr><td>Clear column comments</td><td>What the column means, and whether it's safe to aggregate</td><td><code>Sales_amount</code>: safe to SUM. <code>Actual_price</code>: non-additive, never SUM directly.</td></tr>
+    <tr><td>Certified views, descriptive names</td><td>Pre-built answers to real questions, named so the question is obvious</td><td><code>vw_monthly_category_sales</code>, <code>vw_regional_sales</code> (Day 7 HOL 2)</td></tr>
+    <tr><td>Unambiguous column names</td><td>Avoid cryptic abbreviations</td><td><code>Discounted_price</code>, not <code>disc_prc</code></td></tr>
+    <tr><td>Sample questions + example SQL</td><td>Worked question → SQL pairs registered on the Genie Space</td><td>See Section 5</td></tr>
+  </table>
+
+  <div class="fix-box">
+    <b>GlobalMart already has two semantic-layer artifacts — built before Genie ever entered the conversation.</b> Day 7 HOL 2's <code>gbmart.gold.vw_monthly_category_sales</code> (year/month/category revenue, quantity, orders, avg. discount) and <code>gbmart.gold.vw_regional_sales</code> (state/city revenue, orders, customers, avg. order value) exist because category managers and regional ops leads needed one agreed-upon number to report against — not because Genie needed them. That is precisely what a semantic layer is. A Genie Space built on <code>gbmart.gold</code> would point straight at these two views for exactly the questions they already answer.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 4 ═══════════════════════ -->
+  <h2>4. The Part We CAN Script: Preparing Semantic-Layer Metadata</h2>
+  <p>Genie Space setup is UI-only (Section 1). The semantic layer <i>underneath</i> it — table/column comments, and verifying they landed — is real, scriptable Databricks SQL. The matching notebook does this against a <b>safe practice copy</b>, never the real <code>gbmart.gold.fact_sales</code> table.</p>
+
+  <h3><span class="phase-pill pill-a">Step A</span> Seed a Practice Copy, Look at the Raw Schema</h3>
+  <div class="code-block">
+<span class="cmt"># The ONLY touch against the real table anywhere in this notebook -- read-only.</span><br>
+<span class="var">YOUR_SCHEMA</span> = <span class="str">"main.YOUR_SCHEMA"</span><br>
+<span class="var">spark</span>.<span class="fn">sql</span>(<span class="fn">f</span><span class="str">"CREATE SCHEMA IF NOT EXISTS {YOUR_SCHEMA}"</span>)<br>
+<span class="var">PRACTICE_TABLE</span> = <span class="fn">f</span><span class="str">"{YOUR_SCHEMA}.fact_sales_practice"</span><br>
+<br>
+<span class="cmt"># CREATE OR REPLACE -- idempotent, safe to re-run</span><br>
+<span class="var">spark</span>.<span class="fn">sql</span>(<span class="fn">f</span><span class="str">"CREATE OR REPLACE TABLE {PRACTICE_TABLE} AS SELECT * FROM gbmart.gold.fact_sales LIMIT 100"</span>)<br>
+<br>
+<span class="cmt"># "Before" -- names and types only, exactly what an LLM sees with no semantic layer</span><br>
+<span class="kw">for</span> <span class="var">col_name</span>, <span class="var">col_type</span> <span class="kw">in</span> <span class="var">spark</span>.<span class="fn">table</span>(<span class="var">PRACTICE_TABLE</span>).<span class="var">dtypes</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="var">col_name</span>, <span class="var">col_type</span>)
+  </div>
+
+  <h3><span class="phase-pill pill-b">Step B</span> Add Real Table + Column Comments</h3>
+  <div class="code-block">
+<span class="cmt"># Table comment -- on the PRACTICE copy only, never the real gbmart.gold table</span><br>
+<span class="var">spark</span>.<span class="fn">sql</span>(<span class="fn">f</span><span class="str">"COMMENT ON TABLE {PRACTICE_TABLE} IS '...'"</span>)<br>
+<br>
+<span class="cmt"># Column comments -- additivity-correct, matching Day 6 ILT 3 exactly</span><br>
+<span class="var">column_comments</span> = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"Quantity_purchased"</span>: <span class="str">"...Additive -- safe to SUM across any dimension."</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"Sales_amount"</span>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"Revenue in INR ... Additive and safe to SUM."</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"Actual_price"</span>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"...Non-additive -- never SUM/AVG directly across products."</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"Discounted_price"</span>: <span class="str">"...Non-additive -- derive avg. selling price as SUM(Sales_amount)/SUM(Quantity_purchased)."</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># ... plus fact_sales_sk, Payment_ID, Customer_ID, Product_ID, Order_ID, Address_ID, Time_ID</span><br>
+}<br>
+<span class="kw">for</span> <span class="var">column_name</span>, <span class="var">comment_text</span> <span class="kw">in</span> <span class="var">column_comments</span>.<span class="fn">items</span>():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">spark</span>.<span class="fn">sql</span>(<span class="fn">f</span><span class="str">"ALTER TABLE {PRACTICE_TABLE} ALTER COLUMN {column_name} COMMENT '{comment_text}'"</span>)
+  </div>
+
+  <h3><span class="phase-pill pill-c">Step C</span> Verify the Comments Landed</h3>
+  <div class="code-block">
+<span class="var">spark</span>.<span class="fn">sql</span>(<span class="fn">f</span><span class="str">"DESCRIBE TABLE {PRACTICE_TABLE}"</span>).<span class="fn">show</span>(<span class="var">truncate</span>=<span class="kw">False</span>)<br>
+<span class="var">spark</span>.<span class="fn">sql</span>(<span class="fn">f</span><span class="str">"DESCRIBE TABLE EXTENDED {PRACTICE_TABLE}"</span>).<span class="fn">show</span>(<span class="var">truncate</span>=<span class="kw">False</span>)
+  </div>
+
+  <div class="warn-box">
+    <b>What this session's notebook will NOT do:</b> call any Genie API/SDK, or otherwise attempt to create a Genie Space from code. As of this course's design that setup is UI-only — faking it with code that would not actually work would teach the wrong lesson.
+  </div>
+
+  <table class="compare-table" style="margin-top:14px;">
+    <tr><th></th><th>Before (Step A)</th><th>After (Step C)</th></tr>
+    <tr><td>What a column name tells you</td><td class="warn"><code>Actual_price</code>, <code>decimal</code> — nothing else</td><td class="ok">Same column, plus: "non-additive, never SUM directly across products"</td></tr>
+    <tr><td>Can Genie safely answer "total sales"?</td><td class="warn">Has to guess which of 3 decimal columns is the revenue measure</td><td class="ok">Knows <code>Sales_amount</code> is the additive revenue measure — stated directly</td></tr>
+    <tr><td>Can a new analyst self-serve?</td><td class="warn">Only by asking someone who already knows the rules</td><td class="ok">Yes — the rule is attached to the column itself</td></tr>
+  </table>
+  <div class="info-box">Nothing about the underlying data changes between Step A and Step C — same 100 rows, same values. The only thing that changes is whether the schema can explain itself. That is the entire value of a semantic layer, and exactly what Genie's natural-language-to-SQL translation leans on.</div>
+
+  <!-- ═══════════════════════ SECTION 5 ═══════════════════════ -->
+  <h2>5. Sample Questions: Bootstrapping Genie's Natural-Language Matching</h2>
+  <p>A Genie Space lets you register sample questions paired with the SQL that correctly answers them, so Genie has worked examples to pattern-match against. Illustrative only — not executed in this session.</p>
+  <table class="compare-table">
+    <tr><th>Sample question</th><th>Maps to</th></tr>
+    <tr><td>"What was our revenue by category last month?"</td><td><code>SELECT category, SUM(total_revenue) FROM gbmart.gold.vw_monthly_category_sales ... GROUP BY category</code></td></tr>
+    <tr><td>"Which states generate the most revenue?"</td><td><code>SELECT state, SUM(total_revenue) FROM gbmart.gold.vw_regional_sales GROUP BY state ORDER BY total_revenue DESC</code></td></tr>
+    <tr><td>"What is our average discount by category?"</td><td><code>SELECT category, AVG(avg_discount_given) FROM gbmart.gold.vw_monthly_category_sales GROUP BY category</code></td></tr>
+    <tr><td>"How many orders came from each region?"</td><td><code>SELECT state, city, total_orders FROM gbmart.gold.vw_regional_sales</code></td></tr>
+  </table>
+  <div class="info-box">Every sample question maps to one of the two already-built Gold views from Day 7 HOL 2 — not a fresh query against raw <code>fact_sales</code>. Genie's easiest, most reliable answers come from certified views someone already got right, not from re-deriving join and aggregation logic live, per question.</div>
+
+  <!-- ═══════════════════════ KEY TAKEAWAYS ═══════════════════════ -->
+  <h2>Key Takeaways</h2>
+  <div class="story-box">
+    <p>
+    1. Genie translates natural language to SQL against a curated Genie Space.<br>
+    2. Genie Spaces are set up entirely through the Databricks workspace UI — no SDK/API call creates one.<br>
+    3. A semantic layer is what makes raw tables usable by something that has never seen your business before.<br>
+    4. <code>vw_monthly_category_sales</code> and <code>vw_regional_sales</code> (Day 7 HOL 2) are already real semantic-layer artifacts.<br>
+    5. Comments must be additivity-correct, or they actively mislead — a wrong comment is worse than no comment.<br>
+    6. Every <code>COMMENT</code> / <code>ALTER TABLE</code> statement ran against a 100-row practice copy — the real <code>gbmart.gold.fact_sales</code> was only ever read, once, via <code>LIMIT 100</code>.
+    </p>
+  </div>
+
+  <h2>Self-Check</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">☐</span><span class="label">I can explain what a Genie Space is and how it differs from "the whole catalog"</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">I can name at least 3 ingredients of a good semantic layer</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">I can state which 2 of fact_sales's 4 measures are additive, and which 2 are not</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">I saw the "after" schema show real comments where "before" showed none</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">I can explain why this session never calls a Genie API</span></div>
+  </div>
+
+  <div class="warn-box" style="margin-top:16px;">
+    <b>What's Next:</b> the matching hands-on, <i>"Set Up Genie on Gold Layer — Descriptions + Natural Language Queries,"</i> is a separate, later session done live in the Databricks workspace UI against the real <code>gbmart.gold</code> layer — creating an actual Genie Space, adding descriptions and sample questions, and asking real natural-language questions. Nothing about that session can be scripted in a notebook — that is why it is deferred and separate, not a gap in this one.
+  </div>
+
+  <div class="legend">
+    Day 12 — ILT 2 — pairs with <b>Day12_ILT2_Introduction_Genie_Semantic_Layer.ipynb</b>. Standalone module — does not chain forward the way most days in this course do. Prerequisites: Day 6 ILT 3 (measure additivity), Day 7 HOL 2 (fact_sales + Gold views).
+  </div>
+
+</div>
+</body>
+</html>

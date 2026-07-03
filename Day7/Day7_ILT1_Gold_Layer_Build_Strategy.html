@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 7 ILT 1 — Gold Layer Build Strategy</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; background: #f4f6f8; color: #1f2937; padding: 32px; }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 { font-size: 17px; color: #1f3864; margin: 34px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge { background: #e0e7ff; color: #3730a3; font-size: 11.5px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+  .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; font-size: 12.5px; line-height: 1.8; }
+  .card strong { display: block; color: #1f3864; font-size: 13px; margin-bottom: 6px; }
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px; padding: 16px 20px;
+    font-family: monospace; font-size: 12px; line-height: 1.9; margin-top: 10px; overflow-x: auto;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .story-box { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .warn-box { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .legend { margin-top: 26px; font-size: 11.5px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 7 — ILT 1: Gold Layer Build Strategy</h1>
+  <div class="subtitle">Assembling the Star Schema · GlobalMart Data Engineering Bootcamp</div>
+
+  <div class="meta-row">
+    <span class="badge blue">90 minutes</span>
+    <span class="badge">Instructor-led</span>
+    <span class="badge green">Ready to Run All — real gbmart data</span>
+  </div>
+
+  <div class="card-row">
+    <div class="card"><strong>Builds on</strong>Day 6 dimensions, Day 7 HOL 1 bridge concept</div>
+    <div class="card"><strong>Leads into</strong>Day 7 HOL 2 — the real fact_sales build</div>
+    <div class="card"><strong>Format</strong>Live demo — every cell runs as-is, no placeholders</div>
+  </div>
+
+  <h2>1. Why Order Matters: Dimensions Before Facts</h2>
+  <p>A star schema can only be assembled in one direction: <b>dimensions first, fact second.</b> The fact table's whole job is to look up context by joining <i>out</i> to dimensions — if <code>dim_product</code> doesn't exist yet, there's nothing to join for pricing.</p>
+  <div class="code-block">
+Day 6:&nbsp;&nbsp;Silver &nbsp;──▶&nbsp; dim_customer, dim_product, dim_date, dim_address, dim_payment_method, dim_orders<br>
+Day 7:&nbsp;&nbsp;Silver + Gold dims &nbsp;──▶&nbsp; fact_sales
+  </div>
+  <p>This is why Day 6 explicitly stopped before building <code>fact_sales</code> — the only order that works, not a scheduling accident.</p>
+
+  <h2>2. The Join Chain, Table by Table</h2>
+  <p><code>fact_sales</code>'s grain is <code>order_items</code>. Everything else is a lookup <i>from</i> that grain — this is the exact chain GlobalMart's real Gold build uses:</p>
+  <table class="compare-table">
+    <tr><th>Step</th><th>Join</th><th>Brings in</th></tr>
+    <tr><td>1</td><td><code>silver.order_items</code> (the grain)</td><td><code>order_item_id</code>, <code>order_id</code>, <code>product_id</code>, <code>quantity</code></td></tr>
+    <tr><td>2</td><td>+ <code>silver.orders</code> on <code>order_id</code></td><td><code>customer_id</code>, <code>order_date</code></td></tr>
+    <tr><td>3</td><td>+ <code>silver.products</code> (<code>is_current=true</code>)</td><td><code>Actual_price</code>, <code>Discounted_price</code></td></tr>
+    <tr><td>4</td><td>+ <code>gold.dim_date</code> on <code>order_date=date</code></td><td><code>Time_ID</code> (= <code>date_key</code>)</td></tr>
+    <tr><td>5</td><td>+ <code>silver.address</code> (one per customer)</td><td><code>Address_ID</code></td></tr>
+    <tr><td>6</td><td>+ <code>silver.payments</code> on <code>order_id</code></td><td><code>Payment_ID</code></td></tr>
+  </table>
+  <div class="info-box"><b>Why filter <code>is_current=true</code> on products?</b> <code>dim_product</code> is SCD2 — a product can have multiple rows in Silver. Filtering to the current version keeps this a clean many-to-one join instead of fanning out order lines.</div>
+
+  <h2>3. The One-to-Many Trap: Address</h2>
+  <p><code>silver.address</code> links to <code>customer_id</code>, not to a specific order — a customer can have more than one address on file. Joining straight on <code>customer_id</code> would silently <b>fan out every order line</b> for any multi-address customer.</p>
+  <div class="code-block">
+<span class="cmt"># The fix: rank addresses per customer, Shipping wins, take rank 1 only</span><br>
+address_window = Window.partitionBy(<span class="str">"customer_id"</span>).orderBy(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;when(col(<span class="str">"address_type"</span>).contains(<span class="str">"Shipping"</span>), <span class="num">0</span>).otherwise(<span class="num">1</span>)<br>
+)<br>
+address_primary = address_df.withColumn(<span class="str">"_rank"</span>, row_number().over(address_window)).filter(<span class="str">"_rank = 1"</span>)
+  </div>
+
+  <h2>4. The Big Decision: Natural Keys or Surrogate Keys?</h2>
+  <p>Textbook Kimball: join to dimensions <b>by surrogate key</b> — that's what makes SCD2 history queryable. GlobalMart's real, running build makes a different, deliberate choice: <code>fact_sales</code> stores natural keys (<code>Customer_ID</code>, <code>Product_ID</code>, etc.) — only <code>fact_sales_sk</code> itself is generated.</p>
+  <table class="compare-table">
+    <tr><th></th><th>Surrogate-key fact (textbook)</th><th>Natural-key fact (GlobalMart's real build)</th></tr>
+    <tr><td>Point-in-time accuracy</td><td>Yes — lands on the SCD2 version active at order time</td><td>No — resolves to whatever's current at query time</td></tr>
+    <tr><td>Join complexity</td><td>Higher — needs effective-date range logic</td><td>Lower — plain equi-join on known IDs</td></tr>
+    <tr><td>Build/debug speed here</td><td>Slower</td><td>Faster — the reason it was chosen</td></tr>
+    <tr><td>Production-grade for a real BI team</td><td>Preferred</td><td>Acceptable as a documented simplification</td></tr>
+  </table>
+  <div class="warn-box"><b>Not a mistake to fix in HOL 2</b> — build it exactly this way. Understanding why a real team makes this tradeoff, and what it costs, is the actual lesson.</div>
+
+  <h2>5. Write Strategy: Overwrite Today, Incremental Later</h2>
+  <p>Today's build uses <code>mode("overwrite")</code> — simple and always correct at GlobalMart's current volume. This doesn't scale forever: recomputing the whole fact table on every run gets wasteful as data grows. Day 9–10 replaces this with an incremental <code>MERGE</code>-based refresh touching only new/changed order lines — you're seeing the simple version first on purpose.</p>
+
+  <h2>Recap Before HOL 2</h2>
+  <table class="compare-table">
+    <tr><th>Decision</th><th>GlobalMart's choice</th></tr>
+    <tr><td>Build order</td><td>Dimensions (Day 6) fully before the fact (today)</td></tr>
+    <tr><td>Grain</td><td>One row per order line item</td></tr>
+    <tr><td>Address fan-out</td><td>Resolved with a ranked window function</td></tr>
+    <tr><td>Key strategy</td><td>Natural keys in the fact, surrogate keys stay in dimensions</td></tr>
+    <tr><td>Write strategy (today)</td><td>Full overwrite — incremental MERGE comes Day 9–10</td></tr>
+  </table>
+
+  <div class="legend">
+    Day 7 ILT 1 — Pairs with <b>Day7_ILT1_Gold_Layer_Build_Strategy.ipynb</b>. Every cell is ready to run live against real <code>gbmart</code> data — no student setup required.
+  </div>
+
+</div>
+</body>
+</html>

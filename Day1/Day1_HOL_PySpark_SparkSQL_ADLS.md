@@ -24,6 +24,8 @@ tags:
   - data-storage (skill)
   - data-wrangling (skill)
   - data-quality (skill)
+  - data-understanding (skill)
+  - cloud-management (skill)
   - approach (skill)
 ---
 

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 5 HOL 2 — Build the Silver Layer, All Sources</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge {
+    background: #e0e7ff; color: #3730a3; font-size: 11.5px;
+    padding: 4px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+
+  .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 18px; font-size: 12.5px; line-height: 1.8;
+  }
+  .card strong { display: block; color: #1f3864; font-size: 13px; margin-bottom: 6px; }
+  .card-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px;
+    padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9;
+    margin-top: 10px; overflow-x: auto;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+  .code-block .var { color: #e2e8f0; }
+
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .compare-table .ok { color: #059669; font-weight: 700; }
+  .compare-table .warn { color: #b45309; font-weight: 700; }
+
+  .checklist {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 13px; line-height: 2.2;
+  }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .blank { color: #9ca3af; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { min-width: 280px; color: #374151; }
+
+  .phase-pill {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px; margin-right: 8px;
+  }
+  .pill-a { background: #dbeafe; color: #1e40af; }
+  .pill-b { background: #d1fae5; color: #065f46; }
+  .pill-c { background: #fef3c7; color: #92400e; }
+  .pill-d { background: #ede9fe; color: #5b21b6; }
+
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .warn-box {
+    background: #fff7ed; border-left: 4px solid #f59e0b;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+
+  .schedule { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 10px; }
+  .sched-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 12px 14px; font-size: 12px; line-height: 1.7;
+  }
+  .sched-card .time { color: #6b7280; font-size: 11px; }
+  .sched-card.active { background: #1f3864; color: #fff; }
+  .sched-card.active .time { color: #93c5fd; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 5 — Hands-On Lab 2: Build the Silver Layer — All Sources</h1>
+  <p class="subtitle">GlobalMart Data Engineering Bootcamp &nbsp;|&nbsp; gbmart.bronze.* &rarr; gbmart.silver.* &nbsp;|&nbsp; Quick Reference</p>
+
+  <div class="meta-row">
+    <span class="badge blue">~3 hours</span>
+    <span class="badge green">Intermediate</span>
+    <span class="badge">7 tables</span>
+    <span class="badge orange">Follows HOL 1</span>
+    <span class="badge">Catalog: gbmart</span>
+  </div>
+
+  <h2>The Pattern, Once</h2>
+  <table class="compare-table">
+    <tr><th>Step</th><th>What happens</th></tr>
+    <tr><td>1</td><td>Read Bronze, inspect schema</td></tr>
+    <tr><td>2</td><td>DQ scan — tag every row with its first failing rule</td></tr>
+    <tr><td>3</td><td>Investigate flagged rows — don't fix blind</td></tr>
+    <tr><td>4</td><td>Fix / flag / quarantine — pick correctly (Day 5 ILT 2)</td></tr>
+    <tr><td>5</td><td>Transform — standardize, conform, enrich</td></tr>
+    <tr><td>6</td><td>Write to Silver (+ quarantine table if needed)</td></tr>
+    <tr><td>7</td><td>Verify</td></tr>
+  </table>
+
+  <h2>Table-by-Table Summary</h2>
+  <table class="compare-table">
+    <tr><th>Source</th><th>SCD Type</th><th>Key challenge</th></tr>
+    <tr><td>customers</td><td class="ok">SCD2</td><td>Email/phone fixes, under-18 quarantine (HOL 1)</td></tr>
+    <tr><td>products</td><td class="ok">SCD2 (initial load)</td><td>Semi-structured — flatten <code>specs</code>/<code>supplier_info</code> structs, keep <code>tags</code> array</td></tr>
+    <tr><td>address</td><td>SCD1 (immutable)</td><td>Recover PinCode leading zeros from <code>AddressLine1</code> duplicate text</td></tr>
+    <tr><td>orders</td><td class="warn">SCD1 (MERGE)</td><td>Lakeflow lowercases columns; DELIVERY_BEFORE_SHIP flagged not quarantined</td></tr>
+    <tr><td>order_items</td><td>SCD1 (overwrite)</td><td>Referential integrity vs. silver.orders + silver.products</td></tr>
+    <tr><td>payments</td><td>SCD1 (overwrite)</td><td>Conditional-null business rule (GiftCard/Coupon)</td></tr>
+    <tr><td>payment_methods</td><td>Static lookup</td><td>Small reference table — uniqueness check only</td></tr>
+  </table>
+
+  <h2>Semi-Structured Source — Products</h2>
+  <p><code>bronze.products</code> carries two struct columns (<code>specs</code>, <code>supplier_info</code>) and one array column (<code>tags</code>). Flatten the structs; keep the array as-is since every product has the same tag cardinality — it's a multi-valued attribute, not a many-to-many relationship needing a bridge table.</p>
+  <div class="code-block">
+<span class="fn">col</span>(<span class="str">"specs.power_source"</span>).<span class="fn">alias</span>(<span class="str">"power_source"</span>),<br>
+<span class="fn">col</span>(<span class="str">"specs.material"</span>).<span class="fn">alias</span>(<span class="str">"material"</span>),  <span class="cmt"># NULL by category design, not a DQ issue</span><br>
+<span class="fn">col</span>(<span class="str">"supplier_info.name"</span>).<span class="fn">alias</span>(<span class="str">"supplier_name"</span>),<br>
+<span class="str">"tags"</span>  <span class="cmt"># stays array&lt;string&gt; -- constant cardinality across all products</span>
+  </div>
+
+  <h2>Addresses — Recovering a Corrupted Value</h2>
+  <p>Autoloader inferred <code>PinCode</code> as numeric, silently dropping leading zeros. <code>AddressLine1</code> embeds the same PIN as plain text — text never loses leading zeros — giving an independent, trustworthy source to recover the true value from.</p>
+  <div class="code-block">
+<span class="var">recovered</span> = <span class="var">bronze_address</span>.<span class="fn">withColumn</span>(<br>
+&nbsp;&nbsp;<span class="str">"PinCode"</span>,<br>
+&nbsp;&nbsp;<span class="fn">when</span>(<span class="var">pincode_len</span> &lt; <span class="num">6</span>, <span class="fn">regexp_extract</span>(<span class="fn">col</span>(<span class="str">"AddressLine1"</span>), <span class="str">r"(\d{5,6})\s*$"</span>, <span class="num">1</span>))<br>
+&nbsp;&nbsp;.<span class="fn">otherwise</span>(<span class="fn">col</span>(<span class="str">"PinCode"</span>).<span class="fn">cast</span>(<span class="str">"long"</span>).<span class="fn">cast</span>(<span class="str">"string"</span>))<br>
+)
+  </div>
+
+  <h2>Orders — SCD1 via MERGE</h2>
+  <p>Lakeflow Connect lowercases every Postgres column (<code>OrderID</code> &rarr; <code>orderid</code>). An order has one current truth at any moment, so this is <strong>SCD1</strong>: matched rows get overwritten, unmatched rows get inserted.</p>
+  <div class="code-block">
+<span class="var">deltaTable</span>.<span class="fn">alias</span>(<span class="str">"tgt"</span>)<br>
+&nbsp;&nbsp;.<span class="fn">merge</span>(<span class="var">silver_orders_df</span>.<span class="fn">alias</span>(<span class="str">"src"</span>), <span class="str">"tgt.order_id = src.order_id"</span>)<br>
+&nbsp;&nbsp;.<span class="fn">whenMatchedUpdateAll</span>()<br>
+&nbsp;&nbsp;.<span class="fn">whenNotMatchedInsertAll</span>()<br>
+&nbsp;&nbsp;.<span class="fn">execute</span>()
+  </div>
+  <div class="warn-box"><strong>DELIVERY_BEFORE_SHIP is flagged, not quarantined</strong> — quarantining these 114 orders previously orphaned 352 downstream order_items. See Day 5 ILT 2 for the full story.</div>
+
+  <h2>Referential Integrity — Order Items &amp; Payments</h2>
+  <p>Once <code>silver.orders</code> and <code>silver.products</code> exist, every downstream table checks against them with a <code>left_anti</code> join — the standard way to find rows whose parent doesn't exist.</p>
+  <div class="code-block">
+<span class="var">orphans</span> = <span class="var">bronze_order_items</span>.<span class="fn">join</span>(<br>
+&nbsp;&nbsp;<span class="var">orders_df</span>, <span class="var">bronze_order_items</span>.<span class="var">orderid</span> == <span class="var">orders_df</span>.<span class="var">order_id</span>, <span class="str">"left_anti"</span><br>
+)<br>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Orphans: {orphans.count():,}"</span>)  <span class="cmt"># must be 0</span>
+  </div>
+
+  <h2>Final Verification</h2>
+  <div class="code-block">
+<span class="kw">for</span> <span class="var">t</span> <span class="kw">in</span> [<span class="str">"customers"</span>, <span class="str">"products"</span>, <span class="str">"address"</span>, <span class="str">"orders"</span>, <span class="str">"order_items"</span>, <span class="str">"payments"</span>, <span class="str">"payment_methods"</span>]:<br>
+&nbsp;&nbsp;<span class="fn">print</span>(<span class="fn">f</span><span class="str">"gbmart.silver.{t}: {spark.table(f'gbmart.silver.{t}').count():,} rows"</span>)
+  </div>
+
+  <h2>Submission Checklist</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">☐</span><span class="label">silver.customers — confirmed from HOL 1</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">silver.products — structs flattened, tags kept as array, SCD2 initial load</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">silver.address — PinCode recovered, AddressLine1 duplication removed</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">silver.orders — SCD1 MERGE, DELIVERY_BEFORE_SHIP flagged not quarantined</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">silver.order_items — 0 orphans against orders and products</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">silver.payments — GiftCard/Coupon rule confirmed, 0 orphans</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">silver.payment_methods — bronze.payment_methods built first (Day 4 didn't), 0 duplicate IDs</span></div>
+  </div>
+
+</div>
+</body>
+</html>

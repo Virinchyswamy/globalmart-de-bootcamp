@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 7 HOL 2 — Build Gold Layer: fact_sales</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; background: #f4f6f8; color: #1f2937; padding: 32px; }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 { font-size: 17px; color: #1f3864; margin: 34px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge { background: #e0e7ff; color: #3730a3; font-size: 11.5px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+  .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; font-size: 12.5px; line-height: 1.8; }
+  .card strong { display: block; color: #1f3864; font-size: 13px; margin-bottom: 6px; }
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px; padding: 16px 20px;
+    font-family: monospace; font-size: 12px; line-height: 1.9; margin-top: 10px; overflow-x: auto;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .story-box { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .warn-box { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .checklist { list-style: none; margin-top: 8px; }
+  .checklist li { font-size: 12.5px; margin-bottom: 6px; padding-left: 22px; position: relative; }
+  .checklist li::before { content: "☐"; position: absolute; left: 0; color: #6b7280; font-size: 14px; }
+  .legend { margin-top: 26px; font-size: 11.5px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 7 — Hands-On 2: Build Gold Layer — fact_sales</h1>
+  <div class="subtitle">GlobalMart Data Engineering Bootcamp</div>
+
+  <div class="meta-row">
+    <span class="badge blue">~2.5 hours</span>
+    <span class="badge">Follows ILT 1</span>
+    <span class="badge green">Target: gbmart.gold.fact_sales</span>
+    <span class="badge orange">Real, running GlobalMart build</span>
+  </div>
+
+  <div class="card-row">
+    <div class="card"><strong>Grain</strong>One row per order line item (order_items)</div>
+    <div class="card"><strong>Source</strong>silver.order_items/orders/products/payments/address + gold.dim_date</div>
+    <div class="card"><strong>Target</strong>gbmart.gold.fact_sales + 2 business-facing views</div>
+  </div>
+
+  <h2>Shape — the Real, Running GlobalMart Fact Table</h2>
+  <div class="code-block">
+fact_sales<br>
+├── fact_sales_sk &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">(surrogate PK -- the ONLY generated key)</span><br>
+├── Payment_ID, Customer_ID, Product_ID, Order_ID, Address_ID, Time_ID &nbsp;<span class="cmt">(natural keys)</span><br>
+├── Quantity_purchased, Actual_price, Discounted_price &nbsp;<span class="cmt">(measures)</span><br>
+└── Sales_amount &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">(measure = Quantity_purchased × Discounted_price)</span>
+  </div>
+  <div class="info-box"><b>From ILT 1:</b> every FK here is a natural/business key, not a surrogate key — a deliberate, documented simplification. <code>dim_customer</code>/<code>dim_product</code> still have proper SCD2 surrogate keys; this fact table just isn't wired to them that way.</div>
+
+  <h2>The Build, Step by Step</h2>
+  <table class="compare-table">
+    <tr><th>Step</th><th>What happens</th><th>Row-count check</th></tr>
+    <tr><td>1–2</td><td>Read order_items (grain) + join orders for Customer_ID/order_date</td><td>Should match <code>silver.order_items</code> exactly</td></tr>
+    <tr><td>3</td><td>Join products (<code>is_current=true</code>) for pricing</td><td>Should be unchanged unless a product_id is missing</td></tr>
+    <tr><td>4</td><td>Join dim_date on order_date for Time_ID</td><td>0 unmatched rows expected — dim_date's range was built to cover this exactly</td></tr>
+    <tr><td>5</td><td>Join address — <b>ranked, one per customer</b> (the ILT 1 fan-out trap)</td><td>Must stay unchanged from Step 4 — growth means the ranking broke</td></tr>
+    <tr><td>6</td><td>Join payments (true 1:1 with orders)</td><td>Must stay unchanged from Step 5</td></tr>
+    <tr><td>7</td><td>Compute <code>Sales_amount</code>, generate <code>fact_sales_sk</code></td><td>Final row count = grain row count</td></tr>
+    <tr><td>8</td><td>Write to <code>gbmart.gold.fact_sales</code> (overwrite mode)</td><td>—</td></tr>
+  </table>
+  <div class="warn-box"><b>Watch every printed row count.</b> A build with 6+ joins is exactly where silent fan-outs hide — catch them mid-build, not after the table is "done."</div>
+
+  <div class="code-block">
+<span class="cmt"># The re-run safety trick (Step 4) -- makes this cell safe to re-run</span><br>
+<span class="cmt"># without restarting the whole notebook from Step 2</span><br>
+enriched_df = enriched_df.drop(<span class="str">"Time_ID"</span>, <span class="str">"date"</span>)<br>
+enriched_df = enriched_df.join(dim_date_df, enriched_df.order_date == dim_date_df.date, <span class="str">"left"</span>)
+  </div>
+
+  <h2>Step 9 — Serve It: Business-Facing Gold Views</h2>
+  <p>Nobody outside the data team queries <code>fact_sales</code> directly day to day. Real recurring questions get answered by <b>views</b> — one agreed-upon definition everyone reports against, instead of every analyst writing a slightly different join.</p>
+  <table class="compare-table">
+    <tr><th>View</th><th>Who runs it daily</th><th>Question it answers</th></tr>
+    <tr><td><code>vw_monthly_category_sales</code></td><td>Category / merchandising managers</td><td>How is each category trending month-over-month, and who's leaning on discounts?</td></tr>
+    <tr><td><code>vw_regional_sales</code></td><td>Regional / logistics ops leads</td><td>Which states/cities drive the most revenue, and what's the average order size?</td></tr>
+  </table>
+  <div class="info-box"><b>Why a VIEW, not a materialized table?</b> At <code>fact_sales</code>'s current size, a view recomputes fresh on every query — no refresh job to schedule, always reflects current data. Promote to a materialized table only once a dashboard actually gets slow at much larger scale.</div>
+
+  <h2>Key Takeaways</h2>
+  <ul class="checklist">
+    <li>Verify the row count after every join — this is where fan-outs hide</li>
+    <li><code>is_current = true</code> filters are not optional on SCD2 dimension joins</li>
+    <li>Natural-key joins were a deliberate, understood tradeoff — not a shortcut</li>
+    <li>The two views ARE the deliverable for most downstream consumers</li>
+  </ul>
+
+  <h2>Submission Checklist</h2>
+  <ul class="checklist">
+    <li>Every step's printed row count reviewed — no unexplained jumps</li>
+    <li><code>gbmart.gold.fact_sales</code> written successfully</li>
+    <li>Both views created and queried</li>
+    <li>Screenshot of the write confirmation + one view's output</li>
+  </ul>
+
+  <div class="legend">
+    Day 7 HOL 2 — Pairs with <b>Day7_HOL2_Build_Gold_Layer_Fact_Sales.ipynb</b>. Runs entirely against your own cluster — no shared pipeline or job is triggered by this notebook.
+  </div>
+
+</div>
+</body>
+</html>

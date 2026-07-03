@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Introduction to Orchestration — Need, DAG Concepts and Workflow Design</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  /* ── meta row ── */
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge {
+    background: #e0e7ff; color: #3730a3; font-size: 11.5px;
+    padding: 4px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+
+  .story-box {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* ── monospace diagram / worked-example block ── */
+  .delta-wrap {
+    background: #1e293b; color: #e2e8f0; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace;
+    line-height: 1.9;
+  }
+  .delta-wrap .comment  { color: #64748b; font-style: italic; }
+  .delta-wrap .highlight { color: #7dd3fc; font-weight: 700; }
+  .delta-wrap .green    { color: #86efac; }
+  .delta-wrap .yellow   { color: #fde68a; }
+
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px;
+    padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9;
+    margin-top: 10px; overflow-x: auto;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .yes { color: #047857; font-weight: 600; }
+  .no  { color: #b91c1c; font-weight: 600; }
+  .med { color: #b45309; font-weight: 600; }
+
+  /* ── dimension-card grid ── */
+  .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
+
+  .spotlight {
+    background: #1f3864; color: #fff; border-radius: 12px; padding: 22px 26px; margin-top: 6px;
+  }
+  .spotlight h3 { font-size: 15px; margin-bottom: 10px; color: #fde68a; }
+
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .warn-box {
+    background: #fff7ed; border-left: 4px solid #f59e0b;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .fix-box {
+    background: #ecfdf5; border-left: 4px solid #10b981;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .danger-box {
+    background: #fef2f2; border-left: 4px solid #dc2626;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+
+  /* ── checklist ── */
+  .checklist {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 20px 24px; margin-top: 10px; font-size: 13px; line-height: 2.1;
+  }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { color: #374151; }
+
+  /* ── phase pill ── */
+  .phase-pill {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px; margin-right: 8px;
+  }
+  .pill-a { background: #dbeafe; color: #1e40af; }
+  .pill-b { background: #d1fae5; color: #065f46; }
+  .pill-c { background: #fef3c7; color: #92400e; }
+  .pill-d { background: #ede9fe; color: #5b21b6; }
+
+  .legend {
+    margin-top: 26px; font-size: 11.5px; color: #6b7280;
+    border-top: 1px solid #e5e7eb; padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Introduction to Orchestration — Need, DAG Concepts and Workflow Design</h1>
+  <div class="subtitle">ILT 2 &nbsp;|&nbsp; Day 10 &nbsp;|&nbsp; 3:00 PM – 4:00 PM &nbsp;|&nbsp; Tags: orchestration, dag, fan-out, fan-in, databricks-workflows, topological-sort</div>
+
+  <div class="meta-row">
+    <span class="badge blue">60 minutes</span>
+    <span class="badge green">Builds on Day 2–9 + Day 10 ILT 1</span>
+    <span class="badge">Day 10 · ILT 2</span>
+    <span class="badge orange">Conceptual + real, runnable DAG code demo</span>
+  </div>
+
+  <div class="story-box">
+    <p>By this point on Day 10, GlobalMart's pipeline is <b>12+ real hands-on notebooks</b> across 7 Bronze tables, 7 Silver tables, and 7 Gold objects (6 dimensions + <code>fact_sales</code>) — each with strict ordering rules. This session names that pain precisely, defines the DAG (Directed Acyclic Graph) data structure every orchestrator uses to solve it, and builds GlobalMart's <b>real</b> task graph as running Python — including a genuine topological sort and a genuine cycle-detection error. No Databricks Job, Pipeline, cluster, or warehouse is created, started, or scheduled anywhere in this session — see the Safety Checklist near the end.</p>
+  </div>
+
+  <!-- ═══════════════════════ SECTION 1 ═══════════════════════ -->
+  <h2>1. Why Orchestration Is Needed</h2>
+  <table class="compare-table">
+    <tr><th>Layer</th><th>Real notebooks you've already run</th><th>Lands in</th></tr>
+    <tr><td>Ingestion — Postgres CDC</td><td><code>Day2_HOL1_Lakeflow_Connect_Storage_Credentials</code>, <code>Day2_HOL2_CDC_PostgreSQL_WAL</code></td><td><code>gbmart.bronze.orders</code>, <code>order_items</code></td></tr>
+    <tr><td>Ingestion — ADLS Autoloader</td><td><code>Day3_HOL2_ADLS_AutoLoader_Bronze_Customers_Payments</code>, <code>Day4_HOL1_Build_Bronze_Layer_All_Sources</code></td><td><code>customers</code>, <code>products</code>, <code>addresses</code>, <code>payments</code>, <code>payment_methods</code></td></tr>
+    <tr><td>Silver</td><td><code>Day5_HOL1_Transformations_DQ_Quarantine</code>, <code>Day5_HOL2_Build_Silver_Layer_All_Sources</code></td><td>All 7 <code>gbmart.silver.*</code> tables</td></tr>
+    <tr><td>Gold</td><td><code>Day7_HOL1_Build_Dimensions_Bridge_Table</code>, <code>Day7_HOL2_Build_Gold_Layer_Fact_Sales</code></td><td>6 dimensions + <code>fact_sales</code></td></tr>
+    <tr><td>Incremental / SCD</td><td><code>Day9_HOL1</code>, <code>Day9_HOL2</code>, <code>Day10_HOL1</code>, <code>Day10_HOL2</code></td><td>Keeps Silver/Gold current without full reprocessing</td></tr>
+  </table>
+  <p>That's <b>12 real hands-on notebooks</b> that build or refresh a real <code>gbmart</code> table — before counting a single ILT demo, and all of it already behind you by this point on Day 10.</p>
+
+  <div class="info-box">
+    <b>Callback — it's 2 real pathways, not 4.</b> Day 3 ILT 1 and Day 4 ILT 1 already established this, explicitly: GlobalMart's production pipeline has exactly <b>two</b> real ingestion sources — Postgres CDC via Lakeflow Connect, and ADLS Autoloader. The REST API and Neo4j/GraphDB patterns from Day 3 were deliberate <b>side-explorations</b>, landing in a <code>sandbox/</code> path, never touching a <code>gbmart.bronze</code> table. That matters here more than anywhere so far: <b>an orchestration job only schedules what's actually in production.</b> If a notebook doesn't write to a real <code>gbmart</code> table, it gets no <code>task_key</code> in this DAG — see Section 4.
+  </div>
+
+  <div class="warn-box">
+    <b>The manual pain, made concrete:</b> confirm the CDC pipeline succeeded for <code>orders</code>/<code>order_items</code> → kick off the Autoloader ingestion for 5 entities → wait for all 7 to finish → run all 7 Silver notebooks, each only once its own Bronze table has landed → wait for all 7 → run 6 dimension builds, then <code>fact_sales</code> last → hope nobody ran a step out of order or missed a silent failure. Nothing here is conceptually hard — it's a lot of ordering rules for a human to hold in their head and babysit, every day, forever.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 2 ═══════════════════════ -->
+  <h2>2. DAG Concepts — Nodes, Edges, and Why Cycles Are Invalid</h2>
+  <table class="compare-table">
+    <tr><th>Term</th><th>Meaning</th><th>GlobalMart example</th></tr>
+    <tr><td><b>Node</b></td><td>One unit of work — a task</td><td>"Ingest <code>gbmart.bronze.orders</code>"</td></tr>
+    <tr><td><b>Edge</b></td><td>A directed dependency — "B cannot start until A finishes"</td><td><code>bronze_orders → silver_orders</code></td></tr>
+    <tr><td><b>Directed</b></td><td>Edges have a direction — order matters</td><td>Never the reverse: Silver can't run before Bronze</td></tr>
+    <tr><td><b>Acyclic</b></td><td>No path ever loops back to where it started</td><td>See below</td></tr>
+  </table>
+
+  <div class="warn-box">
+    <b>Why cycles are invalid:</b> if <code>task_a</code> depends on <code>task_b</code>, and <code>task_b</code> depends on <code>task_a</code>, <b>neither can ever start</b> — each is waiting on the other to go first. Not a performance problem — a logical impossibility. A scheduler must <i>prove</i> a graph has no cycle before it can compute any run order at all; that proof is exactly what topological sort does (Section 5), and exactly why it raises an error instead of hanging forever when a cycle exists (Section 6).
+  </div>
+
+  <h2><span class="phase-pill pill-a">Fan-out</span> Independent Work, Free to Run in Parallel</h2>
+  <p><b>Fan-out</b> is any point in the DAG where multiple tasks become runnable at the same time because none of them depends on any of the others.</p>
+  <div class="fix-box">
+    GlobalMart's real fan-out: the CDC-driven tasks (<code>bronze_orders</code>, <code>bronze_order_items</code>) and the five Autoloader-driven tasks (<code>bronze_customers</code>, <code>bronze_products</code>, <code>bronze_addresses</code>, <code>bronze_payments</code>, <code>bronze_payment_methods</code>) share <b>zero dependencies on each other</b>. All seven can start at the same moment, with no coordination required between them.
+  </div>
+
+  <h2><span class="phase-pill pill-b">Fan-in</span> A Task That Has to Wait</h2>
+  <p><b>Fan-in</b>, loosely, is any point where a task cannot start until an upstream task finishes — even a single dependency is a small fan-in gate in that sense. The stricter, more consequential case is a task with <b>multiple</b> upstream dependencies at once.</p>
+  <div class="fix-box">
+    GlobalMart's clearest example: <code>gold_fact_sales</code> waits on <b>six</b> upstream tasks simultaneously — five Silver tables (<code>order_items</code>, <code>orders</code>, <code>products</code>, <code>address</code>, <code>payments</code>) plus <code>gold_dim_date</code>. Miss, delay, or fail any one of those six, and <code>fact_sales</code> cannot start.
+  </div>
+  <div class="info-box">
+    <b>A design choice, not a law.</b> This session gives every dimension a narrow, single-parent dependency — its own Silver table, nothing else. Plenty of real orchestration jobs instead make <i>every</i> Gold task depend on the entire Silver layer finishing first — coarser and safer against half-finished Silver runs, at the cost of avoidable waiting (<code>dim_payment_method</code> would sit idle waiting on <code>silver_orders</code>, even though it never reads that table). <code>fact_sales</code> already shows the narrower, surgical style for real — see Discussion Question 2 in the matching notebook.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 3 ═══════════════════════ -->
+  <h2>3. Workflow Design — How Databricks Jobs Model a DAG</h2>
+  <p>A <b>Databricks Job</b> (the UI now calls this surface "Workflows") is, underneath the drag-and-drop screen, just <b>a JSON document describing a DAG</b>: a name, a list of tasks, and the compute those tasks run on.</p>
+  <table class="compare-table">
+    <tr><th>Field</th><th>What it holds</th><th>GlobalMart example</th></tr>
+    <tr><td><code>task_key</code></td><td>A short, unique name for this task within the job</td><td><code>"silver_orders"</code></td></tr>
+    <tr><td><code>depends_on</code></td><td>Which upstream <code>task_key</code>(s) must succeed first</td><td><code>["bronze_orders"]</code></td></tr>
+    <tr><td><code>notebook_task.notebook_path</code></td><td>Workspace path of the notebook this task runs</td><td><code>/Repos/globalmart-prod/silver/build_silver_orders</code></td></tr>
+    <tr><td><code>pipeline_task.pipeline_id</code></td><td>Used instead of <code>notebook_task</code> when the task is really a Lakeflow/DLT pipeline run</td><td>GlobalMart's real <code>bronze_orders</code> task — driven by <code>orders_data_ingestion_cdc</code>, not a plain notebook</td></tr>
+  </table>
+  <p>A task can also be a <code>sql_task</code>, a <code>dbt_task</code>, a <code>python_wheel_task</code>, and others — the <b>shape of the DAG itself never changes</b>: every task type still carries a <code>task_key</code> and a <code>depends_on</code> list.</p>
+  <div class="code-block">
+job = {<br>
+&nbsp;&nbsp;<span class="str">"name"</span>: <span class="str">"..."</span>,<br>
+&nbsp;&nbsp;<span class="str">"tasks"</span>: [ {task}, {task}, {task}, ... ],&nbsp;&nbsp;<span class="cmt"># every node in the DAG</span><br>
+&nbsp;&nbsp;<span class="str">"job_clusters"</span>: [ ... ],&nbsp;&nbsp;<span class="cmt"># shared compute definitions</span><br>
+&nbsp;&nbsp;<span class="str">"schedule"</span>: { <span class="str">"quartz_cron_expression"</span>: <span class="str">"..."</span>, <span class="str">"timezone_id"</span>: <span class="str">"..."</span> }<br>
+}
+  </div>
+
+  <!-- ═══════════════════════ SECTION 4 ═══════════════════════ -->
+  <h2>4. GlobalMart's Real Task Graph — Built as Running Python</h2>
+  <p><b>2 ingestion pathways → 7 Bronze tables → 7 Silver tables → 6 dimensions + <code>fact_sales</code> = 21 tasks.</b> Every <code>target_table</code> is a real name from this course's <code>gbmart</code> catalog (Day 2–7); every <code>depends_on</code> edge mirrors a dependency already built by hand. The matching notebook builds this as plain Python — no Spark session, no Databricks SDK, no network call anywhere.</p>
+  <div class="code-block">
+<span class="cmt"># Excerpt from globalmart_tasks -- the real fan-in task. Full list of 21 in the .ipynb.</span><br>
+{<br>
+&nbsp;&nbsp;<span class="str">"task_key"</span>: <span class="str">"gold_fact_sales"</span>,<br>
+&nbsp;&nbsp;<span class="str">"depends_on"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"silver_order_items"</span>, <span class="str">"silver_orders"</span>, <span class="str">"silver_products"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"silver_address"</span>, <span class="str">"silver_payments"</span>, <span class="str">"gold_dim_date"</span>,<br>
+&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;<span class="str">"notebook_path"</span>: <span class="str">"/Repos/globalmart-prod/gold/build_fact_sales"</span>,<br>
+&nbsp;&nbsp;<span class="str">"target_table"</span>: <span class="str">"gbmart.gold.fact_sales"</span>,<br>
+}
+  </div>
+  <div class="info-box">
+    Notice this task's <code>depends_on</code> includes <code>gold_dim_date</code> — a <b>Gold</b> task, not a Silver one. Real DAG edges follow data dependency only; they don't have to respect neat "layer by layer" boundaries.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 5 ═══════════════════════ -->
+  <h2>5. Topological Sort — a Real Algorithm, Run For Real</h2>
+  <p><b>Kahn's algorithm</b>, in plain Python: repeatedly collect every task whose dependencies are all already satisfied, treat that whole group as one parallel "wave," remove them, and repeat. If tasks remain but none of them ever becomes free, the graph has a cycle (Section 6).</p>
+
+  <div class="delta-wrap">
+<span class="highlight">Postgres CDC</span> (2 tables) <span class="comment">+</span> <span class="highlight">ADLS Autoloader</span> (5 tables)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="green">Wave 0 -- 7 Bronze tables</span> &nbsp;<span class="comment">(fan-out)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="green">Wave 1 -- 7 Silver tables</span> &nbsp;<span class="comment">(fan-out)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="yellow">Wave 2 -- 6 Gold dimensions</span> &nbsp;<span class="comment">(fan-out)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">Wave 3 -- gold_fact_sales</span> &nbsp;<span class="comment">(fan-in of 6)</span><br>
+<span class="comment"># this is the actual, verified output of topological_sort(globalmart_tasks)</span>
+  </div>
+
+  <table class="compare-table" style="margin-top:14px;">
+    <tr><th>Wave</th><th>Tasks</th><th>Count</th></tr>
+    <tr><td>0</td><td>All 7 Bronze tasks</td><td>7 (fan-out)</td></tr>
+    <tr><td>1</td><td>All 7 Silver tasks</td><td>7 (fan-out)</td></tr>
+    <tr><td>2</td><td>6 Gold dimensions</td><td>6 (fan-out)</td></tr>
+    <tr><td>3</td><td><code>gold_fact_sales</code></td><td>1 (fan-in of 6)</td></tr>
+  </table>
+
+  <div class="code-block">
+flat_order, waves = <span class="fn">topological_sort</span>(globalmart_tasks)<br>
+<span class="kw">assert</span> flat_order[-<span class="num">1</span>] == <span class="str">"gold_fact_sales"</span>&nbsp;&nbsp;<span class="cmt"># passes -- verified in the .ipynb</span>
+  </div>
+
+  <div class="fix-box">
+    This wave breakdown is the <b>actual, verified output</b> of running <code>topological_sort(globalmart_tasks)</code> in the matching notebook — not an illustration. 21 tasks in, 4 clean waves out, <code>gold_fact_sales</code> scheduled last every time.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 6 ═══════════════════════ -->
+  <h2>6. Why DAGs, Not Arbitrary Graphs — a Real Error, on Purpose</h2>
+  <p>The matching notebook wires three real task names into a deliberate cycle: <code>bronze_orders → silver_orders → gold_dim_orders → bronze_orders</code>, then calls <code>topological_sort()</code> on it.</p>
+  <div class="code-block">
+<span class="kw">try</span>:<br>
+&nbsp;&nbsp;<span class="fn">topological_sort</span>(broken_tasks)<br>
+<span class="kw">except</span> ValueError <span class="kw">as</span> e:<br>
+&nbsp;&nbsp;<span class="fn">print</span>(<span class="str">f"ValueError: {e}"</span>)<br>
+&nbsp;&nbsp;<span class="cmt"># -&gt; Cycle detected -- these tasks can never become ready...</span>
+  </div>
+  <p>Caught cleanly and printed clearly — exactly what a real scheduler should do instead of hanging forever waiting for a task that can never become ready. This is the notebook's proof, with real executing code, of why DAGs (not arbitrary graphs) are the structure every orchestrator requires.</p>
+
+  <!-- ═══════════════════════ SECTION 7 ═══════════════════════ -->
+  <h2>7. What This Would Look Like as a Real Databricks Job — Display Only</h2>
+  <p>The matching notebook's <code>to_databricks_job_json()</code> reshapes <code>globalmart_tasks</code> into the nested shape a real Databricks Jobs REST API request expects — <code>depends_on</code> becomes a list of <code>{"task_key": ...}</code> objects, and each task carries either a <code>notebook_task</code> or a <code>pipeline_task</code> block.</p>
+  <div class="warn-box">
+    <b>Printed as text. Nothing is sent anywhere.</b> That function only builds and returns a plain Python <code>dict</code> — no SDK import, no <code>requests</code> call, no workspace client, and no job-creation or run-triggering call of any kind, in that cell or anywhere else in the notebook. Building this JSON is free; <i>submitting</i> it would create a real, running, billable Databricks Job — precisely the line this session does not cross.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 8 ═══════════════════════ -->
+  <h2>8. How You'd Actually Submit This — Never From This Notebook</h2>
+  <p>Turning that JSON into a real, running Job is a deliberate action a person takes <b>outside this notebook entirely</b> — for example, pasting it into the Workflows UI's "Create Job" JSON view, or via the Databricks CLI:</p>
+  <div class="code-block">
+<span class="cmt"># Illustrative only -- shown so you recognize this exact step when Day 11's</span><br>
+<span class="cmt"># Hands-On walks you through it for real, deliberately, with the instructor</span><br>
+<span class="cmt"># watching. Do not run this against a shared workspace outside that session.</span><br>
+databricks jobs create --json @globalmart_job.json
+  </div>
+  <div class="danger-box">
+    <b>Why this notebook never does this, not even once:</b> creating a job costs nothing by itself, but a job is <i>meant</i> to run — and one left attached to a <code>schedule</code> block like Section 3/4's will trigger real, unattended cluster starts on its own timetable, every day, until a person deletes it. That's real, ongoing compute spend with nobody watching. A conceptual ILT session every future cohort re-runs via "Run All" is exactly the wrong place for an action with that consequence. Day 11 creates a real job exactly once, deliberately, paused or manually-triggered rather than scheduled — never as a side effect of opening a notebook.
+  </div>
+
+  <!-- ═══════════════════════ SAFETY CHECKLIST ═══════════════════════ -->
+  <h2>Safety Checklist — What This Session Never Does</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">✓</span><span class="label">Zero calls that create, start, or trigger a real Databricks Job, Workflow, Pipeline, SQL Warehouse, or cluster</span></div>
+    <div class="line"><span class="check">✓</span><span class="label">No job-creation or pipeline-creation REST/SDK calls, and no <code>dbutils</code>-based job control, anywhere in the notebook</span></div>
+    <div class="line"><span class="check">✓</span><span class="label">The one real CLI command shown (Section 8) lives in a markdown cell only — inert text, never a cell that executes in "Run All"</span></div>
+    <div class="line"><span class="check">✓</span><span class="label">The entire notebook runs top-to-bottom via "Run All" with zero errors — plain Python only, no Spark session required</span></div>
+  </div>
+
+  <!-- ═══════════════════════ KEY TAKEAWAYS ═══════════════════════ -->
+  <h2>Key Takeaways</h2>
+  <table class="compare-table">
+    <tr><th>Topic</th><th>Key Takeaway</th></tr>
+    <tr><td>The pain point</td><td>GlobalMart's pipeline is already 12+ real hands-on notebooks across 7 Bronze, 7 Silver, and 7 Gold tables, each with strict ordering rules a human currently has to remember</td></tr>
+    <tr><td>DAG</td><td>Nodes (tasks) + directed edges (dependencies), and it must be acyclic — or no valid first task exists</td></tr>
+    <tr><td>Fan-out</td><td>Free parallelism — GlobalMart's 7 Bronze tasks, then its 7 Silver tasks, are each mutually independent</td></tr>
+    <tr><td>Fan-in</td><td>A synchronization point — <code>gold_fact_sales</code> alone waits on 6 upstream tasks at once</td></tr>
+    <tr><td>A Databricks Job</td><td>Just a JSON/dict of tasks — <code>task_key</code>, <code>depends_on</code>, and a <code>notebook_task</code> or <code>pipeline_task</code></td></tr>
+    <tr><td>Topological sort</td><td>What makes a DAG schedulable — computes a valid order (and parallel waves) automatically, and fails loudly on a cycle instead of hanging</td></tr>
+    <tr><td>Only 2 real pathways</td><td>API/GraphDB patterns from Day 3 don't get a <code>task_key</code> here, on purpose — they never write to a real <code>gbmart</code> table</td></tr>
+    <tr><td>Nothing here was billable</td><td>Every cell was plain Python, executed entirely in memory — no cluster, job, pipeline, or warehouse was created, started, or scheduled</td></tr>
+  </table>
+
+  <div class="spotlight" style="margin-top:16px;">
+    <h3>What's Next</h3>
+    <p style="color:#e5e7eb;">Day 11 — Hands-On: Building the Real GlobalMart Workflow. You'll take the exact task graph designed today and create it for real, in the Databricks Workflows UI (or CLI) — wiring up every <code style="background:rgba(255,255,255,0.15);color:#fde68a;">task_key</code> and <code style="background:rgba(255,255,255,0.15);color:#fde68a;">depends_on</code> edge, on a paused or manually-triggered schedule so nothing runs unattended or unexpectedly. Bring today's <code style="background:rgba(255,255,255,0.15);color:#fde68a;">globalmart_tasks</code> list — you'll be translating it almost line-by-line into real clicks.</p>
+  </div>
+
+  <div class="legend">
+    Day 10 ILT 2 — Pairs with <b>Day10_ILT2_Orchestration_Need_DAG_Workflow_Design.ipynb</b>.
+  </div>
+
+</div>
+</body>
+</html>

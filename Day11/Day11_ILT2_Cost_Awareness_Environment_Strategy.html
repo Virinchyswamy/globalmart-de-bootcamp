@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 11 ILT 2 — Cost Awareness &amp; Environment Strategy</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; background: #f4f6f8; color: #1f2937; padding: 32px; }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 { font-size: 17px; color: #1f3864; margin: 34px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .badge { background: #e0e7ff; color: #3730a3; font-size: 11.5px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+  .badge.red    { background: #fee2e2; color: #991b1b; }
+
+  .card-row   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .card-row-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 10px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; font-size: 12.5px; line-height: 1.8; }
+  .card strong { display: block; color: #1f3864; font-size: 13px; margin-bottom: 6px; }
+
+  .story-box { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 18px 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+  .code-block { background: #1e293b; color: #e2e8f0; border-radius: 10px; padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9; margin-top: 10px; overflow-x: auto; }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+  .code-block .var { color: #e2e8f0; }
+
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .compare-table .ok   { color: #059669; font-weight: 700; }
+  .compare-table .warn { color: #b45309; font-weight: 700; }
+  .compare-table .no   { color: #9ca3af; }
+
+  .path-wrap { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace; line-height: 1.9; color: #374151; overflow-x: auto; }
+  .path-wrap .folder { color: #059669; font-weight: 700; }
+  .path-wrap .step   { color: #1e40af; font-weight: 700; }
+  .path-wrap .cmt    { color: #9ca3af; }
+
+  .checklist { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 22px 26px; margin-top: 10px; font-size: 13px; line-height: 2.2; }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { color: #374151; }
+
+  .phase-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 20px; margin-right: 8px; }
+  .pill-a { background: #dbeafe; color: #1e40af; }
+  .pill-b { background: #d1fae5; color: #065f46; }
+  .pill-c { background: #fef3c7; color: #92400e; }
+  .pill-d { background: #ede9fe; color: #5b21b6; }
+  .pill-e { background: #fee2e2; color: #991b1b; }
+
+  .info-box   { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .warn-box   { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .danger-box { background: #fef2f2; border-left: 4px solid #dc2626; padding: 14px 18px; border-radius: 0 8px 8px 0; font-size: 13px; margin-top: 12px; line-height: 1.7; }
+  .fix-box    { background: #ecfdf5; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+
+  .legend { margin-top: 30px; font-size: 11.5px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 11 — ILT 2: Architecture Best Practices — Cost Awareness &amp; Environment Strategy (dev/test/prod)</h1>
+  <p class="subtitle">GlobalMart Data Engineering Bootcamp &nbsp;|&nbsp; Standalone Architecture Session &nbsp;|&nbsp; 3:00 PM – 4:00 PM</p>
+
+  <div class="meta-row">
+    <span class="badge blue">60 minutes</span>
+    <span class="badge green">ILT + live code walkthrough</span>
+    <span class="badge orange">Standalone module — not part of the Bronze→Silver→Gold build</span>
+    <span class="badge red">Read-only — zero compute provisioned</span>
+  </div>
+
+  <div class="danger-box">
+    <strong>This session only reads metadata — it never provisions compute.</strong> Every command in the companion notebook is a <code>SHOW</code>/<code>SELECT</code> metadata read (wrapped in error handling where permissions might be missing) or plain Python building/printing a dictionary or doing arithmetic. Nothing here calls a Clusters API, Jobs API, Pipelines API, or SQL Warehouses API — and nothing creates, starts, resizes, or edits a real cluster, job, warehouse, or pipeline. Run it top to bottom as many times as you like; it changes nothing.
+  </div>
+
+  <div class="story-box">
+    <p style="margin-bottom:0;">This is a standalone architecture session — the real course calendar lists it separately from the main GlobalMart Bronze → Silver → Gold pipeline build, and it stays that way here too. The question this hour answers: now that you've built a real pipeline against a real Unity Catalog environment, how does a production team keep it from silently costing more than it should — and how do they stop a dev mistake from ever touching prod data?</p>
+  </div>
+
+  <!-- ═══════════════════════ PART 1 — COST DRIVERS ═══════════════════════ -->
+  <h2><span class="phase-pill pill-a">Part 1</span> Cost Drivers in Databricks</h2>
+  <p>Three drivers generate the bill on Azure Databricks — and they are <strong>not equally sized</strong> for most data engineering workloads.</p>
+
+  <div class="card-row-2">
+    <div class="card"><strong>1. Cluster uptime — DBU + cloud VM cost</strong>Two meters run every minute a cluster is up, working or not: Databricks' own DBU fee (rate varies by compute type) plus Azure's underlying VM cost for the driver + worker nodes. This is the single biggest lever in this session.</div>
+    <div class="card"><strong>2. Job clusters vs. all-purpose clusters</strong>Job clusters are created per run and auto-terminate the instant the job ends. All-purpose (interactive) clusters stay up until manually stopped or idle-auto-terminated — that gap is where accidental cost lives.</div>
+    <div class="card"><strong>3. Photon &amp; Serverless</strong>Photon often finishes work faster at a higher per-DBU rate — less wall-clock time can mean lower total cost. Serverless (SQL warehouses, serverless jobs) removes cluster startup/idle time from the equation entirely.</div>
+    <div class="card"><strong>4. Storage — real, but small</strong>ADLS storage bills per GB/month plus transactions, and is genuinely cheap next to compute. For almost every DE workload, compute dominates the bill — this session is entirely about compute for that reason.</div>
+  </div>
+
+  <table class="compare-table">
+    <tr><th></th><th>All-Purpose / Interactive Cluster</th><th>Job Cluster</th></tr>
+    <tr><td>Created</td><td>Manually, or attached to for notebook work</td><td>Automatically, per job run</td></tr>
+    <tr><td>Lifetime</td><td>Stays up until manually stopped or idle-auto-terminated</td><td class="ok">Terminates automatically the instant the job finishes</td></tr>
+    <tr><td>Best for</td><td>Exploration, development, ad-hoc analysis, teaching</td><td>Scheduled / production pipelines</td></tr>
+    <tr><td>Typical risk</td><td class="warn">Left running overnight or over a weekend by accident</td><td class="ok">Essentially none — it cannot outlive the job</td></tr>
+  </table>
+
+  <h3>Where would you actually see these numbers?</h3>
+  <p>Two Unity Catalog system tables exist for exactly this — <code>system.billing.usage</code> (usage/DBU records) and <code>system.compute.clusters</code> (cluster inventory). Both usually require an account admin to grant access to the <code>system</code> catalog. The companion notebook tries both for real against this workspace, wrapped in <code>try/except</code> so a permissions failure explains itself instead of breaking <b>Run All</b>:</p>
+  <div class="code-block">
+<span class="kw">try</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">billing_df</span> = <span class="var">spark</span>.<span class="fn">sql</span>(<span class="str">"SELECT usage_date, sku_name, usage_quantity FROM system.billing.usage ORDER BY usage_date DESC LIMIT 10"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">billing_df</span>.<span class="fn">display</span>()<br>
+<span class="kw">except</span> <span class="var">Exception</span> <span class="kw">as</span> <span class="var">e</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="str">"Needs admin-granted access to the system catalog."</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="str">"If you had it: one row per day per SKU, with DBUs consumed -- the raw feed a real cost dashboard is built from."</span>)<br>
+  </div>
+  <div class="info-box">Same pattern for <code>system.compute.clusters</code> — with access, it lists every cluster ever created in the workspace, whether it was <code>JOB</code>- or <code>UI/API</code>-sourced, and its <code>auto_termination_minutes</code> — exactly how a platform team audits "who left something running all weekend."</div>
+
+  <!-- ═══════════════════════ PART 2 — COST AWARENESS PRACTICES ═══════════════════════ -->
+  <h2><span class="phase-pill pill-b">Part 2</span> Cost Awareness Practices</h2>
+
+  <div class="checklist">
+    <div class="line"><span class="check">1.</span><span class="label">Set <code>autotermination_minutes</code> on every interactive cluster — there's rarely a good reason to leave it at <code>0</code> (never)</span></div>
+    <div class="line"><span class="check">2.</span><span class="label">Right-size the cluster to the data — a 32-core cluster reading a 10 GB table is idle capacity you're paying for, not "extra safe"</span></div>
+    <div class="line"><span class="check">3.</span><span class="label">Use spot/preemptible instances for non-critical batch jobs — a fraction of on-demand price, with automatic on-demand fallback</span></div>
+    <div class="line"><span class="check">4.</span><span class="label">Use job clusters — not all-purpose clusters — for scheduled/production pipelines, <i>because</i> they terminate automatically</span></div>
+  </div>
+
+  <h3>Wasteful vs. cost-aware configs, as plain data</h3>
+  <p>These are ordinary Python dicts, built and printed for comparison — nothing here calls a cluster API or creates, starts, resizes, or edits any real cluster.</p>
+  <div class="code-block">
+<span class="cmt"># WASTEFUL -- all-purpose, left running</span><br>
+<span class="var">wasteful_config</span> = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"num_workers"</span>: <span class="num">8</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"node_type_id"</span>: <span class="str">"Standard_DS5_v2"</span>,&nbsp;&nbsp;<span class="cmt"># oversized for a 10GB table</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"autotermination_minutes"</span>: <span class="num">0</span>,&nbsp;&nbsp;<span class="cmt"># 0 = NEVER auto-terminates, not "fast"</span><br>
+}
+  </div>
+  <div class="code-block">
+<span class="cmt"># COST-AWARE -- right-sized interactive cluster for dev work</span><br>
+<span class="var">cost_aware_interactive_config</span> = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"num_workers"</span>: <span class="num">2</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"node_type_id"</span>: <span class="str">"Standard_DS3_v2"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"autotermination_minutes"</span>: <span class="num">30</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"azure_attributes"</span>: {<span class="str">"availability"</span>: <span class="str">"SPOT_WITH_FALLBACK_AZURE"</span>}<br>
+}<br>
+<br>
+<span class="cmt"># COST-AWARE -- job cluster for a scheduled production pipeline</span><br>
+<span class="var">cost_aware_job_config</span> = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"num_workers"</span>: <span class="num">4</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"node_type_id"</span>: <span class="str">"Standard_DS4_v2"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># no autotermination_minutes key needed -- terminates automatically when the job ends</span><br>
+}
+  </div>
+
+  <h3>A genuinely runnable cost estimate</h3>
+  <p>Pure Python arithmetic — always-on all-purpose cluster vs. a job cluster that only runs during actual processing:</p>
+  <div class="code-block">
+<span class="cmt"># Illustrative placeholder rates -- NOT live Azure Databricks pricing</span><br>
+<span class="var">ILLUSTRATIVE_DBU_RATE_USD</span> = <span class="num">0.55</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># $/DBU-hour, placeholder</span><br>
+<span class="var">ILLUSTRATIVE_VM_RATE_USD_PER_HR</span> = <span class="num">0.90</span>&nbsp;&nbsp;<span class="cmt"># $/hour per node, placeholder</span><br>
+<br>
+<span class="kw">def</span> <span class="fn">monthly_cost_always_on</span>(<span class="var">num_nodes</span>, <span class="var">hours_per_day</span>=<span class="num">24</span>, <span class="var">days_per_month</span>=<span class="num">30</span>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="fn">hourly_cost</span>(<span class="var">num_nodes</span>) * <span class="var">hours_per_day</span> * <span class="var">days_per_month</span><br>
+<br>
+<span class="kw">def</span> <span class="fn">monthly_cost_job_cluster</span>(<span class="var">num_nodes</span>, <span class="var">actual_processing_hours_per_day</span>, <span class="var">days_per_month</span>=<span class="num">30</span>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="fn">hourly_cost</span>(<span class="var">num_nodes</span>) * <span class="var">actual_processing_hours_per_day</span> * <span class="var">days_per_month</span>
+  </div>
+  <table class="compare-table">
+    <tr><th>Pattern (4-node cluster, illustrative rates)</th><th>Illustrative monthly cost</th></tr>
+    <tr><td>Always-on all-purpose cluster (24h/day × 30 days)</td><td class="warn">$5,760.00</td></tr>
+    <tr><td>Job cluster (~1.5h/day actual processing × 30 days)</td><td class="ok">$360.00</td></tr>
+    <tr><td>Illustrative savings</td><td class="ok">$5,400.00 / month (93.75% less)</td></tr>
+  </table>
+  <div class="fix-box">The dollar figures are illustrative placeholders for teaching the <b>arithmetic pattern</b> (usage-based cost × idle hours), not a real quote — but the shape of the result holds at real Azure Databricks pricing too: anything that doesn't need to run 24/7 shouldn't be billed as if it does.</div>
+
+  <!-- ═══════════════════════ PART 3 — ENVIRONMENT STRATEGY ═══════════════════════ -->
+  <h2><span class="phase-pill pill-c">Part 3</span> Environment Strategy (dev/test/prod)</h2>
+  <p>Every notebook run since Day 2 has pointed at one real, shared Unity Catalog catalog: <code>gbmart</code> — schemas <code>bronze</code>/<code>silver</code>/<code>gold</code>, external location <code>gbmart-ext-loc</code>, storage credential <code>ecomprojectscredentials</code>. That's the right call for a training cohort — everyone needs to see the same real data. <strong>A production team would not do this.</strong></p>
+
+  <table class="compare-table">
+    <tr><th>Environment</th><th>Catalog</th><th>External Location</th><th>Storage Credential</th><th>Purpose</th></tr>
+    <tr><td>Dev</td><td><code>gbmart_dev</code></td><td><code>gbmart-dev-ext-loc</code></td><td><code>ecomprojectscredentials_dev</code></td><td>Individual development, safe to break</td></tr>
+    <tr><td>Test</td><td><code>gbmart_test</code></td><td><code>gbmart-test-ext-loc</code></td><td><code>ecomprojectscredentials_test</code></td><td>Integration / smoke testing before promotion</td></tr>
+    <tr><td>Prod</td><td class="ok"><code>gbmart</code></td><td class="ok"><code>gbmart-ext-loc</code></td><td class="ok"><code>ecomprojectscredentials</code></td><td>Real GlobalMart data — this course's environment, all along</td></tr>
+  </table>
+
+  <div class="info-box">
+    <b>Why three layers, not just a different schema name:</b> separate catalogs mean a bad <code>DROP TABLE</code> or a broken <code>MERGE</code> in dev cannot touch a byte of prod data — it isn't pointed at prod's catalog at all. Separate external locations/storage credentials mean that even if dev code referenced a prod path by mistake, the dev credential has no grant on prod's ADLS container — the mistake fails on a permissions error, not a deleted file. Some teams use a single catalog with environment-tagged schemas instead (e.g. <code>gbmart.dev_bronze</code>) when catalog-per-environment isn't practical — either is legitimate; what matters is dev and prod are never the same namespace.
+  </div>
+
+  <h3>Grounding this in what's real, right now</h3>
+  <p>The companion notebook runs these live against the actual workspace — genuinely safe, read-only metadata commands — then checks the illustrative dev/test/prod names above against what it actually finds:</p>
+  <div class="code-block">
+<span class="cmt">-- Run live against the real workspace -- output depends on what exists today</span><br>
+<span class="kw">SHOW</span> <span class="kw">CATALOGS</span>;<br>
+<span class="kw">SHOW</span> <span class="kw">SCHEMAS</span> <span class="kw">IN</span> <span class="var">gbmart</span>;
+  </div>
+
+  <!-- ═══════════════════════ PART 4 — PROMOTION WORKFLOW ═══════════════════════ -->
+  <h2><span class="phase-pill pill-d">Part 4</span> Promotion Workflow — Code Moves, Prod Doesn't Get Hand-Edited</h2>
+  <p>The rule: <strong>prod is only ever changed by a promoted, reviewed change — never by opening a prod notebook and editing it live.</strong></p>
+
+  <div class="path-wrap">
+<span class="step">dev branch (Databricks Repos)</span> — edit + test against <span class="folder">gbmart_dev</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+Pull Request → CI runs lint / unit tests, maybe a dry run against <span class="folder">gbmart_test</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+Merge to main<br>
+&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+Deploy to TEST → smoke test against <span class="folder">gbmart_test</span> + its own external location<br>
+&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+Promote to PROD → same reviewed code now points at <span class="folder">gbmart</span> — deployed by CI/CD<br>
+<span class="cmt">                                                     not by a person typing into the prod notebook</span>
+  </div>
+
+  <div class="danger-box"><b>Common failure mode this prevents:</b> someone fixes an urgent bug directly in the prod notebook to "save time." The fix works, but it never gets backported into the dev/Git version — so the next legitimate deployment silently reverts it. Promotion-only changes make this structurally impossible.</div>
+
+  <!-- ═══════════════════════ KEY TAKEAWAYS ═══════════════════════ -->
+  <h2>Key Takeaways</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">✓</span><span class="label">Cluster uptime is the dominant Databricks cost driver for most DE workloads — DBU + cloud VM cost accrue every minute a cluster runs, working or not</span></div>
+    <div class="line"><span class="check">✓</span><span class="label">Job clusters beat all-purpose clusters for anything scheduled — they cannot be left running by accident</span></div>
+    <div class="line"><span class="check">✓</span><span class="label"><code>autotermination_minutes</code>, right-sizing, and spot instances are configurable habits, not vague advice</span></div>
+    <div class="line"><span class="check">✓</span><span class="label">Environment separation needs separate catalogs AND separate external locations/credentials, not just a different schema name</span></div>
+    <div class="line"><span class="check">✓</span><span class="label">Prod changes only through promotion — Git branches + Databricks Repos + CI, never a hand-edit</span></div>
+    <div class="line"><span class="check">✓</span><span class="label"><code>gbmart</code> is this course's real prod-like environment — right for training, not how a real team would run production traffic</span></div>
+  </div>
+
+  <!-- ═══════════════════════ SELF-CHECK ═══════════════════════ -->
+  <h2>Self-Check</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">☐</span><span class="label">Why does an idle all-purpose cluster cost the same as a busy one?</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Why does a job cluster structurally prevent the "forgot to turn it off" failure mode?</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">What does <code>autotermination_minutes: 0</code> actually mean?</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Name two Unity Catalog objects (besides the catalog) that should be separate per environment</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Why is a Git-based promotion workflow safer than hand-editing a prod notebook?</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Which catalog have you been treating as "prod" since Day 2?</span></div>
+  </div>
+  <div class="info-box"><b>Discussion prompt for the room:</b> if GlobalMart's real workspace only has one catalog (<code>gbmart</code>) today, what's the very first, lowest-effort step toward the dev/test/prod separation described in Part 3?</div>
+
+  <div class="legend">
+    Day 11 · ILT 2 · 3:00 PM – 4:00 PM — a standalone architecture session per the course calendar, independent of the Day 1–10 GlobalMart pipeline build and of any later day. Companion notebook: <code>Day11_ILT2_Cost_Awareness_Environment_Strategy.ipynb</code>.
+  </div>
+
+</div>
+</body>
+</html>

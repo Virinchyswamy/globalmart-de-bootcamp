@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 2 HOL 2 — CDC from PostgreSQL via WAL</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; background: #f4f6f8; color: #1f2937; padding: 32px; }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 { font-size: 17px; color: #1f3864; margin: 34px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge { background: #e0e7ff; color: #3730a3; font-size: 11.5px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+
+  .code-block { background: #1e293b; color: #e2e8f0; border-radius: 10px; padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9; margin-top: 10px; overflow-x: auto; }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .var { color: #e2e8f0; }
+
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .yes { color: #047857; font-weight: 600; }
+  .no  { color: #b91c1c; font-weight: 600; }
+
+  .flow-wrap { background: #1e293b; color: #e2e8f0; border-radius: 12px; padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace; line-height: 1.9; }
+  .flow-wrap .hl { color: #7dd3fc; font-weight: 700; }
+  .flow-wrap .dim { color: #64748b; }
+  .flow-wrap .green { color: #86efac; }
+
+  .checklist { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 22px 26px; margin-top: 10px; font-size: 13px; line-height: 2.2; }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { min-width: 280px; color: #374151; }
+
+  .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+  .warn-box { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin-top: 12px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 2 — HOL 2: CDC from PostgreSQL via WAL (Logical Replication)</h1>
+  <p class="subtitle">GlobalMart Data Engineering &nbsp;|&nbsp; Supabase → Databricks Bronze, by hand</p>
+
+  <div class="meta-row">
+    <span class="badge blue">Personal Supabase project</span>
+    <span class="badge green">Follows HOL 1</span>
+    <span class="badge">Table: poc_orders (your own, scratch)</span>
+    <span class="badge orange">7 steps</span>
+  </div>
+
+  <h2>What We Are Building</h2>
+  <div class="flow-wrap">
+Supabase PostgreSQL<br>
+&nbsp;&nbsp;└── poc_orders table<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│  WAL → Replication Slot &nbsp;<span class="dim">← bookmark that records every change</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+Databricks (JDBC) → <span class="hl">pg_logical_slot_get_changes()</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+<span class="green">YOUR_STORAGE_ACCOUNT/bronze/supabase/poc_orders</span> &nbsp;<span class="dim">(Delta table)</span>
+  </div>
+  <div class="info-box"><strong>poc_orders is your personal scratch table</strong> — it lands in your own Day-1 storage account, not the shared <code>gbmart</code> catalog the rest of the course's real pipeline uses. HOL 1 was the managed version (Lakeflow Connect); this HOL opens that black box with raw JDBC.</div>
+
+  <h2>Watermark Ingestion vs WAL/CDC</h2>
+  <table class="compare-table">
+    <tr><th></th><th>Watermark (<code>updated_at</code> filter)</th><th>WAL / CDC (this HOL)</th></tr>
+    <tr><td>Captures new rows</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>Captures updates</td><td class="yes">Yes, if column changes</td><td class="yes">Yes</td></tr>
+    <tr><td>Captures deletes</td><td class="no">No — row is gone</td><td class="yes">Yes — WAL records it</td></tr>
+    <tr><td>Requires <code>updated_at</code></td><td class="yes">Yes</td><td class="no">No</td></tr>
+  </table>
+
+  <h2>Pre-Work — Create Table + Enable CDC</h2>
+  <div class="code-block">
+<span class="cmt">-- No updated_at column — intentional. Watermark won't work here.</span><br>
+<span class="kw">CREATE TABLE</span> public.poc_orders (order_id <span class="kw">TEXT PRIMARY KEY</span>, ...);<br>
+<br>
+<span class="cmt">-- After 200 rows loaded, before Day-2 changes:</span><br>
+<span class="kw">CREATE PUBLICATION</span> poc_orders_pub <span class="kw">FOR TABLE</span> public.poc_orders;<br>
+<span class="fn">SELECT</span> pg_create_logical_replication_slot(<span class="str">'poc_orders_slot'</span>, <span class="str">'test_decoding'</span>);
+  </div>
+  <div class="warn-box">⚠️ Timing matters: create the slot AFTER the initial load and BEFORE Day-2 changes, or you'll flood the WAL or miss the changes entirely.</div>
+
+  <h2>CDC Capture</h2>
+  <div class="code-block">
+<span class="cmt"># Drains the slot — .cache() so count() and show() read the same snapshot</span><br>
+<span class="var">cdc_raw_df</span> = <span class="var">jdbc_read</span>(<br>
+&nbsp;&nbsp;<span class="str">"(SELECT * FROM pg_logical_slot_get_changes('poc_orders_slot', NULL, NULL)) AS cdc_events"</span><br>
+).<span class="fn">cache</span>()
+  </div>
+  <p>Each statement = 3 WAL rows (BEGIN + event + COMMIT). 5 INSERTs + 2 UPDATEs + 1 DELETE = 24 rows total, parsed down to 8 real events by <code>_cdc_op</code>.</p>
+
+  <h2>Bronze After This HOL</h2>
+  <table class="compare-table">
+    <tr><th>_load_type</th><th>_cdc_op</th><th>rows</th></tr>
+    <tr><td>initial_load</td><td>NULL</td><td>200</td></tr>
+    <tr><td>cdc_event</td><td>INSERT</td><td>5</td></tr>
+    <tr><td>cdc_event</td><td>UPDATE</td><td>2</td></tr>
+    <tr><td>cdc_event</td><td>DELETE</td><td>1</td></tr>
+  </table>
+  <div class="info-box">This is raw Bronze — contradictions and all. Silver resolves the final state with MERGE logic (next session).</div>
+
+  <h2>Key Concepts</h2>
+  <table class="compare-table">
+    <tr><td>Replication slot</td><td>A bookmark in the WAL — remembers where you last read</td></tr>
+    <tr><td>Drain behaviour</td><td><code>pg_logical_slot_get_changes()</code> advances the bookmark — re-run = 0 rows</td></tr>
+    <tr><td><code>.cache()</code></td><td>Materialises the result before Spark makes a second JDBC call</td></tr>
+  </table>
+
+</div>
+</body>
+</html>

@@ -132,6 +132,11 @@
   .legend-key { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; }
   .legend-key .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
 
+  /* ── lessons grid ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; font-size: 12.5px; line-height: 1.7; }
+  .card b { color: #1f3864; display: block; margin-bottom: 4px; }
+
   .checklist {
     background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
     padding: 20px 24px; margin-top: 10px; font-size: 13px; line-height: 2.1;
@@ -154,9 +159,9 @@
 
   <div class="meta-row">
     <span class="badge blue">13-day Azure Databricks DE bootcamp</span>
-    <span class="badge green">Day 1–10 built</span>
-    <span class="badge orange">Day 8 = assessment (no content)</span>
-    <span class="badge red">Day 11+ not started</span>
+    <span class="badge green">Day 1–10 fully built</span>
+    <span class="badge orange">Day 11–12 partially built (standalone modules)</span>
+    <span class="badge red">Day 13 not started</span>
   </div>
 
   <div class="story-box">
@@ -176,7 +181,7 @@
     <div class="flow-card">
       <span class="step-num">2</span>
       <strong>Run the .ipynb live</strong>
-      Open the matching notebook in Databricks and hit <b>Run All</b> in front of the class. It must complete with zero errors and zero placeholders — this is the "how," demonstrated for real against the live <code>gbmart</code> workspace.
+      Open the matching notebook in Databricks and hit <b>Run All</b> in front of the class. It must complete with zero errors and zero placeholders — this is the "how," demonstrated for real against the live <code>gbmart</code> workspace (or, for standalone concept modules, against real read-only metadata / plain Python — see Section 2's note).
     </div>
     <div class="flow-card">
       <span class="step-num">3</span>
@@ -194,6 +199,10 @@
     <b>ILT vs. HOL, in one line:</b> ILT sessions are almost entirely <code>.html</code> + a light or no-code <code>.ipynb</code> — they teach a concept. HOL sessions are a full <code>.ipynb</code> build with real PySpark/SQL against <code>gbmart</code> — they teach a skill. A few sessions are also tagged <code>DEMO</code> (instructor-only walkthrough, no learner redo) or <code>REF</code> (optional certification-prep reference material, not scheduled class time).
   </div>
 
+  <div class="warn-box">
+    <b>Not every ILT is pipeline-flow content.</b> A handful of sessions are deliberately <b>standalone modules</b>: real Databricks/DE knowledge, illustrated with GlobalMart-flavored examples, but not wired into the Bronze→Silver→Gold narrative and not required for later days to make sense. Day 2 ILT/HOL 3 (Code Versioning Concepts) was the first of these. Day 10 ILT 2/3 (orchestration DAG concepts, Databricks Workflows vs Airflow) and the new Day 11/12 ILT sessions (Section 7) follow the same pattern — each still includes real, runnable code (topological sorts, retry simulations, real metadata reads, practice-schema demos), just against plain Python or a personal schema instead of the shared pipeline tables.
+  </div>
+
   <!-- ═══════════════════════ SECTION 2 — FILE TYPES ═══════════════════════ -->
   <h2>2. The Three File Types, and What Each One Is For</h2>
 
@@ -201,7 +210,7 @@
     <div class="filetype-card ft-1">
       <span class="ext">.ipynb</span>
       <strong>The real, running pipeline</strong>
-      A fully-working Databricks notebook. For HOLs, it must run top-to-bottom with <b>Run All</b>, zero errors, against the real <code>gbmart</code> catalog — this is what you demo live and what learners rebuild. For ILTs, it's often lighter or purely conceptual (some ILTs have no notebook at all where the HTML carries the whole session).
+      A fully-working Databricks notebook. For HOLs, it must run top-to-bottom with <b>Run All</b>, zero errors, against the real <code>gbmart</code> catalog — this is what you demo live and what learners rebuild. For ILTs, it's often lighter or purely conceptual (some ILTs have no notebook at all where the HTML carries the whole session); standalone-module ILTs (Section 1) instead run real plain-Python or read-only-SQL demos.
     </div>
     <div class="filetype-card ft-2">
       <span class="ext">.html</span>
@@ -211,7 +220,7 @@
     <div class="filetype-card ft-3">
       <span class="ext">.md</span>
       <strong>LMS-importable hands-on</strong>
-      A markdown file formatted specifically for your LMS's <b>import</b> function — scenario + numbered inputs, so learners can complete the exercise as a tracked assignment outside Databricks entirely. Only built for <b>Day 1's HOL</b> so far; build more only when you explicitly ask, since the exact format had to be reverse-engineered from a real failed import (see Section 6).
+      A markdown file formatted specifically for your LMS's <b>import</b> function — scenario + numbered inputs, so learners can complete the exercise as a tracked assignment outside Databricks entirely. Only built for <b>Day 1's HOL</b> so far; build more only when you explicitly ask, since the exact format had to be reverse-engineered from a real failed import (see Section 8).
     </div>
   </div>
 
@@ -229,13 +238,15 @@
   <div class="path-wrap">
 <span class="folder">DE notebooks/</span><br>
 &nbsp;&nbsp;├── HOW_TO_USE_THIS_COURSE.html&nbsp;&nbsp;<span class="cmt"># this file — meta-reference, not tied to a day</span><br>
+&nbsp;&nbsp;├── 00_Instructor_Guide_How_To_Use_This_Bootcamp.html&nbsp;&nbsp;<span class="cmt"># companion instructor-operations guide — read both</span><br>
 &nbsp;&nbsp;├── globalmart_problem_statement_architecture (1).html&nbsp;&nbsp;<span class="cmt"># canonical architecture spec — the source of truth</span><br>
 &nbsp;&nbsp;├── tred-alch-adv-dbx-chennai-2026-calendar (1).xlsx&nbsp;&nbsp;<span class="cmt"># the 13-day calendar — source of truth for module mapping</span><br>
-&nbsp;&nbsp;├── <span class="folder">Day1/</span> … <span class="folder">Day10/</span>&nbsp;&nbsp;<span class="cmt"># built — see Section 7 for exact status</span><br>
-&nbsp;&nbsp;├── <span class="folder">Day11/</span> <span class="folder">Day12/</span> <span class="folder">Day13/</span>&nbsp;&nbsp;<span class="cmt"># NOT started yet — see Section 7</span><br>
+&nbsp;&nbsp;├── <span class="folder">Day1/</span> … <span class="folder">Day10/</span>&nbsp;&nbsp;<span class="cmt"># fully built — see Section 7 for exact status</span><br>
+&nbsp;&nbsp;├── <span class="folder">Day11/</span> <span class="folder">Day12/</span>&nbsp;&nbsp;<span class="cmt"># partially built — 2 standalone ILTs each, hands-ons deferred — see Section 7</span><br>
+&nbsp;&nbsp;├── <span class="folder">Day13/</span>&nbsp;&nbsp;<span class="cmt"># NOT started yet</span><br>
 &nbsp;&nbsp;├── <span class="folder">extras/</span>&nbsp;&nbsp;<span class="cmt"># optional supplementary notebooks, not on the critical path</span><br>
 &nbsp;&nbsp;├── <span class="folder">globalmart_v2/</span>, <span class="folder">alchemy_advanced_project/</span>&nbsp;&nbsp;<span class="cmt"># separate projects — left alone, out of scope</span><br>
-&nbsp;&nbsp;└── <span class="folder">reference for making the hands/</span>&nbsp;&nbsp;<span class="cmt"># content/question-style inspiration ONLY — see warning in Section 6</span>
+&nbsp;&nbsp;└── <span class="folder">reference for making the hands/</span>&nbsp;&nbsp;<span class="cmt"># content/question-style inspiration ONLY — see warning in Section 8</span>
   </div>
   <div class="warn-box">
     <b>Day numbering has shifted from early drafts.</b> Files were reorganized with <code>git mv</code> partway through this build to match the real calendar (e.g. what was once "Day 5" content is now correctly "Day 4" or "Day 2" depending on topic). If you ever see a stray reference to an old day number in conversation history or an old export, trust the <b>current folder location</b>, not the memory of where something used to be.
@@ -251,16 +262,21 @@
     <tr><td>Unity Catalog</td><td><code>gbmart</code> — schemas <code>bronze</code>, <code>silver</code>, <code>gold</code></td></tr>
     <tr><td>External location</td><td><code>gbmart-ext-loc</code> → <code>abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net/raw-data</code></td></tr>
     <tr><td>Storage credential</td><td><code>ecomprojectscredentials</code></td></tr>
-    <tr><td>CDC source (Postgres/Supabase)</td><td>Lakeflow Connect pipeline <code>orders_data_ingestion_cdc</code> — <b>query/cursor-based</b> on <code>updated_at</code>, NOT log-based WAL — ingests <code>globalmart.orders</code>/<code>order_items</code> into <code>gbmart.bronze.orders</code>/<code>order_items</code>. Does not capture hard deletes (a deliberately taught limitation).</td></tr>
+    <tr><td><b>Ingestion pathways</b></td><td><b>Exactly 2, not 4.</b> Postgres/Supabase CDC via Lakeflow Connect, and ADLS Autoloader — <b>7 real Bronze tables total</b>. Day 3's REST API + GraphDB/Cypher content is a deliberate side-exploration that lands in a <code>sandbox/</code> path and never touches <code>gbmart.bronze</code>. See the callout below — this exact point tripped up part of this course's own build once.</td></tr>
+    <tr><td>CDC source (Postgres/Supabase)</td><td>Lakeflow Connect pipeline <code>orders_data_ingestion_cdc</code> — <b>query/cursor-based</b> on <code>updated_at</code>, NOT log-based WAL — ingests source Postgres <code>globalmart.orders</code>/<code>order_items</code> into <code>gbmart.bronze.orders</code>/<code>order_items</code>. Does not capture hard deletes (a deliberately taught limitation).</td></tr>
     <tr><td>ADLS source (Autoloader)</td><td><code>customers</code>, <code>products</code>, <code>address</code>, <code>payments</code>, <code>payment_methods</code> — flat files under <code>raw-data/</code>, ingested via <code>cloudFiles</code></td></tr>
   </table>
+
+  <div class="danger-box">
+    <b>"4 sources" is a trap — say 2 out loud, every time.</b> An earlier design draft described GlobalMart as having 4 ingestion source <i>systems</i> (Postgres, a REST API, Neo4j/GraphDB, ADLS). The confirmed architecture — stated explicitly in Day 3 ILT 1 and Day 4 ILT 1, in front of the class, on purpose — has only <b>2</b> real ones. This mistake is easy to reintroduce (it happened once already while extending this course into Day 10–12) because a couple of calendar session <i>titles</i> literally say "4" (e.g. "4 Parallel Ingestion Tasks," "Verify Lineage (4 Sources)") — those titles refer to 4 Bronze-<i>table</i>-level tasks or the original spec name, not 4 source systems. If you're ever unsure which "4" a title means, it's the table-level one.
+  </div>
 
   <div class="info-box">
     <b>Bronze vs. Silver casing — the rule that trips people up most.</b> Bronze preserves the source's raw casing exactly (PascalCase from CSVs, e.g. <code>CustomerID</code>; the CDC source's own casing for orders). Silver renames everything to lowercase snake_case (<code>customer_id</code>). That renaming <i>is</i> Silver's job — if you ever see PascalCase in a Silver notebook, something's wrong; if you see snake_case in Bronze, same.
   </div>
 
   <div class="info-box">
-    <b><code>fact_sales</code> — the course's centerpiece — uses natural keys, not surrogate keys.</b> Every dimension (built Day 6) has a proper surrogate key, but the fact table (built Day 7) joins to all six of them by natural business key (<code>Customer_ID</code>, <code>Product_ID</code>, <code>Order_ID</code>, <code>Address_ID</code>, <code>Payment_ID</code>, <code>Time_ID</code>) instead. This is a real, deliberate, and explicitly-taught simplification (Day 6 ILT 3 + Day 7 HOL 2) — not a mistake to "fix" if you see it. Grain = one row per order line item. Measures = <code>Quantity_purchased</code>, <code>Actual_price</code>, <code>Discounted_price</code>, <code>Sales_amount</code>.
+    <b><code>fact_sales</code> — the course's centerpiece — uses natural keys, not surrogate keys.</b> Every dimension (built Day 6) has a proper surrogate key, but the fact table (built Day 7) joins to all six of them by natural business key (<code>Customer_ID</code>, <code>Product_ID</code>, <code>Order_ID</code>, <code>Address_ID</code>, <code>Payment_ID</code>, <code>Time_ID</code>) instead — the only surrogate key it generates is its own row identity, <code>fact_sales_sk</code>. This is a real, deliberate, and explicitly-taught simplification (Day 6 ILT 3 + Day 7 HOL 2), not a mistake to "fix" if you see it. Grain = one row per order line item. Measures = <code>Quantity_purchased</code>, <code>Sales_amount</code> (additive); <code>Actual_price</code>, <code>Discounted_price</code> (non-additive — never SUM/AVG directly). One more wrinkle worth knowing: <code>Order_ID</code> genuinely does join <code>dim_orders</code> on its natural key <i>and</i> plays a degenerate-dimension-style role in the fact (never via <code>dim_orders.order_sk</code>) — while <code>Payment_ID</code> is a pure non-joiner, sitting in a completely different ID space from <code>dim_payment_method</code>. Day 6 ILT 3 covers this in full.
   </div>
 
   <!-- ═══════════════════════ SECTION 5 — SAYLI GROUNDING ═══════════════════════ -->
@@ -269,8 +285,9 @@
 
   <table class="compare-table">
     <tr><th>Content type</th><th>How it was built</th></tr>
-    <tr><td>Bronze/Silver/Gold builds, CDC pipeline, SCD merges</td><td class="ok">Grounded in sayli's real, tested code — same logic, this course's naming + comments + narrative</td></tr>
-    <tr><td>Kimball theory, grain/dimension design, orchestration concepts</td><td class="warn">Written fresh — no direct source equivalent existed</td></tr>
+    <tr><td>Bronze/Silver/Gold builds, CDC pipeline, SCD merges, <code>fact_sales</code></td><td class="ok">Grounded in sayli's real, tested code — same logic, this course's naming + comments + narrative</td></tr>
+    <tr><td>Kimball theory, grain/dimension design</td><td class="warn">Written fresh — no direct source equivalent existed</td></tr>
+    <tr><td>Orchestration, DLQ/ops-readiness, cost strategy, UC governance/Genie intros (Day 10–12 standalone modules)</td><td class="warn">Written fresh, grounded in real Databricks mechanics (Jobs API shape, Unity Catalog SQL) rather than sayli's pipeline code — these topics sit outside her build</td></tr>
   </table>
 
   <div class="danger-box">
@@ -281,7 +298,8 @@
   <h2>6. Safety Rules Baked Into Every Notebook</h2>
   <div class="checklist">
     <div class="line"><span class="check">✓</span><span class="label"><b>No notebook in this repo starts a cluster, job, pipeline, or SQL warehouse on its own.</b> Every "run this" instruction assumes you're already attached to a running all-purpose cluster — nothing here provisions or triggers billable compute by itself.</span></div>
-    <div class="line"><span class="check">✓</span><span class="label"><b>Write-heavy HOLs never write directly to shared <code>gbmart</code> tables.</b> Any exercise involving MERGE/SCD/CDF uses a <code>SHALLOW CLONE</code> or a personal practice schema (<code>main.YOUR_SCHEMA</code>) instead — first introduced in Day 10, retrofitted into Day 9 HOL 2 and Day 4 HOL 2. This is what makes the exercise repeatable for every cohort and every rehearsal, instead of only working once.</span></div>
+    <div class="line"><span class="check">✓</span><span class="label"><b>Write-heavy HOLs never write directly to shared <code>gbmart</code> tables.</b> Any exercise involving MERGE/SCD/CDF uses a <code>SHALLOW CLONE</code> or a personal practice schema (<code>main.YOUR_SCHEMA</code>) instead — first introduced in Day 10, retrofitted into Day 9 HOL 2 and Day 4 HOL 2, and used again for Day 11's DLQ demo and Day 12's row-filter/masking demo. This is what makes the exercise repeatable for every cohort and every rehearsal, instead of only working once.</span></div>
+    <div class="line"><span class="check">✓</span><span class="label"><b>Orchestration and cost topics never call a real Jobs/Clusters/Pipelines API.</b> Day 10 ILT 2/3 and Day 11 ILT 2 teach job/cluster configuration as inspectable Python dicts, constructed and printed — never submitted anywhere. Any streaming <code>.trigger(...)</code> in this course either uses <code>availableNow=True</code> (terminates on its own) or explicitly calls <code>.stop()</code> before the cell can finish — a real gap of exactly this kind was found and fixed in Day 3's cert-prep reference notebook during a safety audit.</span></div>
     <div class="line"><span class="check">✓</span><span class="label"><b><code>VACUUM ... RETAIN 0 HOURS</code> never appears anywhere in this course.</b> It permanently deletes file history — any VACUUM shown is illustrative/commented-out only.</span></div>
   </div>
 
@@ -297,9 +315,9 @@
     <div class="status-cell built"><span class="day-label">7</span>Built</div>
     <div class="status-cell skipped"><span class="day-label">8</span>Assessment</div>
     <div class="status-cell built"><span class="day-label">9</span>Built</div>
-    <div class="status-cell partial"><span class="day-label">10</span>Partial</div>
-    <div class="status-cell pending"><span class="day-label">11</span>Not started</div>
-    <div class="status-cell pending"><span class="day-label">12</span>Not started</div>
+    <div class="status-cell built"><span class="day-label">10</span>Built</div>
+    <div class="status-cell partial"><span class="day-label">11</span>Partial</div>
+    <div class="status-cell partial"><span class="day-label">12</span>Partial</div>
     <div class="status-cell pending"><span class="day-label">13</span>Not started</div>
   </div>
   <div class="legend-key">
@@ -312,25 +330,39 @@
   <table class="compare-table" style="margin-top:16px;">
     <tr><th>Day</th><th>Topic</th><th>Sessions built</th></tr>
     <tr><td>1</td><td>Problem statement, Azure/ADLS, Medallion architecture, PySpark/SQL basics</td><td class="ok">4 ILT + 1 HOL + 1 MD</td></tr>
-    <tr><td>2</td><td>CDC concepts (WAL), Lakeflow Connect, storage credentials, code versioning</td><td class="ok">3 ILT + 3 HOL</td></tr>
-    <tr><td>3</td><td>API ingestion, schema evolution, Autoloader (DEMO + REF)</td><td class="ok">2 ILT + 2 HOL + DEMO + REF</td></tr>
-    <tr><td>4</td><td>Ingestion recap, Bronze layer design/build, partitioning &amp; performance</td><td class="ok">3 ILT + 2 HOL</td></tr>
+    <tr><td>2</td><td>CDC concepts (WAL), Lakeflow Connect, storage credentials, code versioning (standalone)</td><td class="ok">3 ILT + 3 HOL</td></tr>
+    <tr><td>3</td><td>API ingestion + GraphDB (side-exploration, not in the real pipeline), schema evolution, Autoloader (DEMO + REF)</td><td class="ok">2 ILT + 2 HOL + DEMO + REF</td></tr>
+    <tr><td>4</td><td>Ingestion recap (the real "2 pathways, 7 tables" story), Bronze layer design/build, partitioning &amp; performance</td><td class="ok">3 ILT + 2 HOL</td></tr>
     <tr><td>5</td><td>Transformation patterns, DQ/constraints, full Silver layer build</td><td class="ok">2 ILT + 2 HOL</td></tr>
-    <tr><td>6</td><td>Kimball star schema, grain &amp; dimension design, fact table theory</td><td class="ok">3 ILT + 1 HOL</td></tr>
+    <tr><td>6</td><td>Kimball star schema, grain &amp; dimension design (6 dims), fact table theory</td><td class="ok">3 ILT + 1 HOL</td></tr>
     <tr><td>7</td><td>Gold layer strategy, dimensions + bridge table, fact_sales build, Z-order/Liquid Clustering</td><td class="ok">2 ILT + 3 HOL</td></tr>
     <tr><td>8</td><td>Assessment day</td><td class="no">— intentionally skipped —</td></tr>
     <tr><td>9</td><td>Incremental loading (watermark + CDF), control tables</td><td class="ok">3 ILT + 2 HOL</td></tr>
-    <tr><td>10</td><td>SCD Type 1/2 MERGE, incremental Gold/fact refresh</td><td class="warn">1 ILT + 2 HOL built — 2 orchestration ILTs on this calendar day deferred</td></tr>
-    <tr><td>11</td><td>Orchestration (Workflows/Jobs)</td><td class="no">Not started — no sayli source exists yet, needs fresh build</td></tr>
-    <tr><td>12–13</td><td>Unity Catalog governance, Genie</td><td class="no">Not started</td></tr>
+    <tr><td>10</td><td>SCD Type 1/2 MERGE, incremental Gold/fact refresh, orchestration DAG concepts + Databricks Workflows vs Airflow (standalone)</td><td class="ok">3 ILT + 2 HOL</td></tr>
+    <tr><td>11</td><td>DLQ/replay/operational readiness (standalone), cost awareness &amp; environment strategy (standalone)</td><td class="warn">2 standalone ILT built — the 2 pipeline-flow HOLs ("Build Databricks Workflow," "Run the Full Orchestrated Pipeline E2E") not yet built</td></tr>
+    <tr><td>12</td><td>Unity Catalog governance intro (standalone), Genie &amp; semantic layer intro (standalone)</td><td class="warn">2 concept ILT built (each with a real practice-schema demo) — the 2 hands-on sessions applying this to the real <code>gbmart.gold</code> layer deliberately deferred</td></tr>
+    <tr><td>13</td><td>Assessment 2 + review</td><td class="no">Not started</td></tr>
   </table>
 
   <div class="warn-box">
-    <b>Before building Day 11+:</b> re-check sayli's workspace first (read-only) — it's a living environment that may have gained real content since this was last checked. Don't assume it's still empty for those topics.
+    <b>Before building the remaining Day 11/12 hands-ons or Day 13:</b> re-check sayli's workspace first (read-only) — it's a living environment that may have gained real content since this was last checked. Don't assume it's still empty for those topics.
   </div>
 
-  <!-- ═══════════════════════ SECTION 8 — MD IMPORT GOTCHA ═══════════════════════ -->
-  <h2>8. The One Gotcha: LMS <code>.md</code> Import Format</h2>
+  <!-- ═══════════════════════ SECTION 8 — LESSONS FROM THIS BUILD ═══════════════════════ -->
+  <h2>8. Lessons From This Build — Worth Knowing Before You Extend It</h2>
+  <div class="grid2">
+    <div class="card">
+      <b>Never trust a subagent's self-report alone</b>
+      Day 6 was once silently overwritten by a background process that had reported failure but auto-resumed hours later with a stale, pre-verification mental model — wrong catalog name, missing dimension, wrong measures. It was only caught by directly reading the content, not by any failure signal. Independently re-check anything an automated process touches: file validity, a safety-pattern search, and an actual read of the content, every time — before teaching from it.
+    </div>
+    <div class="card">
+      <b>"4 sources" is the recurring trap (Section 4)</b>
+      Worth repeating here because it's the single fact most likely to silently drift back into future material: GlobalMart has 2 real ingestion pathways, not 4. It resurfaced once already while building Day 10–12's standalone modules and had to be corrected across two files.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SECTION 9 — MD IMPORT GOTCHA ═══════════════════════ -->
+  <h2>9. The One Gotcha: LMS <code>.md</code> Import Format</h2>
   <p>The <code>reference for making the hands/</code> folder looks like the obvious template to copy — plain headers, no frontmatter, inputs renumbering from 1 in every scenario. <b>It is not the import format.</b> It's an <i>export</i> dump (what the LMS produces when you read content back out), confirmed the hard way by a real failed import.</p>
   <table class="compare-table">
     <tr><th></th><th>Reference folder style (export — do NOT copy this)</th><th>Actual import format (use this)</th></tr>
@@ -340,7 +372,7 @@
   <div class="fix-box">Confirmed working, currently correct: <code>Day1/Day1_HOL_PySpark_SparkSQL_ADLS.md</code>. If you ever build another hands-on <code>.md</code>, copy <i>that</i> file's structure — never the reference folder's.</div>
 
   <div class="legend">
-    This file lives at the repository root because it's a meta-reference, not tied to any single day. It won't go stale on its own — but if you reorganize folders, rename the day-numbering convention, or reach Day 11+, come back and update the relevant section here too.
+    This file lives at the repository root because it's a meta-reference, not tied to any single day — see also <code>00_Instructor_Guide_How_To_Use_This_Bootcamp.html</code> for a more operations-focused companion covering the same ground from a "day of teaching" angle. Neither goes stale on its own — but if you reorganize folders, rename the day-numbering convention, or build further into Day 11–13, come back and update the relevant sections in both.
   </div>
 
 </div>

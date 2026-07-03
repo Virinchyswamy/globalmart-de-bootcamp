@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Auto Loader Live Demo — Continuous Ingestion from ADLS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge {
+    background: #e0e7ff; color: #3730a3; font-size: 11.5px;
+    padding: 4px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+
+  .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 18px; font-size: 12.5px; line-height: 1.8;
+  }
+  .card strong { display: block; color: #1f3864; font-size: 13px; margin-bottom: 6px; }
+
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px;
+    padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9;
+    margin-top: 10px; overflow-x: auto;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+  .code-block .var { color: #e2e8f0; }
+
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .compare-table .ok { color: #059669; font-weight: 700; }
+  .compare-table .warn { color: #b45309; font-weight: 700; }
+
+  .path-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace;
+    line-height: 2.1; color: #374151;
+  }
+  .path-wrap .container { color: #0369a1; font-weight: 700; }
+  .path-wrap .folder    { color: #059669; font-weight: 700; }
+  .path-wrap .file      { color: #7c3aed; font-weight: 700; }
+  .path-wrap .bronze    { color: #b45309; font-weight: 700; }
+  .path-wrap .dim       { color: #9ca3af; }
+
+  .checklist {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 13px; line-height: 2.2;
+  }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { min-width: 280px; color: #374151; }
+
+  .phase-pill {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px; margin-right: 8px;
+  }
+  .pill-a { background: #dbeafe; color: #1e40af; }
+  .pill-b { background: #d1fae5; color: #065f46; }
+  .pill-c { background: #fef3c7; color: #92400e; }
+  .pill-d { background: #ede9fe; color: #5b21b6; }
+
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .warn-box {
+    background: #fff7ed; border-left: 4px solid #f59e0b;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Auto Loader — Live Demo: Continuous Ingestion from ADLS</h1>
+  <p class="subtitle">GlobalMart Data Engineering &nbsp;|&nbsp; College Presentation Notebook (v2) &nbsp;|&nbsp; Bonus / instructor-led demo</p>
+
+  <div class="meta-row">
+    <span class="badge orange">Presentation aid — not a graded HOL</span>
+    <span class="badge blue">Proves exactly-once ingestion</span>
+    <span class="badge green">Disposable output — not gbmart.bronze.orders</span>
+  </div>
+
+  <div class="warn-box">
+    <strong>Scope note.</strong> This demo ingests every CSV in a private sandbox <code>_demo/raw/</code> folder, including a stand-in <code>orders.csv</code>, purely to get a large-enough file set and a stable ID column (<code>OrderID</code>) to prove exactly-once processing live. In the real GlobalMart architecture, <code>orders</code>/<code>order_items</code> arrive via <strong>Postgres CDC through Lakeflow Connect</strong> (Day 2), not Autoloader. The genuinely Autoloader-sourced entities are <code>products</code>, <code>customers</code>, <code>address</code>, and <code>payments</code> (see HOL 2). Output here is written to a throwaway path under <code>raw-data/_demo/bronze/orders_demo_v2/</code> — never the real <code>gbmart.bronze.orders</code>.
+  </div>
+
+  <h2>What We Are Proving</h2>
+  <p><strong>Auto Loader does NOT re-read files it has already processed.</strong> When a NEW file lands in ADLS, Auto Loader detects it automatically — zero manual intervention.</p>
+
+  <h3>Live Demo Run Order</h3>
+  <table class="compare-table">
+    <tr><th>#</th><th>Action</th><th>Expected Result</th></tr>
+    <tr><td>1</td><td>Setup — configure the External Location (no storage key)</td><td>All paths printed</td></tr>
+    <tr><td>2</td><td>Clean Start — wipe demo Bronze, checkpoint, schema</td><td>Fresh state</td></tr>
+    <tr><td>3</td><td>Phase 1 — load all files with <code>availableNow=True</code></td><td>~1.4M rows in Bronze, stream stops</td></tr>
+    <tr><td>4</td><td>Phase 2 — write <code>orders_new.csv</code> to staging</td><td>File ready, NOT in demo raw/</td></tr>
+    <tr><td>5</td><td>Phase 3 — start continuous stream (same checkpoint)</td><td>Stream idle — no new files</td></tr>
+    <tr><td>6</td><td><strong>Phase 4 — copy <code>orders_new.csv</code> into raw/</strong></td><td class="ok"><strong>Stream detects it, count jumps +5</strong></td></tr>
+    <tr><td>7</td><td>Validation — no-duplicate proof, checkpoint inspection</td><td>Exactly-once confirmed</td></tr>
+  </table>
+
+  <h2>Setup — Unity Catalog External Location</h2>
+  <div class="code-block">
+<span class="cmt"># ─── SETUP — no storage key needed, same as HOL 2 ──────────────────────────────</span><br>
+<span class="var">EXTERNAL_LOCATION</span> = <span class="str">"abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net/raw-data"</span><br>
+<br>
+<span class="var">raw_path</span>        = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_demo/raw"</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># this demo's private "raw/" folder</span><br>
+<span class="var">staging_path</span>    = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_demo/staging"</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># holding area, not watched</span><br>
+<span class="var">checkpoint_path</span> = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_checkpoints/orders_demo_v2"</span><br>
+<span class="var">output_path</span>     = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_demo/bronze/orders_demo_v2"</span>&nbsp;&nbsp;<span class="cmt"># throwaway path</span><br>
+<span class="var">schema_path</span>     = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_schemas/orders_demo_v2"</span>
+  </div>
+
+  <h2>How Auto Loader Tracks Files — The Checkpoint</h2>
+  <div class="path-wrap">
+    <span class="dim">ADLS _demo/raw/ folder:</span><br>
+    <span class="folder">  orders.csv</span><span class="dim">          ← Phase 1: processed ✅  (checkpoint remembers this)</span><br>
+    <span class="file">  orders_new.csv</span><span class="dim">      ← Phase 4: we drop this  🔴 (not yet seen)</span><br>
+    <br>
+    <span class="dim">What happens every trigger (30 seconds):</span><br>
+    <span class="dim">  1. List all files in raw/</span><br>
+    <span class="dim">  2. Compare against checkpoint sources/</span><br>
+    <span class="dim">  3. orders.csv      → already in checkpoint → SKIP</span><br>
+    <span class="bronze">  4. orders_new.csv  → NOT in checkpoint     → PROCESS</span><span class="dim">  ← this is the moment</span><br>
+    <span class="dim">  5. Write 5 new rows to Bronze Delta</span><br>
+    <span class="dim">  6. Update checkpoint — orders_new.csv now recorded</span>
+  </div>
+
+  <h2><span class="phase-pill pill-a">Phase 1</span> Load Everything, Rename Bad Columns</h2>
+  <div class="code-block">
+<span class="cmt"># shipping_tier.csv has "Cost (Rs)" — Delta rejects special chars in column names</span><br>
+<span class="kw">for</span> <span class="var">c</span> <span class="kw">in</span> <span class="var">raw_stream</span>.<span class="fn">columns</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">clean</span> = <span class="var">c</span>.<span class="fn">replace</span>(<span class="str">" "</span>, <span class="str">"_"</span>).<span class="fn">replace</span>(<span class="str">"("</span>, <span class="str">""</span>).<span class="fn">replace</span>(<span class="str">")"</span>, <span class="str">""</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> <span class="var">clean</span> != <span class="var">c</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">raw_stream</span> = <span class="var">raw_stream</span>.<span class="fn">withColumnRenamed</span>(<span class="var">c</span>, <span class="var">clean</span>)
+  </div>
+  <div class="info-box">
+    <code>"Cost (Rs)"</code> → <code>"Cost_Rs"</code> avoids <code>DELTA_INVALID_CHARACTERS_IN_COLUMN_NAMES</code>. Phase 1 and Phase 3 must use the <strong>same renaming logic</strong>, or the Bronze table schema won't match between the two writes.
+  </div>
+
+  <h2><span class="phase-pill pill-c">Phase 3</span> Start the Continuous Stream</h2>
+  <div class="path-wrap">
+    <span class="dim">Phase 1 checkpoint state:  orders.csv + all other CSVs → DONE</span><br>
+    <span class="dim">Phase 3 first trigger:     all files → SKIP (in checkpoint), nothing new → IDLE</span><br>
+    <span class="bronze">Phase 4 (file dropped):    orders_new.csv → NEW → PROCESS</span>
+  </div>
+  <p style="margin-top:8px;">The stream runs in the background — you can run subsequent cells while it is active.</p>
+
+  <h2><span class="phase-pill pill-d">Phase 4</span> THE DEMO MOMENT</h2>
+  <div class="code-block">
+<span class="var">dbutils.fs.cp</span>(<span class="fn">f</span><span class="str">"{staging_path}/orders_new.csv"</span>, <span class="fn">f</span><span class="str">"{raw_path}/orders_new.csv"</span>)
+  </div>
+  <p style="margin-top:8px;">Trigger fires within 30 seconds → count jumps by 5 → <code>_source_file</code> shows <code>orders_new.csv</code> → <code>_ingested_at</code> is LATER than the Phase 1 rows.</p>
+
+  <h2>Validation — Proving Correctness</h2>
+  <table class="compare-table">
+    <tr><th>Claim</th><th>Expected Result</th></tr>
+    <tr><td>No duplicates</td><td class="ok"><code>COUNT(*) == COUNT(DISTINCT OrderID)</code></td></tr>
+    <tr><td><code>orders.csv</code> not re-processed</td><td class="ok">Ingest timestamps all from Phase 1</td></tr>
+    <tr><td>Checkpoint records processed files</td><td class="ok"><code>sources/</code> folder lists all files</td></tr>
+    <tr><td>Delta history shows two writes</td><td class="ok">Version 0 = Phase 1, last version = Phase 4</td></tr>
+  </table>
+
+  <h2>Viva Q&amp;A Highlights</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">Q</span><span class="label">What's the main advantage of Auto Loader over <code>spark.read</code>? → Checkpoint = memory. No re-reads, no duplicates.</span></div>
+    <div class="line"><span class="check">Q</span><span class="label"><code>availableNow=True</code> vs <code>processingTime</code>? → One-shot batch vs continuous polling.</span></div>
+    <div class="line"><span class="check">Q</span><span class="label">Why does this demo use a path, not a Unity Catalog table like the real pipeline? → It's disposable — wiped and rebuilt every run via Clean Start. The real pipeline (HOL 2 onward) always registers a proper <code>catalog.schema.table</code>.</span></div>
+  </div>
+
+  <div class="info-box">
+    <strong>Full architecture, checkpoint internals, and all 26 cells (Clean Start, 4 phases, 4 validations, Viva Q&amp;A) live in the notebook</strong> — this page is a presentation-ready summary, not a replacement for running it live.
+  </div>
+
+</div>
+</body>
+</html>

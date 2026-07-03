@@ -1,0 +1,439 @@
+# Vendor performance analysis and ranking framework
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to evaluate vendor delivery performance for GlobalMart by calculating return rates, late delivery percentages, average delivery duration, average delay, and metric-based vendor ranks using Python and Pandas.
+
+## Learning Objectives
+- Prepare vendor-level performance metrics by combining order and vendor summary data
+- Calculate return rate and late delivery percentage using delivered order counts
+- Compute average delivery duration and average delivery delay for each vendor
+- Rank vendors across multiple lower-is-better performance metrics
+- Create a final vendor ranking DataFrame that supports operational decision making
+
+## Prerequisites
+- Basic Python syntax including variables and functions
+- Working knowledge of Pandas DataFrames
+- Ability to filter, group, aggregate, and merge tabular data
+
+## Duration of Completion
+45 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- approach (skill)
+- python (tool)
+
+#### Overview
+In this scenario you will learn how to evaluate vendor delivery performance for GlobalMart by calculating return rates, late delivery percentages, average delivery duration, average delay, and metric-based vendor ranks using Python and Pandas.
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- approach (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+GlobalMart is a fast-growing e-commerce company that sells products across three lines of business.
+![Image-Gemini_Generated_Image_7v37f07v37f07v37.png](https://cdn.enqurious.com/images/9ebab503-c281-4181-b27d-e6148272696e_Gemini_Generated_Image_7v37f07v37f07v37.webp)
+
+One of GlobalMart's key operational goals is **timely order delivery**. A late delivery can create customer dissatisfaction, increase returns, and raise the risk that customers move to competitors with better delivery experience.
+
+The Vendor Operations team wants to track delivery health and identify vendors that frequently breach delivery expectations. Your task is to help the Data Intelligence team prepare vendor-level performance reports using Python and Pandas.
+
+>[!IMPORTANT] 
+> GlobalMart three Line of Business (LOB) are Technology, Office Supplies and Furniture.
+
+### Business Questions
+
+The team wants to answer questions such as:
+
+- How often do vendors deliver late?
+- Which vendors have the highest return rates?
+- What is the average delivery duration for each vendor?
+- Which vendors show higher average delivery delay?
+- Which vendors should be reviewed because their delivery metrics are poor?
+
+>[!IMPORTANT]
+> In this module, lower values are better for return rate, late delivery percentage, and average delivery delay.
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Datasets And Required Files
+
+Download the required artifacts before starting:
+
+| File | Purpose | 
+|---|---|
+| `order_summary.csv` | Order-level delivery and return information |
+| `vendor_summary.csv` | Vendor-level summary information |
+
+### What You Will Build
+
+You will build two DataFrames:
+
+| DataFrame | Purpose |
+|---|---|
+| `vendor_delivery_summary` | Shows vendor-level delivery metrics such as return rate and late delivery percentage |
+| `vendor_metric_ranks` | Shows each vendor's rank across performance metrics |
+
+>[!TIP]
+> Build the vendor-level metric summary first. The ranking DataFrame depends on those calculated metrics.
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+## Task 1: Build The Vendor-Level Delivery Summary
+
+Prepare a DataFrame named `vendor_delivery_summary` with the following columns:
+
+| Column | Description |
+|---|---|
+| `vendor_id` | Unique vendor identifier |
+| `vendor_name` | Vendor name |
+| `return_rate%` | Percentage of delivered orders that were returned |
+| `late_order_delivery%` | Percentage of delivered orders that were delivered late |
+| `avg_delivery_duration` | Average delivery duration in fractions of a day |
+| `avg_delivery_delay` | Average delivery delay in fractions of a day |
+
+### Metric Formulas
+
+| Metric | Formula |
+|---|---|
+| `return_rate%` | `(total_returns / total_orders_delivered) * 100` |
+| `late_order_delivery%` | `(total_orders_delivered_late / total_orders_delivered) * 100` |
+| `avg_delivery_duration` | Average delivery duration for orders handled by the vendor |
+| `avg_delivery_delay` | Average delivery delay for orders handled by the vendor |
+
+>[!NOTE]
+> If a vendor has zero delivered orders, avoid dividing by zero. In a production workflow, you should decide whether to return 0, NaN, or flag the vendor for review.
+
+---
+
+**Tags**
+
+
+##### Input 4
+**Type:** Code
+
+**Question:** Write Python code to build the `vendor_delivery_summary` DataFrame. Your solution must load the order and vendor summary files, calculate vendor-level return rate and late delivery percentage, and keep the required metric columns.
+
+**Language:** python
+
+**Snippet:** import pandas as pd
+
+order_summary = pd.read_csv(
+    "https://cdn.enqurious.com/documents/c59c4c80-ca28-4c8b-8fb3-c81adaf0dbf6_order_summary.csv"
+)
+
+vendor_summary = pd.read_csv(
+    "https://cdn.enqurious.com/documents/3428dd96-e1b7-4fbe-9f82-44f08177fdb4_vendor_summary.csv"
+)
+
+# TODO: inspect columns in both DataFrames
+
+# TODO: calculate return_rate%
+
+# TODO: calculate late_order_delivery%
+
+# TODO: select final vendor-level summary columns
+
+vendor_delivery_summary.head()
+
+**Solution:** 
+```python
+
+import pandas as pd
+
+# Load files
+order_summary = pd.read_csv(
+    "https://cdn.enqurious.com/documents/c59c4c80-ca28-4c8b-8fb3-c81adaf0dbf6_order_summary.csv"
+)
+
+vendor_summary = pd.read_csv(
+    "https://cdn.enqurious.com/documents/3428dd96-e1b7-4fbe-9f82-44f08177fdb4_vendor_summary.csv"
+)
+
+# Clean column names
+order_summary.columns = order_summary.columns.str.strip()
+vendor_summary.columns = vendor_summary.columns.str.strip()
+
+# Check columns
+print("order_summary columns:", order_summary.columns.tolist())
+print("vendor_summary columns:", vendor_summary.columns.tolist())
+
+# Create average duration and delay per vendor
+vendor_avg_metrics = (
+    order_summary
+    .groupby("vendor_id", as_index=False)
+    .agg({
+        "delivery_duration": "mean",
+        "delay_duration": "mean"
+    })
+    .rename(columns={
+        "delivery_duration": "avg_delivery_duration",
+        "delay_duration": "avg_delivery_delay"
+    })
+)
+
+# Merge with vendor summary
+vendor_delivery_summary = vendor_summary.merge(
+    vendor_avg_metrics,
+    on="vendor_id",
+    how="left"
+)
+
+# Calculate required percentages
+vendor_delivery_summary["return_rate%"] = (
+    vendor_delivery_summary["total_orders_returned"]
+    / vendor_delivery_summary["total_orders_delivered"]
+    * 100
+)
+
+vendor_delivery_summary["late_order_delivery%"] = (
+    vendor_delivery_summary["total_orders_delivered_late"]
+    / vendor_delivery_summary["total_orders_delivered"]
+    * 100
+)
+
+# Final required columns
+vendor_delivery_summary = vendor_delivery_summary[[
+    "vendor_id",
+    "vendor_name",
+    "return_rate%",
+    "late_order_delivery%",
+    "avg_delivery_duration",
+    "avg_delivery_delay"
+]]
+
+vendor_delivery_summary.head()
+```
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / date-processing (skill)
+- data-wrangling / dataframe-processing (skill)
+- data-wrangling / join (skill)
+- data-wrangling / math-calculations (skill)
+
+##### Input 5
+**Type:** Choice
+
+**Question:** Which of the following vendors has the least late delivery percentage?
+
+**Options:** 
+- Johnsons Logistics
+
+- Voyage Enterprises
+
+- Seaborne Ltd.
+
+- Velocity Logistics
+
+**Correct Options:** 
+- Velocity Logistics
+
+**Solution:** 
+- **Correct - Velocity Logistics:** This vendor has the lowest `late_order_delivery%`, so it performs best on the late delivery metric.
+- **Wrong - Johnsons Logistics:** This vendor does not have the lowest late delivery percentage.
+- **Wrong - Voyage Enterprises:** This vendor's late delivery percentage is higher than Velocity Logistics.
+- **Wrong - Seaborne Ltd.:** This vendor performs well on some metrics, but it is not the lowest on late delivery percentage.
+
+**Tags**
+- data-wrangling / sort (skill)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** What is the return rate percentage for Voyage Enterprises?
+
+**Options:** 
+- 5.7
+
+- 4.8
+
+- 5.8
+
+- 6.6
+
+**Correct Options:** 
+- 4.8
+
+**Solution:** 
+- **Correct - 4.8:** Voyage Enterprises has a return rate of 4.8%.
+- **Wrong - 5.7:** This value belongs to another metric or vendor, not Voyage Enterprises' return rate.
+- **Wrong - 5.8:** This is close, but it does not match the calculated return rate for Voyage Enterprises.
+- **Wrong - 6.6:** This is higher than the correct return rate for Voyage Enterprises.
+
+**Tags**
+- data-wrangling / math-calculations (skill)
+
+##### Input 7
+**Type:** Text
+
+## Task 2: Rank Vendors Across Performance Metrics
+
+Now that you have vendor-level metrics, the next task is to rank vendors across the performance metrics.
+
+Create a new DataFrame named `vendor_metric_ranks`.
+
+The ranking should use these rules:
+
+| Metric | Ranking Rule |
+|---|---|
+| `return_rate%` | Lower return rate gets better rank |
+| `late_order_delivery%` | Lower late delivery percentage gets better rank |
+| `avg_delivery_delay` | Lower average delay gets better rank |
+
+The final DataFrame should contain:
+
+| Column | Description |
+|---|---|
+| `vendor_id` | Unique vendor identifier |
+| `vendor_name` | Vendor name |
+| `return_rate%` | Vendor return rate |
+| `return_rate_rank` | Rank based on return rate |
+| `late_order_delivery%` | Vendor late delivery percentage |
+| `late_order_delivery_rank` | Rank based on late delivery percentage |
+| `avg_delivery_delay` | Vendor average delivery delay |
+| `avg_delivery_delay_rank` | Rank based on average delivery delay |
+| `average_rank` | Average of the three metric ranks |
+
+| VendorID | Vendor Name | return_rate% | late_order_delivery% | avg_delivery_delay |
+|---|---|---:|---:|---:|
+| VEN01 | Velocity Logistics | 4 | 2 | 1 |
+| VEN02 | Seaborne Ltd. | 2 | 4 | 3 |
+| VEN03 | Voyage Enterprises | 1 | 1 | 2 |
+| VEN04 | Johnsons Logistics | 3 | 3 | 4 |
+| VEN05 | Seahawk Logistics | 4 | 5 | 5 |
+
+>[!IMPORTANT]
+> Because all three metrics are lower-is-better, use ascending ranking. The smallest metric value should receive rank 1.
+
+---
+
+**Tags**
+
+
+##### Input 8
+**Type:** Code
+
+**Question:** Write Python code to create the `vendor_metric_ranks` DataFrame. Drop `avg_delivery_duration`, rank each lower-is-better metric, and calculate an `average_rank` for each vendor.
+
+**Language:** python
+
+**Snippet:** # vendor_delivery_summary is already available from Task 1
+
+vendor_metric_ranks = vendor_delivery_summary.copy()
+
+# TODO: drop avg_delivery_duration
+
+# TODO: create return_rate_rank
+
+# TODO: create late_order_delivery_rank
+
+# TODO: create avg_delivery_delay_rank
+
+# TODO: calculate average_rank
+
+vendor_metric_ranks
+
+**Solution:** 
+```python
+# Task 2: Create vendor_metric_ranks from vendor_delivery_summary
+
+vendor_metric_ranks = vendor_delivery_summary.copy()
+
+# Drop avg_delivery_duration because ranking uses return rate, late delivery %, and average delay
+vendor_metric_ranks = vendor_metric_ranks.drop(columns=["avg_delivery_duration"])
+
+# Lower values are better, so ascending=True gives rank 1 to the lowest value
+vendor_metric_ranks["return_rate_rank"] = (
+    vendor_metric_ranks["return_rate%"].rank(method="dense", ascending=True)
+)
+
+vendor_metric_ranks["late_order_delivery_rank"] = (
+    vendor_metric_ranks["late_order_delivery%"].rank(method="dense", ascending=True)
+)
+
+vendor_metric_ranks["avg_delivery_delay_rank"] = (
+    vendor_metric_ranks["avg_delivery_delay"].rank(method="dense", ascending=True)
+)
+
+# Calculate average rank across the three metric ranks
+vendor_metric_ranks["average_rank"] = vendor_metric_ranks[[
+    "return_rate_rank",
+    "late_order_delivery_rank",
+    "avg_delivery_delay_rank"
+]].mean(axis=1)
+
+# Sort best vendors first
+vendor_metric_ranks = vendor_metric_ranks.sort_values("average_rank").reset_index(drop=True)
+
+vendor_metric_ranks
+```
+
+>[!NOTE]
+> `method="dense"` gives the same rank to tied values and does not skip the next rank. This makes ranks easier to read when multiple vendors have the same metric value.
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / conditional-logic (skill)
+- data-wrangling / date-processing (skill)
+- data-wrangling / join (skill)
+
+##### Input 9
+**Type:** Choice
+
+**Question:** Based on the vendor metric ranking output, select all correct statements. (Select 2)
+
+**Options:** 
+- Voyage Enterprises is one of the worst vendors overall in terms of average rank
+
+- Velocity Logistics and Voyage Enterprises share the same average rank
+
+- Seaborne Ltd. has the least delay duration
+
+- Johnsons Logistics is the best vendor overall in terms of average rank
+
+**Correct Options:** 
+- Velocity Logistics and Voyage Enterprises share the same average rank
+
+- Seaborne Ltd. has the least delay duration
+
+**Solution:** 
+- **Correct - Velocity Logistics and Voyage Enterprises share the same average rank:** Their individual metric ranks average to the same value, so they tie on overall ranking.
+- **Correct - Seaborne Ltd. has the least delay duration:** Seaborne Ltd. has the lowest `avg_delivery_delay`, which gives it the best rank on that metric.
+- **Wrong - Voyage Enterprises is one of the worst vendors overall:** The average rank output does not support this statement.
+- **Wrong - Johnsons Logistics is the best vendor overall:** Johnsons Logistics does not have the best overall average rank in the output.
+
+**Tags**
+- approach / concept-clarity (skill)
+
