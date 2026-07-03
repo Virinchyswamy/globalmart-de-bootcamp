@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>How This Course Is Built &amp; How To Teach It</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 26px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 18px; color: #1f3864; margin: 38px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.65; color: #374151; margin-bottom: 10px; }
+
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge {
+    background: #e0e7ff; color: #3730a3; font-size: 11.5px;
+    padding: 4px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+  .badge.red    { background: #fee2e2; color: #991b1b; }
+
+  .story-box {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 18px 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* ── workflow steps ── */
+  .flow-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 10px; }
+  .flow-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 16px; font-size: 12.5px; line-height: 1.6; position: relative;
+  }
+  .flow-card .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%; background: #1f3864; color: #fff;
+    font-size: 11px; font-weight: 700; margin-bottom: 8px;
+  }
+  .flow-card strong { display: block; color: #1f3864; font-size: 13.5px; margin-bottom: 6px; }
+  .flow-arrow { display: none; }
+
+  /* ── file-type cards ── */
+  .filetype-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .filetype-card {
+    background: #fff; border-radius: 10px; padding: 18px 18px; font-size: 12.5px; line-height: 1.7;
+    border-top: 4px solid; border: 1px solid #e5e7eb; border-top-width: 4px;
+  }
+  .filetype-card .ext {
+    display: inline-block; font-family: monospace; font-size: 13px; font-weight: 700;
+    padding: 2px 10px; border-radius: 6px; margin-bottom: 10px;
+  }
+  .ft-1 { border-top-color: #7c3aed; } .ft-1 .ext { background:#ede9fe; color:#5b21b6; }
+  .ft-2 { border-top-color: #1e40af; } .ft-2 .ext { background:#dbeafe; color:#1e40af; }
+  .ft-3 { border-top-color: #059669; } .ft-3 .ext { background:#d1fae5; color:#065f46; }
+  .filetype-card strong { display: block; color: #1f3864; font-size: 13.5px; margin-bottom: 6px; }
+
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px;
+    padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9;
+    margin-top: 10px; overflow-x: auto;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .var { color: #e2e8f0; }
+
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .compare-table .ok   { color: #059669; font-weight: 700; }
+  .compare-table .warn { color: #b45309; font-weight: 700; }
+  .compare-table .no   { color: #9ca3af; }
+
+  /* ── folder tree ── */
+  .path-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 20px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace;
+    line-height: 1.9; color: #374151; overflow-x: auto;
+  }
+  .path-wrap .folder { color: #059669; font-weight: 700; }
+  .path-wrap .file   { color: #7c3aed; }
+  .path-wrap .html   { color: #1e40af; }
+  .path-wrap .md     { color: #b45309; }
+  .path-wrap .cmt     { color: #9ca3af; }
+
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    padding: 14px 18px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .warn-box {
+    background: #fff7ed; border-left: 4px solid #f59e0b;
+    padding: 14px 18px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .danger-box {
+    background: #fef2f2; border-left: 4px solid #dc2626;
+    padding: 14px 18px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .fix-box {
+    background: #ecfdf5; border-left: 4px solid #10b981;
+    padding: 14px 18px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+
+  /* ── status grid ── */
+  .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 10px; }
+  .status-cell {
+    border-radius: 8px; padding: 10px 6px; text-align: center; font-size: 12px; font-weight: 700;
+  }
+  .status-cell .day-label { display: block; font-size: 15px; margin-bottom: 2px; }
+  .status-cell.built    { background: #d1fae5; color: #065f46; }
+  .status-cell.skipped  { background: #f3f4f6; color: #6b7280; }
+  .status-cell.partial  { background: #fef3c7; color: #92400e; }
+  .status-cell.pending  { background: #fee2e2; color: #991b1b; }
+
+  .legend-key { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; }
+  .legend-key .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  .checklist {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 20px 24px; margin-top: 10px; font-size: 13px; line-height: 2.1;
+  }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { color: #374151; }
+
+  .legend {
+    margin-top: 30px; font-size: 11.5px; color: #6b7280;
+    border-top: 1px solid #e5e7eb; padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>How This Course Is Built &amp; How To Teach It</h1>
+  <p class="subtitle">GlobalMart Data Engineering Bootcamp &nbsp;|&nbsp; Instructor Reference Guide &nbsp;|&nbsp; Read this once, then use it as a lookup</p>
+
+  <div class="meta-row">
+    <span class="badge blue">13-day Azure Databricks DE bootcamp</span>
+    <span class="badge green">Day 1–10 built</span>
+    <span class="badge orange">Day 8 = assessment (no content)</span>
+    <span class="badge red">Day 11+ not started</span>
+  </div>
+
+  <div class="story-box">
+    <p>This is a reference document for <b>you</b>, the instructor — not for learners. It explains how the whole repository fits together: why every notebook has a matching HTML, what the <code>.md</code> files are for, how the teaching flow works in the classroom, where the real content came from, and what's built versus still pending. Read it top to bottom once, then come back to specific sections as needed.</p>
+  </div>
+
+  <!-- ═══════════════════════ SECTION 1 — TEACHING WORKFLOW ═══════════════════════ -->
+  <h2>1. The Classroom Workflow — What Happens, In Order</h2>
+  <p>Every ILT (Instructor-Led Training) and HOL (Hands-On Lab) session follows the same repeatable pattern:</p>
+
+  <div class="flow-row">
+    <div class="flow-card">
+      <span class="step-num">1</span>
+      <strong>Open the .html</strong>
+      Explain the concept on screen — no code runs yet. This is the "why," the diagrams, the comparison tables. Learners read along, ask questions.
+    </div>
+    <div class="flow-card">
+      <span class="step-num">2</span>
+      <strong>Run the .ipynb live</strong>
+      Open the matching notebook in Databricks and hit <b>Run All</b> in front of the class. It must complete with zero errors and zero placeholders — this is the "how," demonstrated for real against the live <code>gbmart</code> workspace.
+    </div>
+    <div class="flow-card">
+      <span class="step-num">3</span>
+      <strong>Learners redo it (HOL only)</strong>
+      For Hands-On Labs, learners now repeat the same pipeline in their own Databricks accounts. A small number of clearly-marked <code>YOUR_SCHEMA</code>/<code>_______</code> blanks are expected and intentional — that's the exercise.
+    </div>
+    <div class="flow-card">
+      <span class="step-num">4</span>
+      <strong>Import the .md (Day 1 only, so far)</strong>
+      For the one hands-on that has an LMS version, import the <code>.md</code> file into the LMS so learners can also complete it as a tracked, graded exercise outside Databricks.
+    </div>
+  </div>
+
+  <div class="info-box">
+    <b>ILT vs. HOL, in one line:</b> ILT sessions are almost entirely <code>.html</code> + a light or no-code <code>.ipynb</code> — they teach a concept. HOL sessions are a full <code>.ipynb</code> build with real PySpark/SQL against <code>gbmart</code> — they teach a skill. A few sessions are also tagged <code>DEMO</code> (instructor-only walkthrough, no learner redo) or <code>REF</code> (optional certification-prep reference material, not scheduled class time).
+  </div>
+
+  <!-- ═══════════════════════ SECTION 2 — FILE TYPES ═══════════════════════ -->
+  <h2>2. The Three File Types, and What Each One Is For</h2>
+
+  <div class="filetype-grid">
+    <div class="filetype-card ft-1">
+      <span class="ext">.ipynb</span>
+      <strong>The real, running pipeline</strong>
+      A fully-working Databricks notebook. For HOLs, it must run top-to-bottom with <b>Run All</b>, zero errors, against the real <code>gbmart</code> catalog — this is what you demo live and what learners rebuild. For ILTs, it's often lighter or purely conceptual (some ILTs have no notebook at all where the HTML carries the whole session).
+    </div>
+    <div class="filetype-card ft-2">
+      <span class="ext">.html</span>
+      <strong>The concept explainer</strong>
+      A single self-contained styled page (open it directly in any browser — no server needed) covering the "why" before the "how": diagrams, comparison tables, common mistakes, a submission checklist for HOLs. Shown on screen before touching Databricks. Every <code>.ipynb</code> in this course has a matching <code>.html</code> with the same filename.
+    </div>
+    <div class="filetype-card ft-3">
+      <span class="ext">.md</span>
+      <strong>LMS-importable hands-on</strong>
+      A markdown file formatted specifically for your LMS's <b>import</b> function — scenario + numbered inputs, so learners can complete the exercise as a tracked assignment outside Databricks entirely. Only built for <b>Day 1's HOL</b> so far; build more only when you explicitly ask, since the exact format had to be reverse-engineered from a real failed import (see Section 6).
+    </div>
+  </div>
+
+  <h3>Naming convention</h3>
+  <div class="path-wrap">
+<span class="folder">Day{N}</span>/Day{N}_<span class="html">ILT{x}</span>_Topic_Name.ipynb   <span class="cmt"># Instructor-Led Training — concept session</span>
+<span class="folder">Day{N}</span>/Day{N}_<span class="html">HOL{x}</span>_Topic_Name.ipynb   <span class="cmt"># Hands-On Lab — learners build it themselves</span>
+<span class="folder">Day{N}</span>/Day{N}_<span class="html">DEMO</span>_Topic_Name.ipynb    <span class="cmt"># Instructor-only live walkthrough, no learner redo</span>
+<span class="folder">Day{N}</span>/Day{N}_<span class="html">REF</span>_Topic_Name.ipynb     <span class="cmt"># Optional / cert-prep reference, not scheduled class time</span>
+  </div>
+  <p>The <code>{x}</code> suffix (<code>ILT1</code>, <code>ILT2</code>, <code>HOL1</code>, <code>HOL2</code>...) is the <b>order to run them in that day</b>, not a difficulty ranking — always teach/run them in numeric order within a day. When a day has only one ILT or HOL, the number is sometimes omitted (e.g. Day 1's <code>HOL</code> has no <code>1</code>).</p>
+
+  <!-- ═══════════════════════ SECTION 3 — REPO STRUCTURE ═══════════════════════ -->
+  <h2>3. Repository Structure</h2>
+  <div class="path-wrap">
+<span class="folder">DE notebooks/</span><br>
+&nbsp;&nbsp;├── HOW_TO_USE_THIS_COURSE.html&nbsp;&nbsp;<span class="cmt"># this file — meta-reference, not tied to a day</span><br>
+&nbsp;&nbsp;├── globalmart_problem_statement_architecture (1).html&nbsp;&nbsp;<span class="cmt"># canonical architecture spec — the source of truth</span><br>
+&nbsp;&nbsp;├── tred-alch-adv-dbx-chennai-2026-calendar (1).xlsx&nbsp;&nbsp;<span class="cmt"># the 13-day calendar — source of truth for module mapping</span><br>
+&nbsp;&nbsp;├── <span class="folder">Day1/</span> … <span class="folder">Day10/</span>&nbsp;&nbsp;<span class="cmt"># built — see Section 7 for exact status</span><br>
+&nbsp;&nbsp;├── <span class="folder">Day11/</span> <span class="folder">Day12/</span> <span class="folder">Day13/</span>&nbsp;&nbsp;<span class="cmt"># NOT started yet — see Section 7</span><br>
+&nbsp;&nbsp;├── <span class="folder">extras/</span>&nbsp;&nbsp;<span class="cmt"># optional supplementary notebooks, not on the critical path</span><br>
+&nbsp;&nbsp;├── <span class="folder">globalmart_v2/</span>, <span class="folder">alchemy_advanced_project/</span>&nbsp;&nbsp;<span class="cmt"># separate projects — left alone, out of scope</span><br>
+&nbsp;&nbsp;└── <span class="folder">reference for making the hands/</span>&nbsp;&nbsp;<span class="cmt"># content/question-style inspiration ONLY — see warning in Section 6</span>
+  </div>
+  <div class="warn-box">
+    <b>Day numbering has shifted from early drafts.</b> Files were reorganized with <code>git mv</code> partway through this build to match the real calendar (e.g. what was once "Day 5" content is now correctly "Day 4" or "Day 2" depending on topic). If you ever see a stray reference to an old day number in conversation history or an old export, trust the <b>current folder location</b>, not the memory of where something used to be.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 4 — GBMART ENVIRONMENT ═══════════════════════ -->
+  <h2>4. The Real Environment Every Notebook Runs Against</h2>
+  <p>All pipeline notebooks (Day 2 onward) target one real, shared Databricks workspace and Unity Catalog — not a toy/sandbox catalog. Knowing these facts helps you answer "wait, why does it say that?" questions live in class.</p>
+
+  <table class="compare-table">
+    <tr><th>Fact</th><th>Value</th></tr>
+    <tr><td>Databricks workspace</td><td><code>adb-3530457219338656.16.azuredatabricks.net</code></td></tr>
+    <tr><td>Unity Catalog</td><td><code>gbmart</code> — schemas <code>bronze</code>, <code>silver</code>, <code>gold</code></td></tr>
+    <tr><td>External location</td><td><code>gbmart-ext-loc</code> → <code>abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net/raw-data</code></td></tr>
+    <tr><td>Storage credential</td><td><code>ecomprojectscredentials</code></td></tr>
+    <tr><td>CDC source (Postgres/Supabase)</td><td>Lakeflow Connect pipeline <code>orders_data_ingestion_cdc</code> — <b>query/cursor-based</b> on <code>updated_at</code>, NOT log-based WAL — ingests <code>globalmart.orders</code>/<code>order_items</code> into <code>gbmart.bronze.orders</code>/<code>order_items</code>. Does not capture hard deletes (a deliberately taught limitation).</td></tr>
+    <tr><td>ADLS source (Autoloader)</td><td><code>customers</code>, <code>products</code>, <code>address</code>, <code>payments</code>, <code>payment_methods</code> — flat files under <code>raw-data/</code>, ingested via <code>cloudFiles</code></td></tr>
+  </table>
+
+  <div class="info-box">
+    <b>Bronze vs. Silver casing — the rule that trips people up most.</b> Bronze preserves the source's raw casing exactly (PascalCase from CSVs, e.g. <code>CustomerID</code>; the CDC source's own casing for orders). Silver renames everything to lowercase snake_case (<code>customer_id</code>). That renaming <i>is</i> Silver's job — if you ever see PascalCase in a Silver notebook, something's wrong; if you see snake_case in Bronze, same.
+  </div>
+
+  <div class="info-box">
+    <b><code>fact_sales</code> — the course's centerpiece — uses natural keys, not surrogate keys.</b> Every dimension (built Day 6) has a proper surrogate key, but the fact table (built Day 7) joins to all six of them by natural business key (<code>Customer_ID</code>, <code>Product_ID</code>, <code>Order_ID</code>, <code>Address_ID</code>, <code>Payment_ID</code>, <code>Time_ID</code>) instead. This is a real, deliberate, and explicitly-taught simplification (Day 6 ILT 3 + Day 7 HOL 2) — not a mistake to "fix" if you see it. Grain = one row per order line item. Measures = <code>Quantity_purchased</code>, <code>Actual_price</code>, <code>Discounted_price</code>, <code>Sales_amount</code>.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 5 — SAYLI GROUNDING ═══════════════════════ -->
+  <h2>5. Where The Content Came From — the "Sayli" Grounding Pattern</h2>
+  <p>A colleague (sayli) already has a complete, real, working implementation of much of this pipeline in the same shared Databricks workspace — Bronze/Silver/Gold builds, the CDC pipeline, incremental/SCD2 merge scripts. Wherever her real, proven code exists for a topic, it was used as the <b>answer key</b>: pulled read-only, then rebuilt in this repo with GlobalMart's naming, full comments, and a teaching narrative wrapped around it. Where no equivalent exists (pure concept/lecture sessions, or topics she hasn't reached yet), content was written fresh from the architecture spec and calendar.</p>
+
+  <table class="compare-table">
+    <tr><th>Content type</th><th>How it was built</th></tr>
+    <tr><td>Bronze/Silver/Gold builds, CDC pipeline, SCD merges</td><td class="ok">Grounded in sayli's real, tested code — same logic, this course's naming + comments + narrative</td></tr>
+    <tr><td>Kimball theory, grain/dimension design, orchestration concepts</td><td class="warn">Written fresh — no direct source equivalent existed</td></tr>
+  </table>
+
+  <div class="danger-box">
+    <b>Hard rule — never violate this:</b> sayli's account and workspace content were only ever read (<code>databricks workspace export-dir</code> and similar read-only CLI calls). Nothing was ever written to, modified in, or triggered against her account. If you or an assistant ever pull more content from there in the future, keep it strictly read-only.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 6 — SAFETY RULES ═══════════════════════ -->
+  <h2>6. Safety Rules Baked Into Every Notebook</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">✓</span><span class="label"><b>No notebook in this repo starts a cluster, job, pipeline, or SQL warehouse on its own.</b> Every "run this" instruction assumes you're already attached to a running all-purpose cluster — nothing here provisions or triggers billable compute by itself.</span></div>
+    <div class="line"><span class="check">✓</span><span class="label"><b>Write-heavy HOLs never write directly to shared <code>gbmart</code> tables.</b> Any exercise involving MERGE/SCD/CDF uses a <code>SHALLOW CLONE</code> or a personal practice schema (<code>main.YOUR_SCHEMA</code>) instead — first introduced in Day 10, retrofitted into Day 9 HOL 2 and Day 4 HOL 2. This is what makes the exercise repeatable for every cohort and every rehearsal, instead of only working once.</span></div>
+    <div class="line"><span class="check">✓</span><span class="label"><b><code>VACUUM ... RETAIN 0 HOURS</code> never appears anywhere in this course.</b> It permanently deletes file history — any VACUUM shown is illustrative/commented-out only.</span></div>
+  </div>
+
+  <!-- ═══════════════════════ SECTION 7 — BUILD STATUS ═══════════════════════ -->
+  <h2>7. Build Status — What's Ready, What Isn't</h2>
+  <div class="status-grid">
+    <div class="status-cell built"><span class="day-label">1</span>Built</div>
+    <div class="status-cell built"><span class="day-label">2</span>Built</div>
+    <div class="status-cell built"><span class="day-label">3</span>Built</div>
+    <div class="status-cell built"><span class="day-label">4</span>Built</div>
+    <div class="status-cell built"><span class="day-label">5</span>Built</div>
+    <div class="status-cell built"><span class="day-label">6</span>Built</div>
+    <div class="status-cell built"><span class="day-label">7</span>Built</div>
+    <div class="status-cell skipped"><span class="day-label">8</span>Assessment</div>
+    <div class="status-cell built"><span class="day-label">9</span>Built</div>
+    <div class="status-cell partial"><span class="day-label">10</span>Partial</div>
+    <div class="status-cell pending"><span class="day-label">11</span>Not started</div>
+    <div class="status-cell pending"><span class="day-label">12</span>Not started</div>
+    <div class="status-cell pending"><span class="day-label">13</span>Not started</div>
+  </div>
+  <div class="legend-key">
+    <span><span class="dot" style="background:#065f46;"></span>Built — HTML + ipynb ready to teach</span>
+    <span><span class="dot" style="background:#6b7280;"></span>Assessment day — intentionally no content built</span>
+    <span><span class="dot" style="background:#92400e;"></span>Partially built — see note</span>
+    <span><span class="dot" style="background:#991b1b;"></span>Not started</span>
+  </div>
+
+  <table class="compare-table" style="margin-top:16px;">
+    <tr><th>Day</th><th>Topic</th><th>Sessions built</th></tr>
+    <tr><td>1</td><td>Problem statement, Azure/ADLS, Medallion architecture, PySpark/SQL basics</td><td class="ok">4 ILT + 1 HOL + 1 MD</td></tr>
+    <tr><td>2</td><td>CDC concepts (WAL), Lakeflow Connect, storage credentials, code versioning</td><td class="ok">3 ILT + 3 HOL</td></tr>
+    <tr><td>3</td><td>API ingestion, schema evolution, Autoloader (DEMO + REF)</td><td class="ok">2 ILT + 2 HOL + DEMO + REF</td></tr>
+    <tr><td>4</td><td>Ingestion recap, Bronze layer design/build, partitioning &amp; performance</td><td class="ok">3 ILT + 2 HOL</td></tr>
+    <tr><td>5</td><td>Transformation patterns, DQ/constraints, full Silver layer build</td><td class="ok">2 ILT + 2 HOL</td></tr>
+    <tr><td>6</td><td>Kimball star schema, grain &amp; dimension design, fact table theory</td><td class="ok">3 ILT + 1 HOL</td></tr>
+    <tr><td>7</td><td>Gold layer strategy, dimensions + bridge table, fact_sales build, Z-order/Liquid Clustering</td><td class="ok">2 ILT + 3 HOL</td></tr>
+    <tr><td>8</td><td>Assessment day</td><td class="no">— intentionally skipped —</td></tr>
+    <tr><td>9</td><td>Incremental loading (watermark + CDF), control tables</td><td class="ok">3 ILT + 2 HOL</td></tr>
+    <tr><td>10</td><td>SCD Type 1/2 MERGE, incremental Gold/fact refresh</td><td class="warn">1 ILT + 2 HOL built — 2 orchestration ILTs on this calendar day deferred</td></tr>
+    <tr><td>11</td><td>Orchestration (Workflows/Jobs)</td><td class="no">Not started — no sayli source exists yet, needs fresh build</td></tr>
+    <tr><td>12–13</td><td>Unity Catalog governance, Genie</td><td class="no">Not started</td></tr>
+  </table>
+
+  <div class="warn-box">
+    <b>Before building Day 11+:</b> re-check sayli's workspace first (read-only) — it's a living environment that may have gained real content since this was last checked. Don't assume it's still empty for those topics.
+  </div>
+
+  <!-- ═══════════════════════ SECTION 8 — MD IMPORT GOTCHA ═══════════════════════ -->
+  <h2>8. The One Gotcha: LMS <code>.md</code> Import Format</h2>
+  <p>The <code>reference for making the hands/</code> folder looks like the obvious template to copy — plain headers, no frontmatter, inputs renumbering from 1 in every scenario. <b>It is not the import format.</b> It's an <i>export</i> dump (what the LMS produces when you read content back out), confirmed the hard way by a real failed import.</p>
+  <table class="compare-table">
+    <tr><th></th><th>Reference folder style (export — do NOT copy this)</th><th>Actual import format (use this)</th></tr>
+    <tr><td>Frontmatter</td><td class="no">None</td><td class="ok">YAML block: <code>name</code>, <code>content_type</code>, <code>overview</code>, <code>learning_objectives</code>, etc.</td></tr>
+    <tr><td>Input numbering</td><td class="no"><code>##### Input 1</code>, resets to 1 every new scenario</td><td class="ok"><code>## Input 1</code> … <code>## Input 30</code>, numbered <b>globally</b>, never resets</td></tr>
+  </table>
+  <div class="fix-box">Confirmed working, currently correct: <code>Day1/Day1_HOL_PySpark_SparkSQL_ADLS.md</code>. If you ever build another hands-on <code>.md</code>, copy <i>that</i> file's structure — never the reference folder's.</div>
+
+  <div class="legend">
+    This file lives at the repository root because it's a meta-reference, not tied to any single day. It won't go stale on its own — but if you reorganize folders, rename the day-numbering convention, or reach Day 11+, come back and update the relevant section here too.
+  </div>
+
+</div>
+</body>
+</html>

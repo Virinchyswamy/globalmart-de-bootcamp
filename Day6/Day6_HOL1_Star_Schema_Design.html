@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Day 6 HOL — Star Schema Design</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  h3 { font-size: 14px; color: #1f3864; margin: 18px 0 8px; }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  /* ── meta row ── */
+  .meta-row {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px;
+  }
+  .badge {
+    background: #e0e7ff; color: #3730a3; font-size: 11.5px;
+    padding: 4px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .badge.green  { background: #d1fae5; color: #065f46; }
+  .badge.orange { background: #fef3c7; color: #92400e; }
+  .badge.blue   { background: #dbeafe; color: #1e40af; }
+  .badge.red    { background: #fee2e2; color: #991b1b; }
+
+  /* ── info cards ── */
+  .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 18px; font-size: 12.5px; line-height: 1.8;
+  }
+  .card strong { display: block; color: #1f3864; font-size: 13px; margin-bottom: 6px; }
+  .card-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+
+  /* ── code block ── */
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: 10px;
+    padding: 16px 20px; font-family: monospace; font-size: 12px; line-height: 1.9;
+    margin-top: 10px; overflow-x: auto;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .fn  { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+  .code-block .var { color: #e2e8f0; }
+
+  /* ── tables ── */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+  .compare-table th { background: #1f3864; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  .compare-table tr:hover td { background: #f9fafb; }
+  .compare-table code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-family: monospace; }
+  .compare-table .ok { color: #059669; font-weight: 700; }
+  .compare-table .warn { color: #b45309; font-weight: 700; }
+
+  /* ── path diagram ── */
+  .path-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace;
+    line-height: 2.1; color: #374151;
+  }
+  .path-wrap .container { color: #0369a1; font-weight: 700; }
+  .path-wrap .folder    { color: #059669; font-weight: 700; }
+  .path-wrap .file      { color: #7c3aed; font-weight: 700; }
+  .path-wrap .bronze    { color: #b45309; font-weight: 700; }
+  .path-wrap .gold      { color: #ca8a04; font-weight: 700; }
+  .path-wrap .dim       { color: #9ca3af; }
+
+  /* ── star diagram ── */
+  .star-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 12.5px; font-family: monospace;
+    line-height: 2.1; color: #374151; text-align: center; overflow-x: auto;
+  }
+  .star-wrap .fact { color: #1f3864; font-weight: 700; }
+  .star-wrap .dimname { color: #0d9488; font-weight: 700; }
+
+  /* ── checklist ── */
+  .checklist {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 22px 26px; margin-top: 10px; font-size: 13px; line-height: 2.2;
+  }
+  .checklist .check { color: #059669; font-weight: 700; margin-right: 6px; }
+  .checklist .blank { color: #9ca3af; }
+  .checklist .line  { display: flex; gap: 12px; }
+  .checklist .label { min-width: 280px; color: #374151; }
+
+  /* ── phase pill ── */
+  .phase-pill {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px; margin-right: 8px;
+  }
+  .pill-a { background: #dbeafe; color: #1e40af; }
+  .pill-b { background: #d1fae5; color: #065f46; }
+  .pill-c { background: #fef3c7; color: #92400e; }
+  .pill-d { background: #ede9fe; color: #5b21b6; }
+
+  /* ── highlight box ── */
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+  .warn-box {
+    background: #fff7ed; border-left: 4px solid #f59e0b;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 12px; line-height: 1.7;
+  }
+
+  /* ── schedule row ── */
+  .schedule { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 10px; }
+  .sched-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 12px 14px; font-size: 12px; line-height: 1.7;
+  }
+  .sched-card .time { color: #6b7280; font-size: 11px; }
+  .sched-card.active { background: #1f3864; color: #fff; }
+  .sched-card.active .time { color: #93c5fd; }
+
+  .legend {
+    margin-top: 26px; font-size: 11.5px; color:#6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>Day 6 — Hands-On Lab: Star Schema Design</h1>
+  <p class="subtitle">GlobalMart Data Engineering Bootcamp &nbsp;|&nbsp; Quick Reference Cheatsheet</p>
+
+  <div class="meta-row">
+    <span class="badge blue">60 minutes</span>
+    <span class="badge green">Day 6 · Hands-On</span>
+    <span class="badge">Reads: gbmart.silver.*</span>
+    <span class="badge orange">Output: 6 Gold dimension tables</span>
+    <span class="badge red">fact_sales NOT built today</span>
+  </div>
+
+  <!-- ── SCHEDULE ── -->
+  <h2>Day 6 Schedule</h2>
+  <div class="schedule">
+    <div class="sched-card">
+      <div class="time">9:00 – 10:00</div>
+      <strong>ILT 1</strong> Business Process Mapping &amp; Star Schema (Kimball)
+    </div>
+    <div class="sched-card">
+      <div class="time">10:00 – 12:00</div>
+      <strong>ILT 2</strong> Grain Definition &amp; Dimension Design
+    </div>
+    <div class="sched-card">
+      <div class="time">13:00 – 14:00</div>
+      <strong>ILT 3</strong> Fact Tables Deep Dive
+    </div>
+    <div class="sched-card active">
+      <div class="time">14:00 – 15:00 ← NOW</div>
+      <strong>HOL</strong> Star Schema Design
+    </div>
+  </div>
+
+  <!-- ── SOURCE / TARGET TABLES ── -->
+  <h2>Source (Silver) → Target (Gold) Tables</h2>
+  <table class="compare-table">
+    <tr><th>Dimension Built</th><th>Silver Source</th><th>Natural Key</th><th>Surrogate Key</th></tr>
+    <tr><td><code>dim_customer</code></td><td><code>gbmart.silver.customers</code></td><td><code>customer_id</code></td><td class="ok">Reused from Silver — <code>customer_sk</code> (SCD2)</td></tr>
+    <tr><td><code>dim_product</code></td><td><code>gbmart.silver.products</code></td><td><code>product_id</code></td><td class="ok">Reused from Silver — <code>product_sk</code> (SCD2)</td></tr>
+    <tr><td><code>dim_date</code></td><td class="warn">none — generated spine</td><td>calendar date</td><td><code>date_key</code> (YYYYMMDD int, the one exception)</td></tr>
+    <tr><td><code>dim_address</code></td><td><code>gbmart.silver.address</code></td><td><code>address_id</code></td><td>Fresh in Gold — <code>sha2(address_id, 256)</code></td></tr>
+    <tr><td><code>dim_payment_method</code></td><td><code>gbmart.silver.payment_methods</code></td><td><code>payment_method_id</code></td><td>Fresh in Gold — <code>sha2(payment_method_id, 256)</code></td></tr>
+    <tr><td><code>dim_orders</code></td><td><code>gbmart.silver.orders</code></td><td><code>order_id</code></td><td>Fresh in Gold — <code>sha2(order_id, 256)</code></td></tr>
+  </table>
+  <div class="warn-box">
+    ⚠️ <code>dim_payment_method</code> sources from the small <b>lookup table</b> <code>payment_methods</code> (~5 rows), <b>not</b> the transactional <code>payments</code> table (payment events per order — gift card / coupon usage). Reading the wrong one is the most common mix-up in this HOL.
+  </div>
+
+  <!-- ── SETUP ── -->
+  <h2>Setup: Unity Catalog Schemas</h2>
+  <p>No storage account key needed — Unity Catalog manages access to <code>silver</code> and <code>gold</code> transparently.</p>
+  <div class="code-block">
+<span class="cmt"># ─── Unity Catalog Setup ─────────────────────────────────────────────────────</span><br>
+<span class="var">CATALOG</span> = <span class="str">"gbmart"</span><br>
+<span class="var">SILVER</span>&nbsp; = <span class="fn">f</span><span class="str">"{CATALOG}.silver"</span><br>
+<span class="var">GOLD</span>&nbsp;&nbsp;&nbsp; = <span class="fn">f</span><span class="str">"{CATALOG}.gold"</span><br>
+<br>
+<span class="var">spark</span>.<span class="fn">sql</span>(<span class="fn">f</span><span class="str">"CREATE SCHEMA IF NOT EXISTS {GOLD}"</span>)<br>
+<br>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Silver schema : {SILVER}"</span>)<br>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Gold schema   : {GOLD}"</span>)
+  </div>
+
+  <!-- ── PHASE A ── -->
+  <h2><span class="phase-pill pill-a">Phase A</span> Design Before You Build</h2>
+  <p>Put this morning's ILT design on paper before writing PySpark. <b>A1</b> — write the <code>fact_sales</code> grain sentence. <b>A2</b> — fill in source table / natural key / surrogate key for all 6 dimensions. <b>A3</b> — sketch the star.</p>
+
+  <div class="star-wrap">
+                       <span class="dimname">dim_customer</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="dimname">dim_orders</span><br>
+                              \&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/<br>
+    <span class="dimname">dim_payment_method</span> ── <span class="fact">fact_sales</span> ── <span class="dimname">dim_product</span><br>
+                              /&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\<br>
+                       <span class="dimname">dim_date</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="dimname">dim_address</span>
+  </div>
+  <div class="info-box">
+    <b>fact_sales</b> (built Day 7) sits in the middle: one row per order line item, holding <code>Quantity_purchased</code>, <code>Actual_price</code>, <code>Discounted_price</code>, <code>Sales_amount</code>, plus a natural-key reference to each of the 6 points of this star. Today we build the 6 points. The center gets built next.
+  </div>
+
+  <!-- ── PHASE B ── -->
+  <h2><span class="phase-pill pill-b">Phase B</span> dim_date (generated — no source table)</h2>
+  <p>Every other dimension comes from a Silver table. <code>dim_date</code> doesn't — no source system ships a "list of all dates." Generate it once, <b>sized to the data, not an arbitrary range</b>: pull the real bounds straight from <code>silver.orders</code> (earliest <code>order_date</code>, latest <code>actual_delivery_date</code>) and generate exactly that range.</p>
+
+  <div class="code-block">
+<span class="cmt"># ─── Generate the date spine, sized to the data — not an arbitrary range ─────</span><br>
+<span class="cmt"># Pull real bounds from silver.orders so the spine covers every date fact_sales</span><br>
+<span class="cmt"># will ever need, with no wasted rows either side.</span><br>
+<span class="var">date_bounds</span> = <span class="var">spark</span>.<span class="fn">table</span>(<span class="fn">f</span><span class="str">"{SILVER}.orders"</span>).<span class="fn">select</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">spark_min</span>(<span class="str">"order_date"</span>).<span class="fn">alias</span>(<span class="str">"min_date"</span>),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">spark_max</span>(<span class="str">"actual_delivery_date"</span>).<span class="fn">alias</span>(<span class="str">"max_date"</span>)<br>
+).<span class="fn">collect</span>()[<span class="num">0</span>]<br>
+<br>
+<span class="var">min_date</span>, <span class="var">max_date</span> = <span class="var">date_bounds</span>[<span class="str">"min_date"</span>], <span class="var">date_bounds</span>[<span class="str">"max_date"</span>]<br>
+<br>
+<span class="var">date_spine_df</span> = <span class="var">spark</span>.<span class="fn">sql</span>(<span class="fn">f</span><span class="str">'''</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">SELECT</span> <span class="fn">explode</span>(<span class="fn">sequence</span>(<span class="fn">to_date</span>(<span class="str">'{min_date}'</span>), <span class="fn">to_date</span>(<span class="str">'{max_date}'</span>), <span class="kw">interval</span> <span class="num">1</span> <span class="kw">day</span>)) <span class="kw">AS</span> <span class="var">full_date</span><br>
+<span class="str">'''</span>)
+  </div>
+
+  <h3>Derive Calendar Attributes + <code>date_key</code></h3>
+  <p><code>date_key</code> is the <b>one deliberate exception</b> to the "reuse or hash the natural key" convention used everywhere else in this notebook — Kimball's long-standing convention for date dimensions is an integer <code>YYYYMMDD</code> key: human-readable and it sorts correctly in plain numeric order, unlike a hash. Naming matters: the plain calendar column is named <code>date</code> (not <code>full_date</code>) — that's the exact name Day 7's <code>fact_sales</code> build looks up when it joins <code>order_date</code> against this table.</p>
+  <div class="code-block">
+<span class="var">dim_date_df</span> = (<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">date_spine_df</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"date_key"</span>,&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">date_format</span>(<span class="fn">col</span>(<span class="str">"full_date"</span>), <span class="str">"yyyyMMdd"</span>).<span class="fn">cast</span>(<span class="str">"int"</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"date"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">col</span>(<span class="str">"full_date"</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"day_of_week"</span>, <span class="fn">date_format</span>(<span class="fn">col</span>(<span class="str">"full_date"</span>), <span class="str">"EEEE"</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"month"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">month</span>(<span class="fn">col</span>(<span class="str">"full_date"</span>)))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"quarter"</span>,&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">quarter</span>(<span class="fn">col</span>(<span class="str">"full_date"</span>)))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"year"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">year</span>(<span class="fn">col</span>(<span class="str">"full_date"</span>)))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"is_weekend"</span>,&nbsp;<span class="fn">dayofweek</span>(<span class="fn">col</span>(<span class="str">"full_date"</span>)).<span class="fn">isin</span>([<span class="num">1</span>, <span class="num">7</span>]))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">select</span>(<span class="str">"date_key"</span>, <span class="str">"date"</span>, <span class="str">"day_of_week"</span>, <span class="str">"month"</span>, <span class="str">"quarter"</span>, <span class="str">"year"</span>, <span class="str">"is_weekend"</span>)<br>
+)<br>
+<br>
+<span class="var">dim_date_df</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">saveAsTable</span>(<span class="fn">f</span><span class="str">"{GOLD}.dim_date"</span>)
+  </div>
+
+  <!-- ── PHASE C ── -->
+  <h2><span class="phase-pill pill-c">Phase C</span> The Other 5 Dimensions</h2>
+  <p>For each: inspect the real Silver schema first, then build it. Two of these five (<code>dim_customer</code>, <code>dim_product</code>) <b>reuse</b> a surrogate key and SCD2 tracking columns Silver already generated on Day 5 — Gold's job is to <i>republish</i> Silver's already-versioned rows, not regenerate anything. The other three (<code>dim_address</code>, <code>dim_payment_method</code>, <code>dim_orders</code>) get a fresh <code>sha2()</code>-based surrogate key generated here in Gold. Order: smallest/simplest first, then the bigger ones.</p>
+
+  <h3>Inspect-First Pattern (repeat for every dimension)</h3>
+  <div class="code-block">
+<span class="cmt"># If your actual column names differ, THIS cell tells you — adjust select() below to match.</span><br>
+<span class="var">silver_payment_methods</span> = <span class="var">spark</span>.<span class="fn">table</span>(<span class="fn">f</span><span class="str">"{SILVER}.payment_methods"</span>)<br>
+<span class="var">silver_payment_methods</span>.<span class="fn">printSchema</span>()<br>
+<span class="var">silver_payment_methods</span>.<span class="fn">display</span>()
+  </div>
+
+  <div class="card-2col">
+    <div>
+      <h3>C1 — dim_payment_method (silver.payment_methods, key: payment_method_id)</h3>
+      <div class="code-block" style="margin-top:6px;">
+<span class="var">dim_payment_method_df</span> = (<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">silver_payment_methods</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">select</span>(<span class="str">"payment_method_id"</span>, <span class="str">"method_name"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"payment_method_sk"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">sha2</span>(<span class="fn">col</span>(<span class="str">"payment_method_id"</span>).<span class="fn">cast</span>(<span class="str">"string"</span>), <span class="num">256</span>))<br>
+)<br>
+<span class="var">dim_payment_method_df</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">saveAsTable</span>(<span class="fn">f</span><span class="str">"{GOLD}.dim_payment_method"</span>)
+      </div>
+      <p style="margin-top:6px;font-size:11.5px;">⚠️ Sources from the lookup table <code>payment_methods</code>, not the transactional <code>payments</code> table.</p>
+    </div>
+    <div>
+      <h3>C2 — dim_customer (silver.customers, SCD2 — key: customer_id)</h3>
+      <div class="code-block" style="margin-top:6px;">
+<span class="cmt"># customer_sk / is_current / effective_start_date / effective_end_date</span><br>
+<span class="cmt"># already exist on silver.customers -- SELECT as-is, don't re-hash.</span><br>
+<span class="var">dim_customer_df</span> = (<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">silver_customers</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">select</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"customer_sk"</span>, <span class="str">"customer_id"</span>, <span class="str">"full_name"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"email"</span>, <span class="str">"phone_number"</span>, <span class="str">"is_current"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"effective_start_date"</span>, <span class="str">"effective_end_date"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+)<br>
+<span class="var">dim_customer_df</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">saveAsTable</span>(<span class="fn">f</span><span class="str">"{GOLD}.dim_customer"</span>)
+      </div>
+      <p style="margin-top:6px;font-size:11.5px;">Regenerating <code>sha2(customer_id)</code> here would silently collapse SCD2 history back to one row per customer — don't.</p>
+    </div>
+  </div>
+
+  <div class="card-2col" style="margin-top:14px;">
+    <div>
+      <h3>C3 — dim_product (silver.products, SCD2 — key: product_id)</h3>
+      <div class="code-block" style="margin-top:6px;">
+<span class="var">dim_product_df</span> = (<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">silver_products</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">select</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"product_sk"</span>, <span class="str">"product_id"</span>, <span class="str">"product_name"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"category"</span>, <span class="str">"sub_category"</span>, <span class="str">"discounted_price_inr"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"is_current"</span>, <span class="str">"effective_start_date"</span>, <span class="str">"effective_end_date"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+)<br>
+<span class="var">dim_product_df</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">saveAsTable</span>(<span class="fn">f</span><span class="str">"{GOLD}.dim_product"</span>)
+      </div>
+      <p style="margin-top:6px;font-size:11.5px;">Conformed dimension: a future <code>fact_returns</code> would reuse these exact <code>product_sk</code> values.</p>
+    </div>
+    <div>
+      <h3>C4 — dim_address (silver.address, key: address_id)</h3>
+      <div class="code-block" style="margin-top:6px;">
+<span class="var">dim_address_df</span> = (<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">silver_address</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">select</span>(<span class="str">"address_id"</span>, <span class="str">"customer_id"</span>, <span class="str">"city"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"state"</span>, <span class="str">"pincode"</span>, <span class="str">"address_type"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"address_sk"</span>, <span class="fn">sha2</span>(<span class="fn">col</span>(<span class="str">"address_id"</span>).<span class="fn">cast</span>(<span class="str">"string"</span>), <span class="num">256</span>))<br>
+)<br>
+<span class="var">dim_address_df</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">saveAsTable</span>(<span class="fn">f</span><span class="str">"{GOLD}.dim_address"</span>)
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:14px;">C5 — dim_orders (silver.orders, key: order_id) — the sixth dimension</h3>
+  <div class="code-block">
+<span class="var">dim_orders_df</span> = (<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">silver_orders</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">select</span>(<span class="str">"order_id"</span>, <span class="str">"customer_id"</span>, <span class="str">"order_date"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"shipping_tier_id"</span>, <span class="str">"supplier_id"</span>, <span class="str">"order_channel"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"order_sk"</span>, <span class="fn">sha2</span>(<span class="fn">col</span>(<span class="str">"order_id"</span>).<span class="fn">cast</span>(<span class="str">"string"</span>), <span class="num">256</span>))<br>
+)<br>
+<span class="var">dim_orders_df</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">saveAsTable</span>(<span class="fn">f</span><span class="str">"{GOLD}.dim_orders"</span>)
+  </div>
+  <div class="warn-box">
+    ⚠️ <b>Heads-up for Day 7:</b> <code>fact_sales</code> carries <code>Order_ID</code> directly as a natural key — it does <b>not</b> join through <code>dim_orders.order_sk</code>. <code>dim_orders</code> still exists as its own Gold table (built here); it's just not the fact table's chosen join path. ILT 3 revisits this under "degenerate dimensions." Similarly, a customer can have more than one address — that many-to-many is resolved in Day 7's fact build via window-function ranking, <b>not</b> a bridge table.
+  </div>
+
+  <!-- ── PHASE D ── -->
+  <h2><span class="phase-pill pill-d">Phase D</span> Verify All 6 Dimensions</h2>
+  <div class="code-block">
+<span class="var">dimensions</span> = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"dim_customer"</span>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"customer_sk"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"dim_product"</span>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"product_sk"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"dim_date"</span>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"date_key"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"dim_address"</span>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"address_sk"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"dim_payment_method"</span>: <span class="str">"payment_method_sk"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"dim_orders"</span>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"order_sk"</span>,<br>
+}<br>
+<br>
+<span class="kw">for</span> <span class="var">table</span>, <span class="var">sk_col</span> <span class="kw">in</span> <span class="var">dimensions</span>.<span class="fn">items</span>():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">df</span> = <span class="var">spark</span>.<span class="fn">table</span>(<span class="fn">f</span><span class="str">"{GOLD}.{table}"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="var">table</span>, <span class="var">df</span>.<span class="fn">count</span>(), <span class="var">df</span>.<span class="fn">select</span>(<span class="var">sk_col</span>).<span class="fn">distinct</span>().<span class="fn">count</span>())
+  </div>
+  <div class="info-box">
+    Row count should equal distinct surrogate-key count for every dimension — that's your uniqueness check.
+  </div>
+
+  <table class="compare-table" style="margin-top:14px;">
+    <tr><th>Gold Table</th><th>Status After This HOL</th></tr>
+    <tr><td><code>gbmart.gold.dim_customer</code></td><td class="ok">Built</td></tr>
+    <tr><td><code>gbmart.gold.dim_product</code></td><td class="ok">Built</td></tr>
+    <tr><td><code>gbmart.gold.dim_date</code></td><td class="ok">Built</td></tr>
+    <tr><td><code>gbmart.gold.dim_address</code></td><td class="ok">Built (address one-to-many resolved in Day 7's fact build, not here)</td></tr>
+    <tr><td><code>gbmart.gold.dim_payment_method</code></td><td class="ok">Built</td></tr>
+    <tr><td><code>gbmart.gold.dim_orders</code></td><td class="ok">Built (the 6th dimension)</td></tr>
+    <tr><td><code>gbmart.gold.fact_sales</code></td><td class="warn">NOT built — Day 7 "Build Gold Layer"</td></tr>
+  </table>
+
+  <!-- ── SUBMISSION CHECKLIST ── -->
+  <h2>Submission Checklist</h2>
+  <div class="checklist">
+    <div class="line"><span class="check">☐</span><span class="label"><code>gbmart.gold</code> schema created</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Grain sentence written (Phase A1)</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">6-dimension design table filled in (Phase A2)</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Star sketch reviewed (Phase A3)</span></div>
+    <div class="line"><span class="check">☐</span><span class="label"><code>dim_date</code> built — row count recorded</span></div>
+    <div class="line"><span class="check">☐</span><span class="label"><code>dim_payment_method</code> built from the lookup table (not <code>payments</code>)</span></div>
+    <div class="line"><span class="check">☐</span><span class="label"><code>dim_customer</code> built — row count recorded</span></div>
+    <div class="line"><span class="check">☐</span><span class="label"><code>dim_product</code> built — row count recorded</span></div>
+    <div class="line"><span class="check">☐</span><span class="label"><code>dim_address</code> built — row count recorded</span></div>
+    <div class="line"><span class="check">☐</span><span class="label"><code>dim_orders</code> built — row count recorded (the 6th dimension)</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">All 6 surrogate keys confirmed unique (Phase D)</span></div>
+    <div class="line"><span class="check">☐</span><span class="label">Confirmed: <code>fact_sales</code> NOT built today — that's Day 7</span></div>
+  </div>
+
+  <div class="legend">
+    Day 6 HOL — Pairs with <b>Day6_HOL1_Star_Schema_Design.ipynb</b>. Silver column names assumed snake_case per this course's cleaned-column convention; if Day 5's actual output differs, the <code>printSchema()</code>/<code>display()</code> cell before each dimension build surfaces the mismatch at one clearly-marked spot.
+  </div>
+
+</div>
+</body>
+</html>
