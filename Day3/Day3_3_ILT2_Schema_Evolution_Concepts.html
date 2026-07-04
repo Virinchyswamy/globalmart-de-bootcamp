@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 3 | ILT 2 — Autoloader &amp; Schema Evolution Concepts</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 3 · ILT 2 — Autoloader &amp; Schema Evolution</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 19</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Autoloader &amp; Schema Evolution Concepts</h1>
+    <p class="subtitle">Why schemas always change in production, and how Auto Loader + Delta Lake absorb that change without crashing your pipeline</p>
+    <div class="badge">Day 3 &nbsp;·&nbsp; ILT 2 &nbsp;·&nbsp; 2:00 – 3:00 PM</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      Core pipeline content → this is the real GlobalMart build, not a side-exploration
+    </div>
+  </div>
+
+  <!-- SLIDE: OBJECTIVES -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>Session Objectives</h2>
+    <div class="two-col" style="margin-top:20px;">
+      <div class="card">
+        <h4>By the end of this session, you can:</h4>
+        <ul>
+          <li>Explain what Autoloader is, why it exists, and its required configuration</li>
+          <li>Explain what schema evolution is and why it happens in production</li>
+          <li>Identify the 4 types of schema change and their risk level</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>And configure:</h4>
+        <ul>
+          <li>Auto Loader to handle new columns automatically (<code>schemaEvolutionMode</code>)</li>
+          <li><code>mergeSchema</code> and <code>overwriteSchema</code> on Delta writes</li>
+          <li>Describe <code>_rescued_data</code> and how checkpointing gives fault tolerance</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: AGENDA -->
+  <div class="slide slide-content">
+    <h3>Agenda</h3>
+    <table class="sql-table">
+      <tr><th>Time</th><th>Topic</th></tr>
+      <tr><td>2:00</td><td>Autoloader primer — mechanics before modes</td></tr>
+      <tr><td>2:10</td><td>What is schema evolution and why it matters</td></tr>
+      <tr><td>2:15</td><td>4 types of schema change — risk levels</td></tr>
+      <tr><td>2:25</td><td>How Auto Loader handles schema changes</td></tr>
+      <tr><td>2:35</td><td>How Delta Lake handles schema changes</td></tr>
+      <tr><td>2:45</td><td>GlobalMart scenario walkthrough + checkpointing/fault tolerance</td></tr>
+      <tr><td>2:55</td><td>Best practices + Q&amp;A</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: WHAT IS SCHEMA EVOLUTION -->
+  <div class="slide slide-content">
+    <h3>What Is Schema Evolution?</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          <strong style="color:#e2e8f0;">Schema</strong> = the structure of your data: column names, data types, nullability. <strong style="color:#e2e8f0;">Schema evolution</strong> = that structure changes over time as the business changes — a new column, a rename, a data type swap.
+        </p>
+        <div class="highlight-box">
+          <p>In the real world, schemas <strong style="color:#38bdf8;">always</strong> evolve. Your pipeline must handle it gracefully — or it will crash.</p>
+        </div>
+      </div>
+      <div>
+<pre>DAY 1:   orders.csv has 8 columns
+         OrderID, CustomerID, OrderDate, ...
+
+DAY 90:  Supplier adds a new column
+         → PremiumFlag
+
+DAY 180: Marketing renames a column
+         → OrderChannel becomes SalesChannel
+
+DAY 270: Finance changes a data type
+         → TotalAmount: string becomes decimal</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: RISK TABLE -->
+  <div class="slide slide-content">
+    <h3>The Risk Without Schema Handling</h3>
+    <table class="sql-table">
+      <tr><th>Scenario</th><th>Without Schema Handling</th><th>With Schema Handling</th></tr>
+      <tr><td>New column added</td><td>Pipeline crashes</td><td>New column added automatically</td></tr>
+      <tr><td>Column removed</td><td>Pipeline crashes</td><td>Missing column shows as null</td></tr>
+      <tr><td>Type changes</td><td>Silent data corruption</td><td>Error caught early</td></tr>
+      <tr><td>Column renamed</td><td>Wrong data in wrong column</td><td>Handled via column mapping</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: SECTION 4 TYPES -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 2</div>
+    <h2>The 4 Types of Schema Change</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Not all schema changes carry the same risk. Two are usually safe to automate; two need a human decision.
+    </p>
+  </div>
+
+  <!-- SLIDE: TYPE 1 + 2 -->
+  <div class="slide slide-content">
+    <h3>Types 1 &amp; 2 — Additive and Subtractive</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Type 1 — Additive 🟢 Low Risk</h4>
+<pre>BEFORE: OrderID | CustomerID | OrderDate
+AFTER:  OrderID | CustomerID | OrderDate | PremiumFlag ← new</pre>
+        <ul style="margin-top:10px;">
+          <li>Safest change — backward compatible</li>
+          <li>Existing rows get <code>null</code> for the new column</li>
+          <li><strong>Most common in production</strong></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Type 2 — Subtractive 🟡 Medium Risk</h4>
+<pre>BEFORE: OrderID | CustomerID | OrderDate | LegacyCode
+AFTER:  OrderID | CustomerID | OrderDate     ← LegacyCode gone</pre>
+        <ul style="margin-top:10px;">
+          <li>Downstream dashboards referencing <code>LegacyCode</code> will break</li>
+          <li>Bronze layer should <strong>KEEP</strong> the column (fill null) — never drop Bronze columns</li>
+          <li>Silver/Gold can drop it intentionally</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: TYPE 3 + 4 -->
+  <div class="slide slide-content">
+    <h3>Types 3 &amp; 4 — Rename and Type Change</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Type 3 — Rename 🔴 High Risk</h4>
+<pre>BEFORE: OrderID | OrderChannel
+AFTER:  OrderID | SalesChannel  ← renamed from OrderChannel</pre>
+        <ul style="margin-top:10px;">
+          <li>Looks like remove + add — double impact</li>
+          <li>Without column mapping: historical data appears to vanish</li>
+          <li>Requires careful source/pipeline coordination</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Type 4 — Type Change 🔴 High Risk</h4>
+<pre>BEFORE: TotalAmount STRING  → "1234.56"
+AFTER:  TotalAmount DECIMAL → 1234.56</pre>
+        <ul style="margin-top:10px;">
+          <li>Widening (int → long): usually safe</li>
+          <li>Narrowing (decimal → string): data loss risk</li>
+          <li>Best practice: pin your schema explicitly for critical columns</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: AUTOLOADER MODES -->
+  <div class="slide slide-content">
+    <h3>How Auto Loader Handles Schema Changes</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">Auto Loader has a dedicated option: <code>cloudFiles.schemaEvolutionMode</code></p>
+    <table class="sql-table">
+      <tr><th>Mode</th><th>Behaviour</th><th>Use When</th></tr>
+      <tr><td><code>addNewColumns</code></td><td>Adds new columns automatically, updates schema location</td><td><strong>Default — use this in production</strong></td></tr>
+      <tr><td><code>rescue</code></td><td>Keeps existing schema strict, stores unexpected data in <code>_rescued_data</code></td><td>Strict pipelines that must audit unexpected fields</td></tr>
+      <tr><td><code>failOnNewColumns</code></td><td>Stream fails if a new column appears</td><td>Compliance pipelines where any change must be reviewed</td></tr>
+      <tr><td><code>none</code></td><td>Ignores new columns — silently dropped</td><td>Legacy pipelines with externally-controlled schema</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: addNewColumns CODE -->
+  <div class="slide slide-content">
+    <h3>Mode: <code>addNewColumns</code> (What We Use)</h3>
+    <div class="two-col">
+      <div>
+<pre>raw_stream = (
+    spark.readStream
+    .format(<span class="str">"cloudFiles"</span>)
+    .option(<span class="str">"cloudFiles.format"</span>, <span class="str">"csv"</span>)
+    .option(<span class="str">"cloudFiles.schemaLocation"</span>, schema_path)
+    .option(<span class="str">"cloudFiles.schemaEvolutionMode"</span>,
+            <span class="str">"addNewColumns"</span>)  <span class="cm"># ← key option</span>
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>)
+    .load(raw_path)
+)</pre>
+      </div>
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">What happens when a new column appears:</p>
+        <ol class="order-list">
+          <li>Auto Loader detects <code>PremiumFlag</code> in the new file</li>
+          <li>Updates the schema stored at <code>schema_path</code></li>
+          <li>Stream restarts automatically with the new schema</li>
+          <li>New column is written to the Bronze Delta table</li>
+          <li>Historical rows get <code>null</code> for <code>PremiumFlag</code></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: SCHEMA LOCATION -->
+  <div class="slide slide-content">
+    <h3>The Schema Location — Why It Matters</h3>
+    <div class="two-col">
+      <div>
+<pre>_autoloader/schemas/orders_demo/
+    schema   ← current inferred schema (JSON)</pre>
+      </div>
+      <div class="card">
+        <ul>
+          <li>Auto Loader stores the schema here between runs</li>
+          <li>On restart, it loads from this location — it does not re-infer from scratch</li>
+          <li>Deleting this folder (Clean Start) forces a fresh re-infer</li>
+          <li>Keeps schema consistent across restarts — prevents silent drift</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: RESCUED DATA -->
+  <div class="slide slide-content">
+    <h3>The <code>_rescued_data</code> Column</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">When <code>schemaEvolutionMode = rescue</code>, Auto Loader adds a special safety-net column:</p>
+<pre>Incoming row:  OrderID=001 | CustomerID=C01 | NewUnexpectedColumn=XYZ
+Schema says:   OrderID, CustomerID  (knows nothing about NewUnexpectedColumn)
+
+Result:
+  OrderID       = 001
+  CustomerID    = C01
+  _rescued_data = {"NewUnexpectedColumn": "XYZ"}  ← stored as JSON string</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Use case:</strong> audit pipelines that want to capture ALL incoming data without breaking the schema, then review <code>_rescued_data</code> later to decide whether to add the column officially.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p>Think of <code>_rescued_data</code> as a <strong style="color:#22c55e;">safety net</strong> — nothing is lost, you just decide later what to do with it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: DELTA HANDLES SCHEMA -->
+  <div class="slide slide-content">
+    <h3>How Delta Lake Handles Schema Changes</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">Even after Auto Loader handles the incoming schema, the <strong>Delta table</strong> also needs to accept the change.</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>Option 1 — <code>mergeSchema=true</code> (Additive Only)</h4>
+<pre>raw_stream.writeStream
+  .format(<span class="str">"delta"</span>)
+  .option(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>)  <span class="cm"># new cols added</span>
+  .option(<span class="str">"checkpointLocation"</span>, checkpoint_path)
+  .start(output_path)</pre>
+        <p style="margin-top:10px;">New columns added, historical rows get <code>null</code>. <strong>This is what we use in the Auto Loader demo.</strong></p>
+      </div>
+      <div class="card">
+        <h4>Option 2 — <code>overwriteSchema=true</code> (Destructive)</h4>
+<pre>df.write.format(<span class="str">"delta"</span>) \
+  .option(<span class="str">"overwriteSchema"</span>, <span class="str">"true"</span>) \
+  .mode(<span class="str">"overwrite"</span>) \
+  .save(output_path)</pre>
+        <div class="highlight-box warn" style="margin-top:10px;">
+          <p><strong style="color:#f59e0b;">Replaces the ENTIRE schema</strong> — dangerous on production tables. Batch-only; development or full-reload use only.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: COLUMN MAPPING -->
+  <div class="slide slide-content">
+    <h3>Option 3 — Delta Column Mapping (Rename Support)</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="kw">ALTER TABLE</span> delta.`/path/to/table`
+<span class="kw">SET TBLPROPERTIES</span> (
+    <span class="str">'delta.columnMapping.mode'</span> = <span class="str">'name'</span>,
+    <span class="str">'delta.minReaderVersion'</span>   = <span class="str">'2'</span>,
+    <span class="str">'delta.minWriterVersion'</span>   = <span class="str">'5'</span>
+);
+
+<span class="kw">ALTER TABLE</span> delta.`/path/to/table`
+<span class="kw">RENAME COLUMN</span> OrderChannel <span class="kw">TO</span> SalesChannel;</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p>No data rewrite — just updates Delta metadata. Historical data is instantly accessible under the new name, because Delta stores a mapping: <code>SalesChannel → physical_col_id_7</code>. Requires <code>minReaderVersion=2</code>, <code>minWriterVersion=5</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: GLOBALMART SCENARIO -->
+  <div class="slide slide-content">
+    <h3>GlobalMart Scenario — Schema Evolution in Practice</h3>
+    <table class="sql-table">
+      <tr><th>Week</th><th>What Happens</th><th>Pipeline Response</th></tr>
+      <tr><td>Week 1</td><td>Supplier sends <code>orders.csv</code> with 8 columns</td><td>Autoloader ingests → Bronze has 8 cols + <code>_ingested_at</code> + <code>_source_file</code></td></tr>
+      <tr><td>Week 4</td><td>Supplier adds <code>PremiumFlag</code></td><td><code>addNewColumns</code> detects it, <code>mergeSchema</code> adds it to Bronze. Weeks 1–3 rows: <code>null</code></td></tr>
+      <tr><td>Week 8</td><td>Marketing renames <code>OrderChannel</code> → <code>SalesChannel</code></td><td>Both columns exist in Bronze (historical preserved). Needs a manual <code>RENAME COLUMN</code> to merge cleanly</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">The key insight:</strong> Auto Loader + <code>mergeSchema</code> handles additive changes automatically. Renames require a manual <code>ALTER TABLE RENAME COLUMN</code> step.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: DECISION FRAMEWORK -->
+  <div class="slide slide-content">
+    <h3>Summary — Decision Framework</h3>
+    <table class="sql-table">
+      <tr><th>Change Type</th><th>Action</th></tr>
+      <tr><td>New column added</td><td><code>addNewColumns</code> + <code>mergeSchema=true</code> — handled automatically ✅</td></tr>
+      <tr><td>Column removed from source</td><td>Keep column in Bronze (fill null); drop intentionally in Silver ✅</td></tr>
+      <tr><td>Column renamed</td><td>Short term: two columns co-exist. Long term: <code>ALTER TABLE RENAME COLUMN</code> with column mapping ✅</td></tr>
+      <tr><td>Data type changed</td><td>Cast explicitly in Silver — never rely on <code>inferSchema</code> for type changes ✅</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: KEY TAKEAWAYS -->
+  <div class="slide slide-content">
+    <h3>Key Takeaways</h3>
+    <ol class="order-list">
+      <li><strong>Schemas always evolve</strong> — build your pipeline to expect it, not avoid it</li>
+      <li><strong>addNewColumns</strong> is the right Auto Loader mode for ~95% of production cases</li>
+      <li><strong>mergeSchema=true</strong> on every writeStream — no reason not to have it</li>
+      <li><strong>Never drop Bronze columns</strong> — absorb the change, decide in Silver</li>
+      <li><strong>_rescued_data</strong> is your audit safety net for strict pipelines</li>
+      <li><strong>Type changes</strong> are the sneakiest — always cast explicitly in Silver</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE: DISCUSSION QUESTIONS -->
+  <div class="slide slide-content">
+    <h3>Discussion Questions</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>1. New columns</h4>
+        <p>You receive a new CSV with 5 extra columns you've never seen. What happens with <code>addNewColumns</code>? What happens with <code>failOnNewColumns</code>?</p>
+      </div>
+      <div class="card">
+        <h4>2. A "simple" rename</h4>
+        <p>A column is renamed from <code>OrderChannel</code> to <code>SalesChannel</code>. A junior engineer suggests just dropping the old column and adding the new one in Bronze. What's the problem?</p>
+      </div>
+      <div class="card">
+        <h4>3. Why is overwriteSchema dangerous?</h4>
+        <p>Why is <code>overwriteSchema=true</code> dangerous on a production Bronze table?</p>
+      </div>
+      <div class="card">
+        <h4>4. A real GlobalMart column</h4>
+        <p>In the GlobalMart pipeline, <code>shipping_tier.csv</code> has a column named <code>Cost (Rs)</code>. What problem does this cause, and how do we fix it? <em>(Preview of today's Autoloader demo.)</em></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>Hands-On Next: Building Real Bronze Tables</h2>
+    <p style="color:#94a3b8; max-width:620px; margin-top:12px; font-size:15px;">
+      Next up (3:00 PM – 4:00 PM): <strong style="color:#38bdf8;">Day3_HOL2 — ADLS → Autoloader → Bronze (Customers + Payments)</strong>. Build the real Bronze tables for <code>customers</code> and <code>payments</code> using everything covered here.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:900px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>4 types of schema change, <code>addNewColumns</code>, <code>mergeSchema</code>, <code>_rescued_data</code></p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>A live Autoloader demo, then HOL 2 (3:00 PM): real Bronze tables</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Which schema change type needs a manual step, and why?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

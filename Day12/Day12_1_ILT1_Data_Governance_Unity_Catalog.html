@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 12 | ILT 1 — Data Governance: Unity Catalog</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 12 · ILT 1 — Data Governance: Unity Catalog</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 20</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Data Governance: Unity Catalog</h1>
+    <p class="subtitle">Who can touch what, which rows they see, which column values they see, and proving where a number actually came from</p>
+    <div class="badge">Day 12 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; 9:30–10:30 AM</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → Permissions · Row Filters · Masking · Lineage
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>Four Mechanisms, Covered in Order</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>🔑 Permissions</h4>
+        <ul>
+          <li>Who can touch what — <code>GRANT</code>/<code>REVOKE</code>, one hierarchy, four levels</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>👁️ Row Filters &amp; Masking</h4>
+        <ul>
+          <li>Which rows they see, which column values they see — enforced automatically for every reader</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🧬 Lineage</h4>
+        <ul>
+          <li>Proving, after the fact, where a number actually came from</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box success" style="margin-top:20px;">
+      <p><strong style="color:#22c55e;">Safety, upfront:</strong> every <code>ALTER TABLE</code>, <code>CREATE FUNCTION</code>, <code>GRANT</code>, and <code>REVOKE</code> that actually runs in today's demo targets only your own practice schema (<code>main.YOUR_SCHEMA</code>) — never any <code>gbmart.*</code> object. The only things this session does against the real <code>gbmart</code> catalog are <code>SHOW GRANTS</code>, <code>DESCRIBE HISTORY</code>, and plain <code>SELECT</code>s — all non-destructive, read-only.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: WHY THIS, NOW -->
+  <div class="slide slide-content">
+    <h3>Why This, Now</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          By Day 7 you had one shared <code>gbmart.gold</code> layer, built from GlobalMart's <strong style="color:#e2e8f0;">2 real ingestion pathways</strong> — ADLS Autoloader files and the Postgres/Supabase CDC pipeline. That's exactly the moment governance stops being theoretical: the same <code>fact_sales</code> and <code>dim_customer</code> tables now get queried by data engineers, analysts, a future Genie space (this afternoon's topic), and eventually external auditors.
+        </p>
+        <div class="highlight-box">
+          <p>Not all of them should see the same thing. An analyst needs <code>SELECT</code> on <code>gold</code>, not <code>MODIFY</code>. A regional sales lead should only see their own region's rows. Nobody outside HR should see a raw customer email address.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Unity Catalog's Four Answers</h4>
+          <ul>
+            <li><strong>Permissions</strong> — who can touch what</li>
+            <li><strong>Row filters</strong> — which rows they see</li>
+            <li><strong>Masking</strong> — which column values they see</li>
+            <li><strong>Lineage</strong> — proving where a number came from, after the fact</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: SECTION 1 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 1</div>
+    <h2>The Permissions Model</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      One hierarchy, four levels. Every privilege you grant sits at one of these levels — and grants are inherited downward.
+    </p>
+  </div>
+
+  <!-- SLIDE 5: HIERARCHY -->
+  <div class="slide slide-content">
+    <h3>One Hierarchy, Four Levels</h3>
+    <div class="two-col">
+      <div>
+<pre>metastore                     <span class="cm"># one per region/account</span>
+  |-- gbmart                  <span class="tbl">CATALOG</span>
+        |-- bronze            <span class="tbl">SCHEMA</span>
+        |     |-- customers, orders, ...   <span class="cm">TABLE</span>
+        |-- silver            <span class="tbl">SCHEMA</span>
+        |     |-- customers, orders, ...   <span class="cm">TABLE</span>
+        |-- gold              <span class="tbl">SCHEMA</span>
+              |-- dim_customer   <span class="cm">TABLE</span>
+              |-- dim_product    <span class="cm">TABLE</span>
+              |-- fact_sales     <span class="cm">TABLE</span></pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Functions and views sit at the same level as tables</strong> — including the row-filter and masking functions built later in this session. They're securable objects inside a schema too.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: PRINCIPALS AND PRIVILEGES -->
+  <div class="slide slide-content">
+    <h3>Principals and the Standard Privilege Set</h3>
+    <div class="two-col">
+      <div>
+        <table class="sql-table">
+          <tr><th>Principal type</th><th>Typical use</th></tr>
+          <tr><td>User</td><td>One person's own login/access</td></tr>
+          <tr><td>Group</td><td>The normal case — grant to a group, add/remove members, never re-grant</td></tr>
+          <tr><td>Service principal</td><td>Jobs, pipelines, automation — no human login</td></tr>
+        </table>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Privilege</th><th>Grants...</th></tr>
+          <tr><td><code>USE CATALOG</code> / <code>USE SCHEMA</code></td><td>"Step into" — necessary but not sufficient alone</td></tr>
+          <tr><td><code>SELECT</code></td><td>Read rows from a table/view</td></tr>
+          <tr><td><code>MODIFY</code></td><td><code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>/<code>MERGE</code></td></tr>
+          <tr><td><code>CREATE TABLE</code> / <code>CREATE FUNCTION</code></td><td>Create new tables / functions in a schema</td></tr>
+          <tr><td><code>ALL PRIVILEGES</code></td><td>Everything valid at that level, combined</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;"><code>USE CATALOG</code>/<code>USE SCHEMA</code> trip people up:</strong> being able to "step into" <code>gbmart.gold</code> doesn't let you read anything inside it — you also need <code>SELECT</code> on the schema or the table itself.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: GRANT/REVOKE + INHERITANCE -->
+  <div class="slide slide-content">
+    <h3>GRANT / REVOKE Syntax, and Inheritance</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="cm">-- Read access to an entire schema -- present AND future tables</span>
+<span class="kw">GRANT</span> USE CATALOG <span class="kw">ON</span> CATALOG main <span class="kw">TO</span> <span class="str">`analysts`</span>;
+<span class="kw">GRANT</span> USE SCHEMA <span class="kw">ON</span> SCHEMA main.YOUR_SCHEMA <span class="kw">TO</span> <span class="str">`analysts`</span>;
+<span class="kw">GRANT</span> SELECT <span class="kw">ON</span> SCHEMA main.YOUR_SCHEMA <span class="kw">TO</span> <span class="str">`analysts`</span>;
+
+<span class="cm">-- Narrower: only one specific table</span>
+<span class="kw">GRANT</span> SELECT <span class="kw">ON</span> TABLE main.YOUR_SCHEMA.practice_customers <span class="kw">TO</span> <span class="str">`analysts`</span>;
+
+<span class="cm">-- Take it away again</span>
+<span class="kw">REVOKE</span> SELECT <span class="kw">ON</span> SCHEMA main.YOUR_SCHEMA <span class="kw">FROM</span> <span class="str">`analysts`</span>;</pre>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Granting SELECT at...</th><th>...covers</th></tr>
+          <tr><td><code>CATALOG gbmart</code></td><td>Every schema and table, now and later</td></tr>
+          <tr><td><code>SCHEMA gbmart.gold</code></td><td>Every table today — <strong>and any table added next month</strong></td></tr>
+          <tr><td><code>TABLE gbmart.gold.fact_sales</code></td><td>Only that one table</td></tr>
+        </table>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p><strong style="color:#22c55e;">Memorize the middle row:</strong> a schema-level grant is a standing rule for whatever exists at query time, not a one-time snapshot.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: READING REAL GRANTS -->
+  <div class="slide slide-content">
+    <h3>Reading the Real <code>gbmart</code> Grants — Live, Read-Only</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;"><code>SHOW GRANTS</code> is itself just a read — it changes nothing. Wrapped in <code>try/except</code>: this demo account may not own <code>gbmart</code>, and a permission error here is a <strong>normal Unity Catalog boundary</strong>, not a bug.</p>
+        <div class="highlight-box">
+          <p>We check three real levels: the <code>gbmart</code> catalog itself, the <code>gold</code> schema, and one specific table (<code>fact_sales</code>).</p>
+        </div>
+      </div>
+      <div>
+<pre>grant_checks = [
+    (<span class="str">"CATALOG gbmart"</span>, <span class="kw">f</span><span class="str">"SHOW GRANTS ON CATALOG {CATALOG}"</span>),
+    (<span class="str">"SCHEMA gbmart.gold"</span>, <span class="kw">f</span><span class="str">"SHOW GRANTS ON SCHEMA {CATALOG}.gold"</span>),
+    (<span class="str">"TABLE gbmart.gold.fact_sales"</span>,
+     <span class="kw">f</span><span class="str">"SHOW GRANTS ON TABLE {CATALOG}.gold.fact_sales"</span>),
+]
+<span class="kw">for</span> label, stmt <span class="kw">in</span> grant_checks:
+    <span class="kw">try</span>: spark.<span class="fn">sql</span>(stmt).<span class="fn">display</span>()
+    <span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> e:
+        <span class="fn">print</span>(<span class="str">"Normal UC boundary, not a bug."</span>)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: SECTION 2 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 2</div>
+    <h2>Row-Level Security — Row Filters</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      A row filter is a SQL function returning <code>BOOLEAN</code> — a row is visible only if the function returns <code>true</code> for it.
+    </p>
+  </div>
+
+  <!-- SLIDE 10: ROW FILTERS -->
+  <div class="slide slide-content">
+    <h3>Define and Attach a Row Filter</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Attach it once with <code>ALTER TABLE ... SET ROW FILTER</code>, and every reader of that table — any tool, any notebook, any BI dashboard — is filtered automatically. No application code anywhere has to remember a <code>WHERE</code> clause.</p>
+<pre><span class="kw">CREATE OR REPLACE FUNCTION</span> your_catalog.your_schema.region_filter(region <span class="kw">STRING</span>)
+<span class="kw">RETURNS BOOLEAN</span>
+<span class="kw">RETURN</span> region = <span class="str">'US'</span>;
+
+<span class="kw">ALTER TABLE</span> your_catalog.your_schema.your_table
+<span class="kw">SET ROW FILTER</span> your_catalog.your_schema.region_filter <span class="kw">ON</span> (region);</pre>
+      </div>
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">The hands-on demo uses exactly this simple fixed-literal version</strong> (<code>region = 'US'</code>) on purpose — deterministic no matter which account runs it, which is exactly what a repeatable classroom demo needs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: ROW FILTERS IN PRODUCTION -->
+  <div class="slide slide-content">
+    <h3>In Production: Role-Aware Row Filters</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">A real deployment's function body is usually role-aware rather than a fixed literal, so different groups see different slices of the <em>same</em> table:</p>
+<pre><span class="cm">-- Illustrative only -- what a role-aware version looks like in production</span>
+<span class="kw">RETURN CASE</span>
+    <span class="kw">WHEN</span> is_account_group_member(<span class="str">'global_admins'</span>) <span class="kw">THEN</span> true
+    <span class="kw">WHEN</span> is_account_group_member(<span class="str">'us_sales_team'</span>) <span class="kw">THEN</span> region = <span class="str">'US'</span>
+    <span class="kw">WHEN</span> is_account_group_member(<span class="str">'in_sales_team'</span>) <span class="kw">THEN</span> region = <span class="str">'IN'</span>
+    <span class="kw">ELSE</span> false
+<span class="kw">END</span>;</pre>
+  </div>
+
+  <!-- SLIDE 12: SECTION 3 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 3</div>
+    <h2>Column-Level Security — Masking</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      The column equivalent of a row filter: instead of true/false per row, it returns a transformed value for one column.
+    </p>
+  </div>
+
+  <!-- SLIDE 13: MASKING -->
+  <div class="slide slide-content">
+    <h3>Define and Attach a Masking Function</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="kw">CREATE OR REPLACE FUNCTION</span> your_catalog.your_schema.email_mask(email <span class="kw">STRING</span>)
+<span class="kw">RETURNS STRING</span>
+<span class="kw">RETURN CONCAT</span>(<span class="str">'***'</span>, <span class="fn">SUBSTRING</span>(email, <span class="fn">INSTR</span>(email, <span class="str">'@'</span>), <span class="fn">LENGTH</span>(email)));
+
+<span class="kw">ALTER TABLE</span> your_catalog.your_schema.your_table
+<span class="kw">ALTER COLUMN</span> email <span class="kw">SET MASK</span> your_catalog.your_schema.email_mask;</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p>Attach with <code>ALTER TABLE ... ALTER COLUMN ... SET MASK</code>, and every reader of that column gets the function's output instead of the raw value — same mechanism as a row filter, applied per-column.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p><strong style="color:#22c55e;">The hands-on demo runs the unconditional version</strong> — masked for absolutely everyone, including you — for the same determinism reason as the row filter. A production version swaps in a <code>CASE</code>/<code>is_account_group_member(...)</code> body, full value for one role, redacted for everyone else.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: WHY PRACTICE TABLE -->
+  <div class="slide slide-content">
+    <h3>Why a Practice Table, Not <code>gbmart</code></h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>1. It's disruptive to everyone else, immediately</h4>
+          <p>The instant a row filter or mask is attached to a shared table, every other student's and the instructor's next query against it is filtered/masked too — mid-class, with no warning.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>2. It isn't a quiet, reversible change</h4>
+          <p>Unlike a <code>SELECT</code>, attaching a row filter or a mask is a standing change to the table's own metadata. Undoing it needs another explicit statement — it doesn't expire on its own.</p>
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">Compute note:</strong> row filters and column masks are enforced on supported compute only — a SQL warehouse, a shared-access-mode cluster, or a recent single-user runtime. If your cluster doesn't support them, the demo's cells print a clear fallback message instead of failing.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: DEMO -->
+  <div class="slide slide-demo">
+    <h3>Hands-On: Build It on a Practice Table</h3>
+    <div class="demo-label">Companion notebook · Day12_1_ILT1_Data_Governance_Unity_Catalog.ipynb</div>
+    <div class="two-col">
+      <div>
+        <ol class="order-list">
+          <li>Create <code>main.YOUR_SCHEMA</code> and a 6-row, 3-region <code>practice_customers</code> table</li>
+          <li>Baseline — no filter, no mask: everyone sees all 6 rows, full emails</li>
+          <li>Attach the row filter (<code>region = 'US'</code>)</li>
+          <li>Attach the email mask (<code>***</code> before <code>@</code>)</li>
+        </ol>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Query</th><th>Rows returned</th><th><code>email</code> column</th></tr>
+          <tr><td>Baseline</td><td>All 6</td><td>Full value</td></tr>
+          <tr><td>After row filter</td><td>Only 3 (<code>region='US'</code>)</td><td>Full value</td></tr>
+          <tr><td>After column mask</td><td>Same 3</td><td><code>***@example.com</code></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 16: SECTION 4 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 4</div>
+    <h2>Lineage — Two Different (Related) Things</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      "Lineage" gets used loosely, but this session means two specific, different things — a common trip-up.
+    </p>
+  </div>
+
+  <!-- SLIDE 17: DESCRIBE HISTORY VS LINEAGE -->
+  <div class="slide slide-content">
+    <h3><code>DESCRIBE HISTORY</code> vs. Catalog Explorer Lineage</h3>
+    <table class="sql-table">
+      <tr><th></th><th><code>DESCRIBE HISTORY</code></th><th>Unity Catalog Lineage</th></tr>
+      <tr><td>Scope</td><td>One table's own version timeline</td><td>Cross-object graph: tables, notebooks, jobs, dashboards</td></tr>
+      <tr><td>Answers</td><td>"What changed, and when?"</td><td>"What fed this table, what consumes it?"</td></tr>
+      <tr><td>Captured by</td><td>The Delta transaction log</td><td>Unity Catalog observing every query</td></tr>
+      <tr><td>Granularity</td><td>Table + version</td><td>Table-level <strong>and</strong> column-level</td></tr>
+      <tr><td>How you see it</td><td><code>DESCRIBE HISTORY &lt;table&gt;</code></td><td>Catalog Explorer's Lineage tab</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p>Both are automatic — neither needs manual tagging — but they answer different questions.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 18: REAL HISTORY DEMO -->
+  <div class="slide slide-content">
+    <h3>Real Version History — <code>gbmart.gold.dim_customer</code></h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;"><code>dim_customer</code> is SCD2 (Day 6/10) — genuinely interesting history, since Day 10's SCD2 <code>MERGE</code> demo created new versions on top of Day 6's initial build.</p>
+<pre>HISTORY_TABLE = <span class="kw">f</span><span class="str">"{CATALOG}.gold.dim_customer"</span>
+<span class="kw">try</span>:
+    spark.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"DESCRIBE HISTORY {HISTORY_TABLE}"</span>) \
+        .<span class="fn">select</span>(<span class="str">"version"</span>,<span class="str">"timestamp"</span>,<span class="str">"operation"</span>) \
+        .<span class="fn">limit</span>(<span class="col">10</span>).<span class="fn">display</span>()
+<span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> e:
+    <span class="fn">print</span>(<span class="str">"No SELECT, or not present yet."</span>)</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Bonus (optional):</strong> some workspaces additionally expose lineage as queryable metadata — <code>system.access.table_lineage</code> / <code>column_lineage</code> — if an account admin has enabled it. 100% read-only either way; Catalog Explorer's Lineage tab always works regardless.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 19: KEY TAKEAWAYS -->
+  <div class="slide slide-section">
+    <div class="section-tag">Wrap-Up</div>
+    <h2>Key Takeaways</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>🔑 Permissions</h4>
+        <ul>
+          <li>One hierarchy — metastore &rarr; catalog &rarr; schema &rarr; table/view/function</li>
+          <li>Grants at a higher level are inherited by everything below, including objects created later</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>👁️ Row Filters &amp; Masking</h4>
+        <ul>
+          <li>Both apply to every reader automatically — zero application-side filtering code</li>
+          <li>Never attach either to a real shared table you don't own — practice first</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🧬 Lineage</h4>
+        <ul>
+          <li><code>DESCRIBE HISTORY</code> and Catalog Explorer lineage are both automatic, but answer different questions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 20: WHAT'S NEXT / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for ILT 2</h2>
+    <p style="color:#94a3b8; max-width:680px; margin-top:12px; font-size:15px;">
+      Deferred to a later, separate hands-on: <em>"Apply Unity Catalog Governance — GRANT/REVOKE, Mask PII, Verify Lineage (4 Sources)"</em> — that calendar title's "4 Sources" is the original spec name; GlobalMart in fact has <strong style="color:#38bdf8;">2 real ingestion pathways</strong>, and that session will apply today's techniques for real to the <code>gbmart.gold</code> layer built from those 2 sources.
+    </p>
+    <div class="three-col" style="margin-top:28px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>4 mechanisms: permissions, row filters, masking, lineage — all practiced safely on your own schema</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>Day 12 ILT 2 (11:00 AM): Introduction to Genie &amp; Semantic Layer</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Name the 4 Unity Catalog hierarchy levels. Name the 2 real GlobalMart ingestion pathways.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

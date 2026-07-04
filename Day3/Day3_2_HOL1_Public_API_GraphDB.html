@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 3 | HOL 1 — Public API + GraphDB Exploration</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 3 · HOL 1 — Public API + GraphDB Exploration</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 17</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Public API + GraphDB Exploration</h1>
+    <p class="subtitle">Extend the frankfurter.app demo, stand up a free Neo4j graph, and read it back into Databricks — a side-exploration lab, not the GlobalMart pipeline</p>
+    <div class="badge">Day 3 &nbsp;·&nbsp; HOL 1 &nbsp;·&nbsp; 11:00 AM – 1:00 PM (2 hrs)</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      Follows ILT 1 → Part 1: REST API · Part 2: GraphDB Setup · Part 3: Read Into Databricks
+    </div>
+  </div>
+
+  <!-- SLIDE: WHAT YOU WILL BUILD -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What You Will Build</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>Part 1 · REST API (45 min)</h4>
+        <ul>
+          <li>Pull multiple base currencies</li>
+          <li>Pull historical rates for more than one date</li>
+          <li>Land both as sandbox Delta tables</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Part 2 · GraphDB Setup (75 min)</h4>
+        <ul>
+          <li>Create a free Neo4j AuraDB instance</li>
+          <li>Seed a GlobalMart-shaped graph</li>
+          <li>Query it in the Neo4j Browser</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Part 3 · Read Into Databricks</h4>
+        <ul>
+          <li>Connect to AuraDB with the <code>neo4j</code> driver</li>
+          <li>Run the same query from a notebook</li>
+          <li>Land the result as a sandbox Delta table</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:20px;">
+      <p><strong style="color:#38bdf8;">Instructions:</strong> run each cell with Shift + Enter. Cells marked <strong>YOUR TURN</strong> are for you to complete — the pattern is always demonstrated once above them first.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: SIDE-EXPLORATION REMINDER (CRITICAL) -->
+  <div class="slide slide-content">
+    <h3>Reminder: Side-Exploration, Not Part of the GlobalMart Build</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Exactly like ILT 1 said: GlobalMart's real pipeline only has <strong style="color:#e2e8f0;">two sources</strong> — Postgres CDC via Lakeflow Connect, and ADLS file drops via Autoloader.
+        </p>
+        <div class="card">
+          <h4>What today's lab actually produces</h4>
+          <ul>
+            <li>A sandbox Delta table of FX rates</li>
+            <li>A small graph in Neo4j AuraDB</li>
+            <li>A sandbox Delta table read back from that graph</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Nothing in this lab feeds Bronze, Silver, Gold, or <code>fact_sales</code>.</strong> You're practicing two ingestion patterns — REST API, graph traversal — that show up on <em>other</em> projects, using GlobalMart as a familiar backdrop.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: SECTION PART 1 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 1 · 45 min</div>
+    <h2>REST API: Beyond a Single Call</h2>
+    <p style="color:#94a3b8; max-width:620px; margin-top:12px; font-size:15px;">
+      ILT 1 called <code>frankfurter.app/latest</code> once, for the default base currency (EUR). Two realistic extensions: <strong style="color:#38bdf8;">multiple base currencies</strong>, and <strong style="color:#38bdf8;">historical rates</strong>.
+    </p>
+  </div>
+
+  <!-- SLIDE: SETUP + STEP 1 -->
+  <div class="slide slide-demo">
+    <h3>Step 1 — Multiple Base Currencies</h3>
+    <div class="demo-label">SAME SETUP AS ILT 1 · ONE API CALL PER CURRENCY</div>
+    <div class="two-col">
+      <div>
+<pre><span class="cm"># Same Unity Catalog External Location as ILT 1</span>
+EXTERNAL_LOCATION = <span class="str">"abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net"</span>
+sandbox_path = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/sandbox/api_graphdb"</span>
+
+base_currencies = [<span class="str">"USD"</span>, <span class="str">"EUR"</span>, <span class="str">"GBP"</span>]  <span class="cm"># GlobalMart's storefront currencies</span>
+all_rows = []
+
+<span class="kw">for</span> base <span class="kw">in</span> base_currencies:
+    response = requests.<span class="fn">get</span>(<span class="str">"https://api.frankfurter.app/latest"</span>,
+                            params={<span class="str">"base"</span>: base})
+    <span class="kw">if</span> response.status_code != <span class="str">200</span>:
+        <span class="kw">raise</span> <span class="fn">RuntimeError</span>(<span class="fn">f</span><span class="str">"API call failed for base={base}"</span>)
+    <span class="cm"># ... flatten data["rates"] into Row objects, append to all_rows ...</span>
+
+multi_base_df = spark.<span class="fn">createDataFrame</span>(all_rows)</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Why raise instead of skip?</strong> Don't silently skip a failed call — a DE pipeline should always know when a source didn't return what was expected.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: STEP 2 SAVE -->
+  <div class="slide slide-content">
+    <h3>Step 2 — Save to Sandbox</h3>
+<pre>multi_base_df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>) \
+    .save(<span class="fn">f</span><span class="str">"{sandbox_path}/fx_rates_multi_base"</span>)</pre>
+    <div class="highlight-box">
+      <p><code>overwrite</code> is correct here — like ILT 1 explained, this is a live snapshot, not something we want to accumulate duplicate-but-stale rows for.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: YOUR TURN HISTORICAL -->
+  <div class="slide slide-content">
+    <h3>Your Turn — Historical Rates</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">frankfurter.app accepts a date in place of <code>latest</code>: <code>https://api.frankfurter.app/2026-01-01</code>.</p>
+        <ol class="order-list">
+          <li>Loop over the two dates in <code>historical_dates</code></li>
+          <li>Call the API for each date (base currency EUR is fine)</li>
+          <li>Keep both the <strong>requested</strong> date and the <strong>API-returned</strong> date as separate columns — they can differ on weekends/holidays</li>
+          <li>Write with <code>mode("append")</code> — not overwrite — into <code>sandbox_path/fx_rates_historical</code></li>
+        </ol>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">This is the "accumulate history" case ILT 1 flagged.</strong> APIs give live snapshots — if you need history over time, you append with a date column instead of overwriting.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: SECTION PART 2 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 2 · 75 min</div>
+    <h2>GraphDB: Build a Small GlobalMart Graph</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Create a free Neo4j AuraDB instance, seed it with GlobalMart-shaped data, and query it — before ever touching Databricks.
+    </p>
+  </div>
+
+  <!-- SLIDE: STEP 1 AURADB -->
+  <div class="slide slide-content">
+    <h3>Step 1 — Create Your Free Neo4j AuraDB Instance</h3>
+    <ol class="order-list">
+      <li>Go to <code>neo4j.com/cloud/aura</code>, sign up for a free account</li>
+      <li>Click <strong>Create Free Instance</strong> (AuraDB Free tier — no credit card required)</li>
+      <li>Name it, e.g. <code>globalmart-graph-demo</code></li>
+      <li>Copy the connection <strong>URI</strong>, <strong>username</strong> (always <code>neo4j</code>), and <strong>generated password</strong> — shown only once</li>
+      <li>Wait ~1–2 minutes for status to turn from "Creating" to "Running"</li>
+      <li>Click <strong>Open</strong> to launch the Neo4j Browser</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE: STEP 2 SEED -->
+  <div class="slide slide-demo">
+    <h3>Step 2 — Seed the Graph</h3>
+    <div class="demo-label">PASTE INTO NEO4J BROWSER — NOT DATABRICKS</div>
+    <div class="two-col">
+      <div>
+<pre><span class="cm">// Nodes</span>
+<span class="kw">CREATE</span> (c1:Customer {customer_id: <span class="str">'CUST-001'</span>, name: <span class="str">'Raj Patel'</span>, city: <span class="str">'Mumbai'</span>})
+<span class="kw">CREATE</span> (p1:Product {product_id: <span class="str">'PRD-001'</span>, name: <span class="str">'Wireless Mouse'</span>})
+<span class="kw">CREATE</span> (s1:Supplier {supplier_id: <span class="str">'SUP-001'</span>, name: <span class="str">'TechDistributors Inc'</span>})
+<span class="kw">CREATE</span> (o1:Order {order_id: <span class="str">'ORD-001'</span>, order_date: <span class="str">'2026-06-01'</span>})
+<span class="cm">// ... 2 more of each (3 customers, 3 products, 2 suppliers, 3 orders total)</span></pre>
+      </div>
+      <div>
+<pre><span class="cm">// Relationships — wire nodes together with MATCH + CREATE</span>
+<span class="kw">MATCH</span> (c:Customer {customer_id: <span class="str">'CUST-001'</span>}), (o:Order {order_id: <span class="str">'ORD-001'</span>})
+<span class="kw">CREATE</span> (c)-[:PLACED]->(o)
+<span class="cm">// ... same pattern for CONTAINS and SUPPLIED_BY ...</span></pre>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p>Run <code>MATCH (n) RETURN n</code> afterwards to see the graph visualization — <strong style="color:#38bdf8;">11 nodes, 9 relationships</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: STEP 3 QUERY -->
+  <div class="slide slide-content">
+    <h3>Step 3 — Query in the Neo4j Browser</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="cm">// Which products did each customer buy?</span>
+<span class="kw">MATCH</span> (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(p:Product)
+<span class="kw">RETURN</span> c.name, p.name, o.order_id</pre>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Your Turn (in the Neo4j Browser):</strong> write a Cypher query that counts how many orders each customer placed, sorted highest first — same shape as ILT 1's pattern #4: <code>MATCH ... RETURN ... COUNT(o) ... ORDER BY</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: SECTION PART 3 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 3</div>
+    <h2>Read the Graph Into Databricks</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Back in the notebook now — connect to AuraDB using the official <code>neo4j</code> Python driver, and land a query result as a sandbox Delta table.
+    </p>
+  </div>
+
+  <!-- SLIDE: INSTALL + CONNECT -->
+  <div class="slide slide-demo">
+    <h3>Install the Driver and Connect</h3>
+    <div class="demo-label">LIVE CODE · RUN IN DATABRICKS</div>
+    <div class="two-col">
+      <div>
+<pre>%pip install neo4j
+
+<span class="kw">from</span> neo4j <span class="kw">import</span> GraphDatabase
+
+NEO4J_URI      = <span class="str">"neo4j+s://YOUR_INSTANCE_ID.databases.neo4j.io"</span>  <span class="cm"># replace</span>
+NEO4J_USER     = <span class="str">"neo4j"</span>
+NEO4J_PASSWORD = <span class="str">"YOUR_AURADB_PASSWORD"</span>  <span class="cm"># replace</span>
+
+driver = GraphDatabase.<span class="fn">driver</span>(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))</pre>
+      </div>
+      <div>
+<pre><span class="kw">def</span> <span class="fn">run_cypher</span>(query, params=<span class="kw">None</span>):
+    <span class="cm">"""Run one Cypher query, return a list of plain dicts."""</span>
+    <span class="kw">with</span> driver.<span class="fn">session</span>() <span class="kw">as</span> session:
+        result = session.<span class="fn">run</span>(query, params <span class="kw">or</span> {})
+        <span class="kw">return</span> [<span class="fn">dict</span>(record) <span class="kw">for</span> record <span class="kw">in</span> result]</pre>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">Never commit real credentials.</strong> Replace these placeholders locally, then swap them back to placeholders before you upload or submit this notebook.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: RUN + SAVE -->
+  <div class="slide slide-content">
+    <h3>Run the Query and Save to Sandbox</h3>
+<pre>rows = <span class="fn">run_cypher</span>(<span class="str">"MATCH (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(p:Product) RETURN ..."</span>)
+graph_df = spark.<span class="fn">createDataFrame</span>(rows)
+graph_df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>) \
+    .save(<span class="fn">f</span><span class="str">"{sandbox_path}/graph_customer_orders"</span>)</pre>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">Your Turn — Supplier Traversal.</strong> Write a Cypher query that returns, for every product, which supplier it comes from — a 2-hop traversal (<code>Product -[:SUPPLIED_BY]-> Supplier</code>) plus which orders contained that product. Save the result to <code>sandbox_path/graph_product_suppliers</code>.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: BEFORE SUBMITTING -->
+  <div class="slide slide-content">
+    <h3>Before Submitting</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>Good hygiene checklist</h4>
+          <ul>
+            <li>Replace <code>NEO4J_URI</code> and <code>NEO4J_PASSWORD</code> with placeholders again</li>
+            <li>Call <code>driver.close()</code> when done</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p>An open driver holds a connection pool open on AuraDB's side — closing it is good hygiene, not optional cleanup.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: SUBMISSION CHECKLIST -->
+  <div class="slide slide-content">
+    <h3>Submission Checklist</h3>
+    <table class="sql-table">
+      <tr><th>Deliverable</th></tr>
+      <tr><td>Multi-base-currency FX table saved → <code>sandbox/fx_rates_multi_base</code></td></tr>
+      <tr><td>Historical FX table saved (append mode) → <code>sandbox/fx_rates_historical</code></td></tr>
+      <tr><td>Neo4j AuraDB Free instance created, graph seeded (11 nodes, 9 relationships)</td></tr>
+      <tr><td>Customer → Order → Product query run in Neo4j Browser</td></tr>
+      <tr><td>Same query run from Databricks via the <code>neo4j</code> Python driver</td></tr>
+      <tr><td>Result saved → <code>sandbox/graph_customer_orders</code></td></tr>
+      <tr><td>Supplier traversal exercise completed → <code>sandbox/graph_product_suppliers</code></td></tr>
+      <tr><td>Credentials replaced with placeholders before submission</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>On to ILT 2</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      <strong style="color:#38bdf8;">Reminder:</strong> none of this feeds <code>fact_sales</code>. You practiced two ingestion patterns — REST API and graph traversal — that show up in other projects.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:900px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>Multi-currency + historical FX tables, a seeded Neo4j graph, results read back into Databricks</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>ILT 2 (2:00 PM): Autoloader &amp; Schema Evolution Concepts</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Where did today's outputs land — <code>bronze/</code> or <code>sandbox/</code>? Why?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

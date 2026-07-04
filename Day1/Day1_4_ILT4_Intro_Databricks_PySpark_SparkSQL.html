@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 1 | ILT 4 — Intro to Databricks + PySpark &amp; Spark SQL</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 1 · ILT 4 — Databricks, PySpark &amp; SQL</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 26</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Intro to Databricks + PySpark &amp; Spark SQL</h1>
+    <p class="subtitle">The engine under the hood, how a cluster actually runs your code, and the PySpark + SQL you'll use to build every layer of the pipeline</p>
+    <div class="badge">Day 1 &nbsp;·&nbsp; ILT 4 &nbsp;·&nbsp; Trainer-Led Session</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → Apache Spark · Databricks Platform · Clusters &amp; DAGs · PySpark DataFrames · Spark SQL · Connecting to ADLS
+    </div>
+  </div>
+
+  <!-- SLIDE 2: OVERVIEW -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering This Session</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>⚙️ Databricks &amp; Clusters</h4>
+        <ul>
+          <li>Apache Spark vs Databricks</li>
+          <li>Driver + Workers, DAGs, lazy evaluation</li>
+          <li>Notebooks &amp; magic commands</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🐍 PySpark DataFrames</h4>
+        <ul>
+          <li>Reading CSV from ADLS</li>
+          <li>Transformations vs Actions</li>
+          <li>Writing to Delta (Bronze)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔎 Spark SQL</h4>
+        <ul>
+          <li><code>%sql</code> cells vs <code>spark.sql()</code></li>
+          <li>Temp views</li>
+          <li>PySpark vs SQL — when to use which</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: APACHE SPARK -->
+  <div class="slide slide-content">
+    <h3>Apache Spark — The Engine Under the Hood</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px;">Before Databricks, there was <strong style="color:#e2e8f0;">Apache Spark</strong> — an open-source distributed computing engine created at UC Berkeley in 2009. It solves one problem: processing massive datasets, terabytes to petabytes, faster than a single computer ever could.</p>
+      </div>
+      <div class="highlight-box">
+        <p><strong style="color:#38bdf8;">Key insight:</strong> Spark is the engine. Databricks is the platform that wraps Spark so you can use it without a DevOps team. Every line of PySpark you write runs on Apache Spark under the hood.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: DIY VS DATABRICKS -->
+  <div class="slide slide-content">
+    <h3>DIY Apache Spark vs Databricks</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>DIY Apache Spark (raw)</h4>
+        <ul>
+          <li>Download, install, and manage your own cluster</li>
+          <li>Configure Hadoop dependencies manually</li>
+          <li>Set up your own notebooks and scheduling (Airflow)</li>
+          <li>No built-in governance or access control</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Databricks (managed Spark)</h4>
+        <ul>
+          <li>Spark pre-installed, pre-optimised, always current</li>
+          <li>Clusters with one click — auto-scale, auto-terminate</li>
+          <li>Built-in notebooks, Workflows for scheduling</li>
+          <li>Unity Catalog for governance, built in</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: WHAT IS DATABRICKS -->
+  <div class="slide slide-content">
+    <h3>What Is Databricks?</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px;">Think of Databricks as <strong style="color:#e2e8f0;">a supercharged Jupyter notebook</strong> that can process millions of rows using many computers at once — instead of just the one laptop in front of you.</p>
+      </div>
+      <div class="highlight-box success">
+        <p>Databricks is a cloud platform built on Apache Spark. It gives Data Engineers notebooks, clusters, Delta Lake, scheduling, and governance — all in one place. GlobalMart uses it to build and run the full Bronze → Silver → Gold pipeline.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: PLATFORM COMPONENTS 1 -->
+  <div class="slide slide-content">
+    <h3>Databricks Platform Components (1 of 2)</h3>
+    <div class="three-col">
+      <div class="card">
+        <h4>📓 Notebooks</h4>
+        <p>Interactive cells mixing Python, SQL, and Markdown. Run cells one at a time or all at once.</p>
+      </div>
+      <div class="card">
+        <h4>⚡ Clusters</h4>
+        <p>A group of VMs running Apache Spark. Auto-terminates when idle to save cost.</p>
+      </div>
+      <div class="card">
+        <h4>🏔️ Delta Lake</h4>
+        <p>The storage format for every table in the pipeline — Parquet files plus a transaction log.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: PLATFORM COMPONENTS 2 -->
+  <div class="slide slide-content">
+    <h3>Databricks Platform Components (2 of 2)</h3>
+    <div class="three-col">
+      <div class="card">
+        <h4>📁 Unity Catalog</h4>
+        <p>Central metadata store. Controls who can access which table, and tracks lineage from raw file to Gold table.</p>
+      </div>
+      <div class="card">
+        <h4>⚙️ Workflows</h4>
+        <p>Scheduled multi-task pipelines. Runs your ingestion → Silver → Gold chain with retries and alerting.</p>
+      </div>
+      <div class="card">
+        <h4>💬 Genie</h4>
+        <p>Natural-language Q&amp;A on top of Gold Delta tables. Business users ask questions in plain English.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: SECTION - CLUSTER ARCHITECTURE -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 2</div>
+    <h2>Cluster Architecture — Driver + Workers</h2>
+    <p style="color:#94a3b8; max-width:620px; margin-top:12px; font-size:15px;">
+      Every Spark job runs on a cluster. Understanding the two roles inside it explains how Spark turns "millions of rows" into "a few seconds."
+    </p>
+  </div>
+
+  <!-- SLIDE 9: DRIVER + WORKERS -->
+  <div class="slide slide-content">
+    <h3>The Driver Is the Brain, Workers Are the Hands</h3>
+    <div class="two-col">
+      <div>
+<pre>Your Notebook Code (Python / SQL)
+    ↓
+Driver Node   (plans the job, builds the DAG, tracks completion, collects results)
+    ↓ splits data into partitions → distributes tasks
+Worker Node 1  (rows 1–1M)      reads/writes ↔ ADLS
+Worker Node 2  (rows 1M–2M)     reads/writes ↔ ADLS
+Worker Node 3  (rows 2M–3M)     reads/writes ↔ ADLS
+    ↓ partial results back to driver → final result assembled
+Output  (shown in display() / written to a Delta table)</pre>
+      </div>
+      <div class="card">
+        <h4>More workers = faster, automatically</h4>
+        <p>100 GB on 2 workers: about 10 minutes. The same data on 6 workers: about 3 minutes. Spark handles the distribution — you never write parallel-processing code yourself.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: CLUSTER TYPES -->
+  <div class="slide slide-content">
+    <h3>Choosing a Cluster Type</h3>
+    <table class="sql-table">
+      <tr><th>Cluster Type</th><th>Best For</th><th>Auto-Terminate?</th></tr>
+      <tr><td>All-Purpose Cluster</td><td>Interactive notebook development — attach multiple notebooks</td><td>Configurable (30–60 min)</td></tr>
+      <tr><td>Job Cluster</td><td>Production Workflows — spins up for one job, terminates right after</td><td>Always, on completion</td></tr>
+      <tr><td>Single-Node Cluster</td><td>Small datasets / development — driver only, no workers</td><td>Configurable</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 11: LAZY EVALUATION -->
+  <div class="slide slide-content">
+    <h3>Spark Doesn't "Cook" Until You Call an Action</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">Spark does not run code line by line. It builds a plan — a Directed Acyclic Graph (DAG) — and only executes it when you call an <strong>Action</strong>. This is called <strong>lazy evaluation</strong>.</p>
+<pre><span class="cm"># Transformations — just build the plan, nothing runs yet</span>
+df = spark.<span class="fn">read</span>.<span class="fn">csv</span>(raw_path)
+df2 = df.<span class="fn">filter</span>(df.status == <span class="str">"active"</span>)
+df3 = df2.<span class="fn">groupBy</span>(<span class="str">"city"</span>).<span class="fn">count</span>()
+
+<span class="cm"># Action — THIS is what triggers execution</span>
+df3.<span class="fn">show</span>()</pre>
+  </div>
+
+  <!-- SLIDE 12: DAG / SHUFFLES -->
+  <div class="slide slide-content">
+    <h3>Under the Hood: DAG, Stages, and Shuffles</h3>
+<pre>Spark splits your job into stages, separated by shuffles:
+
+Stage 1: read CSV → filter rows      Task 1: partition 1   Task 2: partition 2   Task 3: partition 3
+                                          ↓ shuffle (regroup by key — network transfer)
+Stage 2: aggregate / count           Task 1: keys A–M      Task 2: keys N–Z</pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><strong style="color:#38bdf8;">Shuffles are expensive</strong> — they move data across the network between worker nodes. Minimise them by filtering before <code>groupBy</code>, and use broadcast joins for small reference tables.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: SECTION - NOTEBOOKS & DATAFRAME API -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 3</div>
+    <h2>Notebooks &amp; the PySpark DataFrame API</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      The core object in PySpark is the <strong style="color:#38bdf8;">DataFrame</strong> — a distributed table of rows and columns, similar to pandas but built to run across a whole cluster.
+    </p>
+  </div>
+
+  <!-- SLIDE 14: NOTEBOOK CELL TYPES -->
+  <div class="slide slide-content">
+    <h3>Databricks Notebooks — Mixing Cell Types</h3>
+<pre>%md    ## Section heading — plain markdown, renders as formatted text
+
+Python:  df = spark.read.format("csv").option("header", "true").load(raw_path)
+         ↳ DataFrame [order_id, customer_id, status, …]  ← result shown below the cell
+
+%sql   SELECT status, COUNT(*) FROM bronze.orders GROUP BY status
+       ↳ table output rendered as an interactive grid
+
+Python:  display(df)   ← Databricks-only: interactive table with charts, filters, download</pre>
+  </div>
+
+  <!-- SLIDE 15: DBUTILS -->
+  <div class="slide slide-content">
+    <h3>Databricks Utilities — <code>dbutils</code></h3>
+<pre><span class="cm"># List files in an ADLS path</span>
+dbutils.<span class="fn">fs</span>.<span class="fn">ls</span>(<span class="str">"abfss://amazon-data@amazonprojectadls.dfs.core.windows.net/raw/"</span>)
+
+<span class="cm"># Read a secret from Azure Key Vault (production pattern)</span>
+storage_key = dbutils.<span class="fn">secrets</span>.<span class="fn">get</span>(scope=<span class="str">"globalmart-kv"</span>, key=<span class="str">"adls-key"</span>)
+
+<span class="cm"># Create a notebook widget (interactive parameter)</span>
+dbutils.<span class="fn">widgets</span>.<span class="fn">text</span>(<span class="str">"run_date"</span>, <span class="str">"2026-07-07"</span>, <span class="str">"Run Date"</span>)</pre>
+  </div>
+
+  <!-- SLIDE 16: PYSPARK VS PANDAS -->
+  <div class="slide slide-content">
+    <h3>PySpark vs pandas — Key Differences</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>pandas</h4>
+        <ul>
+          <li>Runs on a single machine — one CPU</li>
+          <li>Data must fit in RAM — crashes past ~16 GB</li>
+          <li>Eager evaluation — every line runs immediately</li>
+          <li>Cannot read from ADLS natively</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>PySpark (Spark DataFrame)</h4>
+        <ul>
+          <li>Runs across a cluster — many CPUs, many machines</li>
+          <li>Data lives in ADLS, not in RAM — handles TB-scale</li>
+          <li>Lazy evaluation — builds a plan, executes on Action</li>
+          <li>Native ADLS support via <code>abfss://</code></li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>The API looks almost the same as pandas — <code>.select()</code>, <code>.filter()</code>, <code>.groupBy()</code> — but it runs on 10 machines instead of 1.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 17: READING DATA -->
+  <div class="slide slide-content">
+    <h3>Reading Data from ADLS</h3>
+<pre><span class="cm"># Read CSV from ADLS</span>
+df = (
+    spark.<span class="fn">read</span>
+    .<span class="fn">option</span>(<span class="str">"header"</span>, <span class="str">"true"</span>)
+    .<span class="fn">option</span>(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>)
+    .<span class="fn">csv</span>(raw_path + <span class="str">"/customers_010626.csv"</span>)
+)
+
+<span class="cm"># Read a Delta table from a path</span>
+df = spark.<span class="fn">read</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">load</span>(bronze_path)
+
+<span class="cm"># Read a Delta table by catalog name (Unity Catalog)</span>
+df = spark.<span class="fn">read</span>.<span class="fn">table</span>(<span class="str">"globalmart.bronze.customers"</span>)</pre>
+  </div>
+
+  <!-- SLIDE 18: TRANSFORMATIONS TABLE -->
+  <div class="slide slide-content">
+    <h3>Essential PySpark Transformations</h3>
+    <table class="sql-table">
+      <tr><th>Operation</th><th>Code</th><th>What It Does</th></tr>
+      <tr><td>select</td><td><code>df.select("order_id", "status")</code></td><td>Keep only these columns</td></tr>
+      <tr><td>filter</td><td><code>df.filter(df.status == "pending")</code></td><td>Keep rows matching a condition</td></tr>
+      <tr><td>withColumn</td><td><code>df.withColumn("year", year("order_date"))</code></td><td>Add or overwrite a column</td></tr>
+      <tr><td>groupBy + agg</td><td><code>df.groupBy("city").agg(count("*"))</code></td><td>Aggregate rows by group</td></tr>
+      <tr><td>join</td><td><code>df.join(dim_customer, "customer_id", "left")</code></td><td>Join two DataFrames</td></tr>
+      <tr><td>dropna / fillna</td><td><code>df.fillna({"status": "unknown"})</code></td><td>Handle nulls</td></tr>
+      <tr><td>when / otherwise</td><td><code>when(col("spend")>1000,"Gold").otherwise("Silver")</code></td><td>Conditional column (SQL CASE WHEN)</td></tr>
+      <tr><td>trim</td><td><code>df.withColumn("name", trim(col("name")))</code></td><td>Remove leading/trailing spaces</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 19: ACTIONS -->
+  <div class="slide slide-content">
+    <h3>Actions Trigger Execution</h3>
+<pre>df.<span class="fn">show</span>(5)              <span class="cm"># print first 5 rows</span>
+display(df)             <span class="cm"># Databricks interactive output with charts</span>
+df.<span class="fn">count</span>()             <span class="cm"># total row count — triggers a full scan</span>
+df.<span class="fn">printSchema</span>()       <span class="cm"># column names and data types</span>
+df.<span class="fn">toPandas</span>()          <span class="cm"># convert to pandas — only for small DataFrames!</span></pre>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p><strong style="color:#f59e0b;">Avoid <code>df.collect()</code></strong> — it pulls every row into the driver's RAM. On a 10 GB table, that's an out-of-memory crash waiting to happen. Use <code>show()</code> or <code>display()</code> instead.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 20: WRITING TO DELTA -->
+  <div class="slide slide-content">
+    <h3>Writing to Delta — Bronze / Silver / Gold</h3>
+<pre><span class="cm"># Full refresh — overwrite everything at this path</span>
+df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">save</span>(bronze_path)
+
+<span class="cm"># Incremental — append new rows, keep existing ones</span>
+df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">save</span>(bronze_path)
+
+<span class="cm"># Add new columns without breaking readers (schema evolution)</span>
+df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">option</span>(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>).<span class="fn">save</span>(bronze_path)</pre>
+  </div>
+
+  <!-- SLIDE 21: SPARK SQL -->
+  <div class="slide slide-content">
+    <h3>Spark SQL — Two Ways to Query Delta Tables</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Option A — a <code>%sql</code> cell</h4>
+<pre style="margin-top:8px;"><span class="kw">SELECT</span> status, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> order_count
+<span class="kw">FROM</span> bronze.orders
+<span class="kw">GROUP BY</span> status</pre>
+      </div>
+      <div class="card">
+        <h4>Option B — <code>spark.sql()</code> in Python</h4>
+<pre style="margin-top:8px;">result_df = spark.<span class="fn">sql</span>(<span class="str">"SELECT city, COUNT(*) FROM v GROUP BY city"</span>)
+result_df.<span class="fn">show</span>()</pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Use <code>%sql</code> for quick exploration. Use <code>spark.sql()</code> when you need the result as a DataFrame you can chain more PySpark onto.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 22: SPARK SQL FUNCTIONS -->
+  <div class="slide slide-content">
+    <h3>Useful Spark SQL Functions</h3>
+    <table class="sql-table">
+      <tr><th>Function</th><th>Example</th><th>Result</th></tr>
+      <tr><td><code>YEAR()</code></td><td><code>YEAR(RegistrationDate)</code></td><td>Integer year, e.g. 2024</td></tr>
+      <tr><td><code>DATEDIFF()</code></td><td><code>DATEDIFF(current_date(), DateOfBirth)</code></td><td>Days between two dates</td></tr>
+      <tr><td><code>TRIM()</code></td><td><code>TRIM(FirstName)</code></td><td>Removes leading/trailing spaces</td></tr>
+      <tr><td><code>COALESCE()</code></td><td><code>COALESCE(email, "unknown")</code></td><td>First non-null value</td></tr>
+      <tr><td><code>COUNT(DISTINCT)</code></td><td><code>COUNT(DISTINCT customer_id)</code></td><td>Count unique values</td></tr>
+      <tr><td><code>BETWEEN</code></td><td><code>DateOfBirth BETWEEN '1990-01-01' AND '1999-12-31'</code></td><td>Inclusive range filter</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 23: CONNECTING TO ADLS -->
+  <div class="slide slide-content">
+    <h3>Connecting to ADLS from Databricks</h3>
+    <div class="card">
+      <h4>GlobalMart storage account: <code>amazonprojectadls</code> · Container: <code>amazon-data</code></h4>
+      <ol class="order-list">
+        <li>Set the storage key in Spark config, once per session: <code>spark.conf.set("fs.azure.account.key.amazonprojectadls.dfs.core.windows.net", storage_key)</code></li>
+        <li>Build the base path: <code>base_path = "abfss://amazon-data@amazonprojectadls.dfs.core.windows.net"</code></li>
+        <li>Read or write using sub-paths: <code>raw_path = base_path + "/raw"</code> and <code>bronze_path = base_path + "/bronze"</code></li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- SLIDE 24: BEST PRACTICES -->
+  <div class="slide slide-content">
+    <h3>PySpark Best Practices</h3>
+    <div class="three-col">
+      <div class="card"><h4>❌ Avoid: df.collect()</h4><p>Pulls all rows into the driver's RAM — an out-of-memory crash waiting to happen on big tables.</p></div>
+      <div class="card"><h4>✅ Do: filter early</h4><p>Apply <code>.filter()</code> as early as possible so less data flows through every later step.</p></div>
+      <div class="card"><h4>✅ Do: select only needed columns</h4><p>Use <code>.select("col1","col2")</code> instead of carrying all 30 columns through the whole pipeline.</p></div>
+      <div class="card"><h4>❌ Avoid: count() before every action</h4><p><code>df.count()</code> triggers a full scan. Don't call it repeatedly on the same DataFrame.</p></div>
+      <div class="card"><h4>✅ Do: broadcast small tables</h4><p>Joining a huge table with a 4-row reference table? Use <code>broadcast(dim)</code> to skip the shuffle.</p></div>
+      <div class="card"><h4>❌ Avoid: hardcoding secrets</h4><p>Never put storage keys directly in notebook code — use <code>dbutils.secrets.get()</code> in production.</p></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 25: SCHEDULE -->
+  <div class="slide slide-content">
+    <h3>Day 1 Schedule — Where You Are Now</h3>
+    <table class="sql-table">
+      <tr><th>Time</th><th>Session</th><th>Type</th></tr>
+      <tr><td>9:00–10:30</td><td>GlobalMart Problem Statement &amp; Architecture</td><td>ILT 1</td></tr>
+      <tr><td>10:30–12:00</td><td>Azure Cloud, ADLS Gen2 &amp; Lakehouse vs Warehouse vs Hybrid</td><td>ILT 2</td></tr>
+      <tr><td>12:00–13:00</td><td>Medallion Architecture &amp; Delta Lake Fundamentals</td><td>ILT 3</td></tr>
+      <tr><td>14:00–15:00</td><td>Intro to Databricks + PySpark &amp; Spark SQL ← you are here</td><td>ILT 4</td></tr>
+      <tr><td>15:00–16:00</td><td>Hands-on: PySpark &amp; Spark SQL with ADLS</td><td>HOL</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><strong style="color:#38bdf8;">At 3:00 PM</strong> you'll read a real customer file from ADLS, run Spark SQL queries, apply PySpark transformations, fix a data-quality issue, and write the result to Bronze as Delta.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 26: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for the Hands-On</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Lakeflow Connect and Autoloader each get a dedicated hands-on session later in the bootcamp. Today's lab gives you the PySpark and Spark SQL foundation both of those will build on.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>Spark = the engine. Databricks = the managed platform. DataFrames are lazy until an Action runs.</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>HOL (3:00 PM): PySpark &amp; Spark SQL with ADLS</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>What's the difference between a transformation and an action? Name one thing to avoid for performance.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

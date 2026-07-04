@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 3 | DEMO — Auto Loader Live Demo: Continuous Ingestion</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 3 · DEMO — Auto Loader Live Demo</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 16</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Auto Loader — Live Demo</h1>
+    <p class="subtitle">Continuous ingestion from ADLS, proven live: exactly-once processing, checkpoints, and automatic new-file detection</p>
+    <div class="badge">Day 3 &nbsp;·&nbsp; Instructor-Led &nbsp;·&nbsp; College Presentation Notebook (v2)</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      Presentation aid — not a graded hands-on lab
+    </div>
+  </div>
+
+  <!-- SLIDE: SCOPE NOTE (CRITICAL) -->
+  <div class="slide slide-content">
+    <h3>Scope: What This Demo Is (and Isn't)</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          This demo ingests every CSV in a private sandbox <code>_demo/raw/</code> folder, including a stand-in <code>orders.csv</code> — purely to get a large-enough file set and a stable ID column (<code>OrderID</code>) to prove exactly-once processing, live.
+        </p>
+        <div class="card">
+          <h4>Output location</h4>
+          <p>Written to a throwaway path: <code>raw-data/_demo/bronze/orders_demo_v2/</code> — never the real <code>gbmart.bronze.orders</code>.</p>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">In the real GlobalMart architecture, <code>orders</code>/<code>order_items</code> arrive via Postgres CDC through Lakeflow Connect</strong> (Day 2) — <strong>not</strong> Autoloader. The genuinely Autoloader-sourced entities are <code>products</code>, <code>customers</code>, <code>address</code>, and <code>payments</code> (see HOL 2).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: WHAT WE ARE PROVING -->
+  <div class="slide slide-content">
+    <h3>What We Are Proving</h3>
+    <div class="two-col">
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">Auto Loader does NOT re-read files it has already processed.</strong> When a NEW file lands in ADLS, Auto Loader detects it automatically — zero manual intervention.</p>
+        </div>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Feature</th><th><code>spark.read</code> (manual)</th><th>Auto Loader</th></tr>
+          <tr><td>Tracks processed files</td><td>No — re-reads everything</td><td>Yes — checkpoint remembers every file</td></tr>
+          <tr><td>New file detection</td><td>Must retrigger entire job</td><td>Automatic on next interval</td></tr>
+          <tr><td>Duplicate risk on re-run</td><td>High</td><td>Zero</td></tr>
+          <tr><td>Production grade</td><td>No</td><td>Yes</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: RUN ORDER -->
+  <div class="slide slide-content">
+    <h3>Live Demo Run Order</h3>
+    <table class="sql-table">
+      <tr><th>#</th><th>Action</th><th>Expected Result</th></tr>
+      <tr><td>1</td><td>Setup — configure the External Location (no storage key)</td><td>All paths printed</td></tr>
+      <tr><td>2</td><td>Clean Start — wipe demo Bronze, checkpoint, schema</td><td>Fresh state</td></tr>
+      <tr><td>3</td><td>Phase 1 — load all files with <code>availableNow=True</code></td><td>~1.4M rows in Bronze, stream stops</td></tr>
+      <tr><td>4</td><td>Phase 2 — write <code>orders_new.csv</code> to staging</td><td>File ready, NOT in demo raw/</td></tr>
+      <tr><td>5</td><td>Phase 3 — start continuous stream (same checkpoint)</td><td>Stream idle — no new files</td></tr>
+      <tr><td>6</td><td><strong>Phase 4 — copy <code>orders_new.csv</code> into raw/</strong></td><td><strong>Stream detects it, count jumps +5</strong></td></tr>
+      <tr><td>7</td><td>Validation — no-duplicate proof, checkpoint inspection, then <strong>stop the stream</strong></td><td>Exactly-once confirmed</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: SETUP -->
+  <div class="slide slide-content">
+    <h3>Setup — Unity Catalog External Location</h3>
+<pre><span class="cm"># No storage key needed — same auth as HOL 2</span>
+EXTERNAL_LOCATION = <span class="str">"abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net/raw-data"</span>
+
+raw_path        = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_demo/raw"</span>            <span class="cm"># this demo's private "raw/" folder</span>
+staging_path    = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_demo/staging"</span>        <span class="cm"># holding area, not watched</span>
+checkpoint_path = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_checkpoints/orders_demo_v2"</span>
+output_path     = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_demo/bronze/orders_demo_v2"</span>  <span class="cm"># throwaway path</span>
+schema_path     = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_schemas/orders_demo_v2"</span></pre>
+  </div>
+
+  <!-- SLIDE: CHECKPOINT TRACKING -->
+  <div class="slide slide-content">
+    <h3>How Auto Loader Tracks Files — The Checkpoint</h3>
+    <div class="two-col">
+      <div>
+<pre>ADLS _demo/raw/ folder:
+  orders.csv       ← Phase 1: processed  (checkpoint remembers this)
+  orders_new.csv   ← Phase 4: we drop this (not yet seen)</pre>
+      </div>
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:8px;">What happens every trigger (30 seconds):</p>
+        <ol class="order-list">
+          <li>List all files in raw/</li>
+          <li>Compare against checkpoint <code>sources/</code></li>
+          <li><code>orders.csv</code> → already in checkpoint → SKIP</li>
+          <li><code>orders_new.csv</code> → NOT in checkpoint → PROCESS ← this is the moment</li>
+          <li>Write 5 new rows to Bronze Delta, update checkpoint</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: PHASE 1 -->
+  <div class="slide slide-demo">
+    <h3>Phase 1 — Load Everything, Rename Bad Columns</h3>
+    <div class="demo-label">LIVE CODE · availableNow=True (ONE-SHOT BATCH)</div>
+<pre>raw_stream = (
+    spark.readStream
+    .format(<span class="str">"cloudFiles"</span>)
+    .option(<span class="str">"cloudFiles.schemaLocation"</span>, schema_path)
+    .option(<span class="str">"cloudFiles.schemaEvolutionMode"</span>, <span class="str">"addNewColumns"</span>)
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>)
+    .load(raw_path)
+    .withColumn(<span class="str">"_ingested_at"</span>, current_timestamp())
+    .withColumn(<span class="str">"_source_file"</span>, input_file_name())
+)
+<span class="cm"># shipping_tier.csv has "Cost (Rs)" — clean special characters before writing</span>
+<span class="kw">for</span> c <span class="kw">in</span> raw_stream.columns:
+    clean = c.replace(<span class="str">" "</span>, <span class="str">"_"</span>).replace(<span class="str">"("</span>, <span class="str">""</span>).replace(<span class="str">")"</span>, <span class="str">""</span>)
+    <span class="kw">if</span> clean != c:
+        raw_stream = raw_stream.withColumnRenamed(c, clean)
+
+phase1_query = (
+    raw_stream.writeStream.format(<span class="str">"delta"</span>).outputMode(<span class="str">"append"</span>)
+    .option(<span class="str">"checkpointLocation"</span>, checkpoint_path)
+    .option(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>)
+    .trigger(availableNow=<span class="kw">True</span>)
+    .start(output_path)
+)
+phase1_query.awaitTermination()  <span class="cm"># one-shot: processes everything, then stops itself</span></pre>
+  </div>
+
+  <!-- SLIDE: WHY RENAME COLUMNS -->
+  <div class="slide slide-content">
+    <h3>Why Rename Columns Before Writing?</h3>
+    <div class="highlight-box">
+      <p><code>"Cost (Rs)"</code> → <code>"Cost_Rs"</code> avoids the <code>DELTA_INVALID_CHARACTERS_IN_COLUMN_NAMES</code> error — Delta rejects spaces, parentheses, and other special characters in column names.</p>
+    </div>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">Phase 1 and Phase 3 must use the exact same renaming logic</strong>, or the Bronze table schema won't match between the two writes.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: PHASE 2 -->
+  <div class="slide slide-demo">
+    <h3>Phase 2 — Prepare the New File (Staging)</h3>
+    <div class="demo-label">LIVE CODE · WRITE TO A HOLDING AREA</div>
+    <div class="two-col">
+      <div>
+<pre>orders_new_content = <span class="str">"""OrderID,CustomerID,OrderDate,...
+ORD-NEW-2026-001,CUST-08966,2026-06-15,...
+... 5 fresh GlobalMart orders total ..."""</span>
+
+staged_csv = <span class="fn">f</span><span class="str">"{staging_path}/orders_new.csv"</span>
+dbutils.fs.put(staged_csv, orders_new_content, overwrite=<span class="kw">True</span>)</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Staging = holding area.</strong> The file is written with 5 fresh orders but is <strong>not</strong> in <code>raw/</code> yet — Auto Loader cannot see it. We control exactly when Auto Loader sees the file by copying it into <code>raw/</code> in Phase 4.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: PHASE 3 -->
+  <div class="slide slide-demo">
+    <h3>Phase 3 — Start the Continuous Stream</h3>
+    <div class="demo-label">LIVE CODE · SAME CHECKPOINT AS PHASE 1</div>
+    <div class="two-col">
+      <div>
+<pre>continuous_query = (
+    continuous_stream.writeStream
+    .format(<span class="str">"delta"</span>).outputMode(<span class="str">"append"</span>)
+    .option(<span class="str">"checkpointLocation"</span>, checkpoint_path)
+    .option(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>)
+    .trigger(processingTime=<span class="str">"30 seconds"</span>)
+    .start(output_path)
+)</pre>
+      </div>
+      <div>
+<pre>Phase 1 checkpoint state:  all CSVs → DONE
+Phase 3 first trigger:     all files → SKIP, nothing new → IDLE
+Phase 4 (file dropped):    orders_new.csv → NEW → PROCESS</pre>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p>The stream runs in the background — you can run subsequent cells while it is active.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: PHASE 4 -->
+  <div class="slide slide-demo">
+    <h3>Phase 4 — The Demo Moment</h3>
+    <div class="demo-label">LIVE CODE · DROP THE FILE INTO raw/</div>
+<pre>dbutils.fs.cp(
+    <span class="fn">f</span><span class="str">"{staging_path}/orders_new.csv"</span>,
+    <span class="fn">f</span><span class="str">"{raw_path}/orders_new.csv"</span>
+)</pre>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p>Trigger fires within 30 seconds → count jumps by 5 → <code>_source_file</code> shows <code>orders_new.csv</code> → <code>_ingested_at</code> is LATER than the Phase 1 rows. No manual retrigger.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: VALIDATION -->
+  <div class="slide slide-content">
+    <h3>Validation — Proving Correctness</h3>
+    <table class="sql-table">
+      <tr><th>Claim</th><th>Expected Result</th></tr>
+      <tr><td>No duplicates</td><td><code>COUNT(*) == COUNT(DISTINCT OrderID)</code></td></tr>
+      <tr><td><code>orders.csv</code> not re-processed</td><td>Ingest timestamps all from Phase 1</td></tr>
+      <tr><td>Checkpoint records processed files</td><td><code>sources/</code> folder lists all files</td></tr>
+      <tr><td>Delta history shows two writes</td><td>Version 0 = Phase 1, last version = Phase 4</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: STOP THE STREAM (CRITICAL) -->
+  <div class="slide slide-content">
+    <h3>Stop the Stream + Final Summary</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="kw">if</span> continuous_query.isActive:
+    continuous_query.stop()
+    <span class="fn">print</span>(<span class="str">"Continuous stream stopped."</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"Stream already stopped."</span>)</pre>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Always stop a continuously-triggered stream once its purpose is demonstrated.</strong> The demo explicitly checks <code>isActive</code> and calls <code>.stop()</code> before printing the final summary — never leave a <code>processingTime</code> stream running untethered.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: VIVA Q&A -->
+  <div class="slide slide-content">
+    <h3>Viva Q&amp;A Highlights</h3>
+    <table class="sql-table">
+      <tr><th>Question</th><th>Answer</th></tr>
+      <tr><td>Main advantage of Auto Loader over <code>spark.read</code>?</td><td>Checkpoint = memory. No re-reads, no duplicates.</td></tr>
+      <tr><td><code>availableNow=True</code> vs <code>processingTime</code>?</td><td>One-shot batch (process then stop) vs continuous polling.</td></tr>
+      <tr><td>Why a path here, not a Unity Catalog table like the real pipeline?</td><td>This table is disposable — wiped and rebuilt every run via Clean Start. The real pipeline (HOL 2 onward) always registers a proper <code>catalog.schema.table</code>.</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: ARCHITECTURE -->
+  <div class="slide slide-content">
+    <h3>Architecture — End to End</h3>
+<pre>ADLS raw-data/_demo/raw/ (this demo's private sandbox — not the real pipeline folders)
+  orders.csv + 9 other CSVs  → Phase 1: ingested (checkpoint records all)
+  orders_new.csv             → Phase 4: detected + ingested automatically
+        │
+        ▼  cloudFiles (Auto Loader)
+  Schema stored  → raw-data/_schemas/orders_demo_v2/
+  Files tracked  → raw-data/_checkpoints/orders_demo_v2/sources/
+        │
+        ▼  Column renaming (Cost (Rs) → Cost_Rs)
+        │
+        ▼  writeStream → Delta
+  raw-data/_demo/bronze/orders_demo_v2/   (throwaway path, not gbmart.bronze.orders)
+    All rows from all files
+    _source_file  = which file this row came from
+    _ingested_at  = when Auto Loader ingested it</pre>
+  </div>
+
+  <!-- SLIDE: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>Now You Build It Yourselves</h2>
+    <p style="color:#94a3b8; max-width:620px; margin-top:12px; font-size:15px;">
+      This was an instructor-led proof of the mechanics. <strong style="color:#38bdf8;">Day3_HOL2</strong> is the real, graded hands-on lab — you'll register proper <code>catalog.schema.table</code> Bronze tables for <code>customers</code> and <code>payments</code>.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:900px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>Checkpoints give exactly-once processing; new files are detected automatically</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>HOL 2 (3:00 PM): real Bronze tables for customers + payments</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>What's in the <code>sources/</code> checkpoint folder, and why does it guarantee no duplicates?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

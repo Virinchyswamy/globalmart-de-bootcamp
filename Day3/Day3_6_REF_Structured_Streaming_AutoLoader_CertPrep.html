@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 3 | REF — Spark Structured Streaming &amp; Auto Loader (Cert Prep)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 3 · REF — Structured Streaming &amp; Auto Loader</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 25</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Structured Streaming &amp; Auto Loader</h1>
+    <p class="subtitle">Certification-Prep Supplement — Databricks Data Engineer Associate</p>
+    <div class="badge">Reference &nbsp;·&nbsp; Self-Study &nbsp;·&nbsp; Not a Scheduled ILT Slot</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      Batch vs streaming · Architecture · Live code · Auto Loader · Triggers · Fault tolerance
+    </div>
+  </div>
+
+  <!-- SLIDE: SCOPE (CRITICAL) -->
+  <div class="slide slide-content">
+    <h3>Not a Scheduled Day 3 Slot</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          The calendar's single 60-minute <strong style="color:#e2e8f0;">"Autoloader &amp; Schema Evolution Concepts"</strong> slot is <code>Day3_ILT2</code>. That's the session everyone needs.
+        </p>
+        <div class="card">
+          <h4>This document goes deeper</h4>
+          <ul>
+            <li>Batch-vs-streaming theory</li>
+            <li>WAL / checkpointing internals</li>
+            <li>Trigger and output-mode mechanics</li>
+            <li>Exam weightage breakdown</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">For learners preparing for the Databricks Data Engineer Associate certification.</strong> Read it on your own time — nothing here is required to complete the Day 3 hands-on labs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: EXAM WEIGHTAGE -->
+  <div class="slide slide-content">
+    <h3>Exam Weightage</h3>
+    <table class="sql-table">
+      <tr><th>Section</th><th>Weight</th><th>Questions</th></tr>
+      <tr><td>Databricks Lakehouse Platform</td><td>24%</td><td>~11</td></tr>
+      <tr><td>ETL with Spark SQL and Python</td><td>29% ← HIGHEST</td><td>~13</td></tr>
+      <tr><td><strong>Incremental Data / Structured Streaming</strong></td><td><strong>20% ← THIS DOC</strong></td><td><strong>~9</strong></td></tr>
+      <tr><td>Production Pipelines</td><td>16%</td><td>~7</td></tr>
+      <tr><td>Data Governance</td><td>9%</td><td>~5</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Strategy:</strong> need ~32/45 correct (70%) to pass. Streaming is worth ~9 questions — worth mastering.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: CHAPTERS COVERED -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>Chapters Covered</h2>
+    <div class="three-col" style="margin-top:20px;">
+      <div class="card"><h4>1. Batch vs Streaming</h4><p>How you PROCESS defines batch/streaming — not how data arrives.</p></div>
+      <div class="card"><h4>2. Real-Time Architecture</h4><p>App → Message Broker → Persistent Storage (ADLS) → Databricks → Delta.</p></div>
+      <div class="card"><h4>3. Structured Streaming</h4><p>Micro-batches — checkpointing replaces manual state tracking.</p></div>
+    </div>
+    <div class="three-col" style="margin-top:20px;">
+      <div class="card"><h4>4. Live Code Demo</h4><p>The WRONG way (<code>spark.read</code>), then correct schema-first streaming.</p></div>
+      <div class="card"><h4>5. Auto Loader</h4><p>Schema inference + evolution, File Notification vs Directory Listing.</p></div>
+      <div class="card"><h4>6. Triggers &amp; Modes</h4><p><code>processingTime</code>, <code>availableNow</code>, <code>continuous</code>; append/complete/update.</p></div>
+    </div>
+    <div class="three-col" style="margin-top:20px; max-width:340px;">
+      <div class="card"><h4>7. Fault Tolerance</h4><p>Checkpointing (state) + WAL (idempotency) = exactly-once.</p></div>
+    </div>
+  </div>
+
+  <!-- SLIDE: CHAPTER 1 BATCH VS STREAMING -->
+  <div class="slide slide-content">
+    <h3>Batch vs Streaming Data</h3>
+    <div class="two-col">
+      <div>
+<pre>BATCH Data:
+  Arrives on a schedule — weekly, daily, hourly
+  Delays are ACCEPTABLE
+  Example: weekly sales report — 2 hours late is fine
+
+STREAMING Data:
+  Arrives continuously — every second
+  Delays of even 5 minutes are NOT acceptable
+  Example: live cricket score, cab ETA</pre>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">The critical rule:</strong> Streaming vs Batch = HOW you PROCESS, not how data arrives. If Kafka sends data every second but you process it once a week — that's still BATCH.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Business example — Amazon vs Flipkart</h4>
+          <p>You browse a laptop on Amazon, don't buy immediately. Amazon processes your clickstream within 1 minute and sends a discount offer. If they waited 5 minutes, you'd have already bought it on Flipkart. That 1-minute window is near real-time processing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: REAL-TIME TABLE -->
+  <div class="slide slide-content">
+    <h3>Real-Time vs Near Real-Time vs Batch</h3>
+    <table class="sql-table">
+      <tr><th>Type</th><th>Delay</th><th>Example</th></tr>
+      <tr><td>Real-Time</td><td>Sub-second</td><td>Live cricket score, stock ticker</td></tr>
+      <tr><td>Near Real-Time</td><td>30 sec – 5 min</td><td>Cab ETA, e-commerce clickstream</td></tr>
+      <tr><td>Batch</td><td>Hours / days</td><td>Weekly orders report</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: ARCHITECTURE -->
+  <div class="slide slide-content">
+    <h3>Real-Time Data Flow Architecture</h3>
+    <div class="two-col">
+      <div>
+<pre>Application (Amazon website, Uber app)
+       │  every user click/action = one event
+       ▼
+Stream Receiver / Message Broker
+  (Kafka | Azure Event Hub | Kinesis | Pub/Sub)
+       │  buffers events, does NOT process
+       ▼
+Persistent Storage  ← safety net
+  (ADLS Gen2 | S3 | GCS)
+       │  Databricks mounts and reads as stream
+       ▼
+Databricks (spark.readStream)
+       ▼
+Delta Table (Bronze → Silver → Gold)</pre>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Cloud</th><th>Service</th></tr>
+          <tr><td>Open Source</td><td>Apache Kafka</td></tr>
+          <tr><td>Azure</td><td>Event Hub</td></tr>
+          <tr><td>AWS</td><td>Kinesis</td></tr>
+          <tr><td>GCP</td><td>Pub/Sub</td></tr>
+        </table>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">Why ADLS between Event Hub and Databricks?</strong> (1) Databricks processes in-memory — a network glitch loses everything; ADLS gives durable persistence. (2) Event Hub retention is short (Basic: 1 day, Standard: 7 days) — after that, data is gone forever. ADLS preserves it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: MICRO-BATCH -->
+  <div class="slide slide-content">
+    <h3>Micro-Batch Concept and the Stateful Processing Problem</h3>
+    <div class="two-col">
+      <div>
+<pre>A trigger fires every N seconds (e.g., 10 sec)
+All data in those 10 sec = one micro-batch
+Resources are shared, not monopolised</pre>
+      </div>
+      <div>
+<pre>Micro-batch 1: CUST-00123 placed 100 orders
+Micro-batch 2: CUST-00123 placed 70 more
+
+Q: How does Spark know the previous count was 100?
+→ It needs to store STATE
+
+Old Spark Streaming:  manual updateStateByKey() — error-prone
+Structured Streaming: checkpoint stores state automatically</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: COMPARISON + SAVE GAME -->
+  <div class="slide slide-content">
+    <h3>Spark Streaming vs Structured Streaming</h3>
+    <table class="sql-table">
+      <tr><th>Feature</th><th>Spark Streaming (Old)</th><th>Structured Streaming (New)</th></tr>
+      <tr><td>API</td><td>Low-level RDD</td><td>High-level DataFrame / SQL</td></tr>
+      <tr><td>State management</td><td>Manual (<code>updateStateByKey</code>)</td><td>Automatic (checkpoint)</td></tr>
+      <tr><td>Late data</td><td>No built-in handling</td><td>Watermarking</td></tr>
+      <tr><td>Recommended?</td><td>No — deprecated</td><td>Yes — current standard</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Save-game analogy for checkpointing:</strong> you save at checkpoint 2, the game crashes at level 3 — you restart from checkpoint 2, not from the beginning. Structured Streaming does the same: if micro-batch 3 fails, Spark resumes from the last checkpoint and only reprocesses batch 3.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: SECTION CH4 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Chapter 4</div>
+    <h2>Structured Streaming — Live Code Demo</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      <strong style="color:#f59e0b;">Note on this reference's sample data:</strong> in the real GlobalMart pipeline, orders/order_items arrive via Postgres CDC (Day 2), not as a file drop — there is no real <code>orders/</code> folder under <code>raw-data/</code>. This chapter is self-study: upload any sample orders CSV to the sandbox path before running.
+    </p>
+  </div>
+
+  <!-- SLIDE: STEP 1 WRONG -->
+  <div class="slide slide-demo">
+    <h3>Step 1 — The WRONG Approach</h3>
+    <div class="demo-label">spark.read = BATCH, NOT STREAMING</div>
+<pre>batch_df = spark.read \
+    .format(<span class="str">"csv"</span>) \
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>) \
+    .load(<span class="fn">f</span><span class="str">"{raw_path}/orders.csv"</span>)
+
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Is streaming? {batch_df.isStreaming}"</span>)
+<span class="cm"># Output: Is streaming? False — reads everything at once and stops</span></pre>
+  </div>
+
+  <!-- SLIDE: STEP 2 FAILS -->
+  <div class="slide slide-demo">
+    <h3>Step 2 — Attempt <code>readStream</code> With <code>inferSchema</code> (Fails)</h3>
+    <div class="demo-label">SCHEMA INFERENCE DOES NOT WORK ON A STREAM</div>
+    <div class="two-col">
+      <div>
+<pre><span class="kw">try</span>:
+    stream_df = spark.readStream \
+        .format(<span class="str">"csv"</span>) \
+        .option(<span class="str">"header"</span>, <span class="str">"true"</span>) \
+        .option(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>) \
+        .load(<span class="fn">f</span><span class="str">"{raw_path}/"</span>)
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"ERROR: {e}"</span>)</pre>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Why it fails:</strong> Structured Streaming cannot infer schema from streaming data. It processes data in micro-batches — it never scans ALL files upfront. Solution: define the schema manually.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: STEP 3 CORRECT -->
+  <div class="slide slide-demo">
+    <h3>Step 3 — Correct: Extract Schema First, Then Stream</h3>
+    <div class="demo-label">THE FIX</div>
+<pre><span class="cm"># Load one file as batch, purely to extract the schema</span>
+sample_df     = spark.read.format(<span class="str">"csv"</span>).option(<span class="str">"header"</span>, <span class="str">"true"</span>) \
+                     .option(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>).load(<span class="fn">f</span><span class="str">"{raw_path}/orders.csv"</span>)
+orders_schema = sample_df.schema
+
+<span class="cm"># Reuse that schema in the streaming read</span>
+orders_stream = spark.readStream.format(<span class="str">"csv"</span>).option(<span class="str">"header"</span>, <span class="str">"true"</span>) \
+                     .schema(orders_schema).load(<span class="fn">f</span><span class="str">"{raw_path}/"</span>)
+
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Is streaming? {orders_stream.isStreaming}"</span>)  <span class="cm"># True</span></pre>
+  </div>
+
+  <!-- SLIDE: STEP 4+5 + KEY RULES -->
+  <div class="slide slide-content">
+    <h3>Aggregations, Schema Evolution Limits, and Key Rules</h3>
+    <div class="two-col">
+      <div>
+<pre>orders_by_channel = orders_stream.groupBy(<span class="str">"OrderChannel"</span>) \
+    .agg(count(<span class="str">"*"</span>).alias(<span class="str">"order_count"</span>))
+<span class="cm"># display(orders_by_channel) triggers the live stream</span></pre>
+        <div class="highlight-box warn" style="margin-top:12px;">
+          <p><strong style="color:#f59e0b;">Schema evolution limitation:</strong> a new CSV with an extra column (e.g. <code>promo_code</code>) is silently ignored by Structured Streaming — no error, the column's data is just missing. Fix: manually update the schema and restart. Auto Loader (next chapter) solves this automatically.</p>
+        </div>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Rule</th><th>Detail</th></tr>
+          <tr><td>Use <code>spark.readStream</code></td><td>NOT <code>spark.read</code></td></tr>
+          <tr><td>Schema MUST be manual</td><td><code>inferSchema</code> does not work</td></tr>
+          <tr><td><code>display()</code> triggers the stream</td><td>Won't run without an action</td></tr>
+          <tr><td>Cluster must stay running</td><td>Stream stops when cluster stops</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: SECTION CH5 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Chapter 5</div>
+    <h2>Auto Loader (<code>cloudFiles</code>)</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Built to fix Structured Streaming's two biggest gaps: no schema inference, and no schema evolution.
+    </p>
+  </div>
+
+  <!-- SLIDE: AUTOLOADER PARAMS + MODES -->
+  <div class="slide slide-content">
+    <h3>Required Parameters and Schema Evolution Modes</h3>
+    <div class="two-col">
+      <div>
+        <table class="sql-table">
+          <tr><th>Parameter</th><th>What It Does</th></tr>
+          <tr><td><code>format("cloudFiles")</code></td><td>Activates Auto Loader</td></tr>
+          <tr><td><code>cloudFiles.format</code></td><td>File type: csv, json, parquet</td></tr>
+          <tr><td><code>cloudFiles.schemaLocation</code></td><td>Where inferred schema is stored — separate from data</td></tr>
+          <tr><td><code>checkpointLocation</code></td><td>Tracks which files were already processed</td></tr>
+        </table>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Mode</th><th>What Happens on a New Column</th></tr>
+          <tr><td><code>addNewColumns</code> (default)</td><td>Adds the new column to schema automatically</td></tr>
+          <tr><td><code>rescue</code></td><td>New column data stored in <code>_rescued_data</code> JSON column</td></tr>
+          <tr><td><code>failOnNewColumns</code></td><td>Pipeline FAILS — strict schema enforcement</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: AUTOLOADER CODE -->
+  <div class="slide slide-demo">
+    <h3>Auto Loader in Code</h3>
+    <div class="demo-label">SCHEMA INFERENCE + RESCUE MODE</div>
+    <div class="two-col">
+      <div>
+<pre>orders_autoloader_stream = spark.readStream \
+    .format(<span class="str">"cloudFiles"</span>) \
+    .option(<span class="str">"cloudFiles.format"</span>, <span class="str">"csv"</span>) \
+    .option(<span class="str">"cloudFiles.schemaLocation"</span>,
+            <span class="fn">f</span><span class="str">"{autoloader_base}/schemas/orders"</span>) \
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>) \
+    .option(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>) \
+    .load(<span class="fn">f</span><span class="str">"{raw_path}/"</span>)
+<span class="cm"># No schema needed — Auto Loader infers and stores it</span></pre>
+      </div>
+      <div>
+<pre>orders_rescue_stream = spark.readStream \
+    .format(<span class="str">"cloudFiles"</span>) \
+    .option(<span class="str">"cloudFiles.schemaEvolutionMode"</span>, <span class="str">"rescue"</span>) \
+    ...
+    .load(<span class="fn">f</span><span class="str">"{raw_path}/"</span>)
+
+<span class="cm"># A new PromoCode column shows up as:</span>
+<span class="cm"># _rescued_data = {"PromoCode": "SAVE10", ...}</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: WRITE TO BRONZE + COMPARISON -->
+  <div class="slide slide-content">
+    <h3>Write to Bronze, and File Notification vs Directory Listing</h3>
+    <div class="two-col">
+      <div>
+<pre>query = orders_with_meta.writeStream \
+    .format(<span class="str">"delta"</span>).outputMode(<span class="str">"append"</span>) \
+    .option(<span class="str">"checkpointLocation"</span>, <span class="fn">f</span><span class="str">"{stream_checkpoint}/orders_autoloader"</span>) \
+    .option(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>) \
+    .trigger(availableNow=<span class="kw">True</span>) \
+    .start(<span class="fn">f</span><span class="str">"{bronze_path}/orders_stream"</span>)
+
+query.awaitTermination()  <span class="cm"># self-stopping, one-shot batch</span></pre>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p><strong style="color:#38bdf8;">File Notification</strong> (cloud sends an event on new file) scales to billions of files without a full folder scan; <strong>Directory Listing</strong> (default) scans the folder each trigger — fine up to millions of files.</p>
+        </div>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Feature</th><th>COPY INTO</th><th>Struct. Streaming</th><th>Auto Loader</th></tr>
+          <tr><td>Scale</td><td>Small–Medium</td><td>Medium–Large</td><td>Large–Billions</td></tr>
+          <tr><td>Schema inference</td><td>Yes</td><td>No (manual)</td><td>Yes (automatic)</td></tr>
+          <tr><td>Schema evolution</td><td>No</td><td>No</td><td>Yes</td></tr>
+          <tr><td>Workspace tier</td><td>Standard</td><td>Standard</td><td>Premium only</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: TRIGGERS + OUTPUT MODES -->
+  <div class="slide slide-content">
+    <h3>Chapter 6 — Triggers &amp; Output Modes</h3>
+    <div class="two-col">
+      <div>
+        <table class="sql-table">
+          <tr><th>Trigger</th><th>Behavior</th></tr>
+          <tr><td><code>processingTime='10 seconds'</code></td><td>Fires every 10 sec — continuous</td></tr>
+          <tr><td><code>availableNow=True</code></td><td>Process all pending, then stop</td></tr>
+          <tr><td><code>continuous='1 second'</code></td><td>No batching — ultra-low latency</td></tr>
+          <tr><td>Default (none)</td><td>500ms micro-batch — not recommended, costly</td></tr>
+        </table>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Output Mode</th><th>Behavior</th></tr>
+          <tr><td><code>append</code></td><td>Insert new rows only, never updates</td></tr>
+          <tr><td><code>complete</code></td><td>Overwrite entire output with fresh result</td></tr>
+          <tr><td><code>update</code></td><td>Write only rows that changed</td></tr>
+        </table>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p><strong style="color:#38bdf8;">Databricks recommendation:</strong> always specify an explicit trigger to control cost — the default 500ms keeps the cluster constantly processing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: TRIGGER EXAMPLES — SAFE PATTERNS (CRITICAL) -->
+  <div class="slide slide-demo">
+    <h3>Trigger Examples — Safe Patterns Only</h3>
+    <div class="demo-label">BOTH EXAMPLES FULLY STOP THEMSELVES — SAFE TO RUN ALL</div>
+    <div class="two-col">
+      <div>
+<pre><span class="cm"># Example 1: processingTime — started, proven alive</span>
+<span class="cm"># for one interval, then stopped programmatically</span>
+q1 = orders_stream.writeStream.format(<span class="str">"delta"</span>) \
+    .outputMode(<span class="str">"append"</span>) \
+    .trigger(processingTime=<span class="str">"10 seconds"</span>) \
+    .option(<span class="str">"checkpointLocation"</span>, <span class="fn">f</span><span class="str">"{stream_checkpoint}/orders_10sec"</span>) \
+    .start(<span class="fn">f</span><span class="str">"{bronze_path}/orders_trigger_demo"</span>)
+
+time.sleep(<span class="str">12</span>)  <span class="cm"># let one 10-sec micro-batch fire</span>
+q1.stop()
+<span class="cm"># the line you must never skip with processingTime triggers</span></pre>
+      </div>
+      <div>
+<pre><span class="cm"># Example 2: availableNow — processes everything</span>
+<span class="cm"># pending, then terminates on its own</span>
+q2 = orders_stream.writeStream.format(<span class="str">"delta"</span>) \
+    .outputMode(<span class="str">"append"</span>) \
+    .trigger(availableNow=<span class="kw">True</span>) \
+    .option(<span class="str">"checkpointLocation"</span>, <span class="fn">f</span><span class="str">"{stream_checkpoint}/orders_available"</span>) \
+    .start(<span class="fn">f</span><span class="str">"{bronze_path}/orders_available_demo"</span>)
+
+q2.awaitTermination()  <span class="cm"># no manual .stop() ever needed</span></pre>
+        <div class="highlight-box warn" style="margin-top:12px;">
+          <p><strong style="color:#f59e0b;">A <code>processingTime</code> trigger runs FOREVER until something calls <code>.stop()</code></strong>, and blocks cluster auto-termination the whole time — exactly the kind of thing that quietly runs up cost if left unattended. Always pair it with an explicit stop, as shown here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: SECTION CH7 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Chapter 7</div>
+    <h2>Fault Tolerance: Checkpointing &amp; WAL</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Two mechanisms combine to give Structured Streaming its exactly-once guarantee.
+    </p>
+  </div>
+
+  <!-- SLIDE: CHECKPOINT STRUCTURE -->
+  <div class="slide slide-content">
+    <h3>Checkpoint Folder Structure = Memory for Spark Streaming</h3>
+    <div class="two-col">
+      <div>
+<pre>_checkpoints/orders_autoloader/
+  metadata   ← stream query ID and configuration
+  sources/   ← which files/offsets read per micro-batch
+  offsets/   ← current stream position (a bookmark)
+  commits/   ← log of completed micro-batch transactions
+  state/     ← ONLY when GROUP BY / window functions used</pre>
+      </div>
+      <div>
+<pre>Micro-batch 1: CUST-00123 → 100 orders → checkpoint saved
+Micro-batch 2: CUST-00123 → 70 more    → checkpoint saved
+Total count: 170
+
+Micro-batch 3 FAILS:
+  Spark reads checkpoint → resumes from count 170
+  Only reprocesses batch 3 → no data loss</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: WAL -->
+  <div class="slide slide-content">
+    <h3>WAL (Write-Ahead Log) = Idempotency</h3>
+    <div class="two-col">
+      <div>
+<pre>WAL = a log entry created for EACH record
+      BEFORE it is processed
+
+Before processing a record:
+  Spark checks: does a WAL entry exist?
+  YES → skip (already processed)
+  NO  → process and create WAL entry
+
+Result: running the pipeline 100 times =
+        same output, no duplicates</pre>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p><strong style="color:#38bdf8;">Attendance register analogy:</strong> a teacher checks the register before letting a student in — already marked, skip; not marked, mark and let them in. WAL does the same for every record.</p>
+        </div>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th></th><th>Checkpoint</th><th>WAL</th></tr>
+          <tr><td>Stores</td><td>STATE (aggregated counts)</td><td>LOG per record</td></tr>
+          <tr><td>Enables</td><td>Recovery + stateful processing</td><td>Idempotency (no duplicates)</td></tr>
+        </table>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p><strong style="color:#22c55e;">Together: Exactly-Once Processing guarantee.</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: CERTIFICATION SUMMARY -->
+  <div class="slide slide-content">
+    <h3>Certification Summary</h3>
+    <ol class="order-list">
+      <li>Auto Loader vs COPY INTO — scale + notification difference</li>
+      <li>Output modes: <code>complete</code> = overwrite, <code>append</code> = insert only</li>
+      <li>Fault tolerance = Checkpointing + WAL</li>
+      <li>Triggers: always specify explicit trigger; default = 500ms</li>
+      <li>Medallion: raw→Bronze (Auto Loader/COPY INTO), Bronze→Silver (MERGE), Silver→Gold (GROUP BY)</li>
+      <li><code>stream.isStreaming = True</code> only with <code>readStream</code></li>
+      <li>Schema must be manually defined in Structured Streaming (not with Auto Loader)</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Optional Supplement</div>
+    <h2>Back to the Core Path</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      This reference is bonus material for certification prep — it isn't required for any Day 3 hands-on lab. The core path continues with Day 4.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:900px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>Checkpointing + WAL = exactly-once; Auto Loader fixes Structured Streaming's schema gaps</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Required Path</h4>
+        <p><code>Day3_ILT2</code> + <code>Day3_HOL2</code> cover everything needed for Day 3</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Self-Check</h4>
+        <p>Why must a <code>processingTime</code> trigger always be paired with an explicit stop?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

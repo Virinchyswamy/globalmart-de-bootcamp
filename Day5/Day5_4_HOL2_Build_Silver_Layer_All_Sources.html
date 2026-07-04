@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 5 | HOL 2 — Build the Silver Layer: All Sources</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 5 · HOL 2 — Build the Silver Layer: All Sources</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 16</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Build the Silver Layer</h1>
+    <p class="subtitle">All 7 GlobalMart sources, one at a time — structs, SCD1 vs. SCD2, and referential integrity across tables</p>
+    <div class="badge">Day 5 &nbsp;·&nbsp; HOL 2 &nbsp;·&nbsp; Hands-On Lab</div>
+    <div style="margin-top:18px;">
+      <span class="pill pill-blue">~3 hours</span>
+      <span class="pill pill-green">Intermediate</span>
+      <span class="pill pill-amber">7 tables · Follows HOL 1</span>
+    </div>
+    <div style="margin-top:22px; color:#475569; font-size:13px;">
+      customers · products · address · orders · order_items · payments · payment_methods
+    </div>
+  </div>
+
+  <!-- SLIDE 2: THE PATTERN ONCE -->
+  <div class="slide slide-section">
+    <div class="section-tag">Before You Start</div>
+    <h2>The Pattern, Once</h2>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px; max-width:700px;">Every source in this lab follows the same 7 steps. Work through sources in order — <code>order_items</code> and <code>payments</code> check referential integrity against Silver tables you build earlier in this same notebook, so don't skip ahead.</p>
+    <table class="sql-table">
+      <tr><th>Step</th><th>What Happens</th></tr>
+      <tr><td>1</td><td>Read Bronze, inspect schema</td></tr>
+      <tr><td>2</td><td>DQ scan — tag every row with its first failing rule</td></tr>
+      <tr><td>3</td><td>Investigate flagged rows — don't fix blind</td></tr>
+      <tr><td>4</td><td>Fix / flag / quarantine — pick correctly (Day 5 ILT 2)</td></tr>
+      <tr><td>5</td><td>Transform — standardize, conform, enrich</td></tr>
+      <tr><td>6</td><td>Write to Silver (+ quarantine table if needed)</td></tr>
+      <tr><td>7</td><td>Verify</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 3: TABLE BY TABLE SUMMARY -->
+  <div class="slide slide-content">
+    <h3>Table-by-Table Summary</h3>
+    <table class="sql-table">
+      <tr><th>Source</th><th>SCD Type</th><th>Key Challenge</th></tr>
+      <tr><td>customers</td><td style="color:#22c55e;">SCD2</td><td>Email/phone fixes, under-18 quarantine (HOL 1)</td></tr>
+      <tr><td>products</td><td style="color:#22c55e;">SCD2 (initial load)</td><td>Semi-structured — flatten structs, keep <code>tags</code> array</td></tr>
+      <tr><td>address</td><td>SCD1 (immutable)</td><td>Recover <code>PinCode</code> leading zeros from duplicate text</td></tr>
+      <tr><td>orders</td><td style="color:#f59e0b;">SCD1 (MERGE)</td><td>Lakeflow lowercases columns; DELIVERY_BEFORE_SHIP flagged</td></tr>
+      <tr><td>order_items</td><td>SCD1 (overwrite)</td><td>Referential integrity vs. silver.orders + silver.products</td></tr>
+      <tr><td>payments</td><td>SCD1 (overwrite)</td><td>Conditional-null business rule (GiftCard/Coupon)</td></tr>
+      <tr><td>payment_methods</td><td>Static lookup</td><td>Small reference table — uniqueness check only</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Why customers and products get SCD2:</strong> both are dimensions whose attributes can change over time (an email, a price). Orders and payments have one current truth at any moment — SCD1 is enough.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: SOURCE 1 CUSTOMERS -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 1 · ALREADY BUILT IN HOL 1</div>
+    <h3>Customers</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">You built <code>gbmart.silver.customers</code> and <code>gbmart.silver.customers_quarantine</code> in HOL 1: email fix, phone standardization, REGISTERED_UNDER_18 quarantine, <code>NOT NULL</code>/<code>CHECK</code> constraints, and SCD2 tracking columns.</p>
+      </div>
+      <div>
+<pre><span class="fn">assert</span> spark.catalog.<span class="fn">tableExists</span>(<span class="str">"gbmart.silver.customers"</span>),
+    <span class="str">"Run HOL 1 first."</span>
+
+spark.<span class="fn">table</span>(<span class="str">"gbmart.silver.customers"</span>) \
+    .<span class="fn">groupBy</span>(<span class="str">"is_current"</span>).<span class="fn">count</span>().<span class="fn">show</span>()</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: SOURCE 2 PRODUCTS INTRO -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 2 · SEMI-STRUCTURED</div>
+    <h3>Products — Not a Flat Table</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">Think of <code>bronze.products</code> like a shipping manifest: most fields are plain text, but <code>specs</code> and <code>supplier_info</code> are folders-within-the-folder (structs), and <code>tags</code> is a list taped to the box (array). Inspect the real shape before assuming anything.</p>
+      </div>
+      <div>
+<pre>bronze_products = spark.<span class="fn">table</span>(<span class="str">"gbmart.bronze.products"</span>)
+bronze_products.<span class="fn">printSchema</span>()
+
+<span class="cm"># Autoloader routes unmatched fields to _rescued_data
+# instead of silently dropping them -- check it stays empty.</span>
+rescued = bronze_products.<span class="fn">filter</span>(
+    <span class="fn">col</span>(<span class="str">"_rescued_data"</span>).<span class="fn">isNotNull</span>()).<span class="fn">count</span>()</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: SOURCE 2 PRODUCTS FLATTEN+WRITE -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 2 · FLATTEN, THEN WRITE</div>
+    <h3>Flatten Structs, Keep Tags as an Array</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="fn">col</span>(<span class="str">"specs.power_source"</span>).<span class="fn">alias</span>(<span class="str">"power_source"</span>),
+<span class="fn">col</span>(<span class="str">"specs.material"</span>).<span class="fn">alias</span>(<span class="str">"material"</span>),
+  <span class="cm"># NULL by category design -- not a DQ issue</span>
+<span class="fn">col</span>(<span class="str">"supplier_info.name"</span>).<span class="fn">alias</span>(<span class="str">"supplier_name"</span>),
+<span class="str">"tags"</span>  <span class="cm"># stays array&lt;string&gt; -- constant
+       # cardinality, not a many-to-many relation</span></pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><code>products.csv</code> is well-formed enough that the DQ scan (<code>NULL_PRODUCT_ID</code>, <code>INVALID_PRICE</code>, <code>DISCOUNT_EXCEEDS_PRICE</code>, <code>INVALID_RATING</code>) typically returns 0 issues — no quarantine table needed for this source.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:10px;">
+          <p>Every product gets its <strong>first</strong> SCD2 version here (<code>is_current = True</code>, open-ended <code>effective_end_date</code>). The MERGE logic that closes an old version when price changes comes later in the course.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: SOURCE 3 ADDRESS RECOVER -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 3 · RECOVER A CORRUPTED VALUE</div>
+    <h3>Address — Recovering PinCode</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">Autoloader inferred <code>PinCode</code> as numeric — any PIN starting with <code>0</code> already lost that digit before Spark showed it to us. Like a torn label rewritten elsewhere on the package: <code>AddressLine1</code> embeds the same PIN as plain text (e.g. <code>Guntur_082130</code>), and text never strips leading zeros.</p>
+      </div>
+      <div>
+<pre>recovered_address = bronze_address.<span class="fn">withColumn</span>(
+    <span class="str">"PinCode"</span>,
+    <span class="fn">when</span>(pincode_len &lt; 6,
+        <span class="fn">regexp_extract</span>(<span class="fn">col</span>(<span class="str">"AddressLine1"</span>),
+            <span class="str">r"(\d{5,6})\s*$"</span>, 1))
+    .<span class="fn">otherwise</span>(<span class="fn">col</span>(<span class="str">"PinCode"</span>)
+        .<span class="fn">cast</span>(<span class="str">"long"</span>).<span class="fn">cast</span>(<span class="str">"string"</span>))
+)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: SOURCE 3 ADDRESS CLEAN+WRITE -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 3 · REMOVE DUPLICATION, THEN WRITE</div>
+    <h3>Address — Clean AddressLine1, Write Silver</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;"><code>AddressLine1</code> embeds a duplicate of City/PinCode at the end, joined with inconsistent separators. Since <code>City</code>/<code>PinCode</code> already exist as clean columns, remove everything after the last comma or line break.</p>
+      </div>
+      <div>
+<pre>cleaned_address = recovered_address \
+    .<span class="fn">withColumn</span>(<span class="str">"AddressLine1"</span>,
+        <span class="fn">regexp_replace</span>(<span class="fn">col</span>(<span class="str">"AddressLine1"</span>),
+            <span class="str">r"[,\n][^,\n]*$"</span>, <span class="str">""</span>)) \
+    .<span class="fn">withColumn</span>(<span class="str">"State"</span>,
+        <span class="fn">regexp_replace</span>(<span class="fn">col</span>(<span class="str">"State"</span>), <span class="str">"_"</span>, <span class="str">" "</span>))</pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><strong style="color:#38bdf8;">Naming note:</strong> the Silver table is singular — <code>silver.address</code>, not <code>silver.addresses</code> — matching the real gbmart workspace convention that later Gold builds already read from.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: SOURCE 4 ORDERS SCD1 -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 4 · SCD1 VIA MERGE</div>
+    <h3>Orders — One Current Truth</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">Lakeflow Connect lowercases every Postgres column (<code>OrderID</code> → <code>orderid</code>). An order has one current truth at any moment, so this is <strong style="color:#e2e8f0;">SCD1</strong>: matched rows get overwritten, unmatched rows get inserted — unlike customers/products, no history kept.</p>
+      </div>
+      <div>
+<pre>deltaTable.<span class="fn">alias</span>(<span class="str">"tgt"</span>).<span class="fn">merge</span>(
+    silver_orders_df.<span class="fn">alias</span>(<span class="str">"src"</span>),
+    <span class="str">"tgt.order_id = src.order_id"</span>
+) \
+ .<span class="fn">whenMatchedUpdateAll</span>() \
+ .<span class="fn">whenNotMatchedInsertAll</span>() \
+ .<span class="fn">execute</span>()</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: SOURCE 4 ORDERS DELIVERY BEFORE SHIP -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 4 · APPLYING ILT 2'S LESSON</div>
+    <h3>DELIVERY_BEFORE_SHIP — Flagged, Not Quarantined</h3>
+    <div class="highlight-box warn">
+      <p><strong style="color:#f59e0b;">Do not quarantine these rows.</strong> The full ILT 2 investigation found the 114 flagged orders are a timezone-cast artifact (UTC vs. IST), not real data errors — quarantining them previously orphaned 352 downstream <code>order_items</code>.</p>
+    </div>
+    <div class="highlight-box success" style="margin-top:14px;">
+      <p>Keep every order. Add a <code>_data_note = 'POSSIBLE_TIMEZONE_OFFSET_1DAY'</code> column instead — fully joinable for revenue, still filterable for SLA analysis.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: SOURCE 5 ORDER ITEMS -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 5 · REFERENTIAL INTEGRITY</div>
+    <h3>Order Items — The Grain of fact_sales</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">No derived columns needed — pricing and totals get computed when joined with <code>products</code> at Gold. The important step: every <code>order_id</code>/<code>product_id</code> here must exist in the Silver tables you already built.</p>
+      </div>
+      <div>
+<pre>orphans = bronze_order_items.<span class="fn">join</span>(
+    orders_df,
+    bronze_order_items.orderid == orders_df.order_id,
+    <span class="str">"left_anti"</span>
+)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Orphans: {orphans.count():,}"</span>)  <span class="cm"># must be 0</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: SOURCE 6 PAYMENTS -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 6 · A BUSINESS RULE, NOT A DQ GAP</div>
+    <h3>Payments — Conditional-Null Columns</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;"><code>GiftCardAmount</code>/<code>CouponAmount</code> are only populated when the matching <code>*Usage</code> flag is <code>"Yes"</code>. Before assuming that's a data gap, confirm it's actually a clean, consistent rule.</p>
+      </div>
+      <div>
+<pre>bronze_payments.<span class="fn">groupBy</span>(<span class="str">"GiftCardUsage"</span>).<span class="fn">agg</span>(
+    <span class="fn">count</span>(<span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"GiftCardAmount"</span>).<span class="fn">isNull</span>(), 1))
+        .<span class="fn">alias</span>(<span class="str">"amount_null"</span>),
+    <span class="fn">count</span>(<span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"GiftCardAmount"</span>).<span class="fn">isNotNull</span>(), 1))
+        .<span class="fn">alias</span>(<span class="str">"amount_populated"</span>)
+).<span class="fn">show</span>()</pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Expected: <code>Usage='No'</code> → amount always null; <code>Usage='Yes'</code> → amount always populated. Zero violations means it's a clean business rule, not a DQ issue.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: SOURCE 7 PAYMENT METHODS -->
+  <div class="slide slide-demo">
+    <div class="demo-label">SOURCE 7 · BUILT FRESH IN THIS LAB</div>
+    <h3>Payment Methods — A Small Lookup Table</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">A small reference table (<code>PaymentMethodID</code> → <code>MethodName</code>) — exactly what a Gold payment-method dimension needs, and what <code>silver.payments</code> joins against to display "Credit Card" instead of <code>PM-001</code>.</p>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Unlike the other 6 sources, Day 4 never ingested this one into Bronze.</strong> This lab builds <code>gbmart.bronze.payment_methods</code> first, using the identical Autoloader pattern used everywhere else in this course, before conforming it into Silver.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: FINAL VERIFICATION -->
+  <div class="slide slide-content">
+    <h3>Final Verification — Row Counts Across the Silver Layer</h3>
+<pre><span class="kw">for</span> t <span class="kw">in</span> [<span class="str">"customers"</span>, <span class="str">"products"</span>, <span class="str">"address"</span>, <span class="str">"orders"</span>,
+          <span class="str">"order_items"</span>, <span class="str">"payments"</span>, <span class="str">"payment_methods"</span>]:
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"gbmart.silver.{t}: {spark.table(f'gbmart.silver.{t}').count():,} rows"</span>)</pre>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Reflect:</strong> which two tables use SCD2 (<code>is_current</code>/<code>effective_start_date</code>/<code>effective_end_date</code>), and why do they need it while <code>orders</code> and <code>payments</code> don't?</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: SUBMISSION CHECKLIST -->
+  <div class="slide slide-content">
+    <h3>Submission Checklist</h3>
+    <div class="two-col">
+      <div class="card">
+        <ul style="list-style:none; padding-left:0;">
+          <li>☐ <code>silver.customers</code> — confirmed from HOL 1 (incl. constraints)</li>
+          <li>☐ <code>silver.products</code> — structs flattened, tags kept as array, SCD2 initial load</li>
+          <li>☐ <code>silver.address</code> — PinCode recovered, duplication removed</li>
+          <li>☐ <code>silver.orders</code> — SCD1 MERGE, DELIVERY_BEFORE_SHIP flagged (not quarantined)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <ul style="list-style:none; padding-left:0;">
+          <li>☐ <code>silver.order_items</code> — 0 orphans against orders and products</li>
+          <li>☐ <code>silver.payments</code> — GiftCard/Coupon rule confirmed, 0 orphans</li>
+          <li>☐ <code>silver.payment_methods</code> — bronze table built first, 0 duplicate IDs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 16: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>The Silver Layer Is Done</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      Every source is now standardized, conformed, enriched, and quality-checked. Day 6 starts dimensional modeling — business process mapping, grain definition, and star schema design on top of the Silver layer you just built.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>7 Silver tables, 2 on SCD2, referential integrity verified end to end</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>Day 6: Business Process Mapping &amp; Star Schema (Kimball)</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Name one SCD2 table and one SCD1 table, and explain why each needs that type</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

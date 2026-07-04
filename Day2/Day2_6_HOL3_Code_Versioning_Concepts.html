@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 2 | HOL 3 — Code Versioning: Databricks Repos + GitHub</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 2 · HOL 3 — Code Versioning: Repos &amp; GitHub</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 16</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Code Versioning</h1>
+    <p class="subtitle">Set up the GitHub repo and Databricks Repos connection you'll use for the rest of the bootcamp</p>
+    <div class="badge">Day 2 &nbsp;·&nbsp; HOL 3 &nbsp;·&nbsp; 2 Hours &nbsp;·&nbsp; Follows ILT 3</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      Phase A: GitHub Repo · Phase B: Connect Databricks · Phase C: dev Branch · Phase D: Shared Config · Phase E: Commit &amp; Push
+    </div>
+  </div>
+
+  <!-- SLIDE 2: LEARNING OBJECTIVES -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>Learning Objectives</h2>
+    <div class="card" style="margin-top:20px;">
+      <ol class="order-list">
+        <li>Create a GitHub repository and a Personal Access Token</li>
+        <li>Connect that repository to Databricks Repos</li>
+        <li>Create a <code>dev</code> branch and confirm you're working on it</li>
+        <li>Build a shared config notebook using the External Location pattern from HOL 1 — no storage key</li>
+        <li>Commit and push a real change from Databricks to GitHub</li>
+      </ol>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Phase E's commit/push workflow is one you'll repeat every day for the rest of the bootcamp.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: SECTION PHASE A -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Phase A</div>
+    <h2>Create Your GitHub Repository</h2>
+  </div>
+
+  <!-- SLIDE 4: A1-A2 -->
+  <div class="slide slide-content">
+    <h3>A1–A2 · Repository + Personal Access Token</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>A1 — Create the repo</h4>
+          <ol class="order-list">
+            <li>Go to github.com and log in (or create a free account)</li>
+            <li>Click <strong>+ New repository</strong></li>
+            <li>Name it <code>globalmart-lakehouse</code>, set it to <strong>Private</strong></li>
+            <li>Check "Add a README file" → Create repository</li>
+          </ol>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>A2 — Generate a Personal Access Token</h4>
+          <ol class="order-list">
+            <li>Settings → Developer Settings → Personal Access Tokens → Tokens (classic)</li>
+            <li>Generate new token → 90-day expiry → check <code>repo</code> scope</li>
+            <li>Generate token → <strong>copy it immediately</strong></li>
+          </ol>
+        </div>
+        <div class="highlight-box warn" style="margin-top:12px;">
+          <p><strong style="color:#f59e0b;">Common mistake:</strong> closing the token page before copying it. If that happens, just generate a new one — there's no way to recover the old value.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: SECTION PHASE B -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Phase B</div>
+    <h2>Connect GitHub to Databricks</h2>
+  </div>
+
+  <!-- SLIDE 6: B1-B2 -->
+  <div class="slide slide-content">
+    <h3>B1–B2 · Link Your Account, Then Clone the Repo</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>B1 — Link your GitHub account</h4>
+          <ol class="order-list">
+            <li>Databricks → username (top right) → Settings</li>
+            <li>Linked Accounts → Git Integration → select GitHub</li>
+            <li>Paste your Personal Access Token from A2</li>
+            <li>Enter your GitHub username → Save</li>
+          </ol>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>B2 — Clone the repo into Databricks</h4>
+          <ol class="order-list">
+            <li>Left sidebar → click <strong>Repos</strong></li>
+            <li>Click <strong>Add Repo</strong></li>
+            <li>Paste: <code>https://github.com/YOUR_USERNAME/globalmart-lakehouse</code></li>
+            <li>Click <strong>Create Repo</strong></li>
+          </ol>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p><strong style="color:#22c55e;">Verify:</strong> your repo appears in Databricks under Repos, with a README.md inside it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: SECTION PHASE C -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Phase C</div>
+    <h2>Create Your dev Branch</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Never write code directly on <code>main</code> — same discipline as the dev → test → prod pattern from ILT 3.
+    </p>
+  </div>
+
+  <!-- SLIDE 8: CREATE BRANCH + VERIFY -->
+  <div class="slide slide-demo">
+    <h3>Create the Branch, Then Verify From a Notebook</h3>
+    <div class="two-col">
+      <div>
+<pre>1. Open your repo in Databricks Repos
+2. Click the Git button (branch icon)
+3. Click Create Branch → name it: dev
+4. Confirm the branch selector shows "dev"</pre>
+      </div>
+      <div>
+<pre><span class="cm"># C1: confirm you're inside a Git repo</span>
+<span class="col">notebook_path</span> = dbutils.notebook.entry_point
+    .getDbutils().notebook().getContext().notebookPath().get()
+
+<span class="kw">if</span> <span class="str">"/Repos/"</span> <span class="kw">in</span> notebook_path:
+    <span class="fn">print</span>(<span class="str">"Git tracking is active."</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"NOT in a Repo — go back to Phase B."</span>)</pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><strong>Verify:</strong> the branch indicator in the Databricks Repos UI reads <code>dev</code>, not <code>main</code>.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: SECTION PHASE D -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Phase D</div>
+    <h2>Build the Shared Config Notebook</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      One <code>config/setup</code> notebook every future notebook calls with <code>%run</code> — using the External Location pattern from HOL 1, not a hardcoded key.
+    </p>
+  </div>
+
+  <!-- SLIDE 10: D1 CREATE FOLDER -->
+  <div class="slide slide-content">
+    <h3>D1 — Create the Folder and Notebook</h3>
+    <ol class="order-list">
+      <li>Inside your repo (on the <code>dev</code> branch), create a folder called <code>config</code></li>
+      <li>Inside <code>config/</code>, create a new notebook called <code>setup</code></li>
+      <li>Copy the config code (next slide) into that notebook, filling in your own storage account name from Day 1</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 11: D2 SHARED CONFIG CODE -->
+  <div class="slide slide-demo">
+    <h3>D2 — config/setup: Shared Connection Config</h3>
+    <div class="demo-label">No storage key anywhere in this notebook or in git history</div>
+<pre><span class="col">STORAGE_ACCOUNT_NAME</span> = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span>   <span class="cm"># ← your storage account from Day 1</span>
+<span class="col">CONTAINER_NAME</span>        = <span class="str">"amazon-data"</span>
+
+<span class="cm"># No spark.conf.set() needed — your External Location from HOL 1</span>
+<span class="cm"># already covers this path; Unity Catalog handles authentication.</span>
+<span class="col">BASE_PATH</span>   = <span class="fn">f</span><span class="str">"abfss://{CONTAINER_NAME}@{STORAGE_ACCOUNT_NAME}.dfs.core.windows.net"</span>
+<span class="col">BRONZE_PATH</span> = <span class="fn">f</span><span class="str">"{BASE_PATH}/raw"</span>
+<span class="col">SILVER_PATH</span> = <span class="fn">f</span><span class="str">"{BASE_PATH}/silver"</span>
+<span class="col">GOLD_PATH</span>   = <span class="fn">f</span><span class="str">"{BASE_PATH}/gold"</span>
+
+<span class="cm"># The shared gbmart catalog doesn't need a path — referenced by name:</span>
+<span class="cm"># spark.table("gbmart.bronze.customers")</span>
+<span class="col">GBMART_CATALOG</span> = <span class="str">"gbmart"</span></pre>
+  </div>
+
+  <!-- SLIDE 12: D3 TEST %RUN -->
+  <div class="slide slide-demo">
+    <h3>D3 — Confirm %run Picks Up the Shared Config</h3>
+    <div class="demo-label">Run from a DIFFERENT notebook in the same repo — not config/setup itself</div>
+<pre><span class="kw">%run</span> ../config/setup
+
+<span class="cm"># After this line runs, BRONZE_PATH / SILVER_PATH / GOLD_PATH /</span>
+<span class="cm"># GBMART_CATALOG are all available — no redefining needed.</span></pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Adjust the relative path if your notebook doesn't sit directly beside the <code>config/</code> folder.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: SECTION PHASE E -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Phase E</div>
+    <h2>Commit and Push</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Get <code>config/setup</code> from your local Databricks Repo into GitHub, on the <code>dev</code> branch. This is the exact workflow you'll repeat every day.
+    </p>
+  </div>
+
+  <!-- SLIDE 14: COMMIT/PUSH STEPS -->
+  <div class="slide slide-content">
+    <h3>The Commit → Push Workflow</h3>
+    <div class="two-col">
+      <div>
+        <ol class="order-list">
+          <li>Databricks Repos → click the Git button on your repo</li>
+          <li><code>config/setup.ipynb</code> appears as a changed file</li>
+          <li>Stage the file</li>
+          <li>Write a commit message: "Add shared ADLS config notebook using External Location auth"</li>
+          <li>Click Commit → Click Push</li>
+          <li>github.com → your repo → switch to <code>dev</code> → confirm the file is there</li>
+        </ol>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Bad</th><th>Good</th></tr>
+          <tr><td><code>update</code></td><td>Add null check for customer email in silver layer</td></tr>
+          <tr><td><code>fix</code></td><td>Fix date format in orders table from MM/DD to YYYY-MM-DD</td></tr>
+          <tr><td><code>changes</code></td><td>Add shared ADLS config notebook using External Location auth</td></tr>
+        </table>
+        <div class="highlight-box warn" style="margin-top:12px;">
+          <p>⚠️ Personal Access Tokens are entered once in the Databricks UI (Phase B) — never paste one into a notebook cell.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: SUBMISSION CHECKLIST -->
+  <div class="slide slide-content">
+    <h3>Submission Checklist</h3>
+    <ol class="order-list">
+      <li>GitHub repo created: <code>globalmart-lakehouse</code> (Private)</li>
+      <li>Personal Access Token generated and saved in Databricks Git Integration</li>
+      <li>Repo cloned into Databricks under Repos</li>
+      <li><code>dev</code> branch created and confirmed active</li>
+      <li><code>config/setup</code> notebook created with your own storage account name — no key in it</li>
+      <li>Committed with a clear message, pushed to GitHub</li>
+      <li>Confirmed <code>config/setup.ipynb</code> appears under the <code>dev</code> branch on GitHub</li>
+    </ol>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p>⚠️ Replace any real token/secret values with placeholders before uploading this notebook.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 16: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>Your Repo Is Live</h2>
+    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
+      From tomorrow, every notebook you write gets committed to this repo. By the end of the bootcamp, your GitHub will show a complete, professional data engineering project.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ You Built</h4>
+        <p>A GitHub repo connected to Databricks Repos, with a real commit on <code>dev</code></p>
+      </div>
+      <div class="card">
+        <h4>➡️ Day 3</h4>
+        <p>Autoloader + REST API + GraphDB ingestion patterns</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Remember</h4>
+        <p>Pull → branch → code → commit → push — every single day</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

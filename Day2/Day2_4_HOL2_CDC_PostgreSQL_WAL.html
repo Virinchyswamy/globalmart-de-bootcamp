@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 2 | HOL 2 — CDC from PostgreSQL via WAL (Logical Replication)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 2 · HOL 2 — CDC from PostgreSQL via WAL</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 22</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>CDC via WAL</h1>
+    <p class="subtitle">Read raw PostgreSQL WAL change events over JDBC — the log-based mechanism Lakeflow Connect can automate, and the mode GlobalMart's real pipeline doesn't use</p>
+    <div class="badge">Day 2 &nbsp;·&nbsp; HOL 2 &nbsp;·&nbsp; Follows HOL 1</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      Your own Supabase project · poc_orders scratch table · Replication slot · pg_logical_slot_get_changes()
+    </div>
+  </div>
+
+  <!-- SLIDE 2: WHAT WE ARE BUILDING -->
+  <div class="slide slide-content">
+    <h3>What We Are Building</h3>
+    <div class="two-col">
+      <div>
+<pre>Supabase PostgreSQL
+  └── poc_orders table
+        │
+        │  WAL (Write-Ahead Log)
+        │  Replication Slot  ← bookmark that records every change
+        │
+        ▼
+  Databricks (JDBC)
+        │  pg_logical_slot_get_changes()
+        │
+        ▼
+  bronze/supabase/poc_orders  (Delta table)</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Why this HOL, right after HOL 1?</strong> HOL 1 set up Lakeflow Connect for GlobalMart's real <code>orders</code>/<code>order_items</code> tables — but running in <strong>query-based</strong> mode (cursor: <code>updated_at</code>), not WAL.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p>This HOL teaches the <strong style="color:#22c55e;">other</strong> connector mode: log-based, reading the WAL directly through a replication slot. You'll create the slot yourself, read raw WAL change events over plain JDBC, and parse INSERT/UPDATE/DELETE out of them by hand — no managed pipeline in between, and unlike HOL 1's query-based pipeline, this mechanism does catch deletes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: WATERMARK VS WAL/CDC -->
+  <div class="slide slide-content">
+    <h3>Watermark Ingestion vs. WAL/CDC</h3>
+    <table class="sql-table">
+      <tr><th></th><th>Watermark ingestion (<code>updated_at</code> filter)</th><th>WAL / CDC (this HOL)</th></tr>
+      <tr><td>Captures new rows</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td>Captures updates</td><td>Yes (if <code>updated_at</code> changes)</td><td>Yes</td></tr>
+      <tr><td>Captures deletes</td><td><strong>No</strong> — row is gone, no trace</td><td><strong>Yes</strong> — WAL records the DELETE</td></tr>
+      <tr><td>Requires <code>updated_at</code> column</td><td>Yes — won't work without it</td><td>No — works on any table</td></tr>
+      <tr><td>Complexity</td><td>Low</td><td>Medium</td></tr>
+      <tr><td>Use when</td><td>Source has <code>updated_at</code>, no hard deletes</td><td>Full fidelity needed — what Lakeflow Connect uses under the hood, in log-based mode</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 4: BY THE END -->
+  <div class="slide slide-section">
+    <div class="section-tag">Outcome</div>
+    <h2>By the End of This HOL You Will Have</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>Bronze Snapshot</h4>
+        <p><code>poc_orders</code> loaded into Bronze as a full Day 1 snapshot</p>
+      </div>
+      <div class="card">
+        <h4>A Live Replication Slot</h4>
+        <p>Tracking every change after the snapshot</p>
+      </div>
+      <div class="card">
+        <h4>Captured CDC Events</h4>
+        <p>INSERT + UPDATE + DELETE, pulled straight from the WAL</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:20px;">
+      <p>A clear mental model of how WAL-based CDC works underneath Lakeflow Connect's log-based mode.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: SECTION - THE PROBLEM -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">The Problem</div>
+    <h2>Why Watermarks Miss Deletes</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      A concrete walk-through, before the mechanics.
+    </p>
+  </div>
+
+  <!-- SLIDE 6: CONCRETE EXAMPLE -->
+  <div class="slide slide-content">
+    <h3>A Ghost Row Watermarking Can't See</h3>
+    <div class="two-col">
+      <div>
+<pre>DAY 1 — Source table: poc_orders
+  OR-00001 | CUST-10001 | 2026-06-01  ← exists
+  OR-00002 | CUST-10002 | 2026-06-01  ← exists
+  OR-00003 | CUST-10003 | 2026-06-01  ← exists
+
+Watermark ingestion reads all 3 rows → Bronze has 3 ✓</pre>
+      </div>
+      <div>
+<pre>DAY 2 — Customer cancels OR-00003 → DELETED
+  OR-00001 | CUST-10001 | 2026-06-01
+  OR-00002 | CUST-10002 | 2026-06-01
+
+Watermark (WHERE updated_at > last_watermark):
+  → No rows returned — nothing was "updated"
+  → Bronze still has 3 rows ← OR-00003 is a ghost!
+
+WAL / CDC ingestion:
+  → Replication slot recorded: DELETE OR-00003
+  → Bronze gets the DELETE event → Silver applies it
+  → Truth preserved ✓</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: HOW WAL WORKS -->
+  <div class="slide slide-content">
+    <h3>How PostgreSQL WAL Works — The Replication Slot as Bookmark</h3>
+    <div class="two-col">
+      <div>
+<pre>Every INSERT / UPDATE / DELETE in Postgres is first written
+to the Write-Ahead Log (WAL) — before the table is updated.
+
+A logical replication slot is a bookmark in the WAL.
+  → It remembers the position of the last change you read.
+  → Next read picks up exactly where you left off —
+    no duplicates, no gaps.</pre>
+      </div>
+      <div>
+<pre>pg_logical_slot_get_changes('slot_name', NULL, NULL)
+  → Returns all new WAL entries since your last read.
+  → DRAINS the slot — run it again and you get nothing
+    until the next change.</pre>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p>This is what Debezium, Fivetran, and Airbyte all use under the hood — and what Lakeflow Connect's log-based mode automates.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: SETUP -->
+  <div class="slide slide-demo">
+    <h3>Setup — JDBC Connection to Your Own Supabase Project</h3>
+    <div class="demo-label">Unity Catalog external location handles ADLS auth — no storage key needed</div>
+<pre><span class="cm"># poc_orders is YOUR OWN scratch/practice table — it lands in your</span>
+<span class="cm"># personal Day-1 storage account, not the shared gbmart catalog.</span>
+<span class="col">storage_account</span>   = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span>
+<span class="col">base_path</span>        = <span class="fn">f</span><span class="str">"abfss://{container}@{storage_account}.dfs.core.windows.net"</span>
+<span class="col">bronze_poc_orders</span> = <span class="fn">f</span><span class="str">"{base_path}/bronze/supabase/poc_orders"</span>
+
+<span class="cm"># Host pattern: aws-0-&lt;region&gt;.pooler.supabase.com — your own project</span>
+<span class="col">pg_host</span>     = <span class="str">"YOUR_SUPABASE_HOST"</span>
+<span class="col">pg_user</span>     = <span class="str">"YOUR_SUPABASE_USER"</span>
+<span class="col">pg_password</span> = <span class="str">"YOUR_SUPABASE_PASSWORD"</span>   <span class="cm"># ← paste your password here</span>
+<span class="col">jdbc_url</span>    = <span class="fn">f</span><span class="str">"jdbc:postgresql://{pg_host}:5432/{pg_database}?sslmode=require"</span></pre>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p>⚠️ Each student uses their own Supabase project — do not push this notebook to GitHub with the real password filled in.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: SECTION - PRE-WORK -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Pre-Work</div>
+    <h2>Setting Up the Table and the Slot</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Run in the Supabase SQL Editor, before touching Databricks.
+    </p>
+  </div>
+
+  <!-- SLIDE 10: PRE-WORK A -->
+  <div class="slide slide-content">
+    <h3>Pre-Work A — Create the Table, Load Day 1 Data</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="kw">CREATE TABLE IF NOT EXISTS</span> public.poc_orders (
+    order_id      <span class="kw">TEXT PRIMARY KEY</span>,
+    customer_id   <span class="kw">TEXT NOT NULL</span>,
+    order_date    <span class="kw">TIMESTAMPTZ</span>,
+    shipping_tier_id <span class="kw">TEXT</span>,
+    supplier_id   <span class="kw">TEXT</span>,
+    order_channel <span class="kw">TEXT</span>
+);</pre>
+        <div class="highlight-box warn" style="margin-top:12px;">
+          <p><strong style="color:#f59e0b;">Notice: no <code>updated_at</code> column</strong> — intentional. Watermark ingestion won't work on this table. That's exactly why we need CDC.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Load 200 rows</h4>
+          <p><strong>Option A (recommended):</strong> Supabase → Table Editor → poc_orders → Import CSV → <code>orders_sample.csv</code></p>
+          <p style="margin-top:8px;"><strong>Option B:</strong> run <code>02_load_orders_sample.py</code> locally with your Supabase <code>.env</code></p>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p>Verify: <code>SELECT COUNT(*) FROM public.poc_orders;</code> → expect 200</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: PRE-WORK B -->
+  <div class="slide slide-content">
+    <h3>Pre-Work B — Enable CDC (Logical Replication Slot)</h3>
+    <div class="highlight-box warn">
+      <p><strong style="color:#f59e0b;">Critical timing:</strong> create the slot AFTER the initial 200-row load and BEFORE any Day 2 changes. Too early and the initial inserts flood the WAL. Too late and you miss the Day 2 changes.</p>
+    </div>
+<pre style="margin-top:14px;"><span class="cm">-- 1. Confirm logical replication is enabled (Supabase default)</span>
+<span class="kw">SHOW</span> wal_level;  <span class="cm">-- Expected: logical</span>
+
+<span class="cm">-- 2. Create a publication — declares which table to track</span>
+<span class="kw">CREATE PUBLICATION</span> poc_orders_pub <span class="kw">FOR TABLE</span> public.poc_orders;
+
+<span class="cm">-- 3. Create the replication slot — the bookmark Databricks reads from</span>
+<span class="fn">SELECT</span> pg_create_logical_replication_slot(<span class="str">'poc_orders_slot'</span>, <span class="str">'test_decoding'</span>);</pre>
+  </div>
+
+  <!-- SLIDE 12: TEST_DECODING -->
+  <div class="slide slide-content">
+    <h3>What Is <code>test_decoding</code>?</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">PostgreSQL ships with two logical decoding plugins:</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>test_decoding</h4>
+        <p>Outputs human-readable text:</p>
+<pre style="margin-top:8px;"><span class="str">'table public.poc_orders: INSERT:
+ order_id[text]:"OR-00201"
+ customer_id[text]:"CUST-10001"'</span></pre>
+        <p style="margin-top:8px;">Good for: learning, debugging, quick POCs. Included in Supabase's free tier — what we use today.</p>
+      </div>
+      <div class="card">
+        <h4>wal2json</h4>
+        <p>Outputs structured JSON (must be installed separately):</p>
+<pre style="margin-top:8px;"><span class="str">{"kind":"insert","schema":"public",
+ "table":"poc_orders","columnnames":[...]}</span></pre>
+        <p style="margin-top:8px;">Good for: production pipelines (easier to parse). For production, use Debezium or Supabase Realtime CDC.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: STEP 1 VERIFY -->
+  <div class="slide slide-demo">
+    <h3>Step 1 — Verify JDBC Connection + Slot Exists</h3>
+<pre><span class="col">test_df</span> = <span class="col">jdbc_read</span>(<span class="str">"(SELECT COUNT(*) AS total_orders FROM public.poc_orders) t"</span>)
+<span class="col">test_df</span>.<span class="fn">show</span>()
+
+<span class="cm"># Also confirm the replication slot was created</span>
+<span class="col">slot_df</span> = <span class="col">jdbc_read</span>(
+    <span class="str">"(SELECT slot_name, plugin, active FROM pg_replication_slots WHERE slot_name = 'poc_orders_slot') t"</span>
+)
+<span class="col">slot_df</span>.<span class="fn">show</span>(truncate=<span class="kw">False</span>)</pre>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p>If <code>slot_df</code> is empty — run Pre-Work B first.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: DAY 1 INITIAL LOAD -->
+  <div class="slide slide-demo">
+    <h3>Step 2 — Initial Load → Bronze (Full Snapshot)</h3>
+    <div class="two-col">
+      <div>
+<pre>Initial load strategy:
+  1. Read ALL 200 rows via JDBC (SELECT *)
+  2. Tag each row with audit columns
+  3. Write to Bronze as a full snapshot
+     (_load_type = 'initial_load')
+
+After this cell runs:
+  Bronze has 200 rows
+  Replication slot has 0 pending events
+  (created after the initial load)</pre>
+      </div>
+      <div>
+<pre><span class="col">initial_df</span> = (
+    <span class="col">jdbc_read</span>(<span class="str">"(SELECT * FROM public.poc_orders) t"</span>)
+    .<span class="fn">withColumn</span>(<span class="str">"_ingested_at"</span>, current_timestamp())
+    .<span class="fn">withColumn</span>(<span class="str">"_source_system"</span>, lit(<span class="str">"supabase_jdbc"</span>))
+    .<span class="fn">withColumn</span>(<span class="str">"_load_type"</span>, lit(<span class="str">"initial_load"</span>))
+)
+
+initial_df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">save</span>(bronze_poc_orders)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: VERIFY BRONZE DAY1 -->
+  <div class="slide slide-demo">
+    <h3>Step 3 — Verify Bronze: Day 1 Snapshot</h3>
+<pre><span class="col">bronze_df</span> = <span class="fn">spark</span>.<span class="fn">read</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">load</span>(bronze_poc_orders)
+
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Bronze poc_orders row count: {bronze_df.count()}"</span>)
+bronze_df.<span class="fn">groupBy</span>(<span class="str">"_load_type"</span>).<span class="fn">count</span>().<span class="fn">show</span>()</pre>
+    <div class="highlight-box success" style="margin-top:14px;">
+      <p>Expect 200 rows, all tagged <code>_load_type = initial_load</code>. Any change to <code>poc_orders</code> from this point forward will show up in the slot.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 16: PAUSE - SIMULATE DAY2 -->
+  <div class="slide slide-content">
+    <h3>Pause — Simulate Day 2 Business Activity</h3>
+    <p style="color:#94a3b8; font-size:13px; margin-bottom:10px;">Run in the Supabase SQL Editor, before running the CDC capture cell:</p>
+<pre><span class="cm">-- 5 NEW orders arrive (INSERT)</span>
+<span class="kw">INSERT INTO</span> public.poc_orders (order_id, customer_id, order_date, shipping_tier_id, order_channel)
+<span class="kw">VALUES</span> (<span class="str">'OR-90001'</span>, <span class="str">'CUST-20001'</span>, NOW(), <span class="str">'STD'</span>, <span class="str">'web'</span>), <span class="cm">/* ...5 total */</span>
+
+<span class="cm">-- Customer upgraded shipping on 2 orders (UPDATE)</span>
+<span class="kw">UPDATE</span> public.poc_orders <span class="kw">SET</span> shipping_tier_id = <span class="str">'EXPRESS'</span> <span class="kw">WHERE</span> ...;
+
+<span class="cm">-- Customer cancels an order (DELETE)</span>
+<span class="cm">-- Watermark ingestion would NEVER see this. CDC captures it.</span>
+<span class="kw">DELETE FROM</span> public.poc_orders <span class="kw">WHERE</span> ...;
+
+<span class="cm">-- Verify: 200 + 5 - 1 = 204 rows</span>
+<span class="fn">SELECT</span> COUNT(*) <span class="kw">FROM</span> public.poc_orders;</pre>
+  </div>
+
+  <!-- SLIDE 17: WHAT THE SLOT CAPTURES -->
+  <div class="slide slide-content">
+    <h3>What the Replication Slot Captures</h3>
+<pre>After 8 statements (5 INSERTs + 2 UPDATEs + 1 DELETE), the slot holds:
+
+  BEGIN &lt;xid&gt;
+  table public.poc_orders: INSERT: order_id[text]:'OR-90001' ...
+  COMMIT &lt;xid&gt;
+  ... (5 INSERTs total)
+
+  BEGIN &lt;xid&gt;
+  table public.poc_orders: UPDATE: order_id[text]:'OR-000XX' ... shipping_tier_id[text]:'EXPRESS'
+  COMMIT &lt;xid&gt;
+
+  BEGIN &lt;xid&gt;
+  table public.poc_orders: DELETE: order_id[text]:'OR-000XX'
+  COMMIT &lt;xid&gt;
+
+Total: 8 statements × 3 rows (BEGIN + event + COMMIT) = 24 rows</pre>
+  </div>
+
+  <!-- SLIDE 18: CDC CAPTURE CONCEPT -->
+  <div class="slide slide-content">
+    <h3>CDC Capture — Reading the Replication Slot</h3>
+    <div class="two-col">
+      <div>
+<pre>pg_logical_slot_get_changes('poc_orders_slot', NULL, NULL)
+
+  slot_name = 'poc_orders_slot'
+  upto_lsn  = NULL  → drain everything to current WAL position
+  upto_nchanges = NULL  → no limit
+
+Returns 3 columns: lsn, xid, data</pre>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">This function DRAINS the slot.</strong> Run 1 → 24 rows. Run 2 → 0 rows, already drained. The slot moves forward — old events are gone.</p>
+        </div>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p>That's why we <code>.cache()</code> the result — so <code>.count()</code> and <code>.show()</code> read the same data without draining the slot twice.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 19: STEP 4 CAPTURE + PARSE -->
+  <div class="slide slide-demo">
+    <h3>Step 4–6 — Capture, Inspect, and Parse CDC Events</h3>
+<pre><span class="col">cdc_raw_df</span> = <span class="col">jdbc_read</span>(
+    <span class="str">"(SELECT * FROM pg_logical_slot_get_changes('poc_orders_slot', NULL, NULL)) AS cdc_events"</span>
+).<span class="fn">cache</span>()  <span class="cm"># critical — drains on first read</span>
+
+<span class="col">data_events_df</span> = (
+    cdc_raw_df
+    .<span class="fn">filter</span>(col(<span class="str">"data"</span>).<span class="fn">startswith</span>(<span class="str">"table "</span>))  <span class="cm"># drop BEGIN/COMMIT noise</span>
+    .<span class="fn">withColumn</span>(<span class="str">"_cdc_op"</span>, regexp_extract(col(<span class="str">"data"</span>), <span class="str">r"table public\.poc_orders: (INSERT|UPDATE|DELETE):"</span>, <span class="tbl">1</span>))
+    .<span class="fn">withColumn</span>(<span class="str">"_order_id"</span>, regexp_extract(col(<span class="str">"data"</span>), <span class="str">r"order_id\[text\]:'([^']+)'"</span>, <span class="tbl">1</span>))
+)</pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Each statement = 3 WAL rows (BEGIN + event + COMMIT). 24 raw rows parse down to 8 real events by <code>_cdc_op</code>.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 20: STEP 7 - APPEND + BRONZE NOW -->
+  <div class="slide slide-content">
+    <h3>Step 7 — Append CDC Events to Bronze</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="col">bronze_cdc_df</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">mode</span>(<span class="str">"append"</span>) \
+    .<span class="fn">option</span>(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>) \
+    .<span class="fn">save</span>(bronze_poc_orders)</pre>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p>Note the mode difference: <code>overwrite</code> for the Day 1 initial load, <code>append</code> for CDC events — Bronze is append-only for changes.</p>
+        </div>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>_load_type</th><th>_cdc_op</th><th>rows</th></tr>
+          <tr><td>initial_load</td><td>NULL</td><td>200</td></tr>
+          <tr><td>cdc_event</td><td>INSERT</td><td>5</td></tr>
+          <tr><td>cdc_event</td><td>UPDATE</td><td>2</td></tr>
+          <tr><td>cdc_event</td><td>DELETE</td><td>1</td></tr>
+          <tr><td colspan="2"><strong>TOTAL</strong></td><td><strong>208</strong></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 21: SILVER NEXT + KEY CONCEPTS -->
+  <div class="slide slide-content">
+    <h3>What Silver Does With This Next</h3>
+    <div class="two-col">
+      <div>
+<pre>CDC INSERT  → MERGE ... WHEN NOT MATCHED THEN INSERT
+CDC UPDATE  → MERGE ... WHEN MATCHED THEN UPDATE
+CDC DELETE  → MERGE ... WHEN MATCHED THEN DELETE
+              (or: SET is_deleted = true)
+
+Result: silver.poc_orders always reflects the
+CURRENT state — 204 rows, 2 updated, 1 gone.</pre>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Concept</th><th>What It Means</th></tr>
+          <tr><td>Replication slot</td><td>Bookmark in the WAL — remembers where you last read</td></tr>
+          <tr><td>Drain behaviour</td><td><code>pg_logical_slot_get_changes()</code> advances the bookmark — re-run = 0 rows</td></tr>
+          <tr><td><code>.cache()</code></td><td>Materialises the result before Spark's second JDBC call</td></tr>
+          <tr><td>Bronze append-only</td><td>CDC events land as new rows — Silver resolves final state</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 22: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You've Opened the Black Box</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      You now know exactly what Lakeflow Connect's log-based mode automates. Next: Code Versioning — putting every notebook you write under Git.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:860px;">
+      <div class="card">
+        <h4>💬 Discuss</h4>
+        <p>What if the slot was created before the 200-row load, not after?</p>
+      </div>
+      <div class="card">
+        <h4>💬 Discuss</h4>
+        <p>Bronze holds both the original row AND a DELETE event — how does Silver know which is truth?</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>ILT 3 / HOL 3 — Code Versioning, Databricks Repos + GitHub</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

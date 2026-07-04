@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 1 | ILT 1 — Problem Statement &amp; GlobalMart Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 1 · ILT 1 — Problem Statement &amp; Architecture</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 16</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>GlobalMart Problem Statement</h1>
+    <p class="subtitle">Who GlobalMart is, what their data problem is, and the 2-source Databricks architecture we'll build over 13 days</p>
+    <div class="badge">Day 1 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; Trainer-Led Session</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → Who is GlobalMart · The Problem · 2 Data Sources · fact_sales · The 13-Day Journey
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering Today</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>🏢 The Business</h4>
+        <ul>
+          <li>GlobalMart — a mid-sized e-commerce company</li>
+          <li>~10,000+ customers, ~100,000+ products</li>
+          <li>10 tables, 2 data sources, 13-day build</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔌 The 2 Real Data Sources</h4>
+        <ul>
+          <li>Supabase Postgres → <strong>Lakeflow Connect</strong> (CDC)</li>
+          <li>ADLS file drops → <strong>Autoloader</strong></li>
+          <li>Everything else is Bronze → Silver → Gold</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🎯 The Destination</h4>
+        <ul>
+          <li><code>fact_sales</code> — one trusted Gold table</li>
+          <li>Queried by stakeholders through <strong>Genie</strong></li>
+          <li>No more manual reports that don't match</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: WHO IS GLOBALMART -->
+  <div class="slide slide-content">
+    <h3>Who is GlobalMart?</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          <strong style="color:#e2e8f0;">GlobalMart</strong> is a mid-sized e-commerce company — think a smaller version of Amazon or Flipkart.
+        </p>
+        <div class="card">
+          <h4>What does GlobalMart do?</h4>
+          <ul>
+            <li>Sells products across many categories (electronics, clothing, home goods)</li>
+            <li>Has customers placing orders online</li>
+            <li>Works with multiple suppliers</li>
+            <li>Offers multiple payment options (card, UPI, cash on delivery)</li>
+            <li>Offers multiple shipping tiers (standard, express, same-day)</li>
+            <li>Handles product returns and refunds</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Key Numbers (GlobalMart Scale)</h4>
+          <table class="sql-table">
+            <tr><th>Metric</th><th>Value</th></tr>
+            <tr><td>Customers</td><td>~10,000+</td></tr>
+            <tr><td>Products in catalog</td><td>~100,000+ (products.csv is 100&nbsp;MB!)</td></tr>
+            <tr><td>Orders per day</td><td>Thousands</td></tr>
+            <tr><td>Data sources</td><td>2 (Postgres + ADLS files)</td></tr>
+            <tr><td>Tables we work with</td><td>10</td></tr>
+            <tr><td>Learning journey</td><td>13 days</td></tr>
+          </table>
+        </div>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">Why this matters:</strong> the data in your ADLS is real-scale. <code>products.csv</code> alone is 100&nbsp;MB — that's why we use Spark, not Excel.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: THE PROBLEM -->
+  <div class="slide slide-content">
+    <h3>The Problem: Two Systems That Don't Talk</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">GlobalMart's data lives in two disconnected places:</p>
+        <table class="sql-table">
+          <tr><th>Source System</th><th>Data Stored</th><th>Tool</th></tr>
+          <tr><td>Supabase PostgreSQL</td><td>orders, order_items (continuously updated)</td><td>Lakeflow Connect</td></tr>
+          <tr><td>ADLS File Drops</td><td>products, customers, payments, addresses, suppliers, returns, payment_methods, shipping_tier</td><td>Autoloader</td></tr>
+        </table>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">Day 3 side-exploration only</strong> — REST API (exchange rates) + GraphDB (customer relationships) are useful patterns you'll see later, but they do <strong>not</strong> feed this pipeline.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>GlobalMart's Three Pain Points</h4>
+          <ol class="order-list">
+            <li><strong>Data Silos</strong> — transaction data and reference files live in separate systems with no automatic connection</li>
+            <li><strong>No Single Source of Truth</strong> — different teams pull numbers differently; reports don't match</li>
+            <li><strong>Slow Decision Making</strong> — business users wait hours or days for reports that should be instant</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: THE SILO ANALOGY -->
+  <div class="slide slide-content">
+    <h3>Why Is This Actually a Problem? A Simple Analogy</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Imagine you have money in <strong style="color:#e2e8f0;">two different banks</strong>, and neither bank can see the other's balance.
+        </p>
+        <div class="card">
+          <h4>To answer "How much money do I have?"</h4>
+          <ul>
+            <li>You'd have to log into Bank A, write down the number</li>
+            <li>Log into Bank B, write down that number</li>
+            <li>Add them together yourself, by hand</li>
+            <li>Do this <em>every single time</em> someone asks</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p>That is <strong style="color:#38bdf8;">exactly</strong> GlobalMart's situation today:</p>
+          <p style="margin-top:8px;">"Bank A" = Postgres (orders). "Bank B" = ADLS CSV files (products, customers, payments...). Every business question means manually combining both — by hand, every time, with room for a different person to get a different answer.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">What we're building instead:</strong> one combined, always-up-to-date "balance" — the <code>fact_sales</code> table — so nobody has to do that manual math again.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: BUSINESS QUESTIONS -->
+  <div class="slide slide-content">
+    <h3>5 Real Questions This Bank-Balance Problem Causes</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">These are the actual questions GlobalMart's managers ask that take hours (or get inconsistent answers) today:</p>
+    <table class="sql-table">
+      <tr><th>Question</th><th>Why It's Hard Right Now</th></tr>
+      <tr><td>Last month's revenue by product category?</td><td>Order amounts are in Postgres, category is in a CSV — no automatic join</td></tr>
+      <tr><td>Which products have the highest return rate?</td><td>Returns are in Postgres, product details in a CSV — analysts combine manually, get different numbers</td></tr>
+      <tr><td>Which customers ordered most last quarter?</td><td>Orders in Postgres, customers in a file drop — no single trusted combined view</td></tr>
+      <tr><td>Payment method breakdown for high-value orders?</td><td>Order values in Postgres, payment lookup in a CSV — reports take hours to produce</td></tr>
+      <tr><td>Is our data even trustworthy?</td><td>Raw CSVs have nulls, duplicates, inconsistent formats — no data quality rules enforced</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Instructor question:</strong> "Have you ever seen Finance report one revenue number while Sales reports a different one?" That's Data Silos — and it's exactly what <code>fact_sales</code> fixes.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: THE SOLUTION -->
+  <div class="slide slide-content">
+    <h3>The Solution: An Azure Databricks Lakehouse</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+      In plain terms: we build one automated pipeline that pulls data out of both "banks," cleans it up, combines it, and keeps it always current — so every question above becomes a 5-second query instead of an hour of manual work. Concretely, that pipeline has 8 steps:
+    </p>
+    <div class="two-col">
+      <div>
+        <ol class="order-list">
+          <li>Ingest orders continuously from Postgres using <strong>Lakeflow Connect (CDC)</strong></li>
+          <li>Ingest reference files automatically from ADLS using <strong>Autoloader</strong></li>
+          <li>Store all raw data in <strong>Bronze</strong> — Delta tables, never modified</li>
+          <li>Clean and standardize in <strong>Silver</strong> — validated, de-duplicated</li>
+          <li>Build <strong><code>fact_sales</code></strong> in <strong>Gold</strong> — one trusted table for all revenue questions</li>
+          <li>Refresh pipelines automatically with <strong>Databricks Workflows</strong></li>
+          <li>Let stakeholders query directly through <strong>Genie</strong> (self-serve Q&amp;A)</li>
+          <li>Govern access and lineage through <strong>Unity Catalog</strong></li>
+        </ol>
+      </div>
+      <div>
+<pre>Supabase Postgres                    Azure Databricks Lakehouse
+(orders, order_items)  ── Lakeflow ──►  Bronze → Silver → Gold (fact_sales)
+                            Connect                            ↓
+ADLS File Drops        ── Autoloader ──► Bronze → Silver ──►  Genie
+(10 CSV files)                                                 ↓
+                                                    DC / Warehouse Manager</pre>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">End Goal:</strong> One Gold Table (<code>fact_sales</code>) → One Revenue Number → One Version of the Truth.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: SECTION - TWO INGESTION TOOLS -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 3</div>
+    <h2>The Two Ingestion Tools</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      We have <strong style="color:#38bdf8;">2 real sources</strong>, handled by <strong style="color:#38bdf8;">2 different Databricks tools</strong>. Everything upstream — Bronze, Silver, Gold — exists to make <code>fact_sales</code> correct and current.
+    </p>
+  </div>
+
+  <!-- SLIDE 8: SOURCE 1 -->
+  <div class="slide slide-content">
+    <h3>Source 1 — Supabase (PostgreSQL) via Lakeflow Connect</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Supabase is GlobalMart's primary transactional database. Every order and line item is stored here and updated continuously all day.</p>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Lakeflow Connect</strong> is Databricks' managed CDC (Change Data Capture) connector. It can detect changes two ways — reading the Postgres Write-Ahead Log directly (log-based), or polling a cursor column on a schedule (query-based). <strong>GlobalMart's real pipeline uses query-based</strong>, with <code>updated_at</code> as the cursor.</p>
+        </div>
+<pre style="margin-top:14px;"><span class="cm">-- Query-based mode, in plain terms:</span>
+Runs: <span class="kw">WHERE</span> updated_at &gt; last_run_time
+INSERT <span class="cm">→ new row appears, gets picked up next run</span>
+UPDATE <span class="cm">→ updated_at changes, gets picked up next run</span>
+DELETE <span class="cm">→ row just vanishes — nothing to trigger on, MISSED</span>
+<span class="cm">-- Same blind spot as a hand-rolled watermark. A deliberate, documented trade-off.</span></pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Source Details</h4>
+          <table class="sql-table">
+            <tr><td>Technology</td><td>Supabase (PostgreSQL)</td></tr>
+            <tr><td>Tables ingested</td><td><code>orders</code>, <code>order_items</code></td></tr>
+            <tr><td>Frequency</td><td>Continuous — polls on a schedule</td></tr>
+            <tr><td>Tool</td><td><strong>Lakeflow Connect</strong></td></tr>
+            <tr><td>Method</td><td>Query-based, cursor column <code>updated_at</code> (not WAL)</td></tr>
+            <tr><td>Main challenge</td><td>Does NOT capture deletes — same limitation as a manual watermark</td></tr>
+            <tr><td>Bootcamp coverage</td><td>Day 2</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: SOURCE 2 -->
+  <div class="slide slide-content">
+    <h3>Source 2 — ADLS File Drops via Autoloader</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Reference and enrichment files land as CSVs in an ADLS folder (<code>raw/</code>). These are file drops, not live database connections — they arrive periodically.</p>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Autoloader</strong> (<code>cloudFiles</code>) is Databricks' incremental file ingestion tool. It watches a folder and picks up new files automatically — without re-reading files it already processed.</p>
+        </div>
+<pre style="margin-top:14px;">New file lands in raw/  → Autoloader detects it
+                        → Reads the new file only (checkpoint)
+                        → Writes to Bronze as Delta
+                        → Updates checkpoint</pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Source Details</h4>
+          <table class="sql-table">
+            <tr><td>Technology</td><td>ADLS Gen2 file drops (CSV)</td></tr>
+            <tr><td>Tables ingested</td><td>customers, products, payments, addresses, suppliers, returns, payment_methods, shipping_tier</td></tr>
+            <tr><td>Frequency</td><td>Periodic — files dropped as batches</td></tr>
+            <tr><td>Tool</td><td><strong>Autoloader</strong> (cloudFiles)</td></tr>
+            <tr><td>Method</td><td>Checkpoint-based — new files only</td></tr>
+            <tr><td>Main challenge</td><td>Schema evolution (new columns appearing)</td></tr>
+            <tr><td>Bootcamp coverage</td><td>Day 3 hands-on</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: COMPARISON -->
+  <div class="slide slide-content">
+    <h3>Comparing the Two Sources</h3>
+    <table class="sql-table">
+      <tr><th>Feature</th><th>Supabase Postgres (Lakeflow Connect)</th><th>ADLS File Drops (Autoloader)</th></tr>
+      <tr><td>Data type</td><td>Live transactional (orders, items)</td><td>Batch reference files</td></tr>
+      <tr><td>Update pattern</td><td>Continuous, query-based (cursor)</td><td>Periodic file drops</td></tr>
+      <tr><td>Captures</td><td>INSERT + UPDATE only — deletes missed</td><td>New files only</td></tr>
+      <tr><td>Trigger</td><td>Continuous / Scheduled</td><td>File arrival</td></tr>
+      <tr><td>Schema handling</td><td>Fixed schema</td><td>Schema evolution supported</td></tr>
+      <tr><td>Bootcamp days</td><td>Day 2</td><td>Day 3</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">The Day 3 side-patterns</strong> — REST API (exchange rates) and GraphDB (customer relationships) — are taught as awareness patterns only. They do <strong>not</strong> feed the main GlobalMart pipeline. ~80% of this bootcamp is Postgres + ADLS + Delta + Databricks.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: DATASET -->
+  <div class="slide slide-content">
+    <h3>Our Dataset — 10 Tables, 2 Tools</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Every table GlobalMart has boils down to just these 10 files. Notice only the first 2 come from the live database — everything else is a file drop:</p>
+    <table class="sql-table">
+      <tr><th>File</th><th>Tool</th></tr>
+      <tr><td>orders.csv</td><td>Lakeflow Connect</td></tr>
+      <tr><td>order_items.csv</td><td>Lakeflow Connect</td></tr>
+      <tr><td>customers.csv</td><td>Autoloader</td></tr>
+      <tr><td>products.csv</td><td>Autoloader</td></tr>
+      <tr><td>payments.csv</td><td>Autoloader</td></tr>
+      <tr><td>addresses.csv</td><td>Autoloader</td></tr>
+      <tr><td>returns.csv</td><td>Autoloader</td></tr>
+      <tr><td>suppliers.csv</td><td>Autoloader</td></tr>
+      <tr><td>payment_methods.csv</td><td>Autoloader</td></tr>
+      <tr><td>shipping_tier.csv</td><td>Autoloader</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 12: FACT_SALES -->
+  <div class="slide slide-content">
+    <h3>Where All 10 Tables End Up: fact_sales</h3>
+    <div class="two-col">
+      <div>
+<pre>            dim_customer      dim_product
+                    \            /
+     dim_payment_method — fact_sales — dim_date
+                    /            \
+             dim_orders      dim_address</pre>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">"Grain" in plain words:</strong> it just means "what does ONE row represent?" Here, one row = one item inside one order (<code>order_item_id</code>) — not one order, not one customer.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>fact_sales — the 4 numbers it tracks (measures)</h4>
+          <ul>
+            <li><code>Quantity_purchased</code> — how many units</li>
+            <li><code>Actual_price</code> — the sticker price</li>
+            <li><code>Discounted_price</code> — what the customer actually paid per unit</li>
+            <li><code>Sales_amount</code> — quantity × discounted price = real revenue</li>
+          </ul>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p>This table answers the question every business team has: <em>"What sold, when, to whom, for how much?"</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: 13-DAY JOURNEY -->
+  <div class="slide slide-section">
+    <div class="section-tag">Section 5</div>
+    <h2>The 13-Day Journey</h2>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">Bring data in → Clean it → Model it → Refresh it automatically → Lock it down → Serve it to stakeholders.</p>
+    <div class="three-col" style="margin-top:14px;">
+      <div class="card">
+        <h4>Week 1 — Ingestion Foundation (Days 1–5)</h4>
+        <ul>
+          <li>D1 Problem statement + architecture + ADLS + Medallion</li>
+          <li>D2 CDC concepts (WAL) + Lakeflow Connect/Storage Credentials + Code Versioning</li>
+          <li>D3 API/GraphDB side patterns + Schema Evolution + Autoloader</li>
+          <li>D4 Ingestion recap + Bronze layer design + Partitioning/Performance</li>
+          <li>D5 Transformation patterns + Data Quality + Build Silver Layer</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Week 2 — Modelling + Gold (Days 6–10)</h4>
+        <ul>
+          <li>D6 Kimball modelling — grain, dimensions, fact tables, star schema</li>
+          <li>D7 Build Gold — dimensions, bridge table, fact_sales, Z-order · <span class="pill pill-blue">Assessment 1</span></li>
+          <li>D9 Incremental loading — watermark &amp; CDF-based patterns</li>
+          <li>D10 SCD Type 1/2 with MERGE + intro to Orchestration</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Week 3 — Ops + Governance (Days 11–12)</h4>
+        <ul>
+          <li>D11 DLQ/Replay strategy + Cost &amp; environment strategy</li>
+          <li>D12 Unity Catalog governance + Genie/semantic layer intro</li>
+          <li>D13 Review · <span class="pill pill-blue">Assessment 2</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: TODAY'S SCHEDULE -->
+  <div class="slide slide-content">
+    <h3>Today's Focus (Day 1)</h3>
+    <ol class="order-list">
+      <li><strong>9:30 AM — ILT 1 (this session)</strong> — Problem statement, architecture, 2 sources, fact_sales</li>
+      <li><strong>11:00 AM — ILT 2</strong> — Azure Cloud, ADLS Gen2, Lakehouse vs Warehouse</li>
+      <li><strong>12:00 PM — ILT 3</strong> — Medallion Architecture and Delta Lake basics</li>
+      <li><strong>2:00 PM — ILT 4</strong> — Intro to Databricks + Lakeflow Connect vs Autoloader</li>
+      <li><strong>3:30 PM — Hands-On</strong> — Create ADLS, upload data, connect Databricks, write first Delta tables</li>
+    </ol>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">By end of day:</strong> you'll have your own ADLS Gen2 storage set up, all 10 GlobalMart files uploaded, and your first Delta table written. That's a big Day 1 achievement.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for ILT 2</h2>
+    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
+      Next up: Azure Cloud, ADLS Gen2, and Lakehouse vs Warehouse vs Hybrid — the storage foundation you'll build on this afternoon's hands-on.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>2 sources, 2 tools, 1 Gold table (<code>fact_sales</code>), 6 dimensions</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>ILT 2 (11:00 AM): Azure Cloud &amp; ADLS Gen2</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Name the 2 sources. Name the Gold table. Name the 3 Medallion layers.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

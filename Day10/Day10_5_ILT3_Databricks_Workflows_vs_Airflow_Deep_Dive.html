@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 10 | ILT 3 — Databricks Workflows vs. Apache Airflow, Deep Dive</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 10 · ILT 3 — Workflows vs. Airflow Deep Dive</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 25</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Workflows vs. Airflow</h1>
+    <p class="subtitle">Which orchestrator, and exactly how dependencies, retries, and failure handling work under the hood</p>
+    <div class="badge">Day 10 &nbsp;·&nbsp; ILT 3 &nbsp;·&nbsp; 90 minutes &nbsp;·&nbsp; Intermediate</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover → Workflows vs Airflow · Task Dependencies · Retries · Failure Handling<br>
+      Pairs with Day10_5_ILT3_Databricks_Workflows_vs_Airflow_Deep_Dive.ipynb
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering Today</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>Part 1 — Workflows vs Airflow</h4>
+        <p>Scope, task types, compute, authoring, cost — and when you'd actually pick one over the other</p>
+      </div>
+      <div class="card">
+        <h4>Part 2 — Task Dependencies</h4>
+        <p><code>depends_on</code>, fan-out/fan-in, and what happens when an upstream task fails</p>
+      </div>
+      <div class="card">
+        <h4>Part 3 &amp; 4 — Retries, Failure Handling</h4>
+        <p>Retry fields, <code>run_if</code> conditions, and a dedicated on-failure task pattern</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Builds on this afternoon's earlier ILT</strong> — Introduction to Orchestration. Every code cell in the matching notebook actually runs and prints real output, but nothing creates, starts, schedules, or triggers a real Databricks Job, Workflow, Pipeline, SQL Warehouse, or cluster. Building the real Workflow happens hands-on on Day 11.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: SECTION - PART 1 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 1</div>
+    <h2>Databricks Workflows vs. Apache Airflow</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Both are orchestrators. The real question isn't "which one is better" — it's "which one fits the org actually doing the orchestrating."
+    </p>
+  </div>
+
+  <!-- SLIDE 4: FRAMING -->
+  <div class="slide slide-content">
+    <h3>Something Has to Call Bronze, Then Silver, Then Gold</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>What every orchestrator does</h4>
+        <p>Runs things in the right order, on a schedule, and tells you when it breaks — whether that's Databricks Workflows, Apache Airflow, or Dagster.</p>
+      </div>
+      <div class="card">
+        <h4>The real decision</h4>
+        <p>Not "which tool is objectively better," but "which tool fits the shape of the organization doing the orchestrating" — a Databricks-only shop has different needs than one coordinating five different systems.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: COMPARISON TABLE A -->
+  <div class="slide slide-content">
+    <h3>Head to Head — Scope, Tasks, Compute, Authoring</h3>
+    <table class="sql-table">
+      <tr><th></th><th>Databricks Workflows</th><th>Apache Airflow</th></tr>
+      <tr><td><strong>Scope</strong></td><td>Native to Databricks — built specifically to orchestrate Databricks-native work</td><td>General-purpose — orchestrates anything an operator exists for: Databricks, Snowflake, S3, dbt, Kubernetes, on-prem systems, plain APIs</td></tr>
+      <tr><td><strong>Task types</strong></td><td>Notebook, Python script, SQL, dbt, Lakeflow/DLT pipeline, JAR, "Run Job" — all first-class, zero extra install</td><td>Whatever a provider package supplies — 90+ provider packages. Databricks awareness is an add-on, not native</td></tr>
+      <tr><td><strong>Cluster / compute</strong></td><td>Spins up a job cluster automatically per run, sized per task, terminates it when the run ends</td><td>Doesn't manage compute at all — an operator calls the Databricks Jobs REST API; Databricks still starts/stops the cluster</td></tr>
+      <tr><td><strong>Authoring</strong></td><td>Point-and-click UI, JSON, Databricks Asset Bundles (YAML), or Terraform</td><td>Python DAG files — "configuration as code," everything is a <code>DAG()</code> object in a <code>.py</code> file</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 6: COMPARISON TABLE B -->
+  <div class="slide slide-content">
+    <h3>Head to Head — Scheduling, Observability, Governance, Cost</h3>
+    <table class="sql-table">
+      <tr><th></th><th>Databricks Workflows</th><th>Apache Airflow</th></tr>
+      <tr><td><strong>Scheduling engine</strong></td><td>Built into the Databricks control plane — nothing extra to run</td><td>A separate service you operate yourself: scheduler, webserver, metadata database, workers</td></tr>
+      <tr><td><strong>UI / observability</strong></td><td>Per-task Gantt-style run view — one click from a failed task straight into its Spark UI / driver logs</td><td>DAG graph and grid views in the Airflow webserver — reaching a Spark UI means leaving Airflow entirely</td></tr>
+      <tr><td><strong>Governance / lineage</strong></td><td>Unity Catalog lineage is automatic for every Databricks task — no extra wiring</td><td>No native Unity Catalog awareness — lineage has to be stitched together separately</td></tr>
+      <tr><td><strong>Cost model</strong></td><td>Job-compute pricing, billed only while a run is actually executing</td><td>Airflow itself needs infrastructure running <strong>continuously</strong>, independent of the compute the tasks it triggers cost</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 7: WHEN YOU'D CHOOSE ONE -->
+  <div class="slide slide-content">
+    <h3>When You'd Actually Choose One Over the Other</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>A Databricks-only shop — like GlobalMart today</h4>
+        <p>Every source lands in <code>gbmart</code> and every transformation is a Databricks notebook or pipeline. Workflows wins: no separate infrastructure to run, faster to author, Unity Catalog lineage comes for free.</p>
+      </div>
+      <div class="card">
+        <h4>An org already standardized on Airflow</h4>
+        <p>If Databricks is one stop among many — a nightly DAG that also refreshes a Snowflake mart, calls a Salesforce API, and drops a file over SFTP — Airflow wins, because it can express the <em>whole</em> company DAG, not just the Databricks slice.</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">The common hybrid in practice:</strong> Airflow as the company-wide orchestrator, where one Airflow task's entire job is "kick off this one Databricks Workflow and wait for it to finish." Each tool does the part it's actually good at — Airflow coordinates <em>across</em> systems, Workflows coordinates <em>inside</em> Databricks.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: GROUNDING - 2 NOT 4 -->
+  <div class="slide slide-content">
+    <h3>Grounding This in GlobalMart's Real Sources — 2, Not 4</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Day 3 ILT 1 and Day 4 ILT 1 already established this, explicitly: GlobalMart's production pipeline has exactly <strong style="color:#e2e8f0;">two</strong> real ingestion pathways.</p>
+        <div class="card">
+          <h4>The 2 real pathways</h4>
+          <ul>
+            <li>Postgres/Supabase CDC via Lakeflow Connect (<code>orders_data_ingestion_cdc</code>)</li>
+            <li>ADLS Autoloader</li>
+          </ul>
+        </div>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">The REST API and Neo4j/GraphDB patterns from Day 3</strong> are deliberate side-explorations that land in a <code>sandbox/</code> path — they never touch a real <code>gbmart.bronze</code> table, so they don't get a <code>task_key</code> here or on Day 11.</p>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">Both real pathways feed one Databricks-only pipeline</strong>, so Workflows is the right default — and exactly what Day 11's hands-on builds.</p>
+        </div>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">Hypothetically:</strong> if GlobalMart's Postgres source were ever owned by a different team running its own Airflow instance for reasons that have nothing to do with Databricks, that's the moment a cross-tool Airflow DAG — with GlobalMart's entire Bronze→Silver→Gold Workflow as a single task inside it — would start to make sense.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: SECTION - PART 2 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 2</div>
+    <h2>Task Dependencies</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      <code>depends_on</code>, fan-out/fan-in, and what happens by default when an upstream task fails.
+    </p>
+  </div>
+
+  <!-- SLIDE 10: TASK LIST INTRO -->
+  <div class="slide slide-content">
+    <h3>One Small, GlobalMart-Shaped Task List</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">The matching notebook builds one task list — using the real 2-pathway architecture, coarser than the earlier ILT's full 7-table breakdown, on purpose, to keep this session's retry/failure-handling demo focused: 2 real ingestion tasks, a Silver build, a Gold build, and one dedicated failure-handling task.</p>
+    <table class="sql-table">
+      <tr><th><code>depends_on</code> Value</th><th>Meaning</th></tr>
+      <tr><td><code>[]</code> (empty)</td><td>No upstream — this task can start as soon as the run begins</td></tr>
+      <tr><td><code>[{"task_key": "x"}]</code></td><td>Simple chain — wait for exactly one upstream task</td></tr>
+      <tr><td><code>[{"task_key":"a"},{"task_key":"b"},...]</code></td><td><strong>Fan-in</strong> — wait for every listed task before starting</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 11: DEMO - FAN-OUT/FAN-IN DIAGRAM -->
+  <div class="slide slide-demo">
+    <h3>This Session's Task Graph</h3>
+    <div class="demo-label">Live Demo · Running Python, No Spark Session</div>
+<pre><span class="cm">// FAN-OUT -- GlobalMart's 2 REAL ingestion pathways, depends_on: [], run concurrently</span>
+  <span class="tbl">ingest_bronze_cdc</span>          <span class="cm">Postgres/Supabase CDC -&gt; orders, order_items</span>
+  <span class="tbl">ingest_bronze_autoloader</span>   <span class="cm">ADLS Autoloader -&gt; customers/products/address/payments/payment_methods</span>
+
+<span class="cm">// FAN-IN -- build_silver's depends_on lists both real tasks above</span>
+  <span class="tbl">build_silver</span>  →  <span class="tbl">build_gold_fact_sales</span>
+
+<span class="cm">// DEDICATED ON-FAILURE TASK -- depends_on ALL 4 tasks above,</span>
+<span class="cm">// run_if = "AT_LEAST_ONE_FAILED" (fires only when something breaks -- Part 4)</span>
+  <span class="tbl">on_failure_alert</span></pre>
+  </div>
+
+  <!-- SLIDE 12: DEMO - BUILD_SILVER CODE -->
+  <div class="slide slide-demo">
+    <h3>build_silver Fans In</h3>
+    <div class="demo-label">Live Demo · Running Python, No Spark Session</div>
+<pre><span class="cm"># build_silver fans IN -- depends_on lists both real upstream tasks</span>
+{
+  <span class="str">"task_key"</span>: <span class="str">"build_silver"</span>,
+  <span class="str">"depends_on"</span>: [
+    {<span class="str">"task_key"</span>: <span class="str">"ingest_bronze_cdc"</span>},
+    {<span class="str">"task_key"</span>: <span class="str">"ingest_bronze_autoloader"</span>}
+  ]
+}</pre>
+  </div>
+
+  <!-- SLIDE 13: WHAT HAPPENS ON FAILURE -->
+  <div class="slide slide-content">
+    <h3>What Happens When an Upstream Task Fails?</h3>
+    <div class="highlight-box warn">
+      <p><strong style="color:#f59e0b;">By default, every task's implicit condition is <code>run_if = ALL_SUCCESS</code>.</strong> If <strong>any</strong> task in <code>depends_on</code> did not succeed, the downstream task is not run at all — Databricks marks it <strong>SKIPPED</strong>, not failed, not run-with-partial-data.</p>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><strong style="color:#38bdf8;">This cascades:</strong> if <code>ingest_bronze_autoloader</code> fails, <code>build_silver</code> is skipped, and since <code>build_gold_fact_sales</code> depends on <code>build_silver</code>, it's skipped too — one failure quietly skips the rest of the chain, unless you deliberately design around it.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: DAY 11 "4" DISAMBIGUATION -->
+  <div class="slide slide-content">
+    <h3>About Day 11's "4 Parallel Ingestion Tasks" Title</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>The exact shape you'll build hands-on</h4>
+        <p>Parallel ingestion tasks fanning into one Silver build is the pattern Day 11's hands-on lab has you build for real: <strong>"Build Databricks Workflow: 4 Parallel Ingestion Tasks to Bronze-Silver-Gold."</strong></p>
+      </div>
+      <div class="highlight-box warn">
+        <p><strong style="color:#f59e0b;">That title's "4" is 4 Bronze-table-level tasks</strong> (matching the earlier ILT's full 7-table breakdown), <strong>not 4 source systems</strong> — GlobalMart still has exactly 2 real ingestion pathways.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: SECTION - PART 3 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 3</div>
+    <h2>Retries</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Every task in the notebook's task list carries three retry fields — real Databricks Jobs API fields, not simplified stand-ins.
+    </p>
+  </div>
+
+  <!-- SLIDE 16: RETRY FIELDS -->
+  <div class="slide slide-content">
+    <h3>Retry Fields — Databricks vs. Airflow</h3>
+    <table class="sql-table">
+      <tr><th>Field</th><th>Type</th><th>Meaning</th></tr>
+      <tr><td><code>max_retries</code></td><td>int</td><td>Additional attempts after the first failure (<code>max_retries: 2</code> = up to 3 total attempts)</td></tr>
+      <tr><td><code>min_retry_interval_millis</code></td><td>int</td><td>The <strong>minimum</strong> wait, in milliseconds, before the next retry starts</td></tr>
+      <tr><td><code>retry_on_timeout</code></td><td>bool</td><td>Whether a task that times out (vs. errors) is also eligible for retry</td></tr>
+    </table>
+    <table class="sql-table" style="margin-top:14px;">
+      <tr><th></th><th>Databricks Jobs</th><th>Airflow</th></tr>
+      <tr><td>Delay between attempts</td><td><code>min_retry_interval_millis</code> — a flat minimum, set once</td><td><code>retry_delay</code>; can grow via <code>retry_exponential_backoff=True</code> + a <code>max_retry_delay</code> cap</td></tr>
+      <tr><td>Where it's set</td><td>Per task, inside that task's block</td><td>Per operator, or once for the whole DAG via <code>default_args</code></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 17: DEMO - RETRY SIMULATION -->
+  <div class="slide slide-demo">
+    <h3>Retries, Simulated in Plain Python</h3>
+    <div class="demo-label">Live Demo · Running Python, No Spark Session</div>
+<pre><span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(1, max_retries + 2):
+    <span class="kw">try</span>:
+        result = simulate_flaky_call(task_key, attempt, fail_until)
+        <span class="kw">return</span> <span class="str">"SUCCEEDED"</span>
+    <span class="kw">except</span> ConnectionError:
+        delay = base_delay * attempt   <span class="cm"># increasing delay each retry</span>
+        time.<span class="fn">sleep</span>(delay)          <span class="cm"># tiny value -- seconds, never minutes</span></pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><strong style="color:#38bdf8;">Databricks' <code>min_retry_interval_millis</code> does not grow on its own</strong> — it's the same minimum wait every time. A truly increasing delay is something you implement yourself inside the task's own code, which is exactly what this simulation does.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 18: SECTION - PART 4 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 4</div>
+    <h2>Failure Handling</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      In the matching notebook, <code>ingest_bronze_autoloader</code> deliberately exhausts its retries and fails for real. What does a well-designed Workflow do because of that?
+    </p>
+  </div>
+
+  <!-- SLIDE 19: NOTIFICATIONS + RUN_IF -->
+  <div class="slide slide-content">
+    <h3>Notifications and run_if</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Databricks Jobs supports <code>email_notifications</code> and <code>webhook_notifications</code>, configurable per task or per job — fired automatically the moment a task's run finishes, no polling required.</p>
+    <table class="sql-table">
+      <tr><th><code>run_if</code> Value</th><th>Runs When...</th></tr>
+      <tr><td><code>ALL_SUCCESS</code> (default)</td><td>Every task in <code>depends_on</code> succeeded</td></tr>
+      <tr><td><code>AT_LEAST_ONE_SUCCESS</code></td><td>At least one upstream task succeeded</td></tr>
+      <tr><td><code>NONE_FAILED</code></td><td>No upstream task failed (skips still allowed)</td></tr>
+      <tr><td><code>ALL_DONE</code></td><td>Every upstream task finished, regardless of outcome</td></tr>
+      <tr><td><code>AT_LEAST_ONE_FAILED</code></td><td>At least one upstream task failed</td></tr>
+      <tr><td><code>ALL_FAILED</code></td><td>Every upstream task failed</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 20: DEMO - ON-FAILURE TASK PATTERN -->
+  <div class="slide slide-demo">
+    <h3>The Dedicated On-Failure Task Pattern</h3>
+    <div class="demo-label">Live Demo · Running Python, No Spark Session</div>
+<pre>{
+  <span class="str">"task_key"</span>: <span class="str">"on_failure_alert"</span>,
+  <span class="str">"depends_on"</span>: [ ... <span class="cm">all 4 tasks above</span> ... ],
+  <span class="str">"run_if"</span>: <span class="str">"AT_LEAST_ONE_FAILED"</span>   <span class="cm"># opposite of the default ALL_SUCCESS</span>
+}</pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><code>on_failure_alert</code> lists <strong>every</strong> task as a dependency and inverts the default logic — it's designed to stay <strong>SKIPPED</strong> when everything goes fine, and to fire (send the Slack/email/PagerDuty alert, kick off a cleanup job) exactly when something didn't.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 21: CONTRAST WITH AIRFLOW -->
+  <div class="slide slide-content">
+    <h3>Failure Handling — Contrast With Airflow</h3>
+    <table class="sql-table">
+      <tr><th></th><th>Databricks Jobs</th><th>Airflow</th></tr>
+      <tr><td>Conditional run based on outcome</td><td><code>run_if</code> on the task</td><td><code>trigger_rule</code> on the task (<code>all_success</code> default, <code>one_failed</code>, <code>all_done</code>...)</td></tr>
+      <tr><td>Automatic notification on failure</td><td><code>email_notifications</code> / <code>webhook_notifications</code></td><td><code>on_failure_callback</code>, or a dedicated Slack/PagerDuty/email operator</td></tr>
+      <tr><td>Dedicated "if anything failed" task</td><td><code>depends_on</code> everything + <code>run_if: AT_LEAST_ONE_FAILED</code></td><td><code>trigger_rule="one_failed"</code> downstream of everything it watches</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 22: SIMULATION OUTPUT -->
+  <div class="slide slide-content">
+    <h3>What the Failure-Propagation Simulation Actually Prints</h3>
+    <table class="sql-table">
+      <tr><th>Task</th><th>Final Status</th></tr>
+      <tr><td><code>ingest_bronze_cdc</code></td><td>SUCCESS</td></tr>
+      <tr><td><code>ingest_bronze_autoloader</code></td><td>FAILED</td></tr>
+      <tr><td><code>build_silver</code></td><td>SKIPPED</td></tr>
+      <tr><td><code>build_gold_fact_sales</code></td><td>SKIPPED</td></tr>
+      <tr><td><code>on_failure_alert</code></td><td>SUCCESS (ran on failure)</td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:14px;">
+      <p><strong style="color:#22c55e;">One real failure</strong> (<code>ingest_bronze_autoloader</code>, after exhausting its retries) quietly skips 2 downstream tasks — and is the only reason the 5th task runs at all. This is the entire point of designing failure handling deliberately instead of assuming "it'll just retry and be fine."</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 23: SESSION SUMMARY -->
+  <div class="slide slide-content">
+    <h3>Session Summary</h3>
+    <table class="sql-table">
+      <tr><th>Topic</th><th>Databricks Workflows</th><th>Apache Airflow</th></tr>
+      <tr><td>Best fit</td><td>Databricks-only pipelines</td><td>Cross-system orchestration, Databricks as one node among many</td></tr>
+      <tr><td>Cluster management</td><td>Automatic, per-run job clusters</td><td>None — delegates to Databricks via an operator/connection</td></tr>
+      <tr><td>Task dependency syntax</td><td><code>depends_on: [{"task_key": ...}]</code></td><td><code>upstream &gt;&gt; downstream</code></td></tr>
+      <tr><td>Retry fields</td><td><code>max_retries</code>, <code>min_retry_interval_millis</code>, <code>retry_on_timeout</code></td><td><code>retries</code>, <code>retry_delay</code> (+ optional backoff)</td></tr>
+      <tr><td>Conditional execution</td><td><code>run_if</code></td><td><code>trigger_rule</code></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 24: KEY TAKEAWAYS -->
+  <div class="slide slide-content">
+    <h3>Key Takeaways</h3>
+    <div class="card">
+      <ul style="list-style:none; padding-left:0;">
+        <li style="padding:8px 0; border-bottom:1px solid #334155;"><span class="pill pill-green">&#10003;</span> Workflows and Airflow solve the same problem for different scopes. GlobalMart is Databricks-only today, so Workflows is the right default; that changes the moment orchestration needs to reach outside Databricks.</li>
+        <li style="padding:8px 0; border-bottom:1px solid #334155;"><span class="pill pill-green">&#10003;</span> <code>depends_on</code> is how fan-out and fan-in are expressed — GlobalMart's 2 real ingestion pathways fan out from the start of the run, then fan back in at <code>build_silver</code>.</li>
+        <li style="padding:8px 0; border-bottom:1px solid #334155;"><span class="pill pill-green">&#10003;</span> A task with an unsatisfied <code>depends_on</code> isn't retried and isn't failed — it's <strong>SKIPPED</strong>, and that skip cascades downstream by default.</li>
+        <li style="padding:8px 0; border-bottom:1px solid #334155;"><span class="pill pill-green">&#10003;</span> <code>max_retries</code> / <code>min_retry_interval_millis</code> / <code>retry_on_timeout</code> give a task its own retry policy — Databricks' interval is a flat minimum, not automatic exponential backoff.</li>
+        <li style="padding:8px 0; border-bottom:1px solid #334155;"><span class="pill pill-green">&#10003;</span> <code>run_if: AT_LEAST_ONE_FAILED</code> is what turns a normal task into a dedicated on-failure/alert task.</li>
+        <li style="padding:8px 0;"><span class="pill pill-green">&#10003;</span> Every simulation today ran in plain Python — the real Workflow gets built for real next, on Day 11.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SLIDE 25: CLOSING / WHAT'S NEXT -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>Day 11 — Building the Real Job</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      Day 11's first hands-on session builds a real Databricks Job around exactly this pattern: <strong>"Build Databricks Workflow — 4 Parallel Ingestion Tasks to Bronze-Silver-Gold."</strong> That title's "4" is at the Bronze-table level, not 4 source systems — GlobalMart still has exactly 2 real ingestion pathways. Today's task list stops being a Python dict and becomes an actual Databricks Job — same fan-out/fan-in shape, same retries and failure handling, now wired to real notebook tasks against <code>gbmart</code>.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:860px;">
+      <div class="card">
+        <h4>Recap</h4>
+        <p>Workflows for Databricks-only, Airflow for cross-system. <code>depends_on</code>, <code>run_if</code>, and retry fields make it real.</p>
+      </div>
+      <div class="card">
+        <h4>Up Next</h4>
+        <p>Day 11 — Hands-On: Build the real GlobalMart Workflow</p>
+      </div>
+      <div class="card">
+        <h4>Closing Check</h4>
+        <p>If <code>ingest_bronze_cdc</code> succeeds but <code>ingest_bronze_autoloader</code> fails, what status does <code>build_gold_fact_sales</code> end up with, and why?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

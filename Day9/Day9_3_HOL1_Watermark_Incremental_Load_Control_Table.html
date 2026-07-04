@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 9 | HOL 1 — Implement Watermark-Based Incremental Load</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 9 · HOL 1 — Watermark Incremental Load</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 11</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>HOL 1 — Watermark-Based Incremental Load</h1>
+    <p class="subtitle">Build the exact mechanism Lakeflow Connect hides from you — your own control table, your own watermark, your own proof it works</p>
+    <div class="badge">Day 9 &nbsp;·&nbsp; HOL 1 &nbsp;·&nbsp; Hands-On Lab</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What you'll build today → Control Table · Incremental Loader · Proof of Incrementality · The Delete Blind Spot
+    </div>
+  </div>
+
+  <!-- SLIDE 2: WHY BY HAND -->
+  <div class="slide slide-section">
+    <div class="section-tag">Before You Start</div>
+    <h2>Why Build This By Hand?</h2>
+    <p style="color:#94a3b8; max-width:760px; margin-top:12px; font-size:15px;">
+      The real <code>orders_data_ingestion_cdc</code> pipeline (Day 2) already does cursor-based incremental loading for you — Lakeflow Connect manages the watermark internally, invisibly. That's great in production, but it means the mechanism is a black box. This lab is like taking a clock apart to see the gears instead of just reading the time off it — you'll build the exact same idea yourself, against a small practice table you fully control.
+    </p>
+    <div class="three-col" style="margin-top:24px; max-width:900px;">
+      <div class="card"><h4>Build</h4><p>A control table that tracks a watermark value per source table</p></div>
+      <div class="card"><h4>Implement</h4><p>An incremental read using <code>WHERE cursor_column &gt; :last_watermark</code></p></div>
+      <div class="card"><h4>Prove</h4><p>The watermark advances only after success — and that hard deletes still slip through</p></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: SETUP + PHASE PREVIEW -->
+  <div class="slide slide-content">
+    <h3>Setup — Your Own Practice Schema</h3>
+    <div class="two-col">
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Before running anything:</strong> replace <code>YOUR_SCHEMA</code> with something unique to you (e.g. your name). This lab works entirely in <code>main.YOUR_SCHEMA</code> — you will not touch any shared GlobalMart table.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>The Five Phases Ahead</h4>
+          <ol class="order-list">
+            <li><strong>Phase A</strong> — Simulate an upstream source</li>
+            <li><strong>Phase B</strong> — Control table + initial load</li>
+            <li><strong>Phase C</strong> — Prove it's incremental</li>
+            <li><strong>Phase D</strong> — Simulate a real change</li>
+            <li><strong>Phase E</strong> — Prove the blind spot yourself</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: PHASE A -->
+  <div class="slide slide-content">
+    <h3>Phase A — Simulate an Upstream Source</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px;">A small Delta table with an <code>updated_at</code> column stands in for "a Postgres table with an <code>updated_at</code> trigger." This lets you <em>cause</em> changes on demand in later phases, instead of waiting for real data to change.</p>
+      </div>
+      <div>
+<pre><span class="col">initial_df</span> = spark.<span class="fn">createDataFrame</span>(
+    [(<span class="str">f"ORD-{i:03d}"</span>, 100.0 * i, <span class="str">"2026-06-01T09:00:00"</span>)
+     <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(1, 6)],
+    [<span class="str">"order_id"</span>, <span class="str">"amount"</span>, <span class="str">"updated_at"</span>]
+).<span class="fn">withColumn</span>(<span class="str">"updated_at"</span>, <span class="fn">to_timestamp</span>(<span class="str">"updated_at"</span>))
+
+initial_df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">saveAsTable</span>(SOURCE_TABLE)</pre>
+      </div>
+    </div>
+    <div class="highlight-box">
+      <p>5 starter rows, all with the same <code>updated_at</code> — this is the "initial load" state, analogous to GlobalMart's real <code>orders</code> table before any incremental runs happened.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: PHASE B -->
+  <div class="slide slide-content">
+    <h3>Phase B — Control Table + Initial Load</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="kw">CREATE TABLE IF NOT EXISTS</span> <span class="tbl">practice_ingestion_control</span> (
+    <span class="col">source_table</span>          <span class="kw">STRING</span>,
+    <span class="col">last_watermark_value</span>  <span class="kw">TIMESTAMP</span>,
+    <span class="col">last_run_at</span>           <span class="kw">TIMESTAMP</span>
+) <span class="kw">USING DELTA</span>;
+
+<span class="cm">-- seeded at epoch (1970-01-01) = "nothing loaded yet, pull everything"</span></pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>One Row Per Source Table</h4>
+          <p>The control table holds exactly one row per source table: the highest <code>updated_at</code> value successfully loaded so far. Before any run has happened, that value is a very old timestamp — meaning "everything is new."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: LOADER FUNCTION -->
+  <div class="slide slide-content">
+    <h3>The Loader Function — 4 Steps, Every Time</h3>
+    <div class="two-col">
+      <div>
+        <ol class="order-list">
+          <li>Read the current watermark from the control table</li>
+          <li>Pull only source rows newer than that watermark</li>
+          <li>If there's anything new, <code>MERGE</code> it into the target (upsert on <code>order_id</code>)</li>
+          <li>Only <strong>after</strong> a successful write, advance the watermark to the max <code>updated_at</code> just loaded</li>
+        </ol>
+      </div>
+      <div>
+<pre><span class="kw">def</span> <span class="fn">run_incremental_load</span>():
+    last_watermark = ...   <span class="cm"># Step 1</span>
+    incremental_df = source.<span class="fn">filter</span>(
+        updated_at > last_watermark)  <span class="cm"># Step 2</span>
+    <span class="cm"># Step 3 — MERGE incremental_df into target</span>
+    <span class="cm">#          (upsert on order_id)</span>
+    <span class="cm"># Step 4 — only now, advance the watermark</span>
+    <span class="cm">#          to MAX(updated_at)</span></pre>
+      </div>
+    </div>
+    <div class="highlight-box warn">
+      <p>Steps 3 and 4 happen in that exact order, deliberately — advancing the watermark before confirming the write succeeded would lose data on a failed run.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: PHASE C -->
+  <div class="slide slide-content">
+    <h3>Phase C — Prove It's Incremental</h3>
+    <table class="sql-table">
+      <tr><th>Run</th><th>State</th><th>Expected Result</th></tr>
+      <tr><td>Run 1</td><td>Initial — watermark at epoch</td><td>All 5 starter rows load</td></tr>
+      <tr><td>Run 2</td><td>Nothing changed upstream</td><td>0 rows — proves it's not a full reload every time</td></tr>
+    </table>
+    <div class="highlight-box">
+      <p>This is the real proof it's incremental, not just "happens to work the first time."</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: PHASE D -->
+  <div class="slide slide-content">
+    <h3>Phase D — Simulate a Real Change</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px;">Update one existing row's <code>amount</code> (bumping its <code>updated_at</code>, exactly like GlobalMart's real <code>trg_orders_updated_at</code> trigger would) and insert one brand-new row. Then run the loader a third time and confirm <strong style="color:#e2e8f0;">only</strong> these 2 rows move — not all 6.</p>
+      </div>
+      <div>
+<pre><span class="kw">UPDATE</span> <span class="tbl">practice_upstream_orders</span>
+<span class="kw">SET</span> amount = 999.0, updated_at = <span class="fn">TIMESTAMP</span>(<span class="str">'2026-06-02T10:00:00'</span>)
+<span class="kw">WHERE</span> order_id = <span class="str">'ORD-002'</span>;
+
+<span class="kw">INSERT INTO</span> <span class="tbl">practice_upstream_orders</span>
+<span class="kw">VALUES</span> (<span class="str">'ORD-006'</span>, 600.0, <span class="fn">TIMESTAMP</span>(<span class="str">'2026-06-02T10:05:00'</span>));</pre>
+      </div>
+    </div>
+    <div class="highlight-box">
+      <p>Run 3 — expect "Rows newer than watermark: 2," showing exactly <code>ORD-002</code> and <code>ORD-006</code>.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: PHASE E -->
+  <div class="slide slide-content">
+    <h3>Phase E — Prove the Blind Spot Yourself</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Like a library removing a book from its shelves without telling the front desk — the "recently returned" list never mentions it's gone. Now delete a row from the upstream source and run the loader again.</p>
+<pre><span class="kw">DELETE FROM</span> <span class="tbl">practice_upstream_orders</span> <span class="kw">WHERE</span> order_id = <span class="str">'ORD-001'</span>;</pre>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p>If watermark-based loading truly can't see deletes, <code>ORD-001</code> should still be sitting in your target table, undeleted, forever — with no error telling you it's stale. Expect "Rows newer than watermark: 0" on the next run.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p>This is the exact same blind spot GlobalMart's real <code>orders_data_ingestion_cdc</code> pipeline has today — a deleted order stays in Bronze forever unless something else (a periodic full reconciliation, or switching to CDF in ILT 3) catches it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: SUBMISSION CHECKLIST -->
+  <div class="slide slide-content">
+    <h3>Submission Checklist</h3>
+    <div class="card">
+      <h4>Before You Submit</h4>
+      <ul>
+        <li>☐ Control table created and seeded with an epoch watermark</li>
+        <li>☐ Run 1 (initial load) loaded all 5 starter rows</li>
+        <li>☐ Run 2 (no changes) loaded 0 rows — proves it's incremental, not a full reload</li>
+        <li>☐ Run 3 picked up exactly the 1 updated + 1 new row after Phase D's changes</li>
+        <li>☐ Run 4 demonstrated the delete blind spot — <code>ORD-001</code> remains in the target after deletion upstream</li>
+        <li>☐ Notebook run top-to-bottom with your own <code>YOUR_SCHEMA</code> value, no errors</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for ILT 3</h2>
+    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
+      Next up: the strategy that actually closes the blind spot you just proved — Delta Change Data Feed.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>You built a real watermark loader: read → filter newer → merge → advance-on-success. It's incremental, and it's blind to deletes — just like the real pipeline.</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>ILT 3: CDF-Based Incremental Loading</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Which single step of your loader is the one thing standing between a failed run and silently losing a batch forever?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

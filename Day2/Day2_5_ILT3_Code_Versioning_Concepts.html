@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 2 | ILT 3 — Code Versioning: Databricks Repos + GitHub</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 2 · ILT 3 — Code Versioning: Repos &amp; GitHub</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 21</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Code Versioning</h1>
+    <p class="subtitle">Databricks Repos + GitHub — why data engineers version-control every notebook, and how to wire it up</p>
+    <div class="badge">Day 2 &nbsp;·&nbsp; ILT 3 &nbsp;·&nbsp; Trainer-Led Session</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → Why Version Control · Git Basics · Dev/Test/Prod · Connecting GitHub · Daily Workflow · Live Demo
+    </div>
+  </div>
+
+  <!-- SLIDE 2: LEARNING OBJECTIVES -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>Learning Objectives</h2>
+    <div class="card" style="margin-top:20px;">
+      <ol class="order-list">
+        <li>Explain why data engineers use version control</li>
+        <li>Understand Git basics: repository, branch, commit, push, pull</li>
+        <li>Explain the dev → test → prod branching strategy</li>
+        <li>Connect a GitHub repository to Databricks Repos</li>
+        <li>Create a branch, make a change, and push it to GitHub from Databricks</li>
+      </ol>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Mostly conceptual + live demo clicks today. Right after this session: <strong style="color:#38bdf8;">HOL 3</strong>, where you set up your own GitHub repo and push a real commit.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: SECTION - WHY VERSION CONTROL -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 1</div>
+    <h2>Why Do Data Engineers Need Version Control?</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Two familiar stories — and the tool that fixes both.
+    </p>
+  </div>
+
+  <!-- SLIDE 4: THE PROBLEM STORY -->
+  <div class="slide slide-content">
+    <h3>The Problem Without Version Control</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>Story 1 — Monday, Tuesday, Wednesday</h4>
+          <ul>
+            <li>Monday: you write a notebook that cleans customer data — it works perfectly</li>
+            <li>Tuesday: you add a new column</li>
+            <li>Wednesday: the pipeline breaks — the new column had a bug</li>
+          </ul>
+          <p style="margin-top:8px;"><strong style="color:#f59e0b;">What do you do?</strong> You can't go back to Monday's working version — you overwrote it.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Story 2 — Two Engineers, One File</h4>
+          <ul>
+            <li>Two engineers are both editing the same notebook at the same time</li>
+            <li>One saves their version, the other saves theirs</li>
+            <li>One person's work is simply gone</li>
+          </ul>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p><strong style="color:#22c55e;">Version control solves both problems.</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: WHAT VERSION CONTROL DOES -->
+  <div class="slide slide-content">
+    <h3>What Version Control Does for You</h3>
+    <table class="sql-table">
+      <tr><th>Problem</th><th>How Version Control Fixes It</th></tr>
+      <tr><td>Accidentally broke working code</td><td>Roll back to any previous version instantly</td></tr>
+      <tr><td>Two engineers editing the same file</td><td>Merge changes safely, see who changed what</td></tr>
+      <tr><td>Need to audit what changed</td><td>Full history of every change ever made</td></tr>
+      <tr><td>Deploying to production safely</td><td>Test in dev/test branch before touching prod</td></tr>
+      <tr><td>Onboarding a new team member</td><td>They clone the repo and have everything immediately</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Instructor question:</strong> "Has anyone ever accidentally deleted or overwritten code and lost work? That never happens with Git."</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: SECTION - GIT BASICS -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 2</div>
+    <h2>Git Basics (Very Simple)</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      <strong style="color:#38bdf8;">Git</strong> is the most popular version control tool in the world. <strong style="color:#38bdf8;">GitHub</strong> is a website where you store your Git repositories online — like Google Drive, but for code.
+    </p>
+  </div>
+
+  <!-- SLIDE 7: 6 GIT CONCEPTS -->
+  <div class="slide slide-content">
+    <h3>6 Git Concepts You Need to Know</h3>
+    <table class="sql-table">
+      <tr><th>Concept</th><th>Simple Meaning</th><th>Real-Life Analogy</th></tr>
+      <tr><td><strong>Repository</strong></td><td>A folder that tracks all changes to all files inside it</td><td>A project folder with a complete history</td></tr>
+      <tr><td><strong>Branch</strong></td><td>A separate copy of the code you can work on safely</td><td>A rough draft that doesn't affect the published version</td></tr>
+      <tr><td><strong>Commit</strong></td><td>Save a snapshot of your current changes with a message</td><td>Pressing Save + writing a note about what you saved</td></tr>
+      <tr><td><strong>Push</strong></td><td>Upload your commits from Databricks to GitHub</td><td>Syncing your phone photos to Google Photos</td></tr>
+      <tr><td><strong>Pull</strong></td><td>Download the latest changes from GitHub into Databricks</td><td>Refreshing your email to get new messages</td></tr>
+      <tr><td><strong>Merge</strong></td><td>Combine changes from one branch into another</td><td>Combining two documents into one final version</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 8: HOW IT FLOWS -->
+  <div class="slide slide-content">
+    <h3>How It All Flows</h3>
+<pre>GitHub (online)
+    │
+    │  ← push (upload your changes)
+    │  → pull (download latest changes)
+    │
+Databricks Repos (your local working copy)
+    │
+    ├── dev branch     (where you write new code)
+    ├── test branch    (where you test before going live)
+    └── prod branch    (the live, running pipeline — only tested code here)</pre>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Tell students:</strong> "GitHub is the source of truth. Databricks Repos is your working copy. Always push your work to GitHub so it is safe and shared."</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: SECTION - DEV/TEST/PROD -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 3</div>
+    <h2>The Dev → Test → Prod Branch Strategy</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      The most important practical concept of this session. Every professional data team uses this pattern.
+    </p>
+  </div>
+
+  <!-- SLIDE 10: THE 3 BRANCHES -->
+  <div class="slide slide-content">
+    <h3>Never Write Code Directly on Production</h3>
+    <div class="three-col">
+      <div class="card">
+        <h4>dev</h4>
+        <p><strong>Who:</strong> individual engineers<br><strong>What runs:</strong> new features, bug fixes, experiments<br><strong>Data:</strong> sample/test data</p>
+      </div>
+      <div class="card">
+        <h4>test</h4>
+        <p><strong>Who:</strong> QA / team review<br><strong>What runs:</strong> integration testing, data quality checks<br><strong>Data:</strong> full data, read-only</p>
+      </div>
+      <div class="card">
+        <h4>prod</h4>
+        <p><strong>Who:</strong> automated pipelines only<br><strong>What runs:</strong> the final, approved, live pipeline<br><strong>Data:</strong> live production data</p>
+      </div>
+    </div>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">The rule:</strong> code only moves forward — dev → test → prod. It never goes backwards. You never edit prod directly.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: FOR GLOBALMART -->
+  <div class="slide slide-content">
+    <h3>For GlobalMart</h3>
+    <div class="two-col">
+      <div>
+<pre>globalmart-lakehouse/          ← your GitHub repo
+    │
+    ├── branch: dev            ← you write here every day
+    │       notebooks/
+    │           bronze_ingestion.ipynb
+    │           silver_customers.ipynb
+    │
+    ├── branch: test           ← tested and reviewed code
+    │
+    └── branch: prod           ← only fully approved code</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Ask the class:</strong> "Why would a company care about keeping prod separate from dev?"</p>
+          <p style="margin-top:8px;">If a bug reaches prod, business dashboards break, Finance gets wrong numbers, reports fail. The cost is very high.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: SECTION - CONNECTING GITHUB -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 4</div>
+    <h2>Databricks Repos — Connecting GitHub</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Instead of saving notebooks only inside Databricks, they also live in GitHub — version-controlled and shareable.
+    </p>
+  </div>
+
+  <!-- SLIDE 13: PART A + B -->
+  <div class="slide slide-content">
+    <h3>Part A + B — GitHub Setup, Then Databricks Setup</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>Part A — GitHub (do this first)</h4>
+          <ol class="order-list">
+            <li>github.com → log in → <strong>+ New repository</strong></li>
+            <li>Name it <code>globalmart-lakehouse</code>, set Private, add a README</li>
+            <li>Settings → Developer Settings → Personal Access Tokens (classic)</li>
+            <li>Generate new token → scope: <code>repo</code> → <strong>copy it immediately</strong></li>
+          </ol>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Part B — Databricks</h4>
+          <ol class="order-list">
+            <li>Username (top right) → Settings → Linked Accounts → Git Integration</li>
+            <li>Select GitHub → paste Personal Access Token + username → Save</li>
+          </ol>
+        </div>
+        <div class="highlight-box warn" style="margin-top:12px;">
+          <p>Common mistake: closing the GitHub token page before copying it. Remind students to copy it first — you can't see it again.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: PART C -->
+  <div class="slide slide-content">
+    <h3>Part C — Clone the Repo into Databricks</h3>
+    <ol class="order-list">
+      <li>In the left sidebar, click <strong>Repos</strong></li>
+      <li>Click <strong>Add Repo</strong></li>
+      <li>Paste your GitHub repo URL: <code>https://github.com/YOUR_USERNAME/globalmart-lakehouse</code></li>
+      <li>Click <strong>Create Repo</strong></li>
+      <li>Your repo now appears in Databricks under Repos</li>
+      <li>Any notebook you create inside this folder is automatically tracked by Git</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 15: SECTION - DAILY WORKFLOW -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 5</div>
+    <h2>The Daily Git Workflow</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      This is the workflow you'll follow every single day of the bootcamp from today onwards.
+    </p>
+  </div>
+
+  <!-- SLIDE 16: DAILY WORKFLOW + COMMIT MESSAGES -->
+  <div class="slide slide-content">
+    <h3>Every Day: Pull → Branch → Code → Commit → Push</h3>
+    <div class="two-col">
+      <div>
+        <ol class="order-list">
+          <li><strong>Pull</strong> latest changes — get any changes your teammates made</li>
+          <li>Make sure you're on the <strong>dev</strong> branch</li>
+          <li>Write your code in the notebook</li>
+          <li><strong>Commit</strong> — Stage changes → write a message → Commit</li>
+          <li><strong>Push</strong> to GitHub — now your code is safe</li>
+        </ol>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Bad message</th><th>Good message</th></tr>
+          <tr><td><code>update</code></td><td>Add null check for customer email in silver layer</td></tr>
+          <tr><td><code>fix</code></td><td>Fix date format in orders table from MM/DD to YYYY-MM-DD</td></tr>
+          <tr><td><code>changes</code></td><td>Add bronze ingestion notebook for customers table</td></tr>
+        </table>
+        <div class="highlight-box" style="margin-top:10px;">
+          <p><strong>Rule:</strong> your commit message should tell a new team member exactly what changed and why.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 17: LIVE DEMO - VERIFY REPO -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — Verify You're Inside a Git Repo</h3>
+    <div class="demo-label">Goal: by the end, everyone has a dev branch and one pushed notebook</div>
+<pre><span class="col">notebook_path</span> = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Current notebook path: {notebook_path}"</span>)
+
+<span class="kw">if</span> <span class="str">"/Repos/"</span> <span class="kw">in</span> notebook_path:
+    <span class="fn">print</span>(<span class="str">"This notebook IS inside a Databricks Repo — Git tracking is active."</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"NOT in a Repo. Move it to your Repos folder to enable Git tracking."</span>)</pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>If the path contains <code>/Repos/</code>, it's Git-tracked. If it contains <code>/Users/</code>, it is not.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 18: LIVE DEMO - SHARED CONFIG -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — One Shared Config Notebook, Called With %run</h3>
+    <div class="demo-label">Change the storage account name in ONE place → every notebook picks it up</div>
+<pre><span class="cm"># config/setup.ipynb — uses the External Location pattern (no storage key)</span>
+<span class="col">STORAGE_ACCOUNT_NAME</span> = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span>
+<span class="col">BASE_PATH</span>   = <span class="fn">f</span><span class="str">"abfss://amazon-data@{STORAGE_ACCOUNT_NAME}.dfs.core.windows.net"</span>
+<span class="col">BRONZE_PATH</span> = <span class="fn">f</span><span class="str">"{BASE_PATH}/raw"</span>
+
+<span class="cm"># In any other notebook, instead of repeating all that code:</span>
+<span class="kw">%run</span> ../config/setup
+<span class="cm"># BRONZE_PATH, SILVER_PATH, GOLD_PATH are now ready to use</span></pre>
+  </div>
+
+  <!-- SLIDE 19: HANDS-ON CHECKLIST PREVIEW -->
+  <div class="slide slide-content">
+    <h3>Hands-On Checklist Preview</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Part A + B — Accounts</h4>
+        <ul>
+          <li>GitHub account + private repo <code>globalmart-lakehouse</code></li>
+          <li>Personal Access Token generated</li>
+          <li>Databricks Git Integration connected</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Part C + D + E — Build &amp; Push</h4>
+        <ul>
+          <li>Create the <code>dev</code> branch, switch to it</li>
+          <li>Create <code>config/setup</code> notebook with your storage account</li>
+          <li>Commit, push, confirm it appears on GitHub</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box success" style="margin-top:14px;">
+      <p><strong style="color:#22c55e;">Success:</strong> your Databricks notebooks are now version-controlled in GitHub.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 20: RECAP -->
+  <div class="slide slide-content">
+    <h3>Session Summary</h3>
+    <table class="sql-table">
+      <tr><th>Topic</th><th>Key Takeaway</th></tr>
+      <tr><td>Why version control</td><td>Tracks every change, allows rollback, enables team collaboration</td></tr>
+      <tr><td>Git vs GitHub</td><td>Git = the tool that tracks changes. GitHub = where the repo lives online.</td></tr>
+      <tr><td>Repository / Branch / Commit</td><td>A tracked folder / a safe copy to work on / a named snapshot</td></tr>
+      <tr><td>Push / Pull</td><td>Upload to / download from GitHub</td></tr>
+      <tr><td>Dev → Test → Prod</td><td>Three environments — code only moves forward, never skip a stage</td></tr>
+      <tr><td>Databricks Repos</td><td>Built-in GitHub integration — notebooks tracked automatically</td></tr>
+      <tr><td>Shared config</td><td>One setup notebook called by all others using <code>%run</code></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 21: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for HOL 3</h2>
+    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
+      Next: create your own GitHub repo, connect Databricks Repos, and push a real commit. Then Day 3 moves to Autoloader + REST API + GraphDB ingestion patterns.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>🧪 HOL 3 (next)</h4>
+        <p>Set up GitHub, connect Databricks Repos, push your first commit</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Day 3</h4>
+        <p>Autoloader + REST API + GraphDB ingestion patterns</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Git vs GitHub? Why never edit prod directly? What does <code>%run</code> do?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 6 | ILT 2 — Grain Definition &amp; Dimension Design</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 6 · ILT 2 — Grain Definition &amp; Dimension Design</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 30</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Grain Definition &amp; Dimension Design</h1>
+    <p class="subtitle">Kimball's #1 rule — declare the grain before building anything — then design every one of fact_sales's 6 dimensions</p>
+    <div class="badge">Day 6 &nbsp;·&nbsp; ILT 2 &nbsp;·&nbsp; 120-Minute Deep Dive</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → Grain · The 6 Dimensions · Surrogate Keys · Conformed Dimensions · SCD 1 vs 2
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA / OBJECTIVES -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering Today</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>Grain</h4>
+        <ul>
+          <li>Define grain and explain why it must be declared before any table is built</li>
+          <li>Justify why <code>fact_sales</code>'s grain is "one row per order line item"</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>The 6 Dimensions</h4>
+        <ul>
+          <li>Design each of GlobalMart's 6 dimension tables — source, natural key, attributes, surrogate key</li>
+          <li>Why Gold reuses some surrogate keys and generates others fresh</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Keys &amp; Conformance</h4>
+        <ul>
+          <li>The SCD Type 1 vs. Type 2 decision framework</li>
+          <li>What a conformed dimension is, and why it matters at GlobalMart's scale</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: WHAT IS GRAIN -->
+  <div class="slide slide-content">
+    <h3>What Is Grain?</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>The single, unambiguous statement</h4>
+          <p><strong>Grain</strong> is the single, unambiguous statement of what one row in a fact table represents. Kimball's rule: declare the grain in one sentence, before designing a single column.</p>
+          <p style="margin-top:10px;">Every measure and dimension added afterward must be true <em>at that grain</em>.</p>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">GlobalMart's declared grain:</strong> one row in <code>fact_sales</code> = one line item within one order — one row per <code>(order_id, product_id)</code> combination in <code>order_items</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: WORKED EXAMPLE -->
+  <div class="slide slide-content">
+    <h3>A Worked Example</h3>
+    <pre>Order <span class="col">OR-094494</span> in order_items:
+  order_item_id = OR-J-283399   | product_id = PRD-00410 | quantity = 1
+  order_item_id = OR-KSC-283400 | product_id = PRD-00107 | quantity = 5
+
+<span class="cm">→ contributes exactly 2 rows to fact_sales — one per product. Actual_price/</span>
+<span class="cm">  Discounted_price looked up from silver.products; Sales_amount computed</span>
+<span class="cm">  during Day 7's fact build. Each row carries its own correct revenue number.</span></pre>
+  </div>
+
+  <!-- SLIDE 5: COARSER GRAIN -->
+  <div class="slide slide-content">
+    <h3>What If Grain Were "One Row Per Order"?</h3>
+    <table class="sql-table">
+      <tr><th>If grain were "one row per order"...</th><th>Problem</th></tr>
+      <tr><td>Order <code>OR-094494</code>'s 2 products collapse into 1 row</td><td>Lose per-product <code>Quantity_purchased</code>/<code>Sales_amount</code> — can't answer "which product sold best?"</td></tr>
+      <tr><td><code>product_id</code> would need to be a list in one cell</td><td>Breaks the star schema pattern — dimensions expect one clean FK per fact row</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">Coarser grain always loses information</strong> you cannot get back later without re-processing Silver. This is the single biggest reason to get grain right the first time.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: FINER + GRAIN TEST -->
+  <div class="slide slide-content">
+    <h3>Could the Grain Be Finer?</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>Not for GlobalMart's current sources</h4>
+          <p><code>order_items</code> doesn't track shipment- or unit-level splits. If it ever did, that would justify a new, finer-grained fact table (e.g. <code>fact_shipments</code>), not a change to <code>fact_sales</code>.</p>
+          <p style="margin-top:10px;">A return/refund event is a genuinely <em>different</em> business process — a future <code>fact_returns</code>, at its own grain, not a variant of this one.</p>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">The grain test:</strong> before adding any column, ask "is this value true for exactly one line item, or could it vary within the order?" <code>Quantity_purchased</code> and <code>Discounted_price</code> pass. "Total items in this order" fails — that's an order-level aggregate. It doesn't belong as a stored column in <code>fact_sales</code> at all; compute it on demand with <code>SUM(Quantity_purchased) GROUP BY Order_ID</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: CONSEQUENCE FOR MEASURES -->
+  <div class="slide slide-content">
+    <h3>Consequence for the 4 Measures</h3>
+    <div class="highlight-box success" style="max-width:820px;">
+      <p>At this grain, <code>Quantity_purchased</code> and <code>Sales_amount</code> always SUM correctly at any rollup level. <code>Actual_price</code>/<code>Discounted_price</code> do not — summing a rate is never meaningful, even at the right grain.</p>
+      <p style="margin-top:10px;">Full additive/non-additive treatment is next in ILT 3.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: SECTION - THE 6 DIMENSIONS -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Grain Is Settled</div>
+    <h2>Designing the 6 Dimensions</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Using GlobalMart's real Silver tables as the source for each one.
+    </p>
+  </div>
+
+  <!-- SLIDE 9: DIM_CUSTOMER -->
+  <div class="slide slide-content">
+    <h3>Designing dim_customer</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;"><strong style="color:#e2e8f0;">Source:</strong> <code>gbmart.silver.customers</code> &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Natural key:</strong> <code>customer_id</code> &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Grain:</strong> one row per customer <em>version</em></p>
+    <table class="sql-table">
+      <tr><th>Column</th><th>Why it's here</th></tr>
+      <tr><td><code>customer_sk</code></td><td><strong>Reused from Silver</strong>, not generated in the Gold build — the join target every fact table uses</td></tr>
+      <tr><td><code>customer_id</code></td><td>Natural/business key — traces back to <code>CustomerID</code> in <code>customers.csv</code></td></tr>
+      <tr><td><code>full_name</code></td><td>What the business actually looks at</td></tr>
+      <tr><td><code>email, phone_number</code></td><td>Contact attributes — also the fields most likely to change over a customer's lifetime</td></tr>
+      <tr><td><code>is_current</code></td><td>Marks which version of this customer is true <em>right now</em></td></tr>
+      <tr><td><code>effective_start_date, effective_end_date</code></td><td>The date range this version of the customer was/is true for</td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><strong style="color:#22c55e;">SCD Type 2 for <code>dim_customer</code> is not a future topic.</strong> Day 5's Hands-On already built <code>silver.customers</code> as a full SCD2 table — it generated <code>customer_sk</code> and stamped every row with <code>is_current</code>/<code>effective_start_date</code>/<code>effective_end_date</code>. This afternoon's Gold build does not re-decide any of that; it selects these columns as-is and republishes them with <code>mode("overwrite")</code>. The <code>MERGE</code>-based mechanics for <em>updating</em> this table when a customer's details change is a later session — today, the SCD2 structure already exists, you're just moving it into Gold.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: DIM_PRODUCT -->
+  <div class="slide slide-content">
+    <h3>Designing dim_product</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;"><strong style="color:#e2e8f0;">Source:</strong> <code>gbmart.silver.products</code> &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Natural key:</strong> <code>product_id</code> &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Grain:</strong> one row per product <em>version</em></p>
+    <table class="sql-table">
+      <tr><th>Column</th><th>Why it's here</th></tr>
+      <tr><td><code>product_sk</code></td><td><strong>Reused from Silver</strong>, same reasoning as <code>dim_customer</code></td></tr>
+      <tr><td><code>product_id</code></td><td>Natural/business key (e.g. <code>PRD-00001</code>)</td></tr>
+      <tr><td><code>product_name</code></td><td>Human-readable label for reports and Genie answers</td></tr>
+      <tr><td><code>category, sub_category</code></td><td>What "revenue by category" — one of the most common business questions — groups and filters by</td></tr>
+      <tr><td><code>discounted_price_inr</code></td><td>The attribute that actually changes — the reason this dimension is SCD Type 2</td></tr>
+      <tr><td><code>is_current, effective_start_date, effective_end_date</code></td><td>SCD2 control columns, same role and source (Silver) as in <code>dim_customer</code></td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><code>discounted_price_inr</code> is exactly the kind of attribute that makes <code>dim_product</code> a realistic SCD Type 2 candidate — if GlobalMart runs a flash sale and drops a price, historical sales should keep reporting against the price that was true <em>at the time of the sale</em>. Like <code>dim_customer</code>, this was already decided and built in Day 5's Silver layer — Gold just carries it forward. <code>is_current</code> matters here: Day 7's Gold reporting views filter on it directly (<code>WHERE p.is_current = true</code>) whenever they join <code>dim_product</code>.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: DIM_DATE WHY -->
+  <div class="slide slide-content">
+    <h3>Designing dim_date — Why It's Different</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;"><strong style="color:#e2e8f0;">Source:</strong> none — <strong style="color:#e2e8f0;">generated</strong>, not read from Silver &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Natural key:</strong> the calendar date itself &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Grain:</strong> one row per calendar day</p>
+        <div class="card">
+          <h4>No source system ships "a table of dates"</h4>
+          <p>Every other dimension has a Silver source table. <code>dim_date</code> never does, in any dimensional model.</p>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Sized to the data, not an arbitrary range:</strong> pull the real bounds straight from <code>silver.orders</code> (earliest <code>order_date</code>, latest <code>actual_delivery_date</code>) and generate exactly that range — no wasted rows either side, and it stays correct automatically as GlobalMart's order history grows.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: DIM_DATE COLUMNS -->
+  <div class="slide slide-content">
+    <h3>dim_date — Columns</h3>
+    <div class="two-col">
+      <div>
+        <table class="sql-table">
+          <tr><th>Column</th><th>Why it's here</th></tr>
+          <tr><td><code>date_key</code></td><td>Surrogate key — the one deliberate exception to the reuse-or-hash convention</td></tr>
+          <tr><td><code>date</code></td><td>The actual calendar date, for display and date-math in BI tools</td></tr>
+          <tr><td><code>year, quarter, month</code></td><td>Pre-computed calendar hierarchy — avoids every query recomputing <code>QUARTER(date)</code> itself</td></tr>
+          <tr><td><code>day_of_week</code></td><td>Day-of-week name, for weekday/weekend and seasonality analysis</td></tr>
+          <tr><td><code>is_weekend</code></td><td>Common business flag — "do we sell more on weekends?" without date-math in every query</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">Why <code>date_key</code> is an integer <code>YYYYMMDD</code>, not a hash:</strong> every other freshly-generated surrogate key in this model is <code>sha2(natural_key, 256)</code>. <code>dim_date</code> breaks that pattern on purpose — e.g. <code>20260703</code>. Long-standing Kimball convention: human-readable, sorts correctly as a number, partitions Delta tables cleanly.</p>
+        </div>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><code>dim_date</code> is the textbook example of a <strong style="color:#38bdf8;">conformed dimension</strong> (coming up later this session) — every fact table GlobalMart ever builds joins to this exact same table. Built once, reused forever.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: DIM_ADDRESS -->
+  <div class="slide slide-content">
+    <h3>Designing dim_address</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;"><strong style="color:#e2e8f0;">Source:</strong> <code>gbmart.silver.address</code> (singular) &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Natural key:</strong> <code>address_id</code> &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Grain:</strong> one row per address record</p>
+    <table class="sql-table">
+      <tr><th>Column</th><th>Why it's here</th></tr>
+      <tr><td><code>address_sk</code></td><td>Surrogate key — generated fresh here in Gold, since Silver never assigned this table one</td></tr>
+      <tr><td><code>address_id</code></td><td>Natural/business key, traces back to source</td></tr>
+      <tr><td><code>customer_id</code></td><td>Filter "this customer's addresses" without going through the fact table</td></tr>
+      <tr><td><code>city, state, pincode</code></td><td>The entire reason this dimension exists — "revenue by city/state" reporting</td></tr>
+      <tr><td><code>address_type</code></td><td>Distinguishes Billing vs. Shipping</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">The many-to-many problem — and how it's actually resolved.</strong> One customer can have <em>multiple</em> addresses — a plain dimension table can't say by itself "which address did <em>this specific order line</em> ship to." That's real, but it is <strong>not</strong> solved with a bridge table. Day 7's <code>fact_sales</code> build resolves it with a window-function ranking: rank each customer's addresses (prefer Shipping), keep the top-ranked one, join on <code>customer_id</code>. <code>dim_address</code> itself stays a plain, honest dimension — the resolution logic lives entirely in the fact build. (Day 7 HOL 1 does build one illustrative bridge table, for a hypothetical products&harr;campaigns relationship, purely to teach the bridge-table pattern in general — unrelated to addresses.)</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: DIM_PAYMENT_METHOD -->
+  <div class="slide slide-content">
+    <h3>Designing dim_payment_method</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;"><strong style="color:#e2e8f0;">Source:</strong> <code>gbmart.silver.payment_methods</code> (the small lookup table) &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Natural key:</strong> <code>payment_method_id</code> &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Grain:</strong> one row per payment method (~5 rows)</p>
+    <table class="sql-table">
+      <tr><th>Column</th><th>Why it's here</th></tr>
+      <tr><td><code>payment_method_sk</code></td><td>Surrogate key, generated fresh here in Gold</td></tr>
+      <tr><td><code>payment_method_id</code></td><td>Natural/business key (e.g. <code>PM-002</code>)</td></tr>
+      <tr><td><code>method_name</code></td><td>Human-readable value ("UPI", "Credit Card") — <code>PM-002</code> means nothing to a business user on its own</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Common mistake — don't confuse the two payment tables.</strong> <code>dim_payment_method</code> sources from <code>payment_methods</code> (the 5-row lookup), <strong>not</strong> from <code>payments</code> (the transactional table recording every individual payment event per order). A tiny reference table like this is sometimes called a <strong>mini-dimension</strong>.</p>
+    </div>
+    <p style="color:#94a3b8; font-size:13px; margin-top:14px;">Both dimensions get a surrogate key generated fresh in Gold, even though they're small — keeping every dimension's join <em>shape</em> identical (a rule the next dimension, <code>dim_orders</code>, is worth a closer look at).</p>
+  </div>
+
+  <!-- SLIDE 15: DIM_ORDERS -->
+  <div class="slide slide-content">
+    <h3>Designing dim_orders — The Sixth Dimension</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;"><strong style="color:#e2e8f0;">Source:</strong> <code>gbmart.silver.orders</code> &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Natural key:</strong> <code>order_id</code> &nbsp;|&nbsp; <strong style="color:#e2e8f0;">Grain:</strong> one row per order</p>
+    <table class="sql-table">
+      <tr><th>Column</th><th>Why it's here</th></tr>
+      <tr><td><code>order_sk</code></td><td>Surrogate key, generated fresh here in Gold — same uniform pattern as <code>dim_address</code>/<code>dim_payment_method</code></td></tr>
+      <tr><td><code>order_id</code></td><td>Natural/business key, traces back to source</td></tr>
+      <tr><td><code>customer_id</code></td><td>Filter "this customer's orders" without going through the fact table</td></tr>
+      <tr><td><code>order_date</code></td><td>Also independently reachable via <code>dim_date</code> through the fact, kept here too as a natural attribute of the order itself</td></tr>
+      <tr><td><code>shipping_tier_id, supplier_id</code></td><td>Carried as plain IDs — no backing lookup table exists for either yet</td></tr>
+      <tr><td><code>order_channel</code></td><td>The one attribute with real reporting value — "Online" vs. "Retail PoS"</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">This is the sixth dimension</strong> — it's easy to assume <code>order_id</code> has no dimension at all. It does: <code>dim_orders</code> is real, and today's Hands-On builds it. What's still true is that <code>fact_sales</code> (Day 7) doesn't join to it by surrogate key — it carries <code>Order_ID</code> directly as a natural key instead, the same simplification the fact table applies to every dimension. <code>dim_orders</code> exists as its own queryable Gold table regardless — ILT 3 (next) revisits this exact point under "degenerate dimensions."</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 16: SECTION - SURROGATE KEYS -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Key Design</div>
+    <h2>Surrogate Keys</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      The Kimball standard — and where GlobalMart deliberately takes a shortcut.
+    </p>
+  </div>
+
+  <!-- SLIDE 17: NATURAL VS SURROGATE -->
+  <div class="slide slide-content">
+    <h3>Natural Key vs. Surrogate Key</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Natural key</h4>
+        <p>The identifier the <em>source system</em> assigns (<code>customer_id</code>, <code>PM-002</code>) — means something to the business.</p>
+      </div>
+      <div class="card">
+        <h4>Surrogate key</h4>
+        <p>An identifier <em>Gold</em> owns, meaningless outside the warehouse, whose only job is a stable, efficient join target.</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">The Kimball-standard rule, and cert material:</strong> dimension tables get a surrogate key, and fact tables join to dimensions on that key — never the natural key.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 18: REUSE VS GENERATE -->
+  <div class="slide slide-content">
+    <h3>Reuse from Silver, or Generate Fresh in Gold?</h3>
+    <table class="sql-table">
+      <tr><th></th><th>Reuse from Silver</th><th>Generate fresh in Gold</th></tr>
+      <tr><td><strong>Applies to</strong></td><td><code>dim_customer</code>, <code>dim_product</code></td><td><code>dim_address</code>, <code>dim_payment_method</code>, <code>dim_orders</code></td></tr>
+      <tr><td><strong>Why</strong></td><td>Silver already built these as SCD2 tables and generated the key there</td><td>Silver never assigned these one, so Gold generates <code>sha2(natural_key, 256)</code></td></tr>
+      <tr><td><strong>Method</strong></td><td><code>SELECT</code> the existing <code>customer_sk</code>/<code>product_sk</code> as-is</td><td><code>address_sk = sha2(address_id, 256)</code>, same pattern for the other two</td></tr>
+    </table>
+    <p style="color:#94a3b8; font-size:13px; margin-top:12px;"><code>dim_date.date_key</code> is the one further exception to <em>both</em> paths — a plain <code>YYYYMMDD</code> integer, as covered above.</p>
+  </div>
+
+  <!-- SLIDE 19: WHY HASH -->
+  <div class="slide slide-content">
+    <h3>Why a Hash-Based Surrogate Key?</h3>
+    <table class="sql-table">
+      <tr><th>Reason</th><th>Explanation</th></tr>
+      <tr><td><strong>Idempotent</strong></td><td>Re-running the Gold build produces the exact same key for the same natural key, every time — an auto-increment counter would not</td></tr>
+      <tr><td><strong>Decouples from source-system key changes</strong></td><td>If Supabase or an ADLS file drop changes its ID format, <code>fact_sales</code> doesn't care — Gold's keys are Gold-owned</td></tr>
+      <tr><td><strong>Stable under SCD Type 2</strong></td><td>The fact must point at the exact dimension row version true at the moment of the sale — only a Gold/Silver-controlled key supports that</td></tr>
+      <tr><td><strong>Join performance</strong></td><td>A fixed-length hash joins faster than long string natural keys at <code>fact_sales</code>'s scale</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 20: GLOBALMART'S SHORTCUT - WHAT -->
+  <div class="slide slide-content">
+    <h3>GlobalMart's Shortcut</h3>
+    <div class="highlight-box success" style="max-width:900px;">
+      <p><strong style="color:#22c55e;">Even though every dimension above has a proper surrogate key, <code>fact_sales</code> itself (Day 7) does not use any of them.</strong> It carries <code>Customer_ID</code>, <code>Product_ID</code>, <code>Order_ID</code>, <code>Address_ID</code>, <code>Payment_ID</code>, and <code>Time_ID</code>.</p>
+      <p style="margin-top:10px;"><strong>Five</strong> of these six join their dimension directly by natural key (<code>Time_ID</code> <em>is</em> <code>dim_date.date_key</code> — natural and surrogate collapse into the same column for that one dimension).</p>
+      <p style="margin-top:10px;"><strong style="color:#22c55e;">Payment_ID is the exception to the exception:</strong> it comes from <code>silver.payments</code>, a completely different ID space from <code>dim_payment_method.payment_method_id</code> — so <code>fact_sales</code> doesn't resolve to <code>dim_payment_method</code> at all (ILT 3 goes deeper on this).</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 21: GLOBALMART'S SHORTCUT - COST -->
+  <div class="slide slide-content">
+    <h3>The Cost of the Shortcut</h3>
+    <div class="two-col">
+      <div>
+        <div class="highlight-box warn">
+          <p>This is a <strong style="color:#f59e0b;">deliberate, documented simplification</strong>, not an oversight — cost: no point-in-time SCD2 accuracy.</p>
+          <p style="margin-top:10px;">If a customer's email changes, every one of their past <code>fact_sales</code> rows now resolves to the <em>current</em> <code>dim_customer</code> row when joined, not the version true when each sale happened.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>The rule to internalize regardless</h4>
+          <p>The surrogate-key discipline is still the correct default to teach — this fact table is the <strong>documented exception</strong>, not the pattern.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 22: SECTION - CONFORMED DIMENSIONS -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Reuse Discipline</div>
+    <h2>Conformed Dimensions</h2>
+  </div>
+
+  <!-- SLIDE 23: WHAT IS A CONFORMED DIMENSION -->
+  <div class="slide slide-content">
+    <h3>What's a Conformed Dimension?</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>Built once, reused unchanged</h4>
+          <p>A <strong>conformed dimension</strong> is built once, with one definition, and reused unchanged by every fact table in the warehouse.</p>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">GlobalMart's example:</strong> <code>dim_product</code> and <code>dim_customer</code>, built today, are designed to be reused. A future <code>fact_returns</code> (from <code>returns.csv</code>, which already exists in the raw data) would join to the exact same <code>dim_product</code>/<code>dim_customer</code> rows — so "revenue by category" and "return rate by category" automatically agree, because both queries filter through the identical <code>category</code> values. <code>dim_date</code> is the cleanest example of all — any future fact table joins to today's exact table, not a re-derived one.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 24: WHY CONFORMANCE MATTERS -->
+  <div class="slide slide-content">
+    <h3>Why Conformance Matters</h3>
+    <div class="highlight-box warn" style="max-width:840px;">
+      <p>Without conformance, two teams building two fact tables might each build their own "product dimension" with slightly different category groupings — now "revenue by category" and "return rate by category" silently disagree.</p>
+      <p style="margin-top:10px;">This is the exact trust problem GlobalMart started this course to solve (Day 1, Problems #1 and #5).</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 25: SECTION - SCD 1 VS 2 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">SCD Strategy</div>
+    <h2>SCD Type 1 vs. Type 2</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      A conceptual preview of the decision framework.
+    </p>
+  </div>
+
+  <!-- SLIDE 26: SCOPE NOTE -->
+  <div class="slide slide-content">
+    <h3>Scope: a Decision Framework, Not an Implementation Lesson</h3>
+    <div class="highlight-box warn" style="max-width:840px;">
+      <p>The <code>MERGE</code>-based mechanics are taught in a later session. Today's Hands-On builds every dimension as a simple current-state table, <strong>except</strong> where Silver already built SCD2 in (<code>dim_customer</code>, <code>dim_product</code>).</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 27: SCD1 VS SCD2 TABLE -->
+  <div class="slide slide-content">
+    <h3>The Decision Framework</h3>
+    <table class="sql-table">
+      <tr><th></th><th>SCD Type 1</th><th>SCD Type 2</th></tr>
+      <tr><td><strong>Behavior</strong></td><td>Overwrite the old value in place</td><td>Keep the old row, insert a new row, mark which is current</td></tr>
+      <tr><td><strong>History preserved?</strong></td><td>No</td><td>Yes — full version history</td></tr>
+      <tr><td><strong>Extra columns</strong></td><td>None</td><td><code>is_current</code>, <code>effective_start_date</code>, <code>effective_end_date</code></td></tr>
+      <tr><td><strong>GlobalMart example</strong></td><td>Fixing a typo'd <code>city</code>; a payment method's display name changing</td><td>A customer's email/city changes but past orders must still show what was true then; a product's price changes but past revenue must reflect the price paid at the time</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Decision rule:</strong> "Does anyone need to know what this looked like in the past?" No &rarr; Type 1. Yes &rarr; Type 2.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 28: WHICH DIMS WHICH TYPE -->
+  <div class="slide slide-content">
+    <h3>Which of the 6 Dimensions Get Which Type?</h3>
+    <table class="sql-table">
+      <tr><th>Dimension</th><th>SCD type</th><th>Why</th></tr>
+      <tr><td><code>dim_customer</code></td><td>Type 2 — already built this way</td><td>Silver already generates the SCD2 columns; historical orders should show what was true at sale time</td></tr>
+      <tr><td><code>dim_product</code></td><td>Type 2 — already built this way</td><td>Same Silver-built SCD2 columns; price history</td></tr>
+      <tr><td><code>dim_address</code></td><td>Type 1 often enough</td><td>Typos don't need history; new addresses are just new rows</td></tr>
+      <tr><td><code>dim_payment_method</code></td><td>Type 1</td><td>~5-row lookup, name fixes don't need history</td></tr>
+      <tr><td><code>dim_orders</code></td><td>Type 1</td><td>Order header attributes don't change after the order is placed</td></tr>
+      <tr><td><code>dim_date</code></td><td>—</td><td>Static, generated — doesn't "change" in the SCD sense</td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><code>dim_customer</code>/<code>dim_product</code> already ship today as Type 2 (inherited from Silver); the rest ship today as simple current-state tables. Later sessions implement Type 2 mechanics hands-on for the ones that need it.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 29: SESSION SUMMARY -->
+  <div class="slide slide-content">
+    <h3>Session Summary — All 6 Dimensions</h3>
+    <table class="sql-table">
+      <tr><th>Dimension</th><th>Source</th><th>Natural key</th><th>Surrogate key</th><th>Grain</th></tr>
+      <tr><td><code>dim_customer</code></td><td><code>gbmart.silver.customers</code></td><td><code>customer_id</code></td><td>Reused — <code>customer_sk</code> (SCD2)</td><td>One row per customer version</td></tr>
+      <tr><td><code>dim_product</code></td><td><code>gbmart.silver.products</code></td><td><code>product_id</code></td><td>Reused — <code>product_sk</code> (SCD2)</td><td>One row per product version</td></tr>
+      <tr><td><code>dim_date</code></td><td>Generated date spine</td><td>calendar date</td><td><code>date_key</code> — <code>YYYYMMDD</code> int</td><td>One row per day</td></tr>
+      <tr><td><code>dim_address</code></td><td><code>gbmart.silver.address</code></td><td><code>address_id</code></td><td>Fresh — <code>sha2(address_id,256)</code></td><td>One row per address</td></tr>
+      <tr><td><code>dim_payment_method</code></td><td><code>gbmart.silver.payment_methods</code></td><td><code>payment_method_id</code></td><td>Fresh — <code>sha2(payment_method_id,256)</code></td><td>One row per method (~5 rows)</td></tr>
+      <tr><td><code>dim_orders</code></td><td><code>gbmart.silver.orders</code></td><td><code>order_id</code></td><td>Fresh — <code>sha2(order_id,256)</code></td><td>One row per order</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 30: CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Session Recap</div>
+    <h2>You're Ready for ILT 3</h2>
+    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
+      Next up: Fact Tables Deep Dive — where these 6 dimensions meet <code>fact_sales</code>'s actual measures, additivity rules, and key design.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>Recap</h4>
+        <p>Grain declared. 6 dimensions designed. Surrogate keys mostly reused/hashed — but <code>fact_sales</code> itself is the documented exception.</p>
+      </div>
+      <div class="card">
+        <h4>Up Next</h4>
+        <p>ILT 3: Fact Tables Deep Dive</p>
+      </div>
+      <div class="card">
+        <h4>Closing Check</h4>
+        <p>State <code>fact_sales</code>'s grain in one sentence. Name the 2 dimensions that reuse a Silver surrogate key. What's different about <code>Payment_ID</code>?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

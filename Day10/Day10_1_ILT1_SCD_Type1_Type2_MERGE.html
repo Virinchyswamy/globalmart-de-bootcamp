@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 10 | ILT 1 — SCD Type 1 &amp; Type 2 Using MERGE</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 10 · ILT 1 — SCD Type 1 &amp; Type 2 Using MERGE</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 14</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>SCD Type 1 &amp; Type 2 Using MERGE</h1>
+    <p class="subtitle">Two ways to handle a changing dimension value — and the one SQL command that implements both, safely, every time</p>
+    <div class="badge">Day 10 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; Instructor-Led Live Demo</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover → SCD1 vs SCD2 Recap · Why MERGE · Live Demo: dim_address (SCD1) · Live Demo: dim_customer (SCD2)
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering Today</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>Recap — Two Kinds of Change</h4>
+        <ul>
+          <li>SCD Type 1 — overwrite, no history</li>
+          <li>SCD Type 2 — close out old, insert new</li>
+          <li>Which GlobalMart dims use which, and why</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Why MERGE</h4>
+        <ul>
+          <li>Separate UPDATE + INSERT has a race condition</li>
+          <li><code>MERGE</code> does both atomically, in one transaction</li>
+          <li>The one operation safe to re-run without duplicates</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Two Live Demos</h4>
+        <ul>
+          <li>Part 1 — SCD1 on <code>dim_address</code></li>
+          <li>Part 2 — SCD2 on <code>dim_customer</code>, the real 6-step pattern</li>
+          <li>Runs against a scratch schema, never the real <code>gbmart</code> tables</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: THE ANALOGY -->
+  <div class="slide slide-content">
+    <h3>Two Ways to Fix a Mistake</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Imagine a customer's address label is wrong, and separately, a customer's email changes. Do you fix both the same way?</p>
+        <div class="card">
+          <h4>Correcting a typo</h4>
+          <p>You cross it out and write the right word. Nobody needs to know what the typo used to say — it's just wrong, now it's right. That's <strong style="color:#e2e8f0;">SCD Type 1</strong>.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Keeping a diary</h4>
+          <p>You don't erase yesterday's entry when today's happens — you date-stamp it "closed" and add a new entry. Anyone can still ask "what did it say last Tuesday?" That's <strong style="color:#e2e8f0;">SCD Type 2</strong>.</p>
+        </div>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">The real question this ILT answers:</strong> how do you actually <em>implement</em> either one, incrementally, without reprocessing the whole table every time?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: COMPARISON TABLE -->
+  <div class="slide slide-content">
+    <h3>SCD Type 1 vs Type 2 — Side by Side</h3>
+    <table class="sql-table">
+      <tr><th></th><th>SCD Type 1</th><th>SCD Type 2</th></tr>
+      <tr><td>What happens on change</td><td>Overwrite the value in place</td><td>Close out the old row, insert a new one</td></tr>
+      <tr><td>History kept?</td><td>No — only the current value survives</td><td>Yes — every version, with <code>effective_start_date</code>/<code>effective_end_date</code></td></tr>
+      <tr><td>GlobalMart dims using it</td><td><code>dim_address</code>, <code>dim_payment_method</code></td><td><code>dim_customer</code>, <code>dim_product</code></td></tr>
+      <tr><td>Why that split</td><td>An address correction or a payment method's display name changing isn't something you need to time-travel through</td><td>A customer's email or a product's price changing over time is exactly what <code>fact_sales</code> needs to attribute correctly</td></tr>
+    </table>
+    <div class="highlight-box">
+      <p><strong style="color:#38bdf8;">Concretely:</strong> was this sale made when the product was priced at &#8377;999 or &#8377;799? SCD2 on <code>dim_product</code> is the only way to answer that correctly, after the fact.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: WHY NOT TWO STATEMENTS -->
+  <div class="slide slide-content">
+    <h3>Why Not Just Two Separate Statements?</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Before <code>MERGE</code> existed, you'd write this as two separate statements:</p>
+<pre><span class="kw">UPDATE</span> dim_table <span class="kw">SET</span> ... <span class="kw">WHERE</span> key <span class="kw">IN</span> (existing_changed_keys);
+<span class="kw">INSERT INTO</span> dim_table <span class="kw">SELECT</span> ... <span class="kw">WHERE</span> key <span class="kw">NOT IN</span> (existing_keys);</pre>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">The race condition:</strong> between the <code>UPDATE</code> and the <code>INSERT</code>, another process could write to the same table — a row that should have been updated could get inserted as a duplicate instead.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Think of two people editing one spreadsheet cell</h4>
+          <p>Person A reads the cell to decide "update or insert?" Before A finishes writing, Person B changes the same row. A's decision is now stale — and the result is a duplicate, not an update.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">MERGE INTO ... WHEN MATCHED ... WHEN NOT MATCHED ...</strong> does both in <strong>one atomic transaction</strong> — Delta Lake guarantees it either fully succeeds or fully rolls back.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: BRIDGE TO DEMOS -->
+  <div class="slide slide-content">
+    <h3>The One Operation Behind Both SCD Types</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">This is the one operation that makes incremental dimension loading — and, in HOL 2, incremental fact loading — safe to run repeatedly without duplicate or half-applied rows.</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>SCD1 uses MERGE with...</h4>
+        <p>One branch only — <code>whenMatchedUpdate</code>. No history columns, no second branch needed.</p>
+      </div>
+      <div class="card">
+        <h4>SCD2 uses MERGE with...</h4>
+        <p>A <code>whenMatchedUpdate</code> to close out the old row, plus a separate append to insert the new version.</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Where this demo writes:</strong> everything below runs against a scratch schema (<code>main.scd_demo</code>), cloned via <code>SHALLOW CLONE</code> from the real <code>gbmart</code> tables — never against <code>gbmart</code> directly. An SCD-MERGE demo consumes its pending change the first time it runs; cloning keeps this repeatable for every cohort.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: SECTION - PART 1 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 1</div>
+    <h2>SCD Type 1 in Action — dim_address</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      The simpler case: when an address's <code>address_type</code> label changes, we don't need to know what it used to say — we just overwrite it.
+    </p>
+  </div>
+
+  <!-- SLIDE 8: DEMO - SCD1 CODE -->
+  <div class="slide slide-demo">
+    <h3>SCD1 MERGE — One Branch, No History Columns</h3>
+    <div class="demo-label">Live Demo · Instructor Notebook</div>
+<pre><span class="cm"># SCD1 MERGE — one branch, no history columns</span>
+(dim_address_tbl.<span class="fn">alias</span>(<span class="str">"tgt"</span>)
+    .<span class="fn">merge</span>(incoming_change_df.<span class="fn">alias</span>(<span class="str">"src"</span>), <span class="str">"tgt.address_id = src.address_id"</span>)
+    .<span class="fn">whenMatchedUpdate</span>(<span class="fn">set</span>={<span class="str">"address_type"</span>: <span class="str">"src.address_type"</span>})
+    .<span class="fn">execute</span>()
+)</pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>One <code>MERGE</code>, one branch (<code>whenMatchedUpdate</code>) — the old value is simply gone afterward. That's correct: nobody needs to ask what an address label used to say.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: SECTION - PART 2 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 2</div>
+    <h2>SCD Type 2 in Action — dim_customer</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      The real pattern GlobalMart uses in production. A customer's email changes — and <code>fact_sales</code> needs to know which email was current at the time of each sale.
+    </p>
+  </div>
+
+  <!-- SLIDE 10: 6-STEP FLOW -->
+  <div class="slide slide-content">
+    <h3>The 6-Step SCD2 Flow</h3>
+    <ol class="order-list">
+      <li>Read the current full state of Bronze</li>
+      <li>Find the version right before the change — CDF reads everything after it</li>
+      <li>Take <strong>only</strong> the changed rows via CDF, not a full re-scan</li>
+      <li>Process just those rows (same cleaning logic as the full load, scoped down)</li>
+      <li><strong>MERGE</strong> — close out the old version (<code>is_current=false</code>, stamp <code>effective_end_date</code>)</li>
+      <li>Append the new version (<code>is_current=true</code>, fresh <code>customer_sk</code>), then verify — each changed customer shows exactly 2 rows</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 11: DEMO - CDF READ -->
+  <div class="slide slide-demo">
+    <h3>Step 3 — Read Only What Changed</h3>
+    <div class="demo-label">Live Demo · Instructor Notebook</div>
+<pre><span class="cm"># Step 3 — CDF read: only what changed since LAST_PROCESSED_VERSION</span>
+cdf_changes_df = (
+    spark.<span class="fn">read</span>.<span class="fn">format</span>(<span class="str">"delta"</span>)
+        .<span class="fn">option</span>(<span class="str">"readChangeFeed"</span>, <span class="str">"true"</span>)
+        .<span class="fn">option</span>(<span class="str">"startingVersion"</span>, LAST_PROCESSED_VERSION + 1)
+        .<span class="fn">table</span>(BRONZE_TABLE)
+        .<span class="fn">filter</span>(<span class="str">"_change_type != 'update_preimage'"</span>)
+)</pre>
+    <div class="highlight-box">
+      <p>Reading from <span class="pill pill-blue">LAST_PROCESSED_VERSION + 1</span> onward means Spark never re-scans rows it already processed — however large Bronze grows.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: DEMO - MERGE 5a/5b -->
+  <div class="slide slide-demo">
+    <h3>Step 5 — Close Out the Old, Append the New</h3>
+    <div class="demo-label">Live Demo · Instructor Notebook</div>
+    <div class="two-col">
+      <div>
+<pre><span class="cm"># 5a — close out old versions where email changed</span>
+(silver_table.<span class="fn">alias</span>(<span class="str">"tgt"</span>)
+    .<span class="fn">merge</span>(processed_df.<span class="fn">alias</span>(<span class="str">"src"</span>),
+        <span class="str">"tgt.customer_id = src.customer_id AND
+         tgt.is_current = true AND
+         tgt.email &lt;&gt; src.email"</span>)
+    .<span class="fn">whenMatchedUpdate</span>(<span class="fn">set</span>={
+        <span class="str">"is_current"</span>: <span class="str">"false"</span>,
+        <span class="str">"effective_end_date"</span>: <span class="str">"current_date()"</span>})
+    .<span class="fn">execute</span>()
+)</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">5b is a plain append, not a MERGE</strong> — every processed row becomes a brand-new Silver row with a fresh <code>customer_sk = sha2(customer_id + effective_start_date)</code>. 5a already closed out the old row, so there's nothing to "match" for the new version.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: RECAP TABLE -->
+  <div class="slide slide-content">
+    <h3>Recap — What Just Happened, Side by Side</h3>
+    <table class="sql-table">
+      <tr><th></th><th>SCD1 (dim_address)</th><th>SCD2 (dim_customer)</th></tr>
+      <tr><td>MERGE branches used</td><td><code>whenMatchedUpdate</code> only</td><td><code>whenMatchedUpdate</code> (close out) + append (new version)</td></tr>
+      <tr><td>Rows per changed key, after</td><td>Still 1</td><td>2 — old closed-out + new current</td></tr>
+      <tr><td>Can you answer "what was this before"?</td><td>No</td><td>Yes — filter <code>is_current = false</code></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 14: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for HOL 1 &amp; HOL 2</h2>
+    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
+      HOL 1 has you run this exact SCD2 flow yourself, in your own scratch schema. HOL 2 applies the same MERGE technique one level up — to <code>fact_sales</code> itself.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>Recap</h4>
+        <p>SCD1 = overwrite. SCD2 = close out + insert. Both implemented with <code>MERGE</code>.</p>
+      </div>
+      <div class="card">
+        <h4>Up Next</h4>
+        <p>HOL 1 — SCD Type 2 for <code>dim_customer</code>, hands-on</p>
+      </div>
+      <div class="card">
+        <h4>Closing Check</h4>
+        <p>Name the 2 MERGE branches SCD2 needs. Name the column that proves history is kept.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

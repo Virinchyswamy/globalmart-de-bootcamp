@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 11 | ILT 1 — DLQ, Replay Strategy &amp; Operational Readiness</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 11 · ILT 1 — DLQ, Replay &amp; Operational Readiness</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 22</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>DLQ, Replay Strategy &amp; Operational Readiness</h1>
+    <p class="subtitle">Routing failed rows instead of losing them, replaying them safely, and knowing when a pipeline is actually healthy</p>
+    <div class="badge">Day 11 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; 10:30 AM – 12:00 PM &nbsp;·&nbsp; Includes a Live Coded Demo</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → What a DLQ Is · Replay Strategy · Runbooks · SLAs · Live Coded Demo
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering Today</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>🗑️ DLQ &amp; Replay</h4>
+        <ul>
+          <li>What a Dead-Letter Queue is, and why it's broader than Day 5's quarantine table</li>
+          <li>A key-based <code>MERGE</code> replay that can never double-process a row</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📋 Runbooks &amp; SLAs</h4>
+        <ul>
+          <li>A real runbook for GlobalMart's CDC pipeline — detect, triage, fix, confirm, close out</li>
+          <li>Freshness SLAs for both a CDC source and a batch source</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>💻 Live Coded Demo</h4>
+        <ul>
+          <li>Build, break, route, replay, and check — all against your own practice schema</li>
+          <li>Read-only against <code>gbmart.bronze.customers</code>, nothing else in <code>gbmart</code></li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box success" style="margin-top:20px;">
+      <p><strong style="color:#22c55e;">Safety, upfront:</strong> every write in today's demo lands in your own <code>main.YOUR_SCHEMA</code> — never <code>gbmart.silver</code> or <code>gbmart.gold</code>. No job, pipeline, cluster, or warehouse is created. The SLA check is print/log only — no real email, Slack, or PagerDuty alert is ever sent.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: SECTION - PART 1 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 1</div>
+    <h2>What a DLQ Is, and Why</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Every pipeline eventually meets a row it cannot process. What you do with that row next says a lot about how production-ready the pipeline is.
+    </p>
+  </div>
+
+  <!-- SLIDE 4: THREE WAYS TO HANDLE A BAD ROW -->
+  <div class="slide slide-content">
+    <h3>Three Ways to Handle a Row That Fails</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Malformed JSON, a schema mismatch, a business-rule violation, a null where a downstream step assumes a value — every pipeline hits rows like this eventually. There are three ways to react, in ascending order of how much a production team should tolerate them.
+        </p>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">A Dead-Letter Queue (DLQ)</strong> is a Delta table that exists purely to catch anything that fails processing, for any reason, anywhere in the pipeline. It's called a "queue" because the intent is to <em>drain</em> it — every row is expected to eventually be replayed or explicitly written off, not to live there forever.</p>
+        </div>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Approach</th><th>What happens</th><th>The problem</th></tr>
+          <tr><td>Crash the batch</td><td>One bad row raises an exception; the whole job fails</td><td>Every other good row is blocked too</td></tr>
+          <tr><td>Silently drop it</td><td>Filtered out, never written anywhere</td><td>Disappears with no record it existed</td></tr>
+          <tr><td>Route it to a DLQ</td><td>Written as-is, tagged with why and when</td><td>Good rows keep flowing; bad row is inspectable</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: DLQ VS QUARANTINE -->
+  <div class="slide slide-content">
+    <h3>DLQ vs. Day 5's Quarantine — Same Mechanism, Different Scope</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">You already built something structurally identical to a DLQ in Day 5: <code>gbmart.silver.customers_quarantine</code>. The write pattern — split clean vs. rejected, tag the rejected rows, write both — is the same. What differs is <em>scope</em>.</p>
+        <table class="sql-table">
+          <tr><th></th><th>Day 5's Quarantine</th><th>This Session's DLQ</th></tr>
+          <tr><td>Trigger</td><td>Rows failing one DQ scan's rules</td><td><strong>Anything</strong> that fails <strong>any</strong> step</td></tr>
+          <tr><td>Framing</td><td>"Is this row valid data?"</td><td>"Did this row survive processing?"</td></tr>
+          <tr><td>What's next</td><td>Mostly stays for human review</td><td>Designed to be <strong>replayed</strong></td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">Quarantine is a DLQ used for exactly one purpose</strong> — a DQ scan. A DLQ is the general pattern quarantine is one instance of. This session builds the general version, plus the piece Day 5 didn't need: a working replay function.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: SECTION - PART 2 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 2</div>
+    <h2>Replay Strategy: Getting Rows Back Out Safely</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      A DLQ that never drains is just an expensive way to lose data slowly. The dangerous part is <em>how</em> you get rows back out.
+    </p>
+  </div>
+
+  <!-- SLIDE 7: DOUBLE PROCESSING TRAP -->
+  <div class="slide slide-content">
+    <h3>The Double-Processing Trap</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Think of a DLQ like a returns bin at a warehouse. If a worker "reprocesses" the bin by just re-shipping every item back onto the outgoing truck — without checking whether that item was already re-shipped an hour ago — a customer can end up with two of the same package.
+        </p>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">That's exactly the risk with replay.</strong> If replay re-runs the transformation and blindly <strong>appends</strong> the result, and it accidentally runs twice — or retries after a partial failure — the row gets written twice. A <code>fact_sales</code>-style downstream aggregate quietly becomes wrong, and nobody notices until someone asks why revenue doubled for one customer.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Why this matters more than it sounds</h4>
+          <ul>
+            <li>Nothing crashes when this happens — the job reports success</li>
+            <li>The error only shows up two or three tables downstream, as a number that "looks a little high"</li>
+            <li>By the time someone notices, the duplicate has been aggregated into a report already</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: KEY-BASED MERGE FIX -->
+  <div class="slide slide-content">
+    <h3>The Fix: Key-Based MERGE, Not Blind Append</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">This is the exact idempotency principle Day 9/Day 10 already established for incremental loading — replay is really just another incremental load, sourced from the DLQ table instead of a change feed.</p>
+    <table class="sql-table">
+      <tr><th>Step</th><th>What it does</th><th>Why it's safe to re-run</th></tr>
+      <tr><td>1</td><td>Read all rows currently in the DLQ table</td><td>Reading never has side effects</td></tr>
+      <tr><td>2</td><td>Apply the fix (default value, corrected business rule)</td><td>Deterministic — same input, same output</td></tr>
+      <tr><td>3</td><td><code>MERGE</code> the fixed rows into the processed table by natural key</td><td>Re-running the same <code>MERGE</code> with the same key can't create a second row</td></tr>
+      <tr><td>4</td><td>Remove the replayed rows from the DLQ (<code>MERGE ... WHEN MATCHED THEN DELETE</code>)</td><td>Once gone from the DLQ, a second replay call finds nothing left to do</td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><strong style="color:#22c55e;">Step 3 makes replay safe; step 4 makes it idempotent end-to-end</strong> — call the replay function once, or ten times in a row, and the outcome is identical to calling it once.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: NOT ALL DLQ ROWS ARE AUTO-REPLAYABLE -->
+  <div class="slide slide-content">
+    <h3>Not Every DLQ Row Is Auto-Replayable</h3>
+    <div class="two-col">
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Some failures need a human decision first</strong> — is this actually bad data, or a business rule that needs to be written? And some can't be fixed at all — a row with no usable key can't be written back anywhere meaningfully.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>A mature replay strategy separates two buckets</h4>
+          <ul>
+            <li><strong>Auto-fixable</strong> — safe to replay on a schedule, no human needed</li>
+            <li><strong>Needs a human to look at it</strong> — don't build a replay function that blindly "fixes" everything just because it's sitting in the DLQ</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: SECTION - PART 3 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 3</div>
+    <h2>Runbooks: Turning Tribal Knowledge Into a Checklist</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      A runbook is a written, step-by-step "if this breaks, do this" document — so whoever is on call, not just the person who built the pipeline, can follow it under pressure.
+    </p>
+  </div>
+
+  <!-- SLIDE 11: RUNBOOK -->
+  <div class="slide slide-content">
+    <h3>Runbook: <code>orders_data_ingestion_cdc</code> Failed Overnight</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;"><strong>Symptom:</strong> <code>gbmart.bronze.orders</code>/<code>order_items</code> row counts haven't moved, or the Lakeflow Connect pipeline shows a failed/skipped run.</p>
+    <ol class="order-list">
+      <li><strong>Detect</strong> — check run history in the Jobs/Pipelines UI; run Day 9 HOL 2-style verification (row counts, <code>MAX(updated_at)</code>, <code>DESCRIBE HISTORY</code>)</li>
+      <li><strong>Triage, cheapest checks first</strong> — credential/auth expiry (<code>ecomprojectscredentials</code>) → source connectivity → schema drift (Day 3) → cursor (<code>updated_at</code>) nulls/clock-skew → compute/warehouse startup issue</li>
+      <li><strong>Fix</strong> — apply the fix for whichever root cause step 2 found; manually trigger a re-run from the Databricks UI (a real click in the workspace, not automated by this notebook)</li>
+      <li><strong>Confirm recovery</strong> — re-run step 1's checks; this session's SLA check against the real last-write timestamp should now show <strong>MET</strong>; check whether any rows need replay as a side effect</li>
+      <li><strong>Close out</strong> — log the incident (what broke, root cause, fix, downtime); if it's a new failure mode, add it to step 2</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 12: PATTERN GENERALIZES -->
+  <div class="slide slide-content">
+    <h3>The Pattern Generalizes</h3>
+    <div class="two-col">
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">Every pipeline in this course deserves the same shape of runbook</strong> — the ADLS Autoloader sources, the Silver <code>MERGE</code> jobs, a Gold refresh: symptom, detect, triage (cheapest checks first), fix, confirm, close out.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Write the shell once</h4>
+          <p>Then fill in pipeline-specific checks for step 2. A runbook that doesn't grow after every real incident stops being useful — treat it as a living document, versioned next to the pipeline code.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: SECTION - PART 4 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 4</div>
+    <h2>SLAs: Defining and Measuring "Fresh Enough"</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      A pipeline SLA here means one thing: how stale is too stale? Without a stated number, "is the pipeline healthy" has no answer.
+    </p>
+  </div>
+
+  <!-- SLIDE 14: FRESHNESS TARGETS -->
+  <div class="slide slide-content">
+    <h3>Two Ingestion Patterns, Two Freshness Targets</h3>
+    <table class="sql-table">
+      <tr><th>Source</th><th>Ingestion pattern</th><th>Reasonable SLA</th><th>How you'd measure it</th></tr>
+      <tr><td><code>orders</code> / <code>order_items</code></td><td>Query-based CDC on <code>updated_at</code></td><td>Within 2 hours</td><td><code>current_timestamp()</code> vs. <code>MAX(updated_at)</code></td></tr>
+      <tr><td>customers, products, addresses, payments, payment_methods</td><td>ADLS Autoloader — daily file drop</td><td>Within 24 hours</td><td><code>DESCRIBE HISTORY</code> — most recent Bronze commit</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p>These numbers are a starting point for class discussion, not a figure handed down from GlobalMart itself — in a real team, the target comes from asking downstream consumers how stale a number they can tolerate, then working backward to a pipeline schedule that can hit it.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: FRESHNESS != SUCCESS -->
+  <div class="slide slide-content">
+    <h3>Freshness SLA &ne; "Did the Pipeline Succeed"</h3>
+    <div class="two-col">
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">A pipeline can run green</strong> — no errors, exit code 0 — and still breach its freshness SLA. No new file arrived at all, so there was nothing to fail on, but the data is now a day older than the SLA allows.</p>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">Measuring freshness directly catches that</strong>; watching only for job failures does not. The SLA check built today is intentionally <strong>print/log only</strong> — no email, Slack, or PagerDuty call. Wiring a real alert on top is an orchestration-layer concern (Databricks Workflows' own notification settings) — out of scope here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 16: SECTION - PART 5 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 5</div>
+    <h2>Live Coded Demo</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Build, break, route, replay, check — real, runnable PySpark, reading only a small read-only sample from <code>gbmart.bronze.customers</code>, writing only to your own practice schema.
+    </p>
+  </div>
+
+  <!-- SLIDE 17: DEMO SETUP + SAMPLE + INJECT + CLASSIFY -->
+  <div class="slide slide-demo">
+    <h3>Steps 1–3 — Sample, Inject, Classify</h3>
+    <div class="demo-label">Companion notebook · Day11_1_ILT1_DLQ_Replay_Strategy_Operational_Readiness.ipynb</div>
+    <div class="two-col">
+      <div>
+        <ol class="order-list">
+          <li><strong>Setup</strong> — <code>CREATE OR REPLACE TABLE</code> for both practice tables (not <code>IF NOT EXISTS</code>) — resets them empty every run, so Run All twice never doubles the counts</li>
+          <li><strong>Sample</strong> — a stable, ordered 30-row read from <code>gbmart.bronze.customers</code>, read-only</li>
+          <li><strong>Inject</strong> — deliberately corrupt 2 rows' email and 2 rows' phone number, chosen <strong>by position in the sample</strong>, not by a hardcoded ID</li>
+          <li><strong>Classify</strong> — a first-matching-rule-wins priority chain (same style as Day 5) tags a <code>_failure_reason</code></li>
+        </ol>
+      </div>
+      <div>
+<pre><span class="cm"># Positions within the SAMPLE, not real CustomerID values</span>
+sample_ids = [r.CustomerID <span class="kw">for</span> r <span class="kw">in</span> sample_df.<span class="fn">select</span>(<span class="str">"CustomerID"</span>).<span class="fn">collect</span>()]
+BAD_EMAIL_IDS = sample_ids[<span class="col">4</span>:<span class="col">6</span>]    <span class="cm"># 2 rows -> null email</span>
+BAD_PHONE_IDS = sample_ids[<span class="col">19</span>:<span class="col">21</span>]  <span class="cm"># 2 rows -> bad phone shape</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 18: DEMO WRITE -->
+  <div class="slide slide-demo">
+    <h3>Step 4 — Write Both Outputs</h3>
+    <div class="demo-label">Split rows land in two practice tables, both tagged with reason + timestamp</div>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px; margin-bottom:14px;"><code>mode("overwrite")</code> here, not <code>append</code> — this is a single batch's worth of processing, so re-running just this cell (without rerunning Setup) still lands on the same result instead of accumulating duplicates.</p>
+        <table class="sql-table">
+          <tr><th>Output</th><th>Destination</th></tr>
+          <tr><td>Rows that can be processed</td><td><code>main.YOUR_SCHEMA.customers_processed</code></td></tr>
+          <tr><td>Rows that failed classification</td><td><code>main.YOUR_SCHEMA.customers_dlq</code></td></tr>
+        </table>
+      </div>
+      <div>
+<pre>processed_new_df.write.<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">saveAsTable</span>(PROCESSED_TABLE)
+
+dlq_new_df.write.<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">saveAsTable</span>(DLQ_TABLE)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 19: DEMO REPLAY FUNCTION -->
+  <div class="slide slide-demo">
+    <h3>Step 5 — <code>replay_dlq()</code>: the Idempotent Upsert</h3>
+    <div class="demo-label">Fix by reason, upsert by key, drain the queue — never a blind append</div>
+<pre><span class="kw">def</span> <span class="fn">replay_dlq</span>():
+    dlq_df = spark.<span class="fn">table</span>(DLQ_TABLE)
+    <span class="kw">if</span> dlq_df.<span class="fn">count</span>() == <span class="col">0</span>:
+        <span class="fn">print</span>(<span class="str">"Nothing to replay."</span>); <span class="kw">return</span>
+
+    fixed_df = <span class="cm"># ... apply the fix per failure_reason ...</span>
+
+    <span class="cm"># Upsert by natural key -- replaying the same DLQ row twice</span>
+    <span class="cm"># can never create a duplicate in the processed table.</span>
+    (processed_tbl.<span class="fn">alias</span>(<span class="str">"tgt"</span>)
+        .<span class="fn">merge</span>(fixed_df.<span class="fn">alias</span>(<span class="str">"src"</span>), <span class="str">"tgt.customer_id = src.customer_id"</span>)
+        .<span class="fn">whenMatchedUpdateAll</span>()
+        .<span class="fn">whenNotMatchedInsertAll</span>()
+        .<span class="fn">execute</span>())
+
+    <span class="cm"># Drain the DLQ -- merge-delete exactly the rows just replayed.</span>
+    (dlq_tbl.<span class="fn">alias</span>(<span class="str">"tgt"</span>)
+        .<span class="fn">merge</span>(fixed_df.<span class="fn">select</span>(<span class="str">"customer_id"</span>).<span class="fn">alias</span>(<span class="str">"src"</span>), <span class="str">"tgt.customer_id = src.customer_id"</span>)
+        .<span class="fn">whenMatchedDelete</span>()
+        .<span class="fn">execute</span>())</pre>
+  </div>
+
+  <!-- SLIDE 20: DEMO IDEMPOTENCY PROOF -->
+  <div class="slide slide-demo">
+    <h3>Steps 6–7 — Run Replay Twice, Prove It's Idempotent</h3>
+    <div class="demo-label">First call drains the DLQ; the second call finds nothing left to do</div>
+    <div class="two-col">
+      <div>
+        <table class="sql-table">
+          <tr><th>Call</th><th>DLQ rows pending</th><th>Result</th></tr>
+          <tr><td>1st <code>replay_dlq()</code></td><td>4+ (the injected failures)</td><td>Upserted into processed, removed from DLQ</td></tr>
+          <tr><td>2nd <code>replay_dlq()</code></td><td>0</td><td>"Nothing to replay." — counts unchanged</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">Step 7 verifies it</strong> — grouping the processed table by <code>source</code> and <code>original_failure_reason</code> shows both the original <code>direct</code> rows and the <code>replay</code> rows, the replayed ones still carrying the reason they were originally DLQ'd, kept for audit purposes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 21: DEMO SLA CHECK -->
+  <div class="slide slide-demo">
+    <h3>Steps 8–9 — <code>check_sla()</code>: Print-Only Freshness Check</h3>
+    <div class="demo-label">Compares a last-success timestamp against a freshness target — no real alert is ever sent</div>
+    <div class="two-col">
+      <div>
+<pre><span class="kw">def</span> <span class="fn">check_sla</span>(source_name, last_success_ts, freshness_target_hours):
+    hours_since = (datetime.<span class="fn">now</span>() - last_success_ts) \
+                    .<span class="fn">total_seconds</span>() / <span class="col">3600</span>
+    status = <span class="str">"MET"</span> <span class="kw">if</span> hours_since &lt;= freshness_target_hours <span class="kw">else</span> <span class="str">"BREACHED"</span>
+    <span class="fn">print</span>(<span class="kw">f</span><span class="str">"SLA status: {status}"</span>)
+    <span class="kw">return</span> status</pre>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Scenario</th><th>Result</th></tr>
+          <tr><td>CDC source, last run 1h ago, 2h target</td><td>MET</td></tr>
+          <tr><td>CDC source, last run 6h ago, 2h target</td><td>BREACHED</td></tr>
+          <tr><td>Autoloader source, last run 20h ago, 24h target</td><td>MET</td></tr>
+          <tr><td>Bonus: real <code>DESCRIBE HISTORY</code> signal on <code>gbmart.bronze.customers</code></td><td>Read-only, no risk</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 22: KEY TAKEAWAYS + CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>Key Takeaways</h2>
+    <div class="three-col" style="margin-top:28px; max-width:960px;">
+      <div class="card">
+        <h4>✅ DLQ &amp; Replay</h4>
+        <p>Route, don't crash or drop. Replay must be idempotent — key-based <code>MERGE</code> plus draining the DLQ makes "replay twice" match "replay once."</p>
+      </div>
+      <div class="card">
+        <h4>📋 Runbooks &amp; SLAs</h4>
+        <p>Runbooks turn tribal knowledge into a checklist. SLAs measure freshness, not success — a pipeline can exit cleanly and still be stale.</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Try It Yourself</h4>
+        <p>Run the notebook twice, call <code>replay_dlq()</code> a third time, flip a <strong>MET</strong> to <strong>BREACHED</strong>, add a third DLQ rule, sketch a runbook for another pipeline.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

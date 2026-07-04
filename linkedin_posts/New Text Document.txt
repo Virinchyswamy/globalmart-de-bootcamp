@@ -1,0 +1,21 @@
+1. CDC cursor vs. WAL → Day2/Day2_HOL2_CDC_PostgreSQL_WAL.ipynb — screenshot the cell showing the cursor_columns: ["updated_at"] config, or the pipeline verification output.
+
+2. Bronze/Silver casing → Day4/Day4_HOL1_Build_Bronze_Layer_All_Sources.ipynb (a printSchema() showing PascalCase) side-by-side with Day5/Day5_HOL2_Build_Silver_Layer_All_Sources.ipynb (the .withColumnRenamed cell). Two screenshots stitched, like your existing posts do.
+
+3. SCD Type 2 → Day10/Day10_HOL1_SCD_Type2_Dim_Customer_MERGE.ipynb — the MERGE cell itself, plus the before/after row count showing a new version created.
+
+4. Z-Order vs Liquid Clustering → Day7/Day7_HOL3_Zorder_vs_LiquidClustering_Fact_Tables.ipynb — this is a direct head-to-head comparison; screenshot the timing/file-count output for both. Good video candidate — a short screen recording of both queries running back to back is more convincing than two static numbers.
+
+5. Natural vs. surrogate keys → Day7/Day7_HOL2_Build_Gold_Layer_Fact_Sales.ipynb — the join cells showing Customer_ID/Product_ID used directly, no _sk columns in sight.
+
+6. Dead-Letter Queue → Day11/Day11_ILT1_DLQ_Replay_Strategy_Operational_Readiness.ipynb — screenshot the DLQ table contents, then the "0 rows pending" output after replay_dlq(). Good video candidate: record calling replay_dlq() twice, showing the second call finds nothing left to do.
+
+7. Autoloader schema evolution → Day3/Day3_ILT2_Schema_Evolution_Concepts.ipynb — the 4-mode comparison table/cell, or a _rescued_data column example if you have one populated.
+
+8. Delta time travel → any notebook using DESCRIBE HISTORY — Day9/Day9_HOL2_Handling_Incremental_Data_Bronze_Silver.ipynb or Day10_HOL1 both have one. Screenshot the version history table itself — it's visually self-explanatory.
+
+9. Row filters & masking → Day12/Day12_ILT1_Data_Governance_Unity_Catalog.ipynb — the three-query comparison (baseline → filtered → masked) is literally built as a before/during/after sequence. Strong screenshot material as-is.
+
+10. Idempotent incremental loading → Day9/Day9_HOL1_Watermark_Incremental_Load_Control_Table.ipynb — run it twice, screenshot "0 new rows processed" on the second run.
+
+Open each in Databricks, run it, and grab the real output — that's your proof, and it's true.

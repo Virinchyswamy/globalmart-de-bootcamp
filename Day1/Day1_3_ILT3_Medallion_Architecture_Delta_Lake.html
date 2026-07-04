@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 1 | ILT 3 — Medallion Architecture &amp; Delta Lake Fundamentals</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 1 · ILT 3 — Medallion &amp; Delta Lake</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 20</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Medallion Architecture &amp; Delta Lake Fundamentals</h1>
+    <p class="subtitle">How raw, messy data becomes one trusted Gold table — and why Delta Lake is what makes the whole thing reliable</p>
+    <div class="badge">Day 1 &nbsp;·&nbsp; ILT 3 &nbsp;·&nbsp; Trainer-Led Session</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → Why 3 Layers · Bronze/Silver/Gold Rules · Delta Lake Internals · ACID · fact_sales
+    </div>
+  </div>
+
+  <!-- SLIDE 2: OVERVIEW -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering This Session</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>🥉🥈🥇 Why 3 Layers?</h4>
+        <ul>
+          <li>Raw data is messy — you cannot report on it directly</li>
+          <li>Bronze → Silver → Gold rules</li>
+          <li>Who reads which layer</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔒 Delta Lake</h4>
+        <ul>
+          <li>The <code>_delta_log</code> transaction log</li>
+          <li>ACID transactions, in plain English</li>
+          <li>overwrite / append / merge / ignore</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🎯 fact_sales</h4>
+        <ul>
+          <li>The Gold deliverable of this whole pipeline</li>
+          <li>Its grain, measures, and dimensions</li>
+          <li>The business questions it answers</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: WHY THREE LAYERS -->
+  <div class="slide slide-content">
+    <h3>Why Do We Need Three Layers?</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Imagine handing your finance team a shoebox of crumpled receipts — some dates written <code>12/1/24</code>, others <code>2024-01-12</code>, a few duplicated, a few with coffee stains. Nobody would trust a revenue report built straight from that shoebox.
+        </p>
+        <p style="color:#94a3b8; font-size:14px;">
+          GlobalMart's raw data from Postgres CDC and ADLS file drops has exactly this problem: nulls, duplicate rows, inconsistent date formats, trailing spaces in names, columns named differently across files.
+        </p>
+      </div>
+      <div>
+        <div class="card">
+          <h4>The Medallion Architecture fixes this</h4>
+          <p>Data passes through three quality layers — each one making it more trustworthy and more useful than the last. Raw data enters at Bronze; only business-ready data leaves at Gold.</p>
+        </div>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">Instructor question:</strong> "We have 10 raw CSV files in ADLS — can we just query them directly for business reports?" Technically yes. In practice, the numbers would be wrong.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: THREE LAYERS AT A GLANCE -->
+  <div class="slide slide-content">
+    <h3>The Three Layers at a Glance</h3>
+    <table class="sql-table">
+      <tr><th>Layer</th><th>Question It Answers</th><th>Who Creates It</th><th>Who Reads It</th></tr>
+      <tr><td>🥉 Bronze</td><td>What did the source send us, exactly as received?</td><td>Autoloader / Lakeflow Connect</td><td>Data Engineers only</td></tr>
+      <tr><td>🥈 Silver</td><td>What is the true, clean version of this data?</td><td>PySpark transformation jobs</td><td>Data Engineers + Analysts</td></tr>
+      <tr><td>🥇 Gold</td><td>What business question does this answer?</td><td>Star schema build (MERGE / write)</td><td>Business + Genie + ML</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 5: BRONZE DETAIL -->
+  <div class="slide slide-content">
+    <h3>🥉 Bronze — Raw, Exactly as Received</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>The Rules</h4>
+        <ul>
+          <li>Never modified after landing — append-only</li>
+          <li>Adds <code>_ingestion_ts</code> and <code>_source_file</code> metadata columns</li>
+          <li>Format: Delta, converted from CSV/CDC on arrival</li>
+          <li>Retains ALL columns — even bad ones</li>
+          <li>Retains duplicates — dedup happens in Silver</li>
+        </ul>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Think of Bronze as:</strong> a photocopy of the original. You always have the original to refer back to if something downstream breaks.</p>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4>GlobalMart examples</h4>
+          <p><code>bronze/orders/</code> — raw CDC events<br><code>bronze/customers/</code> — raw file-drop rows<br><code>bronze/order_items/</code> — line items</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: SILVER DETAIL -->
+  <div class="slide slide-content">
+    <h3>🥈 Silver — Clean, Validated &amp; Standardised</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>The Rules</h4>
+        <ul>
+          <li>Delta format only — never CSV</li>
+          <li>Nulls filled or flagged; all dates → <code>YYYY-MM-DD</code></li>
+          <li>Strings trimmed; deduplication applied</li>
+          <li>Schema enforced — no surprise columns</li>
+          <li>SCD Type 1 / Type 2 for slowly-changing dimensions</li>
+        </ul>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Think of Silver as:</strong> clean, trustworthy data. An analyst could query this directly and get the right answer.</p>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4>GlobalMart examples</h4>
+          <p><code>silver/dim_customer/</code><br><code>silver/dim_product/</code><br><code>silver/stg_orders/</code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: GOLD DETAIL -->
+  <div class="slide slide-content">
+    <h3>🥇 Gold — Business-Ready, the Deliverable</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>The Rules</h4>
+        <ul>
+          <li>Delta format only — star schema (facts + dimensions)</li>
+          <li>Column names in plain business language</li>
+          <li>Calculated metrics, ready to use</li>
+          <li><code>OPTIMIZE</code> + <code>ZORDER</code> applied for fast queries</li>
+          <li>Governed — Unity Catalog access rules apply</li>
+        </ul>
+      </div>
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">Think of Gold as:</strong> the final answer. A manager can query this without knowing SQL deeply.</p>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4>GlobalMart output</h4>
+          <p><code>gold/fact_sales/</code> — the whole point<br>plus <code>dim_date</code>, <code>dim_address</code>, and 4 more dimensions</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: LAYER COMPARISON -->
+  <div class="slide slide-content">
+    <h3>Layer Comparison, Side by Side</h3>
+    <table class="sql-table">
+      <tr><th></th><th>Bronze</th><th>Silver</th><th>Gold</th></tr>
+      <tr><td>Format</td><td>Original (CSV, CDC)</td><td>Delta</td><td>Delta</td></tr>
+      <tr><td>Transformations</td><td>None</td><td>Clean, validate</td><td>Aggregate, join</td></tr>
+      <tr><td>Data quality</td><td>Raw — may have errors</td><td>High</td><td>Highest</td></tr>
+      <tr><td>Who uses it</td><td>Data Engineers only</td><td>Engineers + Analysts</td><td>Business + Genie</td></tr>
+      <tr><td>Typical path</td><td><code>raw/customers.csv</code></td><td><code>silver/dim_customer/</code></td><td><code>gold/fact_sales/</code></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 9: SECTION - DELTA LAKE -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 2</div>
+    <h2>Delta Lake — What Makes It Different</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      Delta Lake is NOT a separate database. It's a storage layer that lives on top of Parquet files in ADLS — and it changes everything about how reliable that data is.
+    </p>
+  </div>
+
+  <!-- SLIDE 10: BANK ANALOGY -->
+  <div class="slide slide-content">
+    <h3>The Bank Account Analogy</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Imagine a bank with <strong style="color:#e2e8f0;">no transaction history</strong>:</p>
+        <div class="card">
+          <ul>
+            <li>Someone credits your account — the system crashes halfway. Did the money arrive?</li>
+            <li>Two people withdraw at the same time — does the balance go negative?</li>
+            <li>An error was made last week — can you go back and see the old balance?</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Without Delta Lake</strong> = a bank with no transaction log. Chaos: no ACID, no schema enforcement, no updates or deletes, no audit trail, partial writes.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p><strong style="color:#22c55e;">With Delta Lake</strong> = every write, update, and delete is logged. You can roll back. You can see history. Nothing is lost.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: _delta_log DIAGRAM -->
+  <div class="slide slide-content">
+    <h3>The Secret Ingredient: <code>_delta_log</code></h3>
+    <div class="two-col">
+      <div>
+<pre>silver/customers/                     ← Delta table path in ADLS
+    _delta_log/                       ← Delta's brain
+        00000000000000000000.json     (version 0 — initial write: 6,666 rows)
+        00000000000000000001.json     (version 1 — append: 200 new rows)
+        00000000000000000002.json     (version 2 — MERGE: 5 updated, 1 deleted)
+    part-00000-a1b2c3.parquet         ← actual data, columnar format
+    part-00001-d4e5f6.parquet</pre>
+      </div>
+      <div class="card">
+        <h4>Every change → a new JSON entry</h4>
+        <p>This log is what gives Delta its superpowers: ACID transactions, schema enforcement, time travel, full audit history, and MERGE (upsert) support.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: KEY DELTA COMMANDS -->
+  <div class="slide slide-content">
+    <h3>Key Delta Commands</h3>
+<pre><span class="cm">-- See all versions of a Delta table</span>
+<span class="kw">DESCRIBE</span> HISTORY customers;
+
+<span class="cm">-- Query a previous version (time travel)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> customers <span class="kw">VERSION AS OF</span> 1;
+
+<span class="cm">-- Restore to a previous version</span>
+RESTORE <span class="kw">TABLE</span> customers <span class="kw">TO VERSION AS OF</span> 1;
+
+<span class="cm">-- Compact small files (run periodically for performance)</span>
+OPTIMIZE customers ZORDER BY (registration_date);
+
+<span class="cm">-- Remove old data files no longer referenced (default: 7-day retention)</span>
+VACUUM customers RETAIN 168 HOURS;</pre>
+  </div>
+
+  <!-- SLIDE 13: ACID -->
+  <div class="slide slide-content">
+    <h3>ACID — What It Means in Plain English</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Without ACID, two jobs writing at once could corrupt your data — or a failed job could leave partial results behind.</p>
+    <div class="two-col" style="grid-template-columns: repeat(4,1fr); gap:16px;">
+      <div class="card">
+        <h4>A — Atomicity</h4>
+        <p>All-or-nothing. If writing 6,666 rows fails halfway, zero rows are visible.</p>
+      </div>
+      <div class="card">
+        <h4>C — Consistency</h4>
+        <p>Data always moves from one valid state to another — schema rules are enforced.</p>
+      </div>
+      <div class="card">
+        <h4>I — Isolation</h4>
+        <p>Two jobs writing at the same time cannot corrupt each other.</p>
+      </div>
+      <div class="card">
+        <h4>D — Durability</h4>
+        <p>Once written and confirmed, data is never lost — even if the cluster crashes.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: WRITE MODES -->
+  <div class="slide slide-content">
+    <h3>Delta Write Modes — When to Use Which</h3>
+    <div class="two-col" style="grid-template-columns: repeat(4,1fr); gap:16px;">
+      <div class="card">
+        <h4>overwrite</h4>
+        <p>Deletes existing data, writes fresh. Safe to re-run. Small reference tables refreshed daily.</p>
+      </div>
+      <div class="card">
+        <h4>append</h4>
+        <p>Adds new rows, never deletes. Growing tables — daily order batches.</p>
+      </div>
+      <div class="card">
+        <h4>merge (UPSERT)</h4>
+        <p>Matches by key — UPDATE existing, INSERT new. SCD Type 1, CDC processing.</p>
+      </div>
+      <div class="card">
+        <h4>ignore</h4>
+        <p>Does nothing if data already exists there. Rare in production pipelines.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: DELTA VS CSV VS PARQUET -->
+  <div class="slide slide-content">
+    <h3>Delta Table vs CSV vs Parquet</h3>
+    <table class="sql-table">
+      <tr><th>Feature</th><th>CSV</th><th>Parquet</th><th>Delta Table</th></tr>
+      <tr><td>ACID transactions</td><td>No</td><td>No</td><td>Yes</td></tr>
+      <tr><td>Schema enforcement</td><td>No</td><td>Partial</td><td>Yes — strict</td></tr>
+      <tr><td>UPDATE / DELETE rows</td><td>No</td><td>No</td><td>Yes</td></tr>
+      <tr><td>Time travel</td><td>No</td><td>No</td><td>Yes — full version history</td></tr>
+      <tr><td>Streaming + Batch</td><td>Batch only</td><td>Batch only</td><td>Both — unified</td></tr>
+      <tr><td>Query performance</td><td>Very slow</td><td>Good</td><td>Best — stats + Z-order</td></tr>
+    </table>
+    <p style="margin-top:12px; font-weight:600; color:#e2e8f0;">In one sentence: Delta = Parquet files + a transaction log. That log changes everything.</p>
+  </div>
+
+  <!-- SLIDE 16: GLOBALMART FORMAT MAP -->
+  <div class="slide slide-content">
+    <h3>GlobalMart's Layer Format Map</h3>
+    <table class="sql-table">
+      <tr><th>Layer</th><th>Format</th><th>Write Mode</th><th>Reason</th></tr>
+      <tr><td>Bronze</td><td>Delta (from CSV/CDC)</td><td>append / overwrite (first run)</td><td>Preserves raw values with ACID protection</td></tr>
+      <tr><td>Silver</td><td>Delta only</td><td>merge (upsert on key)</td><td>Need UPDATE rows (SCD), enforce schema</td></tr>
+      <tr><td>Gold</td><td>Delta only</td><td>overwrite (full rebuild) or merge</td><td>Fast queries via stats + Z-ordering</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><strong style="color:#38bdf8;">Schema evolution:</strong> set <code>.option("mergeSchema", "true")</code> when writing to safely absorb new columns from the source.</p>
+    </div>
+    <div class="highlight-box warn" style="margin-top:12px;">
+      <p><strong style="color:#f59e0b;">VACUUM warning:</strong> after VACUUM runs, you cannot time-travel past the retention window (default 7 days). Don't run it aggressively on Bronze — Bronze is your permanent audit trail.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 17: SECTION - FACT_SALES -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 3</div>
+    <h2>fact_sales — The Gold Deliverable</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      A star schema separates <strong style="color:#38bdf8;">measures</strong> (numbers you sum or average) from <strong style="color:#38bdf8;">dimensions</strong> (attributes you slice and filter by). <code>fact_sales</code> is the fact table — it holds the numbers and a foreign key to each dimension.
+    </p>
+  </div>
+
+  <!-- SLIDE 18: FACT_SALES GRAIN + MEASURES -->
+  <div class="slide slide-content">
+    <h3>fact_sales — Grain &amp; Measures</h3>
+    <div class="two-col">
+      <div>
+<pre>            dim_customer      dim_product
+                    \            /
+     dim_payment_method — fact_sales — dim_date
+                    /            \
+             dim_orders      dim_address</pre>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">"Grain" in plain words:</strong> it just means "what does ONE row represent?" Here, one row = one item inside one order (<code>order_item_id</code>) — not one order, not one customer.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>fact_sales — the 4 numbers it tracks (measures)</h4>
+          <ul>
+            <li><code>Quantity_purchased</code> — how many units</li>
+            <li><code>Actual_price</code> — the sticker price</li>
+            <li><code>Discounted_price</code> — what the customer actually paid per unit</li>
+            <li><code>Sales_amount</code> — quantity × discounted price = real revenue</li>
+          </ul>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p>This table answers the question every business team has: <em>"What sold, when, to whom, for how much?"</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 19: FACT_SALES DIMENSIONS -->
+  <div class="slide slide-content">
+    <h3>fact_sales — The 6 Dimensions It Connects To</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Slice and filter by any of these 6</h4>
+        <ul>
+          <li><code>dim_customer</code> — who bought it</li>
+          <li><code>dim_product</code> — what was sold</li>
+          <li><code>dim_date</code> — when</li>
+          <li><code>dim_address</code> — where it shipped</li>
+          <li><code>dim_payment_method</code> — how it was paid</li>
+          <li><code>dim_orders</code> — which order it belongs to</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Business questions it answers</h4>
+        <ul>
+          <li>Revenue by product category this month</li>
+          <li>Top 10 customers by total spend</li>
+          <li>Payment method breakdown</li>
+          <li>Regional sales trends by city</li>
+          <li>Average order value by loyalty tier</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 20: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for ILT 4</h2>
+    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
+      Next up: Intro to Databricks, PySpark, and Spark SQL — the tools you'll use to actually build these Bronze, Silver, and Gold tables.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>3 layers: Bronze (raw) → Silver (clean Delta) → Gold (business Delta). Delta = Parquet + a transaction log.</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>ILT 4 (2:00 PM): Intro to Databricks + PySpark &amp; Spark SQL</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>What folder does Delta create alongside the data files? How many measures and dimensions does <code>fact_sales</code> have?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

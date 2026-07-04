@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 5 | HOL 1 — Transformations + Data Quality + Quarantine</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 5 · HOL 1 — Transformations + DQ + Quarantine</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 11</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Transformations + DQ + Quarantine</h1>
+    <p class="subtitle">Hands-on: run a DQ scan, fix real formatting errors, make a quarantine call, and lock it in with Delta constraints</p>
+    <div class="badge">Day 5 &nbsp;·&nbsp; HOL 1 &nbsp;·&nbsp; Hands-On Lab</div>
+    <div style="margin-top:18px;">
+      <span class="pill pill-blue">60 minutes</span>
+      <span class="pill pill-green">Beginner–Intermediate</span>
+      <span class="pill pill-amber">Source: bronze.customers</span>
+    </div>
+    <div style="margin-top:22px; color:#475569; font-size:13px;">
+      Phase A: DQ Scan · Phases B–C: Standardize · Phase D: Quarantine · Phases E–G: Write, Constrain, Verify
+    </div>
+  </div>
+
+  <!-- SLIDE 2: SETUP -->
+  <div class="slide slide-section">
+    <div class="section-tag">Setup</div>
+    <h2>Dataset &amp; Target Tables</h2>
+    <table class="sql-table" style="margin-top:20px;">
+      <tr><th>Table</th><th>Role</th></tr>
+      <tr><td><code>gbmart.bronze.customers</code></td><td>Source — read only, never modified</td></tr>
+      <tr><td><code>gbmart.silver.customers</code></td><td>Target — rows that pass every DQ rule</td></tr>
+      <tr><td><code>gbmart.silver.customers_quarantine</code></td><td>Target — rows that failed a rule, tagged with why</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:18px;">
+      <p><strong style="color:#38bdf8;">Instructions:</strong> run each cell with <strong>Shift + Enter</strong>. Blanks marked <code>#&nbsp;YOUR CODE HERE</code> are for you to complete — the DQ rules and thresholds are given in the comments above each blank.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: PHASE A -->
+  <div class="slide slide-demo">
+    <div class="demo-label">PHASE A · OBSERVE ONLY</div>
+    <h3>First DQ Scan</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">Before fixing anything, read the raw data and tag every row with its first failing rule. Don't fix yet — just observe what's actually there.</p>
+        <div class="card" style="margin-top:12px;">
+          <h4>Your task</h4>
+          <p>Complete the priority chain: the <code>INVALID_EMAIL_FORMAT</code> rule is left as a blank — the regex is given, you add the <code>when()</code> line.</p>
+        </div>
+      </div>
+      <div>
+<pre>bronze_df = spark.<span class="fn">table</span>(BRONZE_TABLE)
+
+dq_scan_df = bronze_df.<span class="fn">withColumn</span>(<span class="str">"_dq_issue"</span>,
+    <span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"CustomerID"</span>).<span class="fn">isNull</span>(),       <span class="fn">lit</span>(<span class="str">"NULL_CUSTOMER_ID"</span>))
+    .<span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"FirstName"</span>).<span class="fn">isNull</span>(),       <span class="fn">lit</span>(<span class="str">"NULL_FIRST_NAME"</span>))
+    .<span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"Email"</span>).<span class="fn">isNull</span>(),           <span class="fn">lit</span>(<span class="str">"NULL_EMAIL"</span>))
+    <span class="cm"># YOUR CODE HERE: INVALID_EMAIL_FORMAT rule</span>
+    .<span class="fn">when</span>(age_at_reg &lt; 18,                    <span class="fn">lit</span>(<span class="str">"REGISTERED_UNDER_18"</span>))
+    .<span class="fn">otherwise</span>(<span class="fn">lit</span>(<span class="kw">None</span>))
+)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: PHASE B -->
+  <div class="slide slide-demo">
+    <div class="demo-label">PHASE B · INVESTIGATE BEFORE FIXING</div>
+    <h3>Look Before You Fix</h3>
+    <p style="color:#cbd5e1; font-size:14px; margin-bottom:14px;">Look at the actual <code>INVALID_EMAIL_FORMAT</code> rows before writing a fix. Guessing without looking at real examples is how you "fix" data that wasn't broken.</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>Two real patterns you'll see</h4>
+        <ul>
+          <li>A stray space inserted mid-email (mobile autocorrect)</li>
+          <li>A <code>d'</code> prefix from surnames like D'Souza/D'Silva that most providers strip, but this form accepted</li>
+        </ul>
+      </div>
+      <div class="highlight-box success">
+        <p><strong style="color:#22c55e;">Business decision: fix, don't quarantine.</strong> Both are recoverable formatting errors — quarantining them would mean losing real customers over a keyboard quirk.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: PHASE C -->
+  <div class="slide slide-demo">
+    <div class="demo-label">PHASE C · STANDARDIZE</div>
+    <h3>Phone Number Format</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">Check the length distribution of <code>PhoneNumber</code> before assuming anything about its format. Every number turns out to be 12 digits — GlobalMart's form prepends <code>91</code> without a <code>+</code>.</p>
+        <div class="card" style="margin-top:12px;">
+          <h4>Your task</h4>
+          <p>Reformat 12-digit numbers starting with <code>91</code> into <code>+91-XXXXXXXXXX</code>. Only touch numbers matching that exact shape — never blindly slice a string without confirming length and prefix first.</p>
+        </div>
+      </div>
+      <div>
+<pre><span class="fn">when</span>(
+    <span class="cm"># YOUR CODE HERE: length == 12 AND starts with "91"</span>
+    <span class="fn">lit</span>(<span class="kw">True</span>),
+    <span class="fn">concat</span>(<span class="fn">lit</span>(<span class="str">"+91-"</span>), <span class="fn">col</span>(<span class="str">"PhoneNumber"</span>).<span class="fn">substr</span>(3, 10))
+).<span class="fn">otherwise</span>(<span class="fn">col</span>(<span class="str">"PhoneNumber"</span>))</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: PHASE D -->
+  <div class="slide slide-demo">
+    <div class="demo-label">PHASE D · THE QUARANTINE DECISION</div>
+    <h3>REGISTERED_UNDER_18</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">Look at the actual flagged rows before deciding anything. Unlike the email fix, these rows can't be "corrected" — we don't know if the DOB is wrong or the customer genuinely registered underage (the form had no age check at the time).</p>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">GlobalMart requires 18+</strong> (legal compliance, payment authorization) — these rows must not reach Silver as valid customers. You justify this call yourself in the notebook; ILT 2 walked through the identical reasoning.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: PHASE E-F -->
+  <div class="slide slide-demo">
+    <div class="demo-label">PHASE E–F · SPLIT, STANDARDIZE &amp; WRITE</div>
+    <h3>Split Clean vs. Quarantine, Then Write</h3>
+    <div class="two-col">
+      <div>
+<pre>clean_df      = dq_df.<span class="fn">filter</span>(<span class="fn">col</span>(<span class="str">"_dq_issue"</span>).<span class="fn">isNull</span>())
+quarantine_df = dq_df.<span class="fn">filter</span>(<span class="fn">col</span>(<span class="str">"_dq_issue"</span>).<span class="fn">isNotNull</span>())
+
+<span class="cm"># given -- renames to snake_case, adds SCD2 columns Gold needs</span>
+silver_customers_df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>)
+    .<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">saveAsTable</span>(SILVER_TABLE)
+quarantine_df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>)
+    .<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">saveAsTable</span>(QUARANTINE_TABLE)</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Correctness check, every time:</strong> clean rows + quarantine rows must always sum to the Bronze total.</p>
+        </div>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p>The standardize/enrich step (renames + SCD2 columns) is given code, not a graded blank — Day 6's dimension build depends on these exact column names.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: PHASE F.5 -->
+  <div class="slide slide-demo">
+    <div class="demo-label">PHASE F.5 · ENFORCE WITH DELTA CONSTRAINTS</div>
+    <h3>Lock In the Guarantee</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px;">The DQ scan already <strong style="color:#e2e8f0;">guarantees</strong> every row in <code>clean_df</code> has a non-null <code>customer_id</code> and a valid, non-null <code>email</code> — that's exactly why those rows are in <code>clean_df</code>, not <code>quarantine_df</code>. Turning that guarantee into a table constraint is safe and permanent.</p>
+      </div>
+      <div>
+<pre><span class="kw">ALTER TABLE</span> <span class="tbl">gbmart.silver.customers</span>
+<span class="kw">ALTER COLUMN</span> <span class="col">customer_id</span> <span class="kw">SET NOT NULL</span>;
+<span class="kw">ALTER TABLE</span> <span class="tbl">gbmart.silver.customers</span>
+<span class="kw">ALTER COLUMN</span> <span class="col">email</span> <span class="kw">SET NOT NULL</span>;
+
+<span class="kw">ALTER TABLE</span> <span class="tbl">gbmart.silver.customers</span>
+<span class="kw">ADD CONSTRAINT</span> valid_email_shape
+  <span class="kw">CHECK</span> (<span class="col">email</span> <span class="kw">LIKE</span> <span class="str">'%@%.%'</span>);</pre>
+      </div>
+    </div>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p>Add constraints for rules you've already proven true via the DQ scan — never one you haven't tested. A <code>CHECK</code> that fails on existing data turns the <code>ALTER TABLE</code> itself into a hard error.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: PHASE G -->
+  <div class="slide slide-demo">
+    <div class="demo-label">PHASE G · VERIFY</div>
+    <h3>Confirm It Actually Worked</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Checks to run</h4>
+        <ul>
+          <li><code>silver.customers</code> row count</li>
+          <li>Remaining invalid emails (expected: 0)</li>
+          <li>Phone numbers formatted <code>+91-XXXXXXXXXX</code></li>
+        </ul>
+      </div>
+      <div class="highlight-box success">
+        <p><strong style="color:#22c55e;">Non-negotiable check:</strong> clean rows + quarantine rows = Bronze total. If it doesn't add up, something was silently dropped or double-counted.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: SUBMISSION CHECKLIST -->
+  <div class="slide slide-content">
+    <h3>Submission Checklist</h3>
+    <div class="two-col">
+      <div class="card">
+        <ul style="list-style:none; padding-left:0;">
+          <li>☐ DQ scan completed — all 5 issue categories tagged correctly</li>
+          <li>☐ Email fix applied and re-validated (0 remaining invalid)</li>
+          <li>☐ Phone number reformatted to <code>+91-XXXXXXXXXX</code></li>
+          <li>☐ REGISTERED_UNDER_18 quarantine decision justified in your own words</li>
+        </ul>
+      </div>
+      <div class="card">
+        <ul style="list-style:none; padding-left:0;">
+          <li>☐ Clean + quarantine row counts sum to the Bronze total</li>
+          <li>☐ <code>silver.customers</code> written and verified</li>
+          <li>☐ <code>silver.customers_quarantine</code> written and verified</li>
+          <li>☐ <code>NOT NULL</code> (customer_id, email) + <code>CHECK</code> (valid_email_shape) constraints added</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for HOL 2</h2>
+    <p style="color:#94a3b8; max-width:620px; margin-top:12px; font-size:15px;">
+      Next up: apply this exact pattern across every remaining source — products, address, orders, order_items, payments, payment_methods — plus SCD2 vs. SCD1, a semi-structured source, and cross-table referential integrity.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>Scan → investigate → standardize → quarantine → write → constrain → verify</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>HOL 2: Build the Silver Layer — All Sources (~3 hours)</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Do your clean + quarantine counts sum to the Bronze total? If not, why not?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

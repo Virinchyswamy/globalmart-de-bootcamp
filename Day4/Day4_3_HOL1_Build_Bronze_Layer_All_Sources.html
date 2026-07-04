@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 4 | HOL 1 — Build the Bronze Layer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 4 · HOL 1 — Build the Bronze Layer</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 13</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Build the Bronze Layer</h1>
+    <p class="subtitle">Hands-on: 4 Autoloader tables across 2 file formats, plus verifying the 2 CDC tables from Day 2 — the complete 6-table Bronze layer</p>
+    <div class="badge">Day 4 &nbsp;·&nbsp; HOL 1 &nbsp;·&nbsp; Hands-On Lab</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll build today → customers · addresses · payments · products (JSON) · verify orders / order_items
+    </div>
+  </div>
+
+  <!-- SLIDE 2: SECTION - WHAT WE'RE BUILDING -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Building</h2>
+    <div class="two-col" style="margin-top:20px;">
+      <div>
+<pre>SOURCE (ADLS raw-data/)      AUTOLOADER        BRONZE TABLE
+customers/*.csv          →  cloudFiles(csv)  →  gbmart.bronze.customers
+addresses/*.csv          →  cloudFiles(csv)  →  gbmart.bronze.addresses
+payments/*.csv           →  cloudFiles(csv)  →  gbmart.bronze.payments
+products/*.json          →  cloudFiles(json) →  gbmart.bronze.products
+
+SOURCE (Postgres/Supabase)   LAKEFLOW CONNECT    BRONZE TABLE
+orders, order_items      →  CDC (Day 2 HOL 1) →  gbmart.bronze.orders
+                                                   gbmart.bronze.order_items</pre>
+      </div>
+      <div class="card">
+        <h4>By the End of This HOL You Will Have</h4>
+        <ul>
+          <li>4 new Bronze Delta tables: <code>customers</code>, <code>addresses</code>, <code>payments</code>, <code>products</code></li>
+          <li>Every table carrying the audit columns from ILT 2: <code>_ingested_at</code> + <code>_source_file</code></li>
+          <li>Hands-on experience with two file formats — CSV and nested JSON — using the same Autoloader pattern</li>
+          <li>Confirmation that all 6 Bronze tables are live and queryable</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: COST & SAFETY -->
+  <div class="slide slide-content">
+    <h3>Before You Start — Cost &amp; Safety</h3>
+    <div class="highlight-box warn">
+      <p><strong style="color:#f59e0b;">Do not start, trigger, or run any Databricks pipeline, job, or SQL warehouse from the UI or CLI as part of this HOL</strong> beyond what's in these notebook cells. Everything here runs as ordinary notebook cells on your already-running cluster.</p>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>If a cell asks you to wait for a streaming query, that query stops itself once it's processed the available files — <code>trigger(availableNow=True)</code> does not run indefinitely.</p>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <h4>The 4 Autoloader Tables Built Hands-On Today</h4>
+      <p>The 2 CDC-sourced tables (<code>orders</code>, <code>order_items</code>) were already built by Day 2's Lakeflow Connect pipeline — this session ends by verifying they're there, not rebuilding them.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: DEMO - SETUP -->
+  <div class="slide slide-demo">
+    <h3>Setup — Real External Location, No Keys</h3>
+    <div class="demo-label">Notebook cell · runs on your existing cluster</div>
+<pre><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> col, current_timestamp
+
+CATALOG = <span class="str">"gbmart"</span>
+SCHEMA  = <span class="str">"bronze"</span>
+EXTERNAL_LOCATION = <span class="str">"abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net/raw-data"</span>
+
+spark.sql(<span class="fn">f</span><span class="str">"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{SCHEMA}"</span>)</pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>No <code>spark.conf.set</code>, no storage key anywhere. The Unity Catalog external location (<code>gbmart-ext-loc</code>, registered in Day 2 HOL 1) handles authentication automatically.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: DEMO - PHASE 1 CUSTOMERS -->
+  <div class="slide slide-demo">
+    <h3>Phase 1 — customers (CSV, the Worked Example)</h3>
+    <div class="demo-label">Read carefully — Phases 2 and 3 reuse this exact pattern</div>
+<pre>customers_df = (
+    spark.readStream
+    .format(<span class="str">"cloudFiles"</span>)
+    .option(<span class="str">"cloudFiles.format"</span>, <span class="str">"csv"</span>)
+    .option(<span class="str">"cloudFiles.schemaLocation"</span>, SCHEMA_PATH)
+    .option(<span class="str">"cloudFiles.inferColumnTypes"</span>, <span class="str">"true"</span>)
+    .option(<span class="str">"cloudFiles.schemaEvolutionMode"</span>, <span class="str">"addNewColumns"</span>)
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>)
+    .load(SOURCE_PATH)
+    .withColumn(<span class="str">"_source_file"</span>, col(<span class="str">"_metadata.file_path"</span>))
+    .withColumn(<span class="str">"_ingested_at"</span>, current_timestamp())
+)
+customers_df.writeStream.format(<span class="str">"delta"</span>).outputMode(<span class="str">"append"</span>) \
+    .option(<span class="str">"checkpointLocation"</span>, CHECKPOINT_PATH) \
+    .option(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>) \
+    .trigger(availableNow=<span class="kw">True</span>) \
+    .toTable(<span class="str">"gbmart.bronze.customers"</span>)</pre>
+    <div class="highlight-box" style="margin-top:12px;">
+      <p><strong style="color:#f59e0b;">If you already did Day 3 HOL 2:</strong> this cell targets the exact same table and checkpoint. Re-running is safe — the checkpoint means no duplicate rows land.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: DEMO - PHASE 2 ADDRESSES -->
+  <div class="slide slide-demo">
+    <h3>Phase 2 — addresses (CSV, With a Multi-Line Gotcha)</h3>
+    <div class="demo-label">Same pattern as Phase 1, plus one real-world wrinkle</div>
+    <div class="two-col">
+      <div>
+        <p style="color:#cbd5e1; font-size:14px; margin-bottom:14px;">Imagine a spreadsheet cell containing a street address that wraps onto a second line. A naive CSV reader sees that line break and thinks it's a brand-new row — splitting one real address into two broken ones.</p>
+        <div class="highlight-box warn">
+          <p>Some <code>AddressLine1</code> values contain embedded line breaks. Without handling this, a plain CSV parser would split them into extra, wrong rows.</p>
+        </div>
+      </div>
+      <div>
+<pre>.option(<span class="str">"header"</span>, <span class="str">"true"</span>)
+.option(<span class="str">"multiLine"</span>, <span class="str">"true"</span>)
+.option(<span class="str">"escape"</span>, <span class="str">'"'</span>)
+<span class="cm"># Everything else is identical to Phase 1</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: DEMO - PHASE 3 PAYMENTS -->
+  <div class="slide slide-demo">
+    <h3>Phase 3 — payments (CSV, Same Pattern Again)</h3>
+    <div class="demo-label">No new concepts — reinforcing the pattern before Phase 4 changes the format</div>
+    <p style="color:#cbd5e1; font-size:14px;">Identical shape to Phase 1 — plain CSV, no special options needed. (Also revisits Day 3 HOL 2's <code>payments</code> checkpoint — the same safe-to-rerun note applies.)</p>
+  </div>
+
+  <!-- SLIDE 8: DEMO - PHASE 4 PRODUCTS JSON -->
+  <div class="slide slide-demo">
+    <h3>Phase 4 — products (JSON, Nested — a Different File Format)</h3>
+    <div class="demo-label">Same Autoloader mental model, different cloudFiles.format</div>
+    <div class="two-col">
+      <div>
+        <table class="sql-table">
+          <tr><th>Option</th><th>customers/addresses/payments</th><th>products</th></tr>
+          <tr><td><code>cloudFiles.format</code></td><td><code>csv</code></td><td><code>json</code></td></tr>
+          <tr><td>Extra option</td><td><code>header=true</code> (CSV)</td><td><code>multiLine=true</code> — the JSON array spans multiple lines</td></tr>
+        </table>
+      </div>
+      <div>
+<pre>{ <span class="str">"product_id"</span>: <span class="str">"PRD-00001"</span>,
+  <span class="str">"specs"</span>: {<span class="str">"warranty_months"</span>: 24, <span class="str">"color_options"</span>: [<span class="str">"Blue"</span>,<span class="str">"Black"</span>]},
+  <span class="str">"tags"</span>: [<span class="str">"electronics"</span>, <span class="str">"gadget"</span>],
+  <span class="str">"supplier_info"</span>: {<span class="str">"supplier_id"</span>: <span class="str">"SUP-02"</span>, <span class="str">"name"</span>: <span class="str">"Greenwood Supplies"</span>} }</pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Bronze preserves nested structs/arrays as-is — no flattening. Access directly: <code>df.select("specs.warranty_months", "supplier_info.name")</code>. Silver decides whether to flatten.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: DEMO - PHASE 5 VERIFY CDC -->
+  <div class="slide slide-demo">
+    <h3>Phase 5 — Verify the CDC-Sourced Tables (Built in Day 2)</h3>
+    <div class="demo-label">Not built here — just confirmed</div>
+<pre>bronze_tables = [
+    <span class="str">"customers"</span>, <span class="str">"addresses"</span>, <span class="str">"payments"</span>, <span class="str">"products"</span>,  <span class="cm"># built today</span>
+    <span class="str">"orders"</span>, <span class="str">"order_items"</span>,                             <span class="cm"># from Day 2 CDC</span>
+]
+<span class="kw">for</span> table <span class="kw">in</span> bronze_tables:
+    count = spark.table(<span class="fn">f</span><span class="str">"gbmart.bronze.{table}"</span>).count()
+    print(<span class="fn">f</span><span class="str">"gbmart.bronze.{table}: {count:,} rows"</span>)</pre>
+    <div class="highlight-box" style="margin-top:12px;">
+      <p><code>orders</code> and <code>order_items</code> arrive via the Lakeflow Connect CDC pipeline set up in Day 2 HOL 1 — this phase only confirms they landed, side by side with the 4 tables built today.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: ALL 6 TABLES -->
+  <div class="slide slide-content">
+    <h3>All 6 Bronze Tables, Side by Side</h3>
+    <table class="sql-table">
+      <tr><th>Table</th><th>Built By</th><th>Format</th></tr>
+      <tr><td><code>gbmart.bronze.customers</code></td><td>Today — Phase 1</td><td>CSV</td></tr>
+      <tr><td><code>gbmart.bronze.addresses</code></td><td>Today — Phase 2</td><td>CSV (multiLine)</td></tr>
+      <tr><td><code>gbmart.bronze.payments</code></td><td>Today — Phase 3</td><td>CSV</td></tr>
+      <tr><td><code>gbmart.bronze.products</code></td><td>Today — Phase 4</td><td>JSON (nested)</td></tr>
+      <tr><td><code>gbmart.bronze.orders</code></td><td>Day 2 HOL 1 (CDC)</td><td>Delta event log</td></tr>
+      <tr><td><code>gbmart.bronze.order_items</code></td><td>Day 2 HOL 1 (CDC)</td><td>Delta event log</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 11: SUBMISSION CHECKLIST -->
+  <div class="slide slide-content">
+    <h3>Submission Checklist</h3>
+    <ol class="order-list">
+      <li>External location <code>gbmart-ext-loc</code> confirmed accessible via <code>dbutils.fs.ls</code></li>
+      <li><code>gbmart.bronze.customers</code> built and row count verified</li>
+      <li><code>gbmart.bronze.addresses</code> built (multiLine handled correctly)</li>
+      <li><code>gbmart.bronze.payments</code> built and row count verified</li>
+      <li><code>gbmart.bronze.products</code> built, nested schema explored</li>
+      <li>All 6 Bronze tables (4 new + 2 from Day 2) confirmed queryable</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 12: KEY TAKEAWAYS -->
+  <div class="slide slide-section">
+    <div class="section-tag">Recap</div>
+    <h2>Key Takeaways</h2>
+    <div class="three-col" style="margin-top:20px;">
+      <div class="card">
+        <h4>One Pattern, Two Formats</h4>
+        <p><code>cloudFiles.format</code> is the only thing that changes between CSV and JSON — checkpoint, schema location, and audit columns are identical.</p>
+      </div>
+      <div class="card">
+        <h4>Nested JSON Lands As-Is</h4>
+        <p>Struct and array columns are preserved; dotted access works directly. Silver decides whether to flatten.</p>
+      </div>
+      <div class="card">
+        <h4>CDC Tables Aren't Rebuilt</h4>
+        <p><code>orders</code>/<code>order_items</code> already exist from Day 2 — different Bronze HOLs don't duplicate each other's work.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for ILT 3</h2>
+    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
+      Bronze exists now — 6 real tables. Next: how to lay it out on disk and keep it fast as it grows — storage formats, partitioning, Z-ORDER, and caching.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>6 Bronze tables live: 4 built today, 2 verified from Day 2</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>ILT 3: Partitioning, Storage Formats &amp; Performance Levers</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Why does <code>products</code> need a different <code>cloudFiles.format</code>? Why wasn't <code>orders</code> rebuilt here?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 1 | REF — Ingestion Deep-Dive: Lakeflow Connect vs Autoloader</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 1 · REF — Lakeflow Connect vs Autoloader</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 13</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Ingestion Deep-Dive: Lakeflow Connect vs Autoloader</h1>
+    <p class="subtitle">Why GlobalMart uses two different ingestion tools, how each one actually works, and which GlobalMart table uses which</p>
+    <div class="badge">Day 1 &nbsp;·&nbsp; Reference Material &nbsp;·&nbsp; Self-Paced</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      This is reference material, not a live trainer-led session — read it whenever you want the deep-dive on the two ingestion tools.
+    </div>
+  </div>
+
+  <!-- SLIDE 2: WHY TWO TOOLS -->
+  <div class="slide slide-content">
+    <h3>Why Two Different Tools?</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px;">
+          GlobalMart's data comes from two fundamentally different places. One is a live PostgreSQL database where orders are being inserted and updated right now. The other is a storage folder where CSV files land periodically. These two situations need two different approaches.
+        </p>
+      </div>
+      <div class="highlight-box">
+        <p><strong style="color:#38bdf8;">The core question:</strong> is the data changing under you right now (a live database), or does it arrive as a finished file that never changes again (a file drop)?</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: TWO SOURCES TWO TOOLS -->
+  <div class="slide slide-content">
+    <h3>Two Sources, Two Tools</h3>
+    <div class="two-col">
+      <div class="card">
+        <span class="pill pill-blue">Lakeflow Connect</span>
+        <h4>For: Live Databases (Postgres)</h4>
+        <ul>
+          <li>Rows are inserted, updated, and deleted in real time</li>
+          <li>You can't JDBC-query a large table every few minutes without hurting performance</li>
+          <li>Reads the database's Write-Ahead Log (WAL) continuously</li>
+          <li>Delivers change events to Bronze as a streaming table</li>
+        </ul>
+        <p style="margin-top:8px; font-size:12px; color:#64748b;">GlobalMart tables: <code>orders</code>, <code>order_items</code></p>
+      </div>
+      <div class="card">
+        <span class="pill pill-green">Autoloader</span>
+        <h4>For: File Drops in ADLS</h4>
+        <ul>
+          <li>CSV/JSON/Parquet files land in <code>raw/</code> on a schedule</li>
+          <li>Once landed, files do not change</li>
+          <li>Uses a checkpoint to track which files are already processed</li>
+          <li>Never re-reads a file it has already ingested</li>
+        </ul>
+        <p style="margin-top:8px; font-size:12px; color:#64748b;">GlobalMart tables: customers, payments, products, addresses, returns, payment_methods, shipping_tier, suppliers</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: HOW BOTH FEED BRONZE -->
+  <div class="slide slide-content">
+    <h3>How Both Feed Bronze</h3>
+<pre>Supabase PostgreSQL (live orders DB)
+    → Lakeflow Connect (reads WAL, continuous CDC)
+    → Bronze streaming table (bronze/orders/, bronze/order_items/)
+
+ADLS raw/ (file drops — CSVs from upstream systems)
+    → Autoloader / cloudFiles (checkpoint-based incremental scan)
+    → Bronze Delta tables (bronze/customers/, bronze/products/, …)
+
+Both Bronze layers
+    → Silver (clean, deduped, SCD)
+    → Gold (fact_sales + dimensions)
+    → Genie (self-serve Q&amp;A for business)</pre>
+  </div>
+
+  <!-- SLIDE 5: SECTION - LAKEFLOW CONNECT -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Deep Dive 1</div>
+    <h2>Lakeflow Connect — CDC from PostgreSQL</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Databricks' native Change Data Capture connector — it reads changes directly from the Postgres transaction log, continuously, with no manual scheduling.
+    </p>
+  </div>
+
+  <!-- SLIDE 6: HOW CDC WORKS -->
+  <div class="slide slide-content">
+    <h3>How CDC Works, via the PostgreSQL WAL</h3>
+    <div class="card">
+      <ol class="order-list">
+        <li>An order is updated in Supabase: <code>UPDATE orders SET status = 'shipped' WHERE order_id = 'O1001'</code></li>
+        <li>PostgreSQL writes this change to the <strong>Write-Ahead Log (WAL)</strong> before applying it to the table — this is how Postgres guarantees durability</li>
+        <li>Lakeflow Connect holds a <strong>replication slot</strong> in Postgres. It tails the WAL continuously and sees this UPDATE event</li>
+        <li>Lakeflow Connect delivers a row to the Bronze streaming table with the operation type, the changed values, and a CDC timestamp</li>
+        <li>Bronze now has a complete history of every INSERT, UPDATE, DELETE — Silver can replay this to get the current state</li>
+      </ol>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>You configure Lakeflow Connect as a pipeline in Databricks. There's no manual code to read Postgres — Databricks handles the WAL connection, retries, and checkpointing.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: SECTION - AUTOLOADER -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Deep Dive 2</div>
+    <h2>Autoloader — Incremental File Ingestion</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Databricks' incremental file ingestion tool — it watches a folder in ADLS and picks up new files automatically, without ever re-reading a file it already processed.
+    </p>
+  </div>
+
+  <!-- SLIDE 8: HOW AUTOLOADER WORKS -->
+  <div class="slide slide-content">
+    <h3>How Autoloader Works</h3>
+    <div class="card">
+      <ol class="order-list">
+        <li>A new file <code>customers_2024-06-02.csv</code> lands in <code>raw/</code></li>
+        <li>Autoloader detects the new file automatically</li>
+        <li>It checks its checkpoint folder — has this file been processed before? No → process it</li>
+        <li>Reads the CSV, applies the schema, appends rows to the Bronze Delta table</li>
+        <li>Writes the file name to the checkpoint — the next run skips it</li>
+        <li>When another file lands tomorrow, only that new file is read — never the whole folder</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: AUTOLOADER CODE PATTERN -->
+  <div class="slide slide-content">
+    <h3>Autoloader Code Pattern</h3>
+<pre><span class="cm"># Autoloader reads new files from raw/ and appends to Bronze</span>
+df = (
+    spark.readStream
+    .<span class="fn">format</span>(<span class="str">"cloudFiles"</span>)
+    .<span class="fn">option</span>(<span class="str">"cloudFiles.format"</span>, <span class="str">"csv"</span>)
+    .<span class="fn">option</span>(<span class="str">"cloudFiles.schemaLocation"</span>, checkpoint_path + <span class="str">"schema"</span>)
+    .<span class="fn">option</span>(<span class="str">"header"</span>, <span class="str">"true"</span>)
+    .<span class="fn">load</span>(raw_path + <span class="str">"customers_*.csv"</span>)
+)
+
+(
+    df.writeStream
+    .<span class="fn">format</span>(<span class="str">"delta"</span>)
+    .<span class="fn">option</span>(<span class="str">"checkpointLocation"</span>, checkpoint_path)
+    .<span class="fn">trigger</span>(availableNow=<span class="kw">True</span>)
+    .<span class="fn">toTable</span>(<span class="str">"bronze.customers"</span>)
+)</pre>
+  </div>
+
+  <!-- SLIDE 10: TWO TRIGGER MODES -->
+  <div class="slide slide-content">
+    <h3>Two Trigger Modes</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>availableNow=True (batch-like)</h4>
+        <p>Processes all new files waiting in the folder, then stops. Run this on a schedule — for example, every hour via Workflows. Good for most GlobalMart ADLS tables.</p>
+      </div>
+      <div class="card">
+        <h4>continuous=True (streaming)</h4>
+        <p>Stays running and picks up files the moment they land. Uses more cluster time. Good for near-real-time needs, like payments that must appear in Bronze within minutes.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: SIDE-BY-SIDE COMPARISON -->
+  <div class="slide slide-content">
+    <h3>Side-by-Side Comparison</h3>
+    <table class="sql-table">
+      <tr><th>Feature</th><th>Lakeflow Connect</th><th>Autoloader (cloudFiles)</th></tr>
+      <tr><td>Source type</td><td>PostgreSQL database</td><td>Files in ADLS (CSV / JSON / Parquet)</td></tr>
+      <tr><td>How it detects change</td><td>Tails Postgres WAL (replication slot)</td><td>Checkpoint on file paths</td></tr>
+      <tr><td>Captures</td><td>INSERT + UPDATE + DELETE</td><td>New rows from new files only</td></tr>
+      <tr><td>Can replay history?</td><td>Yes — Bronze has all CDC events</td><td>No — only what's in the files</td></tr>
+      <tr><td>Write mode</td><td>Streaming table (append + MERGE)</td><td>overwrite (Full Load) or append (Incremental)</td></tr>
+      <tr><td>Schema evolution</td><td>Fixed schema from Postgres DDL</td><td>Automatic — detects new columns in new files</td></tr>
+      <tr><td>Dedicated hands-on</td><td>Later in the bootcamp</td><td>Today's patterns, plus a dedicated hands-on later</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 12: GLOBALMART TABLE ASSIGNMENTS -->
+  <div class="slide slide-content">
+    <h3>GlobalMart Table Assignments</h3>
+    <table class="sql-table">
+      <tr><th>Table</th><th>Tool</th><th>Strategy</th><th>Why</th></tr>
+      <tr><td><code>orders</code></td><td><span class="pill pill-blue">Lakeflow Connect</span></td><td>CDC streaming</td><td>Updated continuously — INSERT + UPDATE + DELETE</td></tr>
+      <tr><td><code>order_items</code></td><td><span class="pill pill-blue">Lakeflow Connect</span></td><td>CDC streaming</td><td>Line items change along with order status</td></tr>
+      <tr><td><code>payment_methods</code></td><td><span class="pill pill-green">Autoloader</span></td><td>Full Load</td><td>Small reference table, rarely changes</td></tr>
+      <tr><td><code>shipping_tier</code></td><td><span class="pill pill-green">Autoloader</span></td><td>Full Load</td><td>Small reference table, rarely changes</td></tr>
+      <tr><td><code>products</code></td><td><span class="pill pill-green">Autoloader</span></td><td>Full Load</td><td>Catalog refreshed periodically — overwrite keeps it current</td></tr>
+      <tr><td><code>suppliers</code></td><td><span class="pill pill-green">Autoloader</span></td><td>Full Load</td><td>Small, infrequently updated</td></tr>
+      <tr><td><code>customers</code></td><td><span class="pill pill-green">Autoloader</span></td><td>Incremental</td><td>New customers arrive daily — append with a watermark</td></tr>
+      <tr><td><code>payments</code></td><td><span class="pill pill-green">Autoloader</span></td><td>Incremental</td><td>New payments arrive continuously</td></tr>
+      <tr><td><code>addresses</code></td><td><span class="pill pill-green">Autoloader</span></td><td>Incremental</td><td>Grows over time — append new rows</td></tr>
+      <tr><td><code>returns</code></td><td><span class="pill pill-green">Autoloader</span></td><td>Incremental</td><td>New returns arrive over time</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 13: DECISION RULE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">The Rule of Thumb</div>
+    <h2>One Question Decides the Tool</h2>
+    <div class="highlight-box" style="max-width:720px; text-align:left;">
+      <p><strong style="color:#38bdf8;">Is the source a live database with INSERT / UPDATE / DELETE?</strong> → Lakeflow Connect</p>
+      <p style="margin-top:10px;"><strong style="color:#38bdf8;">Is the source a file that lands in ADLS and never changes?</strong></p>
+      <p style="margin-top:4px;">— Grows over time? → Autoloader + Incremental Load (append + watermark)</p>
+      <p>— Small and fully refreshed each time? → Autoloader + Full Load (overwrite)</p>
+    </div>
+    <p style="color:#94a3b8; max-width:600px; margin-top:20px; font-size:14px;">
+      This is reference material — revisit it whenever Lakeflow Connect or Autoloader come up again later in the bootcamp.
+    </p>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

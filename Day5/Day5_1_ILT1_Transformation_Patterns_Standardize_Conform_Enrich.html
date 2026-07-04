@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 5 | ILT 1 — Transformation Patterns: Standardize, Conform, Enrich</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 5 · ILT 1 — Transformation Patterns</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 12</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Transformation Patterns</h1>
+    <p class="subtitle">Standardize, Conform, Enrich — turning raw Bronze data into trustworthy Silver, with real GlobalMart examples</p>
+    <div class="badge">Day 5 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; Trainer-Led Session</div>
+    <div style="margin-top:18px;">
+      <span class="pill pill-blue">60 minutes</span>
+      <span class="pill pill-green">Concept + Worked Examples</span>
+      <span class="pill pill-amber">Catalog: gbmart</span>
+    </div>
+    <div style="margin-top:22px; color:#475569; font-size:13px;">
+      What we'll cover today → Why Bronze Isn't Enough · Standardize · Conform · Enrich · Putting It Together
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering Today</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>🥉 Why Bronze Isn't Enough</h4>
+        <ul>
+          <li>Bronze lands data exactly as the source gave it — zero loss, zero cleanup</li>
+          <li>Two ingestion tools land two different column-casing conventions</li>
+          <li>Not yet safe to hand to a business user or a report</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔧 Three Transformation Categories</h4>
+        <ul>
+          <li><strong>Standardize</strong> — fix the values</li>
+          <li><strong>Conform</strong> — align the naming</li>
+          <li><strong>Enrich</strong> — derive new business value</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📋 All From Real Bronze Data</h4>
+        <ul>
+          <li>Every example today is a real, already-solved GlobalMart case</li>
+          <li>No toy examples</li>
+          <li>You build the full Silver layer yourself in the Day 5 hands-on labs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: WHY BRONZE ISN'T ENOUGH -->
+  <div class="slide slide-content">
+    <h3>Why Bronze Isn't Enough On Its Own</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Bronze does exactly one job well: land the data <strong style="color:#e2e8f0;">exactly as the source gave it to us</strong>, with zero loss. Think of it like a grocery delivery dropped at the door in whatever bags it arrived in — nothing is missing or spoiled, but you can't serve dinner straight out of the delivery bags.
+        </p>
+        <div class="card">
+          <h4>The Real Complication</h4>
+          <p>GlobalMart's Bronze layer fills up two different ways, and each one spells column names differently:</p>
+          <ul>
+            <li><strong>Autoloader</strong> (ADLS files) keeps each source file's original casing</li>
+            <li><strong>Lakeflow Connect</strong> (Postgres CDC) lowercases every column</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Source</th><th>Ingestion Tool</th><th>Casing landed in Bronze</th></tr>
+          <tr><td>orders, order_items<br>(Postgres/Supabase)</td><td>Lakeflow Connect (CDC)</td><td><code>OrderID</code> → <code>orderid</code></td></tr>
+          <tr><td>customers, products, address, payments<br>(ADLS files)</td><td>Autoloader</td><td><code>CustomerID</code> stays <code>CustomerID</code></td></tr>
+        </table>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">Why it matters:</strong> if Gold tries to join <code>bronze.orders.customerid</code> to <code>bronze.customers.CustomerID</code> directly, every query becomes a guessing game about casing. That's exactly what <strong>conform</strong> fixes — one of the three problems this session solves, alongside <strong>standardize</strong> and <strong>enrich</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: SECTION - THREE CATEGORIES -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 2</div>
+    <h2>Three Ways Bronze Becomes Silver</h2>
+    <p style="color:#94a3b8; max-width:660px; margin-top:12px; font-size:15px;">
+      Think of Bronze data like laundry straight out of the hamper. Some items are stained or torn — fix those first (<strong style="color:#38bdf8;">standardize</strong>). Everything needs folding into the <em>same</em> labeled drawers no matter which store it came from (<strong style="color:#38bdf8;">conform</strong>). Only once it's clean and organized does it make sense to sew on a nametag with information that didn't exist before (<strong style="color:#38bdf8;">enrich</strong>).
+    </p>
+  </div>
+
+  <!-- SLIDE 5: STANDARDIZE - PHONE -->
+  <div class="slide slide-content">
+    <h3><span class="pill pill-blue">STEP 1</span>&nbsp; Standardize — Fix the Values, Not Just the Shape</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">The row is in the right table, right column — but the value itself is malformed: wrong type, extra characters, inconsistent format.</p>
+        <div class="card">
+          <h4>Real example — PhoneNumber in bronze.customers</h4>
+          <p>Every phone number in Bronze is 12 digits. GlobalMart's registration form auto-prepends the <code>91</code> India country code but drops the <code>+</code> — so <code>+91-7584314890</code> lands in Bronze as <code>917584314890</code>. Not wrong data — an unstandardized format.</p>
+        </div>
+      </div>
+      <div>
+<pre><span class="fn">bronze_customers</span> = spark.<span class="fn">table</span>(<span class="str">"gbmart.bronze.customers"</span>)
+
+<span class="cm"># PhoneNumber is BIGINT in Bronze (Autoloader inferred it as a
+# number) -- cast to string first, or leading digits get read as math.</span>
+standardized_phone = (
+    bronze_customers
+    .<span class="fn">withColumn</span>(<span class="str">"PhoneNumber"</span>, <span class="fn">col</span>(<span class="str">"PhoneNumber"</span>).<span class="fn">cast</span>(<span class="str">"string"</span>))
+    .<span class="fn">withColumn</span>(<span class="str">"PhoneNumber"</span>,
+        <span class="fn">when</span>(
+            (<span class="fn">length</span>(<span class="fn">col</span>(<span class="str">"PhoneNumber"</span>)) == 12) &amp; <span class="fn">col</span>(<span class="str">"PhoneNumber"</span>).<span class="fn">startswith</span>(<span class="str">"91"</span>),
+            <span class="fn">concat</span>(<span class="fn">lit</span>(<span class="str">"+91-"</span>), <span class="fn">col</span>(<span class="str">"PhoneNumber"</span>).<span class="fn">substr</span>(3, 10))
+        ).<span class="fn">otherwise</span>(<span class="fn">col</span>(<span class="str">"PhoneNumber"</span>))
+    )
+)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: STANDARDIZE - EMAIL -->
+  <div class="slide slide-content">
+    <h3><span class="pill pill-blue">STEP 1</span>&nbsp; Standardize — Email Formatting Errors</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Two distinct, recoverable patterns show up in <code>bronze.customers.Email</code>:</p>
+        <table class="sql-table">
+          <tr><th>Pattern</th><th>Example</th><th>Root Cause</th></tr>
+          <tr><td>Accidental space</td><td><code>swaminathaninaaya 482@outlook.com</code></td><td>Mobile autocorrect inserts a space after a long name</td></tr>
+          <tr><td>Apostrophe in surname</td><td><code>taran.d'alia307@hotmail.com</code></td><td>D'Souza/D'Silva-style surnames; most providers strip <code>d'</code>, this form didn't</td></tr>
+        </table>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">Standardize, don't discard.</strong> Both are recoverable format issues — quarantining these customers would lose real people over a keyboard quirk. (More on that fix/flag/quarantine split in ILT 2.)</p>
+        </div>
+      </div>
+      <div>
+<pre>standardized_email = bronze_customers.<span class="fn">withColumn</span>(<span class="str">"Email"</span>,
+    <span class="fn">regexp_replace</span>(
+        <span class="fn">regexp_replace</span>(
+            <span class="fn">trim</span>(<span class="fn">lower</span>(<span class="fn">col</span>(<span class="str">"Email"</span>))),
+            <span class="str">" "</span>, <span class="str">""</span>                  <span class="cm"># remove stray space</span>
+        ),
+        <span class="str">"d['’‘]"</span>, <span class="str">""</span>    <span class="cm"># remove d + apostrophe variant</span>
+    )
+)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: CONFORM - COLUMN NAMES -->
+  <div class="slide slide-content">
+    <h3><span class="pill pill-green">STEP 2</span>&nbsp; Conform — One Vocabulary Across Every Source</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Conforming means making data from different sources speak the same structural language — same naming convention, same casing — so Gold can join across them without translation logic scattered everywhere. GlobalMart's rule: <strong style="color:#e2e8f0;">every Silver table uses lowercase snake_case</strong>, no matter what casing the source or ingestion tool used.</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>Lakeflow source (small rename)</h4>
+<pre style="margin-top:8px;">bronze_orders = spark.<span class="fn">table</span>(<span class="str">"gbmart.bronze.orders"</span>)
+conformed_orders = (
+    bronze_orders
+    .<span class="fn">withColumnRenamed</span>(<span class="str">"orderid"</span>, <span class="str">"order_id"</span>)
+    .<span class="fn">withColumnRenamed</span>(<span class="str">"customerid"</span>, <span class="str">"customer_id"</span>)
+)</pre>
+      </div>
+      <div class="card">
+        <h4>Autoloader source (bigger rename)</h4>
+<pre style="margin-top:8px;">conformed_customers = (
+    bronze_customers
+    .<span class="fn">withColumnRenamed</span>(<span class="str">"CustomerID"</span>, <span class="str">"customer_id"</span>)
+    .<span class="fn">withColumnRenamed</span>(<span class="str">"FirstName"</span>, <span class="str">"first_name"</span>)
+)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: CONFORM - A VALUE NOT JUST A NAME -->
+  <div class="slide slide-content">
+    <h3>Conforming a Value, Not Just a Name</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px;"><code>bronze.address</code> has the same underscore-for-space corruption in both <code>State</code> and <code>AddressType</code> (<code>Tamil_Nadu</code> instead of <code>Tamil Nadu</code>). This is still <strong style="color:#e2e8f0;">conform</strong> — it's not correcting a wrong value, it's aligning representation with every other Silver text field.</p>
+      </div>
+      <div>
+<pre>bronze_address = spark.<span class="fn">table</span>(<span class="str">"gbmart.bronze.addresses"</span>)
+
+conformed_address = bronze_address \
+    .<span class="fn">withColumn</span>(<span class="str">"State"</span>,
+        <span class="fn">regexp_replace</span>(<span class="fn">col</span>(<span class="str">"State"</span>), <span class="str">"_"</span>, <span class="str">" "</span>)) \
+    .<span class="fn">withColumn</span>(<span class="str">"AddressType"</span>,
+        <span class="fn">regexp_replace</span>(<span class="fn">col</span>(<span class="str">"AddressType"</span>), <span class="str">"_"</span>, <span class="str">" "</span>))</pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">The distinction that matters:</strong> standardize fixes a value that's wrong or malformed; conform fixes a value that's <em>already correct</em> but written inconsistently with the rest of Silver. <code>Tamil_Nadu</code> isn't incorrect — it's just not how every other Silver text field writes a space.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: ENRICH - TENURE -->
+  <div class="slide slide-content">
+    <h3><span class="pill pill-amber">STEP 3</span>&nbsp; Enrich — Add Business Value That Doesn't Exist Yet</h3>
+    <div class="highlight-box">
+      <p><strong style="color:#38bdf8;">The rule:</strong> if multiple Gold tables or reports need the same derived value, compute it once — in Silver.</p>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div>
+        <p style="color:#94a3b8; font-size:14px;">Gold, BI dashboards, and Genie will all eventually ask for customer segments like <em>New (&lt;90 days)</em>, <em>Regular (90–365)</em>, <em>Loyal (&gt;365)</em>. Computing tenure once in Silver means nobody repeats <code>datediff(current_date(), registration_date)</code> five different ways — five chances to get it subtly wrong.</p>
+      </div>
+      <div>
+<pre>enriched_customers = (
+    bronze_customers
+    .<span class="fn">withColumn</span>(<span class="str">"age"</span>,
+        <span class="fn">floor</span>(<span class="fn">datediff</span>(<span class="fn">current_date</span>(), <span class="fn">col</span>(<span class="str">"DateOfBirth"</span>)) / 365.25)
+        .<span class="fn">cast</span>(<span class="str">"int"</span>))
+    .<span class="fn">withColumn</span>(<span class="str">"customer_tenure_days"</span>,
+        <span class="fn">datediff</span>(<span class="fn">current_date</span>(), <span class="fn">col</span>(<span class="str">"RegistrationDate"</span>))
+        .<span class="fn">cast</span>(<span class="str">"int"</span>))
+)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: ENRICH - ORDER KPIS -->
+  <div class="slide slide-content">
+    <h3>Real Example — Order Fulfillment KPIs</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;"><code>bronze.orders</code> has four raw date columns. None of them is itself a business metric — but the <em>gaps between them</em> are exactly what Operations' delivery-SLA dashboard needs every day.</p>
+    <table class="sql-table">
+      <tr><th>Derived Column</th><th>Formula</th><th>Business Need</th></tr>
+      <tr><td><code>order_to_ship_days</code></td><td><code>datediff(shippingdate, orderdate)</code></td><td>Fulfillment SLA KPI</td></tr>
+      <tr><td><code>is_late</code></td><td><code>actualdeliverydate &gt; expecteddeliverydate</code></td><td>SLA breach reporting</td></tr>
+      <tr><td><code>order_status</code></td><td>Derived from which dates are populated</td><td>Single readable status for Genie/BI</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Same rule as tenure:</strong> derive it once in Silver — <code>order_status</code> (Delivered / Shipped / Pending) means Genie and BI tools never have to infer status from raw date columns themselves.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: PUTTING IT TOGETHER -->
+  <div class="slide slide-content">
+    <h3>Putting It Together — The Order Matters</h3>
+    <div class="two-col">
+      <div>
+        <ol class="order-list">
+          <li><strong>Standardize first</strong> — fix values while they're still easy to reason about, before renames make the logic harder to read</li>
+          <li><strong>Conform next</strong> — once values are trustworthy, align naming/casing so joins across sources are simple</li>
+          <li><strong>Enrich last</strong> — derive new columns on data that's already standardized and conformed, so the logic doesn't fight messy inputs</li>
+        </ol>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Not covered yet:</strong> what happens to rows that <strong>can't</strong> be fixed — a null primary key, an impossible date, an out-of-range rating? That's <strong>ILT 2 — Data Quality Constraints &amp; Validation</strong>, next.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for ILT 2</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Next up: Data Quality Constraints &amp; Validation — what to do with rows that standardize and conform can't save, and when quarantining is the right call (or a bug of its own).
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>3 patterns: standardize (fix values), conform (align naming), enrich (derive value) — in that order</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>ILT 2: DQ scans, Delta constraints, and the fix/flag/quarantine decision</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Name the 3 transformation categories, in order, and give one GlobalMart example of each</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

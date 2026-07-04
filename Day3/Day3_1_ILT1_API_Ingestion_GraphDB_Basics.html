@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 3 | ILT 1 — API Ingestion Mechanics &amp; GraphDB/Cypher Basics</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 3 · ILT 1 — API Ingestion &amp; GraphDB/Cypher Basics</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 19</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE: COVER -->
+  <div class="slide slide-cover active">
+    <h1>API Ingestion &amp; GraphDB/Cypher Basics</h1>
+    <p class="subtitle">How Data Engineers call REST APIs and model relationships in a graph database — a side-exploration pattern demo, using GlobalMart data as a familiar backdrop</p>
+    <div class="badge">Day 3 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; 9:30 – 11:00 AM</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover → REST APIs · Live API Demo · Graph Databases · Cypher Basics · Free Tools
+    </div>
+  </div>
+
+  <!-- SLIDE: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We Cover Today</h2>
+    <div class="three-col" style="margin-top:20px;">
+      <div class="card">
+        <h4>1 · REST APIs</h4>
+        <ul>
+          <li>What they are, how DEs use them</li>
+          <li>The ingestion flow: call → check status → parse → land</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>2 · Live API Demo</h4>
+        <ul>
+          <li>Call frankfurter.app</li>
+          <li>Parse the JSON, land it as a sandbox Delta table</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>3 · Graph Databases</h4>
+        <ul>
+          <li>Nodes + relationships, why they exist</li>
+          <li>How they compare to relational joins</li>
+        </ul>
+      </div>
+    </div>
+    <div class="three-col" style="margin-top:20px;">
+      <div class="card">
+        <h4>4 · Cypher Basics</h4>
+        <ul>
+          <li><code>MATCH</code>, relationships, traversal</li>
+          <li>Reads like an ASCII drawing of the graph</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>5 · Free Tools</h4>
+        <ul>
+          <li>frankfurter.app — no API key</li>
+          <li>Neo4j AuraDB Free — no credit card</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Instructor Pacing</h4>
+        <ul>
+          <li>~35 min API + live code</li>
+          <li>~35 min GraphDB theory + Cypher, ~20 min wrap-up/Q&amp;A</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: SIDE-EXPLORATION FRAMING (CRITICAL) -->
+  <div class="slide slide-content">
+    <h3>Important: This Is a Side-Exploration, Not the Main Pipeline</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Think of today as a field trip. GlobalMart's real data pipeline runs on exactly <strong style="color:#e2e8f0;">2 rails</strong> — we're stepping off those rails on purpose to see how other companies solve a different kind of problem.
+        </p>
+        <table class="sql-table">
+          <tr><th>GlobalMart's 2 Real Sources</th><th>Tool</th></tr>
+          <tr><td><code>orders</code>, <code>order_items</code> (Postgres/Supabase)</td><td>Lakeflow Connect (CDC)</td></tr>
+          <tr><td><code>products</code>, <code>customers</code>, <code>address</code>, <code>payments</code> (ADLS)</td><td>Autoloader</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">A REST API and a graph database are not among these.</strong> Today's session steps outside the real pipeline on purpose. Nothing built today feeds Bronze, Silver, Gold, or <code>fact_sales</code>.</p>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4>So why do this at all?</h4>
+          <p>These are ingestion <em>patterns</em> you'll meet on <strong>other</strong> projects. GlobalMart data is just a convenient, familiar example to practice on — everything we build lands in a <code>sandbox/</code> path, deliberately separate from <code>bronze/</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: WHAT IS A REST API -->
+  <div class="slide slide-content">
+    <h3>What Is a REST API?</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Think of an API like a waiter at a restaurant. You (your code) ask for something — an <strong style="color:#e2e8f0;">HTTP GET</strong> request. The waiter walks to the kitchen (the server), and brings back exactly what you asked for as a <strong style="color:#e2e8f0;">JSON response</strong>. You never need to know how the kitchen works.
+        </p>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">API</strong> (Application Programming Interface) = a way for one system to talk to another over the internet. <strong style="color:#38bdf8;">REST API</strong> = a specific style of API that uses HTTP, the same protocol as websites.</p>
+        </div>
+      </div>
+      <div>
+<pre>Your code                    API Server
+   |                             |
+   |── HTTP GET /latest ────────►|
+   |                             |
+   |◄─── JSON response ──────────|
+   |
+   ▼
+Parse JSON → save to a landing table</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: WHY DES USE APIS -->
+  <div class="slide slide-content">
+    <h3>Why Data Engineers Use APIs</h3>
+    <table class="sql-table">
+      <tr><th>Use Case</th><th>Example API</th></tr>
+      <tr><td>Currency exchange rates</td><td><code>frankfurter.app</code></td></tr>
+      <tr><td>Weather data</td><td>OpenWeatherMap</td></tr>
+      <tr><td>Shipping rates</td><td>FedEx / UPS APIs</td></tr>
+      <tr><td>Company financials</td><td>Alpha Vantage</td></tr>
+      <tr><td>Address validation</td><td>Google Maps</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Why frankfurter.app today?</strong> This is a pattern demo, not a GlobalMart requirement — the real Gold layer computes revenue straight from source-currency order amounts, with no FX conversion step anywhere in the actual build. frankfurter.app is free, needs no API key, and is reliable — perfect for practicing ingestion mechanics.</p>
+        </div>
+  </div>
+
+  <!-- SLIDE: KEY API CONCEPTS -->
+  <div class="slide slide-content">
+    <h3>Key API Concepts Every DE Must Know</h3>
+    <table class="sql-table">
+      <tr><th>Concept</th><th>What It Means</th><th>Example</th></tr>
+      <tr><td>Endpoint</td><td>The URL you call</td><td><code>https://api.frankfurter.app/latest</code></td></tr>
+      <tr><td>HTTP GET</td><td>Read-only request — fetch data</td><td>Most data APIs use GET</td></tr>
+      <tr><td>HTTP POST</td><td>Send data to the API</td><td>Webhooks, form submissions</td></tr>
+      <tr><td>JSON</td><td>The format APIs return data in</td><td><code>{"USD": 1.08, "INR": 89.5}</code></td></tr>
+      <tr><td>Status code</td><td>Did it work?</td><td>200 = OK, 404 = not found, 500 = server error</td></tr>
+      <tr><td>Rate limit</td><td>How many calls allowed per minute</td><td>Free APIs: usually 100/day or 60/min</td></tr>
+      <tr><td>Pagination</td><td>Large results split into pages</td><td><code>page=1</code>, <code>offset=100</code></td></tr>
+      <tr><td>API key</td><td>Password to authenticate</td><td>Not needed for frankfurter.app</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: DE INGESTION FLOW -->
+  <div class="slide slide-content">
+    <h3>The DE Ingestion Flow for APIs</h3>
+    <ol class="order-list">
+      <li><strong>Call API</strong> — get JSON response</li>
+      <li><strong>Check status code</strong> — 200 = continue, anything else = raise error</li>
+      <li><strong>Parse JSON</strong> — convert to a Spark DataFrame</li>
+      <li><strong>Add audit columns</strong> — <code>ingestion_timestamp</code>, <code>source_url</code></li>
+      <li><strong>Save to a landing table</strong> — Delta format, <code>sandbox/</code> for this exploration</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE: SETUP -->
+  <div class="slide slide-content">
+    <h3>Setup — Connect via Unity Catalog External Location</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="cm"># Same external location the real pipeline uses (set up Day 2),</span>
+<span class="cm"># but we write under sandbox/ — deliberately NOT raw-data/ or gbmart.bronze.*</span>
+
+<span class="tbl">EXTERNAL_LOCATION</span> = <span class="str">"abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net"</span>
+<span class="tbl">sandbox_path</span> = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/sandbox/api_graphdb"</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Sandbox path: {sandbox_path}"</span>)</pre>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p>No <code>spark.conf.set()</code>, no storage key anywhere. Unity Catalog's External Location (set up in Day 2 HOL 1) already grants this cluster read/write access via a Managed Identity.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: LIVE DEMO -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — Call the frankfurter.app API</h3>
+    <div class="demo-label">LIVE CODE · RUN IN DATABRICKS</div>
+    <div class="two-col">
+      <div>
+<pre><span class="kw">import</span> requests, json
+
+api_url = <span class="str">"https://api.frankfurter.app/latest"</span>
+response = requests.<span class="fn">get</span>(api_url)
+
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Status code : {response.status_code}"</span>)
+
+<span class="kw">if</span> response.status_code == <span class="str">200</span>:
+    data = response.<span class="fn">json</span>()  <span class="cm"># parse JSON into a dict</span>
+    <span class="fn">print</span>(json.<span class="fn">dumps</span>(data, indent=<span class="str">2</span>))</pre>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>JSON field</th><th>Meaning</th></tr>
+          <tr><td><code>amount</code></td><td>Base amount the rates apply to (default 1.0)</td></tr>
+          <tr><td><code>base</code></td><td>The base currency, e.g. <code>"EUR"</code></td></tr>
+          <tr><td><code>date</code></td><td>The date these rates are valid as of</td></tr>
+          <tr><td><code>rates</code></td><td>Dict of 30+ target currencies → exchange rate</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: FLATTEN JSON -->
+  <div class="slide slide-content">
+    <h3>Flatten JSON → Spark DataFrame</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="kw">from</span> pyspark.sql <span class="kw">import</span> Row
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="cm"># One row per currency — flatten the nested rates dict</span>
+rows = [
+    <span class="fn">Row</span>(base_currency=data[<span class="str">"base"</span>], target_currency=currency,
+        exchange_rate=<span class="fn">float</span>(rate), rate_date=data[<span class="str">"date"</span>])
+    <span class="kw">for</span> currency, rate <span class="kw">in</span> data[<span class="str">"rates"</span>].<span class="fn">items</span>()
+]
+fx_df = spark.<span class="fn">createDataFrame</span>(rows)
+
+fx_df.write.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>) \
+      .<span class="fn">save</span>(<span class="fn">f</span><span class="str">"{sandbox_path}/fx_rates"</span>)</pre>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Idempotency for API data.</strong> APIs return <em>live</em> data — calling twice gives different results (rates change daily). Use <code>mode("overwrite")</code> for a live snapshot; use <code>mode("append")</code> with a <code>rate_date</code> column if you need history over time.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: COMMON API CHALLENGES -->
+  <div class="slide slide-content">
+    <h3>Common API Challenges</h3>
+    <table class="sql-table">
+      <tr><th>Challenge</th><th>What Happens</th><th>How to Handle</th></tr>
+      <tr><td>Rate limiting</td><td>API rejects calls after too many requests</td><td><code>time.sleep(1)</code> between calls; check headers</td></tr>
+      <tr><td>Pagination</td><td>API returns 100 rows per call, there are 10,000</td><td>Loop through pages until empty response</td></tr>
+      <tr><td>Schema change</td><td>API adds/removes fields without warning</td><td>Validate response shape before parsing</td></tr>
+      <tr><td>API downtime</td><td>API returns 500 or 503</td><td>Add retry logic with <code>try/except</code></td></tr>
+      <tr><td>Auth expiry</td><td>API key or token expires</td><td>Refresh token before each run</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: SECTION - GRAPH DATABASES -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 4</div>
+    <h2>Introduction to Graph Databases</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      A completely different way to store data — as <strong style="color:#38bdf8;">nodes and relationships</strong> instead of rows in tables joined by foreign keys.
+    </p>
+  </div>
+
+  <!-- SLIDE: WHAT IS A GRAPH DB -->
+  <div class="slide slide-content">
+    <h3>What Is a Graph Database?</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Picture a family tree or a mind-map — circles connected by labelled arrows. A graph database stores data exactly like that: <strong style="color:#e2e8f0;">nodes</strong> (entities) and <strong style="color:#e2e8f0;">relationships</strong> (connections between them).
+        </p>
+        <div class="highlight-box">
+          <p>The payoff: <em>"Which suppliers connect to customers who returned products?"</em> is a 4-table join in SQL — but a single Cypher traversal in a graph.</p>
+        </div>
+      </div>
+      <div>
+<pre>Relational DB (tables):        Graph DB (nodes + edges):
+
+customers table                (Customer: Raj)
++----+---------+                     |
+| id | name    |                   BOUGHT
++----+---------+                     |
+| 1  | Raj     |              (Product: iPhone)
++----+---------+                     |
+                                SUPPLIED_BY
+orders table                         |
++----+----+------------+      (Supplier: Apple Inc.)
+| id | cid| product_id |
++----+----+------------+</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: GLOBALMART AS A GRAPH -->
+  <div class="slide slide-content">
+    <h3>Illustrative Only — Modeling GlobalMart-Shaped Data as a Graph</h3>
+    <table class="sql-table">
+      <tr><th>Node</th><th>Relationship</th><th>Node</th></tr>
+      <tr><td>Customer</td><td>PLACED →</td><td>Order</td></tr>
+      <tr><td>Order</td><td>CONTAINS →</td><td>Product</td></tr>
+      <tr><td>Product</td><td>SUPPLIED_BY →</td><td>Supplier</td></tr>
+      <tr><td>Customer</td><td>LIVES_IN →</td><td>Address</td></tr>
+      <tr><td>Order</td><td>RETURNED_AS →</td><td>Return</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">Not a real deliverable.</strong> This is a familiar example to build intuition for re-modeling entities you already know as a graph. Nothing here writes back into Bronze/Silver/Gold, and <code>fact_sales</code> does not depend on it.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: NEO4J AURADB FREE -->
+  <div class="slide slide-content">
+    <h3>Free Tool: Neo4j AuraDB Free</h3>
+    <table class="sql-table">
+      <tr><th>Step</th><th>Action</th></tr>
+      <tr><td>1</td><td>Go to <code>neo4j.com/cloud/aura</code></td></tr>
+      <tr><td>2</td><td>Create free account</td></tr>
+      <tr><td>3</td><td>Create a free AuraDB instance</td></tr>
+      <tr><td>4</td><td>Download the connection credentials (URI + password)</td></tr>
+      <tr><td>5</td><td>Connect from Databricks using the <code>neo4j</code> Python driver</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: CYPHER BASICS -->
+  <div class="slide slide-content">
+    <h3>Cypher Query Language Basics</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Cypher is Neo4j's query language — designed to look like an ASCII drawing of the graph.</p>
+<pre><span class="cm">SQL:     SELECT * FROM customers WHERE city = 'Mumbai'</span>
+<span class="cm">Cypher:  MATCH (c:Customer {city: 'Mumbai'}) RETURN c</span></pre>
+      </div>
+      <div>
+<pre><span class="cm">-- Find all products a customer bought</span>
+<span class="kw">MATCH</span> (c:Customer {name: <span class="str">'Raj'</span>})-[:PLACED]->(o:Order)-[:CONTAINS]->(p:Product)
+<span class="kw">RETURN</span> p.name, p.price
+
+<span class="cm">-- Count orders per customer (like GROUP BY)</span>
+<span class="kw">MATCH</span> (c:Customer)-[:PLACED]->(o:Order)
+<span class="kw">RETURN</span> c.name, <span class="fn">COUNT</span>(o) <span class="kw">AS</span> total_orders
+<span class="kw">ORDER BY</span> total_orders <span class="kw">DESC</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: READING FROM NEO4J -->
+  <div class="slide slide-content">
+    <h3>Reading From Neo4j Into Databricks</h3>
+    <div class="two-col">
+      <div>
+<pre><span class="cm"># pip install neo4j</span>
+<span class="kw">from</span> neo4j <span class="kw">import</span> GraphDatabase
+
+driver = GraphDatabase.<span class="fn">driver</span>(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+
+<span class="kw">with</span> driver.<span class="fn">session</span>() <span class="kw">as</span> session:
+    result = session.<span class="fn">run</span>(<span class="str">"MATCH (c:Customer)-[:PLACED]->(o:Order) RETURN c.id, COUNT(o)"</span>)
+    rows = [<span class="fn">dict</span>(r) <span class="kw">for</span> r <span class="kw">in</span> result]</pre>
+      </div>
+      <div>
+<pre><span class="cm"># Land in the SAME sandbox/ location as the API demo, never bronze/</span>
+graph_df = spark.<span class="fn">createDataFrame</span>(rows)
+graph_df.write.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>) \
+    .<span class="fn">save</span>(sandbox_path + <span class="str">"/graph_customer_orders"</span>)</pre>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p>We will set up Neo4j AuraDB and run this during the hands-on (11:00 AM). For now — understand the concept. Cypher is easy once you think of it as drawing arrows.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE: RECAP -->
+  <div class="slide slide-content">
+    <h3>Recap</h3>
+    <table class="sql-table">
+      <tr><th>Topic</th><th>Key Takeaway</th></tr>
+      <tr><td>REST API</td><td>HTTP GET → JSON response → flatten → save to a landing table</td></tr>
+      <tr><td>Status codes</td><td>Always check 200 before processing</td></tr>
+      <tr><td>Rate limits</td><td>Don't hammer the API — add sleep, cache results</td></tr>
+      <tr><td>Graph DB</td><td>Nodes + Relationships — great for traversal queries</td></tr>
+      <tr><td>Cypher</td><td><code>MATCH (a)-[:REL]->(b) RETURN a, b</code> — reads like a drawing</td></tr>
+      <tr><td>Neo4j AuraDB Free</td><td>Free cloud Neo4j — use for bootcamp demos</td></tr>
+      <tr><td>Scope</td><td>Side-exploration only — none of this feeds Bronze/Silver/Gold or <code>fact_sales</code></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE: BRIDGE / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for the Hands-On</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Next up (11:00 AM – 1:00 PM): <strong style="color:#38bdf8;">Day3_HOL1 — Public API + GraphDB</strong>. Extend the API demo with multiple base currencies and historical rates, set up Neo4j AuraDB, seed a GlobalMart-shaped graph, and read it back into Databricks.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:900px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>REST APIs + Graph DBs are side-exploration patterns — not part of the 2-source pipeline</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>HOL 1 (11:00 AM): frankfurter.app extensions + Neo4j AuraDB hands-on</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Name GlobalMart's 2 real sources. Name today's 2 side-exploration patterns.</p>
+      </div>
+    </div>
+    <div style="margin-top:20px; color:#64748b; font-size:13px;">Then at 2:00 PM — ILT 2: Autoloader &amp; Schema Evolution Concepts</div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 1 | HOL — PySpark &amp; Spark SQL with ADLS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 1 · HOL — PySpark &amp; Spark SQL with ADLS</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 13</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Hands-On Lab: PySpark &amp; Spark SQL with ADLS</h1>
+    <p class="subtitle">Read a real customer file from ADLS, query it with Spark SQL, clean it with PySpark, and land it in Bronze as a Delta table</p>
+    <div class="badge">Day 1 &nbsp;·&nbsp; Hands-On Lab &nbsp;·&nbsp; 60 Minutes</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      Dataset: customers_010626.csv &nbsp;·&nbsp; 6,666 rows &nbsp;·&nbsp; 8 columns &nbsp;·&nbsp; Output: a Bronze Delta table
+    </div>
+  </div>
+
+  <!-- SLIDE 2: SCHEDULE -->
+  <div class="slide slide-section">
+    <div class="section-tag">Where You Are</div>
+    <h2>Day 1 Schedule</h2>
+    <table class="sql-table" style="margin-top:24px; max-width:800px;">
+      <tr><th>Time</th><th>Session</th></tr>
+      <tr><td>9:00 – 10:30</td><td>ILT 1 — GlobalMart Problem Statement</td></tr>
+      <tr><td>10:30 – 12:00</td><td>ILT 2 — Azure / ADLS / Lakehouse vs Warehouse</td></tr>
+      <tr><td>12:00 – 13:00</td><td>ILT 3 — Medallion Architecture &amp; Delta Lake</td></tr>
+      <tr><td>14:00 – 15:00</td><td>ILT 4 — Intro to Databricks + PySpark &amp; Spark SQL</td></tr>
+      <tr><td>15:00 – 16:00 ← now</td><td>HOL — PySpark &amp; Spark SQL with ADLS</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 3: DATASET -->
+  <div class="slide slide-content">
+    <h3>The Dataset: customers_010626.csv</h3>
+    <table class="sql-table">
+      <tr><th>Column</th><th>Data Type</th><th>Sample Value</th><th>Notes</th></tr>
+      <tr><td>CustomerID</td><td>String</td><td><code>CUST-00042</code></td><td>Unique identifier</td></tr>
+      <tr><td>FirstName</td><td>String</td><td><code>Ahana&nbsp;&nbsp;</code></td><td>⚠ trailing spaces — needs trim</td></tr>
+      <tr><td>LastName</td><td>String</td><td><code>Sharma</code></td><td>—</td></tr>
+      <tr><td>Email</td><td>String</td><td><code>ahana@gmail.com</code></td><td>⚠ some rows have embedded spaces</td></tr>
+      <tr><td>PhoneNumber</td><td>String</td><td><code>917890123456</code></td><td>Indian 12-digit, starts with 91</td></tr>
+      <tr><td>DateOfBirth</td><td>Date</td><td><code>1992-04-15</code></td><td>Range: 1974–2006</td></tr>
+      <tr><td>RegistrationDate</td><td>Date</td><td><code>2019-11-03</code></td><td>Range: 1995–2024</td></tr>
+      <tr><td>PreferredPaymentMethodID</td><td>String</td><td><code>PM-002</code></td><td>PM-001 to PM-004</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><span class="pill pill-blue">6,666 rows</span> <span class="pill pill-blue">8 columns</span> <span class="pill pill-green">Raw CSV → ADLS → Bronze Delta</span></p>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: ADLS PATH STRUCTURE -->
+  <div class="slide slide-content">
+    <h3>ADLS Path Structure</h3>
+<pre>Storage Account: YOUR_STORAGE_ACCOUNT_NAME
+   Container: amazon-data
+      raw/
+         customers/
+            customers_010626.csv     ← you uploaded this
+      bronze/
+         customers/                  ← Delta table will be written here
+
+Protocol: abfss://amazon-data@YOUR_ACCOUNT.dfs.core.windows.net/raw/customers</pre>
+    <div class="highlight-box">
+      <p><strong style="color:#38bdf8;">abfss://</strong> = Azure Blob File System Secure. ADLS Gen2 only works with this protocol in Databricks. <strong>Hierarchical Namespace</strong> must be enabled on the storage account — you did this at setup time.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: DEMO - SETUP -->
+  <div class="slide slide-demo">
+    <h3>Live Demo: Connect to ADLS</h3>
+    <div class="demo-label">Run this cell first, every session</div>
+<pre><span class="cm"># ─── ADLS Connection Setup ───</span>
+storage_account_name = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span>   <span class="cm"># ← your storage account name</span>
+container_name        = <span class="str">"amazon-data"</span>
+storage_account_key   = <span class="str">"YOUR_STORAGE_ACCOUNT_KEY"</span>   <span class="cm"># ← from Portal → Access Keys → key1</span>
+
+spark.conf.<span class="fn">set</span>(
+    <span class="fn">f</span><span class="str">"fs.azure.account.key.{storage_account_name}.dfs.core.windows.net"</span>,
+    storage_account_key
+)
+
+base_path   = <span class="fn">f</span><span class="str">"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net"</span>
+raw_path    = <span class="fn">f</span><span class="str">"{base_path}/raw/customers"</span>
+bronze_path = <span class="fn">f</span><span class="str">"{base_path}/bronze/customers"</span>
+
+<span class="fn">print</span>(<span class="str">"Connection successful!"</span>)</pre>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p><strong style="color:#f59e0b;">Never paste your real key into a notebook you share or push to GitHub.</strong> Replace it with the placeholder before submitting.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: DEMO - PHASE A -->
+  <div class="slide slide-demo">
+    <h3>Phase A — Understand the Data</h3>
+    <div class="demo-label">Read the CSV, then look at what you got</div>
+    <div class="two-col">
+      <div>
+<pre>customers_df = (
+    spark.read
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>)
+    .option(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>)
+    .csv(<span class="fn">f</span><span class="str">"{raw_path}/customers_010626.csv"</span>)
+)
+customers_df.printSchema()
+customers_df.show(5, truncate=<span class="kw">False</span>)
+print(customers_df.count())</pre>
+      </div>
+      <div class="card">
+        <h4>What each method does</h4>
+        <ul>
+          <li><code>printSchema()</code> — column names + Spark data types</li>
+          <li><code>show(n, truncate=False)</code> — n rows, full values</li>
+          <li><code>count()</code> — total rows, triggers a full scan</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: PHASE B - SPARK SQL CHEATSHEET -->
+  <div class="slide slide-content">
+    <h3>Phase B — Spark SQL</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">Register the DataFrame as a temp view, then query it exactly like a SQL table:</p>
+<pre>customers_df.createOrReplaceTempView(<span class="str">"customers"</span>)</pre>
+    <table class="sql-table" style="margin-top:14px;">
+      <tr><th>Function / Keyword</th><th>What It Does</th><th>Example</th></tr>
+      <tr><td><code>YEAR(col)</code></td><td>Extracts year from a Date column</td><td><code>YEAR(RegistrationDate)</code></td></tr>
+      <tr><td><code>TRIM(col)</code></td><td>Removes leading &amp; trailing spaces</td><td><code>TRIM(FirstName)</code></td></tr>
+      <tr><td><code>BETWEEN a AND b</code></td><td>Filters values in a range</td><td><code>DateOfBirth BETWEEN '1990-01-01' AND '1999-12-31'</code></td></tr>
+      <tr><td><code>GROUP BY col</code></td><td>Groups rows by distinct values</td><td><code>GROUP BY PreferredPaymentMethodID</code></td></tr>
+      <tr><td><code>ORDER BY col DESC</code></td><td>Sorts results, highest first</td><td><code>ORDER BY customer_count DESC</code></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 8: DEMO - SAMPLE QUERIES -->
+  <div class="slide slide-demo">
+    <h3>Live Demo: Three Sample Queries</h3>
+    <div class="demo-label">Run each one, then answer the workbook questions</div>
+<pre><span class="cm">-- Payment method distribution</span>
+<span class="kw">SELECT</span> PreferredPaymentMethodID, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> customer_count
+<span class="kw">FROM</span> customers <span class="kw">GROUP BY</span> PreferredPaymentMethodID <span class="kw">ORDER BY</span> customer_count <span class="kw">DESC</span>
+
+<span class="cm">-- Registrations per year</span>
+<span class="kw">SELECT</span> <span class="fn">YEAR</span>(RegistrationDate) <span class="kw">AS</span> yr, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> cnt
+<span class="kw">FROM</span> customers <span class="kw">GROUP BY</span> yr <span class="kw">ORDER BY</span> yr <span class="kw">DESC</span>
+
+<span class="cm">-- Customers born in the 1990s</span>
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">AS</span> nineties_customers
+<span class="kw">FROM</span> customers
+<span class="kw">WHERE</span> DateOfBirth <span class="kw">BETWEEN</span> <span class="str">'1990-01-01'</span> <span class="kw">AND</span> <span class="str">'1999-12-31'</span></pre>
+  </div>
+
+  <!-- SLIDE 9: PHASE C CHEATSHEET -->
+  <div class="slide slide-content">
+    <h3>Phase C — PySpark Transformations</h3>
+    <table class="sql-table">
+      <tr><th>Operation</th><th>Method</th><th>Example</th></tr>
+      <tr><td>Filter rows</td><td><code>filter(condition)</code></td><td><code>df.filter(year(col("RegistrationDate")) &gt;= 2020)</code></td></tr>
+      <tr><td>Add a column</td><td><code>withColumn(name, expr)</code></td><td><code>df.withColumn("age", floor(datediff(current_date(), col("DateOfBirth")) / 365))</code></td></tr>
+      <tr><td>Conditional value</td><td><code>when(cond, val).otherwise(val)</code></td><td><code>when(year(col("RegistrationDate")) &lt; 2010, "Gold").otherwise("Bronze")</code></td></tr>
+      <tr><td>Remove spaces</td><td><code>trim(col)</code></td><td><code>df.withColumn("FirstName", trim(col("FirstName")))</code></td></tr>
+      <tr><td>Group &amp; count</td><td><code>groupBy(col).count()</code></td><td><code>df.groupBy("LoyaltyTier").count()</code></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 10: DEMO - AGE + LOYALTY TIER -->
+  <div class="slide slide-demo">
+    <h3>Live Demo: Age Column &amp; Loyalty Tier</h3>
+    <div class="demo-label">Two new computed columns from one date field</div>
+    <div class="two-col">
+      <div>
+        <h4 style="color:#f59e0b; font-size:14px; margin-bottom:8px;">Age Column</h4>
+<pre><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> floor, datediff, current_date
+
+df.withColumn(<span class="str">"age"</span>,
+    floor(datediff(current_date(), col(<span class="str">"DateOfBirth"</span>)) / 365)
+)</pre>
+      </div>
+      <div>
+        <h4 style="color:#f59e0b; font-size:14px; margin-bottom:8px;">Loyalty Tier</h4>
+<pre><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> when, year, col
+
+df.withColumn(<span class="str">"LoyaltyTier"</span>,
+    when(year(col(<span class="str">"RegistrationDate"</span>)) &lt; 2010, <span class="str">"Gold"</span>)
+    .when(year(col(<span class="str">"RegistrationDate"</span>)) &lt; 2020, <span class="str">"Silver"</span>)
+    .otherwise(<span class="str">"Bronze"</span>)
+)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: DEMO - WRITE TO BRONZE -->
+  <div class="slide slide-demo">
+    <h3>Live Demo: Write to Bronze &amp; Verify</h3>
+    <div class="demo-label">Persist the cleaned DataFrame as Delta</div>
+    <div class="two-col">
+      <div>
+<pre>df.write \
+    .format(<span class="str">"delta"</span>) \
+    .mode(<span class="str">"overwrite"</span>) \
+    .save(bronze_path)</pre>
+      </div>
+      <div>
+<pre>bronze_df = spark.read \
+    .format(<span class="str">"delta"</span>) \
+    .load(bronze_path)
+print(bronze_df.count())</pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Writing creates a <code>_delta_log/</code> folder automatically — the ACID transaction log. Use <code>overwrite</code> for a full refresh, <code>append</code> when new daily files arrive.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: CHECKLIST -->
+  <div class="slide slide-content">
+    <h3>Submission Checklist</h3>
+    <div class="three-col">
+      <div class="card">
+        <h4>Azure Setup</h4>
+        <ul>
+          <li>Storage account created, Hierarchical Namespace enabled</li>
+          <li>Container <code>amazon-data</code> created (private access)</li>
+          <li><code>raw/customers/</code> folder created</li>
+          <li><code>customers_010626.csv</code> uploaded</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Databricks Connection</h4>
+        <ul>
+          <li>Access key located and copied</li>
+          <li>Connection cell ran — "Connection successful!" printed</li>
+          <li>Total row count confirmed</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Queries &amp; Cleanup</h4>
+        <ul>
+          <li>Payment method distribution query completed</li>
+          <li>Registrations-per-year query completed</li>
+          <li>1990s customers query completed</li>
+          <li><code>LoyaltyTier</code> column added, counts recorded</li>
+          <li><code>FirstName</code> spaces fixed with <code>trim()</code></li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">Before uploading:</strong> replace your real <code>storage_account_key</code> with the placeholder <code>YOUR_STORAGE_ACCOUNT_KEY</code>.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Nice Work</div>
+    <h2>Day 1 Complete</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      You connected Databricks to ADLS, queried real data with Spark SQL, cleaned it with PySpark, and wrote your first Bronze Delta table.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:860px;">
+      <div class="card">
+        <h4>✅ What You Built</h4>
+        <p>A working ADLS + Databricks connection and a Bronze Delta table with a verified row count.</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>The bootcamp continues the ingestion story — deeper into Delta Lake and the patterns you'll reuse all the way through.</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Before You Go</h4>
+        <p>Confirm every checklist item above and submit your notebook with the key removed.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

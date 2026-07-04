@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 11 | ILT 2 — Cost Awareness &amp; Environment Strategy</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 11 · ILT 2 — Cost Awareness &amp; Environment Strategy</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 18</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Cost Awareness &amp; Environment Strategy</h1>
+    <p class="subtitle">How a production team keeps a Databricks pipeline from silently costing too much — and keeps a dev mistake from ever touching prod data</p>
+    <div class="badge">Day 11 &nbsp;·&nbsp; ILT 2 &nbsp;·&nbsp; 3:00 PM – 4:00 PM &nbsp;·&nbsp; Standalone Architecture Session</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → Cost Drivers · Cost-Aware Practices · Environment Strategy (dev/test/prod) · Promotion Workflow
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering Today</h2>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px; max-width:760px;">This is a standalone architecture session — the course calendar lists it separately from the main Bronze → Silver → Gold pipeline build, and it stays that way here too. Nothing in it depends on Days 1–10's pipeline work.</p>
+    <div class="three-col" style="margin-top:14px;">
+      <div class="card">
+        <h4>💰 Cost Drivers</h4>
+        <ul>
+          <li>Cluster uptime, job vs. all-purpose clusters</li>
+          <li>Photon &amp; Serverless, storage vs. compute</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🎛️ Cost-Aware Practices</h4>
+        <ul>
+          <li><code>autotermination_minutes</code>, right-sizing, spot instances</li>
+          <li>Job clusters over all-purpose for scheduled pipelines</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🗂️ Environment Strategy</h4>
+        <ul>
+          <li>Separate dev/test/prod catalogs and credentials</li>
+          <li>A Git-based promotion workflow</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box success" style="margin-top:18px;">
+      <p><strong style="color:#22c55e;">This session only ever reads metadata.</strong> It never creates, starts, resizes, or edits a real cluster, job, warehouse, or pipeline. Every query is a <code>SHOW</code> command, a read-only <code>SELECT</code> on a system table, or plain Python building/printing a dictionary or doing arithmetic.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: SECTION - PART 1 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 1</div>
+    <h2>Cost Drivers in Databricks</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Before you can be cost-aware, you need to know what actually generates the bill. Three drivers exist — and they are not equally sized.
+    </p>
+  </div>
+
+  <!-- SLIDE 4: WHAT DRIVES THE BILL -->
+  <div class="slide slide-content">
+    <h3>What Actually Drives the Bill</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
+          Think of a running cluster like a taxi meter that keeps ticking whether the taxi is moving or just parked at the curb. Two meters run at the same time for every minute a cluster is up, whether or not it's doing useful work: Databricks' own usage-based <strong>DBU</strong> fee, and Azure's <strong>cloud VM cost</strong> for the underlying driver + worker machines.
+        </p>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">This is the single biggest lever in this whole session.</strong> A cluster sitting idle between two meetings costs exactly the same, minute for minute, as a cluster running a real job.</p>
+        </div>
+      </div>
+      <div>
+        <table class="sql-table">
+          <tr><th>Driver</th><th>In short</th></tr>
+          <tr><td>1. Cluster uptime</td><td>DBU + cloud VM cost, billed every minute the cluster is up</td></tr>
+          <tr><td>2. Job vs. all-purpose clusters</td><td>Job clusters auto-terminate; all-purpose can be left running</td></tr>
+          <tr><td>3. Photon &amp; Serverless</td><td>Often less wall-clock time, or no idle time billed at all</td></tr>
+          <tr><td>4. Storage</td><td>Real cost, but genuinely small next to compute</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: JOB VS ALL-PURPOSE -->
+  <div class="slide slide-content">
+    <h3>Job Clusters vs. All-Purpose Clusters</h3>
+    <table class="sql-table">
+      <tr><th></th><th>All-Purpose / Interactive Cluster</th><th>Job Cluster</th></tr>
+      <tr><td>Created</td><td>Manually, or attached to for notebook work</td><td>Automatically, per job run</td></tr>
+      <tr><td>Lifetime</td><td>Stays up until manually stopped or idle-auto-terminated</td><td>Terminates automatically the instant the job finishes</td></tr>
+      <tr><td>Best for</td><td>Exploration, development, ad-hoc analysis, teaching</td><td>Scheduled / production pipelines</td></tr>
+      <tr><td>Typical risk</td><td>Left running overnight or over a weekend by accident</td><td>Essentially none — it cannot outlive the job</td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><strong style="color:#22c55e;">Photon</strong> often finishes work faster on the same cluster, which can reduce total cost even at a higher per-DBU rate. <strong style="color:#22c55e;">Serverless</strong> compute removes cluster startup/idle time from the equation entirely — you pay for query execution, not for a cluster waiting for the next command.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: WHERE YOU'D SEE THE NUMBERS -->
+  <div class="slide slide-content">
+    <h3>Where Would You Actually See These Numbers?</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Two Unity Catalog system tables exist for exactly this. Both usually require an account admin to grant access — the companion notebook tries them for real against this workspace, wrapped in <code>try/except</code> so a permissions failure explains itself instead of breaking <strong>Run All</strong>.</p>
+        <table class="sql-table">
+          <tr><th>System table</th><th>What it holds</th></tr>
+          <tr><td><code>system.billing.usage</code></td><td>One row per day per SKU, with DBUs consumed</td></tr>
+          <tr><td><code>system.compute.clusters</code></td><td>Every cluster ever created, its source (JOB vs. UI/API), and its <code>auto_termination_minutes</code></td></tr>
+        </table>
+      </div>
+      <div>
+<pre><span class="kw">try</span>:
+    billing_df = spark.<span class="fn">sql</span>(<span class="str">"""
+        SELECT usage_date, sku_name, usage_quantity
+        FROM system.billing.usage
+        ORDER BY usage_date DESC LIMIT 10
+    """</span>)
+    billing_df.<span class="fn">display</span>()
+<span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> e:
+    <span class="fn">print</span>(<span class="str">"Needs admin-granted access to the system catalog."</span>)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: SECTION - PART 2 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 2</div>
+    <h2>Cost Awareness Practices</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Knowing the drivers is step one. Four concrete practices turn "we should be more cost-aware" into things you actually configure.
+    </p>
+  </div>
+
+  <!-- SLIDE 8: FOUR PRACTICES -->
+  <div class="slide slide-content">
+    <h3>Four Concrete Practices</h3>
+    <ol class="order-list">
+      <li><strong>Set <code>autotermination_minutes</code></strong> on every interactive cluster — there's rarely a good reason to leave it at <code>0</code> (never) outside a short, actively-supervised session</li>
+      <li><strong>Right-size the cluster to the data</strong> — a 32-core cluster reading a 10&nbsp;GB table isn't "extra safe," it's idle capacity you're paying for</li>
+      <li><strong>Use spot (preemptible) instances</strong> for non-critical batch work — a fraction of on-demand price, with automatic on-demand fallback</li>
+      <li><strong>Use job clusters, not all-purpose clusters</strong>, for scheduled/production pipelines — the single highest-leverage habit in this session</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 9: CONFIGS AS DATA -->
+  <div class="slide slide-content">
+    <h3>Wasteful vs. Cost-Aware Configs, as Plain Data</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">These are ordinary Python dictionaries, built and printed for comparison only. Nothing here calls a cluster API — no cluster is created, started, resized, or edited by running this cell.</p>
+<pre><span class="cm"># WASTEFUL -- all-purpose, left running</span>
+wasteful_config = {
+    <span class="str">"num_workers"</span>: <span class="col">8</span>,
+    <span class="str">"node_type_id"</span>: <span class="str">"Standard_DS5_v2"</span>,   <span class="cm"># oversized for a 10GB table</span>
+    <span class="str">"autotermination_minutes"</span>: <span class="col">0</span>,        <span class="cm"># 0 = NEVER auto-terminates, not "fast"</span>
+}
+
+<span class="cm"># COST-AWARE -- job cluster for a scheduled production pipeline</span>
+cost_aware_job_config = {
+    <span class="str">"num_workers"</span>: <span class="col">4</span>,
+    <span class="str">"node_type_id"</span>: <span class="str">"Standard_DS4_v2"</span>,
+    <span class="str">"azure_attributes"</span>: {<span class="str">"availability"</span>: <span class="str">"SPOT_WITH_FALLBACK_AZURE"</span>},
+    <span class="cm"># no autotermination_minutes key needed -- ends when the job ends</span>
+}</pre>
+  </div>
+
+  <!-- SLIDE 10: COST ESTIMATE -->
+  <div class="slide slide-content">
+    <h3>A Genuinely Runnable Cost Estimate</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Pure Python arithmetic — always-on all-purpose cluster vs. a job cluster that only runs during actual processing. GlobalMart's real nightly Bronze → Silver → Gold run takes about 1.5 hours of actual processing.</p>
+    <table class="sql-table">
+      <tr><th>Pattern (4-node cluster, illustrative rates)</th><th>Illustrative monthly cost</th></tr>
+      <tr><td>Always-on all-purpose cluster (24h/day &times; 30 days)</td><td>$5,760.00</td></tr>
+      <tr><td>Job cluster (~1.5h/day actual processing &times; 30 days)</td><td>$360.00</td></tr>
+      <tr><td>Illustrative savings</td><td>$5,400.00 / month (93.75% less)</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">Every rate above is an illustrative placeholder</strong> for teaching the arithmetic pattern (usage-based cost &times; idle hours) — not live Azure Databricks pricing. Always check current pricing pages for real rates. The shape of the result — job clusters dramatically cheaper for anything that doesn't run 24/7 — holds at real pricing too.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: SECTION - PART 3 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 3</div>
+    <h2>Environment Strategy (dev/test/prod)</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      Every notebook since Day 2 has pointed at one real, shared catalog: <strong style="color:#38bdf8;">gbmart</strong>. Right for a training cohort — not how a real production team would run it.
+    </p>
+  </div>
+
+  <!-- SLIDE 12: THREE LAYERS -->
+  <div class="slide slide-content">
+    <h3>Three Layers of Separation, Not Just One</h3>
+    <table class="sql-table">
+      <tr><th>Layer</th><th>Why it matters</th></tr>
+      <tr><td>Separate catalogs (or catalog + schema) per environment</td><td>A bad <code>DROP TABLE</code> or broken <code>MERGE</code> in dev cannot touch a byte of prod — it isn't pointed at prod's catalog at all</td></tr>
+      <tr><td>Separate external locations / storage credentials per environment</td><td>Even if dev code referenced a prod path by mistake, the dev credential has no grant on prod's ADLS container — it fails on a permissions error, not a deleted file</td></tr>
+      <tr><td>A promotion workflow, not hand-editing</td><td>Code moves dev &rarr; test &rarr; prod through Git branches and CI, never by typing directly into the prod notebook</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p>Some teams use a single catalog with environment-tagged schemas instead of three catalogs when catalog-per-environment isn't practical. Either is a legitimate choice — what matters is dev and prod are never the same namespace.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: DEV/TEST/PROD TARGET -->
+  <div class="slide slide-content">
+    <h3>Illustrative Dev/Test/Prod Target State</h3>
+    <table class="sql-table">
+      <tr><th>Environment</th><th>Catalog</th><th>External Location</th><th>Storage Credential</th></tr>
+      <tr><td>Dev</td><td><code>gbmart_dev</code></td><td><code>gbmart-dev-ext-loc</code></td><td><code>ecomprojectscredentials_dev</code></td></tr>
+      <tr><td>Test</td><td><code>gbmart_test</code></td><td><code>gbmart-test-ext-loc</code></td><td><code>ecomprojectscredentials_test</code></td></tr>
+      <tr><td>Prod</td><td><code>gbmart</code></td><td><code>gbmart-ext-loc</code></td><td><code>ecomprojectscredentials</code></td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><strong style="color:#22c55e;">The one catalog that IS real and live all course is <code>gbmart</code></strong> — the prod-like environment. Everything since Day 2 has written directly to it. That's completely fine for a training cohort; a real team inserts dev and test catalogs between a developer's laptop and this one.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: GROUNDING IN WHAT'S REAL -->
+  <div class="slide slide-content">
+    <h3>Grounding This in What's Real, Right Now</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px;">The companion notebook runs these live against the actual workspace — genuinely safe, read-only metadata reads — then checks the illustrative dev/test/prod names against what actually exists today.</p>
+      </div>
+      <div>
+<pre><span class="cm">-- Real, read-only metadata reads -- zero cost, zero risk</span>
+<span class="kw">SHOW</span> <span class="kw">CATALOGS</span>;
+<span class="kw">SHOW</span> <span class="kw">SCHEMAS</span> <span class="kw">IN</span> <span class="tbl">gbmart</span>;
+<span class="cm">-- bronze / silver / gold are the three you've built</span>
+<span class="cm">-- against since Day 2.</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: SECTION - PART 4 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 4</div>
+    <h2>Promotion Workflow</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      The rule: prod is only ever changed by a promoted, reviewed change — never by opening a prod notebook and editing it live.
+    </p>
+  </div>
+
+  <!-- SLIDE 16: PROMOTION DIAGRAM -->
+  <div class="slide slide-content">
+    <h3>Code Moves, Prod Doesn't Get Hand-Edited</h3>
+    <div class="two-col">
+      <div>
+<pre>dev branch (Databricks Repos)
+  edit + test against gbmart_dev
+        |
+        v
+Pull Request -> CI runs lint / unit tests
+        |
+        v
+Merge to main -> Deploy to TEST
+        |         (smoke test vs gbmart_test)
+        v
+Promote to PROD -> same reviewed code
+                   now points at gbmart,
+                   deployed by CI/CD</pre>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">Common failure mode this prevents:</strong> someone fixes an urgent bug directly in the prod notebook to "save time." The fix works, but it never gets backported into the dev/Git version — so the next legitimate deployment silently reverts it. Promotion-only changes make this structurally impossible.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 17: KEY TAKEAWAYS -->
+  <div class="slide slide-section">
+    <div class="section-tag">Wrap-Up</div>
+    <h2>Key Takeaways</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>💰 Cost</h4>
+        <ul>
+          <li>Cluster uptime is the dominant cost driver — DBU + VM cost accrue every minute, working or not</li>
+          <li>Job clusters beat all-purpose for anything scheduled</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🗂️ Environment</h4>
+        <ul>
+          <li>Separation needs separate catalogs AND separate credentials, not just a schema name</li>
+          <li><code>gbmart</code> is this course's real prod-like environment</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔁 Promotion</h4>
+        <ul>
+          <li>Prod changes only through Git + CI, never a hand-edit</li>
+          <li>Databricks Repos is what makes promotion possible at all</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 18: SELF-CHECK / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>Self-Check</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      Why does an idle all-purpose cluster cost the same as a busy one? What does <code>autotermination_minutes: 0</code> actually mean? Which catalog have you been treating as "prod" since Day 2?
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:820px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p>3 cost drivers, 4 cost-aware practices, 3 layers of environment separation, 1 promotion rule</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>Day 12 ILT 1: Data Governance — Unity Catalog</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Discussion Prompt</h4>
+        <p>If <code>gbmart</code> is the only catalog today, what's the lowest-effort first step toward dev/test/prod separation?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>
