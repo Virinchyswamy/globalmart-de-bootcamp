@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Day 1 | HOL — PySpark &amp; Spark SQL with ADLS</title>
+<title>Day 1 | HOL — PySpark &amp; Spark SQL with Databricks Volumes</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
@@ -119,7 +119,7 @@
 <body>
 
 <nav>
-  <div class="logo">DAY 1 · HOL — PySpark &amp; Spark SQL with ADLS</div>
+  <div class="logo">DAY 1 · HOL — PySpark &amp; Spark SQL with Databricks Volumes</div>
   <div class="controls">
     <button onclick="changeSlide(-1)">&#8592; Prev</button>
     <span class="slide-counter" id="counter">1 / 13</span>
@@ -131,11 +131,11 @@
 
   <!-- SLIDE 1: COVER -->
   <div class="slide slide-cover active">
-    <h1>Hands-On Lab: PySpark &amp; Spark SQL with ADLS</h1>
-    <p class="subtitle">Read a real customer file from ADLS, query it with Spark SQL, clean it with PySpark, and land it in Bronze as a Delta table</p>
+    <h1>Hands-On Lab: PySpark &amp; Spark SQL with Databricks Volumes</h1>
+    <p class="subtitle">Upload real GlobalMart data into a Volume, query it with Spark SQL, transform it with PySpark, and land it in Bronze as Delta tables — no storage key required</p>
     <div class="badge">Day 1 &nbsp;·&nbsp; Hands-On Lab &nbsp;·&nbsp; 60 Minutes</div>
     <div style="margin-top:36px; color:#475569; font-size:13px;">
-      Dataset: customers_010626.csv &nbsp;·&nbsp; 6,666 rows &nbsp;·&nbsp; 8 columns &nbsp;·&nbsp; Output: a Bronze Delta table
+      Datasets: customers · orders · products &nbsp;·&nbsp; ~7,000 rows combined &nbsp;·&nbsp; Output: 3 Bronze Delta tables
     </div>
   </div>
 
@@ -149,85 +149,81 @@
       <tr><td>10:30 – 12:00</td><td>ILT 2 — Azure / ADLS / Lakehouse vs Warehouse</td></tr>
       <tr><td>12:00 – 13:00</td><td>ILT 3 — Medallion Architecture &amp; Delta Lake</td></tr>
       <tr><td>14:00 – 15:00</td><td>ILT 4 — Intro to Databricks + PySpark &amp; Spark SQL</td></tr>
-      <tr><td>15:00 – 16:00 ← now</td><td>HOL — PySpark &amp; Spark SQL with ADLS</td></tr>
+      <tr><td>15:00 – 16:00 ← now</td><td>HOL — PySpark &amp; Spark SQL with Databricks Volumes</td></tr>
     </table>
   </div>
 
-  <!-- SLIDE 3: DATASET -->
+  <!-- SLIDE 3: DATASETS -->
   <div class="slide slide-content">
-    <h3>The Dataset: customers_010626.csv</h3>
+    <h3>The Three Datasets</h3>
     <table class="sql-table">
-      <tr><th>Column</th><th>Data Type</th><th>Sample Value</th><th>Notes</th></tr>
-      <tr><td>CustomerID</td><td>String</td><td><code>CUST-00042</code></td><td>Unique identifier</td></tr>
-      <tr><td>FirstName</td><td>String</td><td><code>Ahana&nbsp;&nbsp;</code></td><td>⚠ trailing spaces — needs trim</td></tr>
-      <tr><td>LastName</td><td>String</td><td><code>Sharma</code></td><td>—</td></tr>
-      <tr><td>Email</td><td>String</td><td><code>ahana@gmail.com</code></td><td>⚠ some rows have embedded spaces</td></tr>
-      <tr><td>PhoneNumber</td><td>String</td><td><code>917890123456</code></td><td>Indian 12-digit, starts with 91</td></tr>
-      <tr><td>DateOfBirth</td><td>Date</td><td><code>1992-04-15</code></td><td>Range: 1974–2006</td></tr>
-      <tr><td>RegistrationDate</td><td>Date</td><td><code>2019-11-03</code></td><td>Range: 1995–2024</td></tr>
-      <tr><td>PreferredPaymentMethodID</td><td>String</td><td><code>PM-002</code></td><td>PM-001 to PM-004</td></tr>
+      <tr><th>File</th><th>Rows</th><th>Key Columns</th></tr>
+      <tr><td><code>ex_customers.csv</code></td><td>336</td><td><code>customer_id</code>, <code>customer_name</code>, <code>segment</code>, <code>postal_code</code>, <code>joining_date</code></td></tr>
+      <tr><td><code>ex_orders.csv</code></td><td>4,909</td><td><code>order_id</code>, <code>customer_id</code>, <code>order_status</code>, <code>order_purchase_date</code>, <code>order_delivered_date</code></td></tr>
+      <tr><td><code>ex_products.csv</code></td><td>1,778</td><td><code>product_id</code>, <code>category</code>, <code>manufacturer</code>, <code>weight</code></td></tr>
     </table>
     <div class="highlight-box" style="margin-top:14px;">
-      <p><span class="pill pill-blue">6,666 rows</span> <span class="pill pill-blue">8 columns</span> <span class="pill pill-green">Raw CSV → ADLS → Bronze Delta</span></p>
+      <p><span class="pill pill-blue">customer_id links customers ↔ orders</span> <span class="pill pill-amber">products stands alone in this exercise</span> <span class="pill pill-green">Raw CSV → Volume → Bronze Delta</span></p>
     </div>
   </div>
 
-  <!-- SLIDE 4: ADLS PATH STRUCTURE -->
+  <!-- SLIDE 4: VOLUME PATH STRUCTURE -->
   <div class="slide slide-content">
-    <h3>ADLS Path Structure</h3>
-<pre>Storage Account: YOUR_STORAGE_ACCOUNT_NAME
-   Container: amazon-data
-      raw/
+    <h3>Unity Catalog Volume Path Structure</h3>
+<pre>Catalog: YOUR_CATALOG   (commonly "workspace")
+   Schema: YOUR_SCHEMA   (your own name)
+      Volume: raw_data
          customers/
-            customers_010626.csv     ← you uploaded this
-      bronze/
-         customers/                  ← Delta table will be written here
+            ex_customers.csv     ← you uploaded this
+         orders/
+            ex_orders.csv        ← you uploaded this
+         products/
+            ex_products.csv      ← you uploaded this
+         bronze/                 ← Delta tables will be written here
 
-Protocol: abfss://amazon-data@YOUR_ACCOUNT.dfs.core.windows.net/raw/customers</pre>
+Path format: /Volumes/YOUR_CATALOG/YOUR_SCHEMA/raw_data/customers/ex_customers.csv</pre>
     <div class="highlight-box">
-      <p><strong style="color:#38bdf8;">abfss://</strong> = Azure Blob File System Secure. ADLS Gen2 only works with this protocol in Databricks. <strong>Hierarchical Namespace</strong> must be enabled on the storage account — you did this at setup time.</p>
+      <p><strong style="color:#38bdf8;">A Volume is already inside Unity Catalog.</strong> No <code>abfss://</code>, no storage account, no access key — the same three-level <code>catalog.schema.object</code> namespace you'll use for every table later in this course, just for files instead of rows.</p>
     </div>
   </div>
 
   <!-- SLIDE 5: DEMO - SETUP -->
   <div class="slide slide-demo">
-    <h3>Live Demo: Connect to ADLS</h3>
-    <div class="demo-label">Run this cell first, every session</div>
-<pre><span class="cm"># ─── ADLS Connection Setup ───</span>
-storage_account_name = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span>   <span class="cm"># ← your storage account name</span>
-container_name        = <span class="str">"amazon-data"</span>
-storage_account_key   = <span class="str">"YOUR_STORAGE_ACCOUNT_KEY"</span>   <span class="cm"># ← from Portal → Access Keys → key1</span>
+    <h3>Live Demo: Read From Your Volume</h3>
+    <div class="demo-label">Run this cell first, every session — no key required</div>
+<pre><span class="cm"># ─── Volume Setup ───</span>
+volume_path = <span class="str">"/Volumes/YOUR_CATALOG/YOUR_SCHEMA/raw_data"</span>   <span class="cm"># ← your Volume path</span>
 
-spark.conf.<span class="fn">set</span>(
-    <span class="fn">f</span><span class="str">"fs.azure.account.key.{storage_account_name}.dfs.core.windows.net"</span>,
-    storage_account_key
-)
+customers_path = <span class="fn">f</span><span class="str">"{volume_path}/customers/ex_customers.csv"</span>
+orders_path    = <span class="fn">f</span><span class="str">"{volume_path}/orders/ex_orders.csv"</span>
+products_path  = <span class="fn">f</span><span class="str">"{volume_path}/products/ex_products.csv"</span>
 
-base_path   = <span class="fn">f</span><span class="str">"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net"</span>
-raw_path    = <span class="fn">f</span><span class="str">"{base_path}/raw/customers"</span>
-bronze_path = <span class="fn">f</span><span class="str">"{base_path}/bronze/customers"</span>
-
-<span class="fn">print</span>(<span class="str">"Connection successful!"</span>)</pre>
-    <div class="highlight-box warn" style="margin-top:14px;">
-      <p><strong style="color:#f59e0b;">Never paste your real key into a notebook you share or push to GitHub.</strong> Replace it with the placeholder before submitting.</p>
+<span class="fn">display</span>(dbutils.fs.<span class="fn">ls</span>(volume_path))</pre>
+    <div class="highlight-box success" style="margin-top:14px;">
+      <p><strong style="color:#22c55e;">Notice what's missing:</strong> no <code>spark.conf.set()</code>, no key, no "connection successful" print statement to write yourself. Unity Catalog already knows who you are — if you can see the Volume in Catalog Explorer, this cell just works.</p>
     </div>
   </div>
 
   <!-- SLIDE 6: DEMO - PHASE A -->
   <div class="slide slide-demo">
     <h3>Phase A — Understand the Data</h3>
-    <div class="demo-label">Read the CSV, then look at what you got</div>
+    <div class="demo-label">Read all three CSVs, then look at what you got</div>
     <div class="two-col">
       <div>
-<pre>customers_df = (
-    spark.read
+<pre>customers_df = (spark.read
     .option(<span class="str">"header"</span>, <span class="str">"true"</span>)
     .option(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>)
-    .csv(<span class="fn">f</span><span class="str">"{raw_path}/customers_010626.csv"</span>)
-)
-customers_df.printSchema()
-customers_df.show(5, truncate=<span class="kw">False</span>)
-print(customers_df.count())</pre>
+    .csv(customers_path))
+
+orders_df = (spark.read
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>)
+    .option(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>)
+    .csv(orders_path))
+
+products_df = (spark.read
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>)
+    .option(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>)
+    .csv(products_path))</pre>
       </div>
       <div class="card">
         <h4>What each method does</h4>
@@ -243,34 +239,39 @@ print(customers_df.count())</pre>
   <!-- SLIDE 7: PHASE B - SPARK SQL CHEATSHEET -->
   <div class="slide slide-content">
     <h3>Phase B — Spark SQL</h3>
-    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">Register the DataFrame as a temp view, then query it exactly like a SQL table:</p>
-<pre>customers_df.createOrReplaceTempView(<span class="str">"customers"</span>)</pre>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">Register all three as temp views, then query — and join — them exactly like SQL tables:</p>
+<pre>customers_df.createOrReplaceTempView(<span class="str">"customers"</span>)
+orders_df.createOrReplaceTempView(<span class="str">"orders"</span>)
+products_df.createOrReplaceTempView(<span class="str">"products"</span>)</pre>
     <table class="sql-table" style="margin-top:14px;">
       <tr><th>Function / Keyword</th><th>What It Does</th><th>Example</th></tr>
-      <tr><td><code>YEAR(col)</code></td><td>Extracts year from a Date column</td><td><code>YEAR(RegistrationDate)</code></td></tr>
-      <tr><td><code>TRIM(col)</code></td><td>Removes leading &amp; trailing spaces</td><td><code>TRIM(FirstName)</code></td></tr>
-      <tr><td><code>BETWEEN a AND b</code></td><td>Filters values in a range</td><td><code>DateOfBirth BETWEEN '1990-01-01' AND '1999-12-31'</code></td></tr>
-      <tr><td><code>GROUP BY col</code></td><td>Groups rows by distinct values</td><td><code>GROUP BY PreferredPaymentMethodID</code></td></tr>
-      <tr><td><code>ORDER BY col DESC</code></td><td>Sorts results, highest first</td><td><code>ORDER BY customer_count DESC</code></td></tr>
+      <tr><td><code>YEAR(col)</code></td><td>Extracts year from a date column</td><td><code>YEAR(order_purchase_date)</code></td></tr>
+      <tr><td><code>LEFT JOIN ... WHERE x IS NULL</code></td><td>Finds rows on the left with no match on the right</td><td>customers with zero orders</td></tr>
+      <tr><td><code>GROUP BY col</code></td><td>Groups rows by distinct values</td><td><code>GROUP BY order_status</code></td></tr>
+      <tr><td><code>ORDER BY col DESC</code></td><td>Sorts results, highest first</td><td><code>ORDER BY order_count DESC</code></td></tr>
     </table>
   </div>
 
   <!-- SLIDE 8: DEMO - SAMPLE QUERIES -->
   <div class="slide slide-demo">
-    <h3>Live Demo: Three Sample Queries</h3>
+    <h3>Live Demo: Four Sample Queries</h3>
     <div class="demo-label">Run each one, then answer the workbook questions</div>
-<pre><span class="cm">-- Payment method distribution</span>
-<span class="kw">SELECT</span> PreferredPaymentMethodID, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> customer_count
-<span class="kw">FROM</span> customers <span class="kw">GROUP BY</span> PreferredPaymentMethodID <span class="kw">ORDER BY</span> customer_count <span class="kw">DESC</span>
+<pre><span class="cm">-- Customer segment distribution</span>
+<span class="kw">SELECT</span> segment, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> customer_count
+<span class="kw">FROM</span> customers <span class="kw">GROUP BY</span> segment <span class="kw">ORDER BY</span> customer_count <span class="kw">DESC</span>
 
-<span class="cm">-- Registrations per year</span>
-<span class="kw">SELECT</span> <span class="fn">YEAR</span>(RegistrationDate) <span class="kw">AS</span> yr, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> cnt
-<span class="kw">FROM</span> customers <span class="kw">GROUP BY</span> yr <span class="kw">ORDER BY</span> yr <span class="kw">DESC</span>
+<span class="cm">-- Orders by status</span>
+<span class="kw">SELECT</span> order_status, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> order_count
+<span class="kw">FROM</span> orders <span class="kw">GROUP BY</span> order_status <span class="kw">ORDER BY</span> order_count <span class="kw">DESC</span>
 
-<span class="cm">-- Customers born in the 1990s</span>
-<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">AS</span> nineties_customers
-<span class="kw">FROM</span> customers
-<span class="kw">WHERE</span> DateOfBirth <span class="kw">BETWEEN</span> <span class="str">'1990-01-01'</span> <span class="kw">AND</span> <span class="str">'1999-12-31'</span></pre>
+<span class="cm">-- Customers who have NEVER ordered (LEFT JOIN)</span>
+<span class="kw">SELECT</span> c.customer_id, c.customer_name
+<span class="kw">FROM</span> customers c <span class="kw">LEFT JOIN</span> orders o <span class="kw">ON</span> c.customer_id = o.customer_id
+<span class="kw">WHERE</span> o.order_id <span class="kw">IS NULL</span>
+
+<span class="cm">-- Orders per year</span>
+<span class="kw">SELECT</span> <span class="fn">YEAR</span>(order_purchase_date) <span class="kw">AS</span> yr, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> cnt
+<span class="kw">FROM</span> orders <span class="kw">GROUP BY</span> yr <span class="kw">ORDER BY</span> yr <span class="kw">DESC</span></pre>
   </div>
 
   <!-- SLIDE 9: PHASE C CHEATSHEET -->
@@ -278,35 +279,38 @@ print(customers_df.count())</pre>
     <h3>Phase C — PySpark Transformations</h3>
     <table class="sql-table">
       <tr><th>Operation</th><th>Method</th><th>Example</th></tr>
-      <tr><td>Filter rows</td><td><code>filter(condition)</code></td><td><code>df.filter(year(col("RegistrationDate")) &gt;= 2020)</code></td></tr>
-      <tr><td>Add a column</td><td><code>withColumn(name, expr)</code></td><td><code>df.withColumn("age", floor(datediff(current_date(), col("DateOfBirth")) / 365))</code></td></tr>
-      <tr><td>Conditional value</td><td><code>when(cond, val).otherwise(val)</code></td><td><code>when(year(col("RegistrationDate")) &lt; 2010, "Gold").otherwise("Bronze")</code></td></tr>
-      <tr><td>Remove spaces</td><td><code>trim(col)</code></td><td><code>df.withColumn("FirstName", trim(col("FirstName")))</code></td></tr>
-      <tr><td>Group &amp; count</td><td><code>groupBy(col).count()</code></td><td><code>df.groupBy("LoyaltyTier").count()</code></td></tr>
+      <tr><td>Filter rows</td><td><code>filter(condition)</code></td><td><code>orders_df.filter(col("order_status") == "delivered")</code></td></tr>
+      <tr><td>Add a column</td><td><code>withColumn(name, expr)</code></td><td><code>df.withColumn("delivery_days", datediff(col("order_delivered_date"), col("order_purchase_date")))</code></td></tr>
+      <tr><td>Conditional value</td><td><code>when(cond, val).otherwise(val)</code></td><td><code>when(col("delivery_days") &lt;= 3, "Fast").otherwise("Slow")</code></td></tr>
+      <tr><td>Check for blanks</td><td><code>isNull() | (trim(col) == "")</code></td><td><code>col("manufacturer").isNull()</code></td></tr>
+      <tr><td>Group &amp; count</td><td><code>groupBy(col).count()</code></td><td><code>df.groupBy("delivery_speed").count()</code></td></tr>
     </table>
   </div>
 
-  <!-- SLIDE 10: DEMO - AGE + LOYALTY TIER -->
+  <!-- SLIDE 10: DEMO - DELIVERY TIME + SPEED -->
   <div class="slide slide-demo">
-    <h3>Live Demo: Age Column &amp; Loyalty Tier</h3>
-    <div class="demo-label">Two new computed columns from one date field</div>
+    <h3>Live Demo: Delivery Time &amp; Speed Classification</h3>
+    <div class="demo-label">One derived column, then a 3-way classification on top of it</div>
     <div class="two-col">
       <div>
-        <h4 style="color:#f59e0b; font-size:14px; margin-bottom:8px;">Age Column</h4>
-<pre><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> floor, datediff, current_date
+        <h4 style="color:#f59e0b; font-size:14px; margin-bottom:8px;">Delivery Days</h4>
+<pre><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> datediff, col
 
-df.withColumn(<span class="str">"age"</span>,
-    floor(datediff(current_date(), col(<span class="str">"DateOfBirth"</span>)) / 365)
+delivered = orders_df.<span class="fn">filter</span>(col(<span class="str">"order_status"</span>) == <span class="str">"delivered"</span>)
+
+delivered.<span class="fn">withColumn</span>(<span class="str">"delivery_days"</span>,
+    datediff(col(<span class="str">"order_delivered_date"</span>),
+             col(<span class="str">"order_purchase_date"</span>))
 )</pre>
       </div>
       <div>
-        <h4 style="color:#f59e0b; font-size:14px; margin-bottom:8px;">Loyalty Tier</h4>
-<pre><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> when, year, col
+        <h4 style="color:#f59e0b; font-size:14px; margin-bottom:8px;">Delivery Speed Tier</h4>
+<pre><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> when
 
-df.withColumn(<span class="str">"LoyaltyTier"</span>,
-    when(year(col(<span class="str">"RegistrationDate"</span>)) &lt; 2010, <span class="str">"Gold"</span>)
-    .when(year(col(<span class="str">"RegistrationDate"</span>)) &lt; 2020, <span class="str">"Silver"</span>)
-    .otherwise(<span class="str">"Bronze"</span>)
+df.<span class="fn">withColumn</span>(<span class="str">"delivery_speed"</span>,
+    when(col(<span class="str">"delivery_days"</span>) &lt;= 3, <span class="str">"Fast"</span>)
+    .when(col(<span class="str">"delivery_days"</span>) &lt;= 7, <span class="str">"Normal"</span>)
+    .otherwise(<span class="str">"Slow"</span>)
 )</pre>
       </div>
     </div>
@@ -314,24 +318,15 @@ df.withColumn(<span class="str">"LoyaltyTier"</span>,
 
   <!-- SLIDE 11: DEMO - WRITE TO BRONZE -->
   <div class="slide slide-demo">
-    <h3>Live Demo: Write to Bronze &amp; Verify</h3>
-    <div class="demo-label">Persist the cleaned DataFrame as Delta</div>
-    <div class="two-col">
-      <div>
-<pre>df.write \
-    .format(<span class="str">"delta"</span>) \
-    .mode(<span class="str">"overwrite"</span>) \
-    .save(bronze_path)</pre>
-      </div>
-      <div>
-<pre>bronze_df = spark.read \
-    .format(<span class="str">"delta"</span>) \
-    .load(bronze_path)
-print(bronze_df.count())</pre>
-      </div>
-    </div>
+    <h3>Live Demo: Write All Three to Bronze &amp; Verify</h3>
+    <div class="demo-label">Persist customers, orders, and products as Delta — same Volume, new subfolder</div>
+<pre>bronze_path = <span class="fn">f</span><span class="str">"{volume_path}/bronze"</span>
+
+customers_df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>).save(<span class="fn">f</span><span class="str">"{bronze_path}/customers"</span>)
+orders_df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>).save(<span class="fn">f</span><span class="str">"{bronze_path}/orders"</span>)
+products_df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>).save(<span class="fn">f</span><span class="str">"{bronze_path}/products"</span>)</pre>
     <div class="highlight-box" style="margin-top:14px;">
-      <p>Writing creates a <code>_delta_log/</code> folder automatically — the ACID transaction log. Use <code>overwrite</code> for a full refresh, <code>append</code> when new daily files arrive.</p>
+      <p>Each write creates its own <code>_delta_log/</code> folder — the ACID transaction log — right inside your Volume. Use <code>overwrite</code> for a full refresh, <code>append</code> when new daily files arrive.</p>
     </div>
   </div>
 
@@ -340,35 +335,33 @@ print(bronze_df.count())</pre>
     <h3>Submission Checklist</h3>
     <div class="three-col">
       <div class="card">
-        <h4>Azure Setup</h4>
+        <h4>Volume Setup</h4>
         <ul>
-          <li>Storage account created, Hierarchical Namespace enabled</li>
-          <li>Container <code>amazon-data</code> created (private access)</li>
-          <li><code>raw/customers/</code> folder created</li>
-          <li><code>customers_010626.csv</code> uploaded</li>
+          <li>Schema and Volume (<code>raw_data</code>) created</li>
+          <li><code>customers/</code>, <code>orders/</code>, <code>products/</code> folders uploaded</li>
+          <li><code>dbutils.fs.ls()</code> confirmed all three</li>
         </ul>
       </div>
       <div class="card">
-        <h4>Databricks Connection</h4>
+        <h4>Spark SQL</h4>
         <ul>
-          <li>Access key located and copied</li>
-          <li>Connection cell ran — "Connection successful!" printed</li>
-          <li>Total row count confirmed</li>
+          <li>Segment distribution query completed</li>
+          <li>Order status distribution completed</li>
+          <li>Zero-order customers found via <code>LEFT JOIN</code></li>
+          <li>Orders-per-year query completed</li>
         </ul>
       </div>
       <div class="card">
-        <h4>Queries &amp; Cleanup</h4>
+        <h4>PySpark &amp; Bronze</h4>
         <ul>
-          <li>Payment method distribution query completed</li>
-          <li>Registrations-per-year query completed</li>
-          <li>1990s customers query completed</li>
-          <li><code>LoyaltyTier</code> column added, counts recorded</li>
-          <li><code>FirstName</code> spaces fixed with <code>trim()</code></li>
+          <li><code>delivery_days</code> and <code>delivery_speed</code> columns added</li>
+          <li>Manufacturer completeness gap quantified</li>
+          <li>All 3 Bronze Delta tables written and row counts verified</li>
         </ul>
       </div>
     </div>
-    <div class="highlight-box warn" style="margin-top:16px;">
-      <p><strong style="color:#f59e0b;">Before uploading:</strong> replace your real <code>storage_account_key</code> with the placeholder <code>YOUR_STORAGE_ACCOUNT_KEY</code>.</p>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><strong style="color:#22c55e;">Nothing to redact before uploading.</strong> This notebook never contained a storage account key.</p>
     </div>
   </div>
 
@@ -377,12 +370,12 @@ print(bronze_df.count())</pre>
     <div class="section-tag">Nice Work</div>
     <h2>Day 1 Complete</h2>
     <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      You connected Databricks to ADLS, queried real data with Spark SQL, cleaned it with PySpark, and wrote your first Bronze Delta table.
+      You uploaded real data into a Databricks Volume, joined and queried it with Spark SQL, transformed it with PySpark, caught a real data quality gap, and wrote your first three Bronze Delta tables.
     </p>
     <div class="three-col" style="margin-top:32px; max-width:860px;">
       <div class="card">
         <h4>✅ What You Built</h4>
-        <p>A working ADLS + Databricks connection and a Bronze Delta table with a verified row count.</p>
+        <p>A keyless Volume-to-Bronze pipeline across 3 real GlobalMart tables, with verified row counts.</p>
       </div>
       <div class="card">
         <h4>➡️ Up Next</h4>
@@ -390,7 +383,7 @@ print(bronze_df.count())</pre>
       </div>
       <div class="card">
         <h4>🎤 Before You Go</h4>
-        <p>Confirm every checklist item above and submit your notebook with the key removed.</p>
+        <p>Confirm every checklist item above, then submit your notebook.</p>
       </div>
     </div>
   </div>

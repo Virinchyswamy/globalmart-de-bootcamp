@@ -1,15 +1,15 @@
 ---
-name: Day 1 HOL — PySpark & Spark SQL with ADLS
+name: Day 1 HOL — PySpark & Spark SQL with Databricks Volumes
 content_type: Project
-overview: GlobalMart is a fast-growing e-commerce company that needs a reliable data platform to power its analytics. In this hands-on exercise, you will set up Azure Data Lake Storage Gen2 from scratch, upload a real GlobalMart customer dataset, connect your Databricks workspace to ADLS using a storage access key, and explore the data using PySpark and Spark SQL. By the end, you will have a cleaned Bronze Delta table ready for further processing.
+overview: GlobalMart is a fast-growing e-commerce company that needs a reliable data platform to power its analytics. In this hands-on exercise, you will upload real GlobalMart customer, order, and product data into a Databricks Volume, read it into a notebook, and explore it using PySpark and Spark SQL. By the end, you will have cleaned Bronze Delta tables ready for further processing — and you will have done it without ever touching a storage account key.
 learning_objectives:
-  - Create an Azure Storage Account with ADLS Gen2 (Hierarchical Namespace) enabled
-  - Upload a CSV dataset to a structured folder hierarchy in ADLS
-  - Connect Azure Databricks to ADLS using a storage access key
-  - Explore and transform a DataFrame using PySpark and Spark SQL
-  - Write a cleaned DataFrame to a Bronze Delta table
+  - Upload CSV datasets into a Databricks Unity Catalog Volume
+  - Read files directly from a Volume path in a notebook — no external storage connection needed
+  - Explore and join multiple DataFrames using PySpark and Spark SQL
+  - Apply PySpark transformations, including filtering, derived columns, and conditional classification
+  - Identify and quantify a real data quality issue
+  - Write cleaned DataFrames to Bronze Delta tables
 prerequisites:
-  - Access to an Azure subscription (provided by your instructor)
   - A Databricks workspace already created (provided by your instructor)
   - Completed Day 1 ILT 4 — Intro to Databricks + PySpark & Spark SQL
 duration: 60 minutes
@@ -17,7 +17,6 @@ level: Beginner
 industries:
   - e-commerce
 tags:
-  - azure (tool)
   - databricks (tool)
   - spark (tool)
   - sql (tool)
@@ -25,17 +24,16 @@ tags:
   - data-wrangling (skill)
   - data-quality (skill)
   - data-understanding (skill)
-  - cloud-management (skill)
   - approach (skill)
 ---
 
 ---
 
-## Scenario 1 — Working with Azure
+## Scenario 1 — Working with Databricks Volumes
 
-**Overview:** Before you can use data in Databricks, it needs to live somewhere in the cloud. In this scenario you will create your own Azure Data Lake Storage Gen2 account, set up the folder structure GlobalMart uses, and upload the customer dataset.
+**Overview:** Before you can use data in Databricks, it needs to live somewhere the cluster can read it. Instead of setting up cloud storage from scratch, you will use a **Databricks Volume** — a Unity Catalog-managed storage location you can upload files into directly from the Databricks UI. No storage account, no container, no access key. In this scenario you will upload three real GlobalMart datasets — customers, orders, and products — into your own Volume.
 
-**Outcome:** A storage account with `customers_010626.csv` sitting at `amazon-data/raw/customers/`, ready to be read by Databricks.
+**Outcome:** Three CSV files sitting inside a Volume, organized into `customers/`, `orders/`, and `products/` folders, ready to be read by a notebook with zero credentials.
 
 ---
 
@@ -44,13 +42,15 @@ tags:
 **Type:** Text
 
 >[!IMPORTANT]
->Ensure you download the dataset below before proceeding with the hands-on.
+>Ensure you download all three datasets below before proceeding with the hands-on.
 
-**Dataset:** customers_010626.csv — 6,666 GlobalMart customer records, 8 columns: CustomerID, FirstName, LastName, Email, PhoneNumber, DateOfBirth, RegistrationDate, PreferredPaymentMethodID
-
-[Download customers_010626.csv — attach file here]
+**Datasets:**
+- `ex_customers.csv` — 336 GlobalMart customer records, 6 columns: `customer_id`, `customer_email`, `customer_name`, `segment`, `postal_code`, `joining_date`
+- `ex_orders.csv` — 4,909 GlobalMart orders, 10 columns: `order_id`, `customer_id`, `partner_id`, `ship_mode`, `order_status`, `order_purchase_date`, `order_approved_at`, `order_dispatched_date`, `order_delivered_date`, `order_estimated_delivery_date`
+- `ex_products.csv` — 1,778 GlobalMart catalog products, 11 columns: `product_id`, `product_name`, `colors`, `category`, `sub_category`, `date_added`, `manufacturer`, `sizes`, `upc`, `weight`, `product_photos_qty`
 
 **Tags**
+- data-understanding (skill)
 
 ---
 
@@ -58,38 +58,30 @@ tags:
 
 **Type:** Text
 
-### Instructions: Create Your Azure Storage Account
+### Instructions: Create a Unity Catalog Volume
 
-Follow these steps carefully. This is your first time setting up cloud storage — read each step before clicking.
+A **Volume** is a Unity Catalog object that represents a folder of raw files (not tables) — the modern, keyless replacement for "go set up a storage account." Follow these steps:
 
-1. Go to **https://portal.azure.com** and sign in with the Azure credentials provided by your instructor.
+1. In your Databricks workspace, click **Catalog** in the left sidebar.
 
-2. In the **search bar at the top**, type `Storage accounts` and click the result.
+2. Navigate to the catalog your instructor has given you access to (commonly `workspace`), then into a schema you can write to. If you have permission to create your own schema, do this instead:
+   - Click **Create** → **Schema**
+   - **Catalog:** the catalog your instructor gave you
+   - **Schema name:** your own name in lowercase, e.g. `virinchy` (no spaces)
+   - Click **Create**
 
-3. Click **+ Create** (top-left button).
+3. Inside your schema, click **Create** → **Volume**.
+   - **Volume name:** `raw_data`
+   - **Volume type:** Managed
+   - Click **Create**
 
-4. Fill in the **Basics** tab:
-   - **Subscription:** select the subscription provided to you
-   - **Resource group:** click *Create new* → name it `globalmart-rg` → click OK
-   - **Storage account name:** choose a unique all-lowercase name, e.g. `globalmartYOURNAME` (no spaces, no special characters, 3–24 characters)
-   - **Region:** East US (or the region your instructor specifies)
-   - **Performance:** Standard
-   - **Redundancy:** Locally-redundant storage (LRS)
+4. You now have a Volume at the path `/Volumes/<catalog>/<your_schema>/raw_data/` — this is your keyless landing zone. Anyone in the workspace with permission can read it; nobody needs a password to do so.
 
-5. Click the **Advanced** tab at the top of the form.
-
-6. Under **Data Lake Storage Gen2**, check the box next to **Enable hierarchical namespace**.
-   > This is the critical step — it turns a regular Blob storage account into ADLS Gen2. Without it, Databricks cannot use the `abfss://` protocol.
-
-7. Leave all other settings as default.
-
-8. Click **Review + Create** → then **Create**.
-
-9. Wait for the deployment to complete (usually 30–60 seconds). You will see a green tick and "Your deployment is complete."
-
-10. Click **Go to resource**.
+> **Why this replaces a storage account + key:** a Volume is already inside Unity Catalog, so it is governed the same way as every table you will build later in this course — permissions, audit logs, and lineage all apply automatically. There is no key to leak, rotate, or accidentally commit to GitHub.
 
 **Tags**
+- databricks (tool)
+- data-storage (skill)
 
 ---
 
@@ -97,12 +89,12 @@ Follow these steps carefully. This is your first time setting up cloud storage �
 
 **Type:** Short Answer
 
-**Question:** What is the exact name of the storage account you created?
+**Question:** What is the full path to the Volume you created? (Format: `/Volumes/<catalog>/<schema>/<volume_name>/`)
 
 **Template:** null
 
 **Tags**
-- azure (tool)
+- databricks (tool)
 - data-storage (skill)
 
 ---
@@ -111,32 +103,19 @@ Follow these steps carefully. This is your first time setting up cloud storage �
 
 **Type:** Text
 
-### Instructions: Create Container, Folder Structure, and Upload the Dataset
+### Instructions: Create Folders and Upload the Datasets
 
-You are now inside your storage account. Follow these steps to create the folder structure and upload the file.
+You are now inside your Volume. Create one folder per dataset and upload each file into its own folder.
 
-1. In the left menu, click **Containers** (under the *Data storage* section).
-
-2. Click **+ Container**.
-   - Name: `amazon-data`
-   - Public access level: *Private (no anonymous access)*
-   - Click **Create**
-
-3. Click on the **amazon-data** container to open it.
-
-4. Click **+ Add Directory** → type `raw` → click **Save**.
-
-5. Click on the **raw** folder to open it.
-
-6. Click **+ Add Directory** → type `customers` → click **Save**.
-
-7. You are now inside `amazon-data/raw/customers/`. This is where your file will land.
-
-8. Click the **⬆ Upload** button. Click *Browse for files*, select `customers_010626.csv` from your computer, and click **Upload**.
-
-9. Wait for the upload to complete. You should see `customers_010626.csv` listed in the folder.
+1. Click **Create** → **Folder**, name it `customers`, click **Create**.
+2. Click into the `customers` folder, click **Upload to this volume**, select `ex_customers.csv` from your computer, and upload it.
+3. Go back to the Volume root. Repeat step 1 with the folder name `orders`, and upload `ex_orders.csv` into it.
+4. Go back to the Volume root. Repeat step 1 with the folder name `products`, and upload `ex_products.csv` into it.
+5. You should now see three folders inside your Volume, each containing exactly one CSV file.
 
 **Tags**
+- databricks (tool)
+- data-storage (skill)
 
 ---
 
@@ -144,7 +123,7 @@ You are now inside your storage account. Follow these steps to create the folder
 
 **Type:** File Upload
 
-**Question:** Take a screenshot of the Azure Storage Browser showing `customers_010626.csv` inside the `raw/customers/` folder. Upload your screenshot here.
+**Question:** Take a screenshot of the Volume browser showing all three folders (`customers`, `orders`, `products`), each containing its file. Upload your screenshot here.
 
 **Max No. of Files:** 1
 
@@ -153,46 +132,70 @@ You are now inside your storage account. Follow these steps to create the folder
 **Allowed File Types:** ANY, IMAGE
 
 **Tags**
-- azure (tool)
+- databricks (tool)
 
 ---
 
 ## Input 6
 
-**Type:** Text
+**Type:** Choice
 
-### Instructions: Find Your Storage Access Key
+**Question:** What is the correct path format for a file inside a Unity Catalog Volume?
 
-To connect Databricks to your storage account, you need the Storage Account Access Key. Here is how to find it:
+**Options:**
+- `abfss://<container>@<account>.dfs.core.windows.net/<path>`
+- `/Volumes/<catalog>/<schema>/<volume_name>/<path>`
+- `dbfs:/mnt/<mount_name>/<path>`
+- `s3://<bucket>/<path>`
 
-1. In your storage account, look at the **left-side menu**.
+**Correct Options:**
+- `/Volumes/<catalog>/<schema>/<volume_name>/<path>`
 
-2. Scroll down to the **Security + networking** section.
-
-3. Click **Access keys**.
-
-4. You will see **key1** and **key2**. Click **Show** next to *key1*.
-
-5. Copy the key value — you will paste it into your Databricks notebook in Scenario 2.
-
->[!WARNING]
->Never share this key publicly or commit it to GitHub. It gives full access to your storage account. Treat it like a password.
+**Solution:**
+Unity Catalog Volumes are always addressed as `/Volumes/<catalog>/<schema>/<volume_name>/<path>` — the same three-level namespace (catalog.schema.object) used for tables, just for files instead of rows and columns. `abfss://` is the ADLS Gen2 protocol used when connecting to external storage directly with a key — a Volume never needs it.
 
 **Tags**
+- databricks (tool)
+- data-storage (skill)
 
 ---
 
 ## Input 7
 
-**Type:** Short Answer
+**Type:** Text
 
-**Question:** Where exactly in the Azure Portal did you find the storage access key? Describe the navigation path (for example: "Left menu → Security + networking → Access keys").
+### Instructions: Read the Volume From a Notebook
 
-**Template:** null
+1. Open your **Databricks workspace** and create a new notebook. Name it `Day1_HOL_PySpark_SparkSQL`.
+
+2. Make sure your **cluster is running**. If it is not, click the cluster name at the top of the notebook and start it. Wait for the green dot before continuing.
+
+3. In the first cell of your notebook, paste and run this setup code. Replace the placeholder with your own catalog/schema:
+
+```python
+# ─── Volume Setup ───────────────────────────────────────────────────────────
+# HOW TO GET THIS VALUE: Catalog (left sidebar) → your catalog → your schema
+# → raw_data volume → the path is shown at the top of the Volume browser, or
+# copy it from Input 3 above.
+# No key, no spark.conf.set(), no storage account -- Unity Catalog already
+# knows who you are and what you're allowed to read.
+volume_path = "/Volumes/YOUR_CATALOG/YOUR_SCHEMA/raw_data"   # ← replace with your path
+
+customers_path = f"{volume_path}/customers/ex_customers.csv"
+orders_path    = f"{volume_path}/orders/ex_orders.csv"
+products_path  = f"{volume_path}/products/ex_products.csv"
+
+# List what's actually in the volume -- a quick sanity check before reading
+display(dbutils.fs.ls(volume_path))
+```
+
+4. Press **Shift + Enter** to run the cell.
+
+5. If you see your three folders (`customers`, `orders`, `products`) listed below the cell, you are ready for Scenario 2.
 
 **Tags**
-- azure (tool)
-- cloud-management (skill)
+- databricks (tool)
+- approach (skill)
 
 ---
 
@@ -200,113 +203,7 @@ To connect Databricks to your storage account, you need the Storage Account Acce
 
 **Type:** File Upload
 
-**Question:** Take a screenshot of the Access Keys page. Before uploading, blur or cover the actual key value — do not share your real key. We just want to confirm you found the right page.
-
-**Max No. of Files:** 1
-
-**Max File Size:** 10
-
-**Allowed File Types:** ANY, IMAGE
-
-**Tags**
-- azure (tool)
-
----
-
-## Input 9
-
-**Type:** Choice
-
-**Question:** Which protocol does Databricks use to read files from ADLS Gen2?
-
-**Options:**
-- wasbs:// — Windows Azure Storage Blob Secure
-- abfss:// — Azure Blob File System Secure
-- https:// — Standard web protocol
-- hdfs:// — Hadoop Distributed File System
-
-**Correct Options:**
-- abfss:// — Azure Blob File System Secure
-
-**Solution:**
-abfss:// (Azure Blob File System Secure) is the ADLS Gen2 native protocol. The path format is: `abfss://CONTAINER@STORAGEACCOUNT.dfs.core.windows.net/FOLDER/`. Without Hierarchical Namespace enabled on the storage account, this protocol will not work.
-
-**Tags**
-- azure (tool)
-- data-storage (skill)
-
----
-
-## Input 10
-
-**Type:** Short Answer
-
-**Question:** Write the full `abfss://` path to your `raw/customers/` folder using your own storage account name.
-
-The format is: `abfss://CONTAINER@STORAGEACCOUNT.dfs.core.windows.net/FOLDER/SUBFOLDER/`
-
-Example: `abfss://amazon-data@globalmartvirincy.dfs.core.windows.net/raw/customers/`
-
-**Template:** null
-
-**Tags**
-- azure (tool)
-- data-storage (skill)
-
----
-
-## Input 11
-
-**Type:** Text
-
-### Instructions: Connect Databricks to ADLS
-
-1. Open your **Databricks workspace** and create a new notebook. Name it `Day1_HOL_PySpark_SparkSQL`.
-
-2. Make sure your **cluster is running**. If it is not, click the cluster name at the top of the notebook and start it. Wait for the green dot before continuing.
-
-3. In the first cell of your notebook, paste and run this setup code. Replace the two placeholder values with your own:
-
-```python
-# ─── ADLS Connection Setup ─────────────────────────────────────────────────
-# HOW TO GET THESE VALUES MANUALLY (Azure Portal → portal.azure.com):
-#   storage_account_name → the name you chose in Input 2 (Storage accounts
-#                           → your account → shown at top of Overview page)
-#   storage_account_key  → same account → left menu "Security + networking"
-#                           → "Access keys" → click "Show" next to key1 → Copy
-#   container_name        → same account → left menu "Data storage" →
-#                           "Containers" → the container from Input 4
-storage_account_name = "YOUR_STORAGE_ACCOUNT_NAME"   # ← your storage account name
-container_name       = "amazon-data"
-storage_account_key  = "YOUR_STORAGE_ACCOUNT_KEY"    # ← key1 from Azure Portal
-
-spark.conf.set(
-    f"fs.azure.account.key.{storage_account_name}.dfs.core.windows.net",
-    storage_account_key
-)
-
-base_path    = f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net"
-raw_path     = f"{base_path}/raw/customers"
-bronze_path  = f"{base_path}/bronze/customers"
-
-print("Connection successful!")
-print(f"Raw path:    {raw_path}")
-print(f"Bronze path: {bronze_path}")
-```
-
-4. Press **Shift + Enter** to run the cell.
-
-5. If you see `Connection successful!` printed below the cell, you are ready for Scenario 2.
-
-**Tags**
-
----
-
-## Input 12
-
-**Type:** File Upload
-
-**Question:** Take a screenshot of your Databricks notebook showing the setup cell output with "Connection successful!" printed. Upload it here.
+**Question:** Take a screenshot of your Databricks notebook showing the `dbutils.fs.ls()` output with your three folders listed. Upload it here.
 
 **Max No. of Files:** 1
 
@@ -321,44 +218,61 @@ print(f"Bronze path: {bronze_path}")
 
 ## Scenario 2 — Data Wrangling with PySpark & Spark SQL
 
-**Overview:** With the customer data in ADLS and Databricks connected, you will explore the dataset, answer business questions using Spark SQL, apply PySpark transformations, and write cleaned data to a Bronze Delta table.
+**Overview:** With customers, orders, and products sitting in your Volume, you will load all three into DataFrames, join them to answer real business questions, apply PySpark transformations, catch a genuine data quality gap in the product catalog, and write cleaned Bronze Delta tables.
 
-**Outcome:** A cleaned Bronze Delta table at `bronze/customers/` with trimmed strings and a new `LoyaltyTier` column.
+**Outcome:** Three cleaned Bronze Delta tables — `bronze/customers`, `bronze/orders`, `bronze/products` — plus answers to five real GlobalMart business questions.
 
 > Continue working in the same notebook you created in Scenario 1. Add new cells below the setup cell for each question.
 
 ---
 
-## Input 13
+## Input 9
 
 **Type:** Text
 
 ### Phase A — Understand the Data
 
-In a new cell in your notebook, paste and run this code to load and explore the customer dataset:
+In a new cell, load all three datasets and explore their structure:
 
 ```python
 customers_df = (
     spark.read
     .option("header", "true")
     .option("inferSchema", "true")
-    .csv(f"{raw_path}/customers_010626.csv")
+    .csv(customers_path)
 )
 
-print(f"Total rows: {customers_df.count()}")
-customers_df.printSchema()
-customers_df.show(5, truncate=False)
+orders_df = (
+    spark.read
+    .option("header", "true")
+    .option("inferSchema", "true")
+    .csv(orders_path)
+)
+
+products_df = (
+    spark.read
+    .option("header", "true")
+    .option("inferSchema", "true")
+    .csv(products_path)
+)
+
+for name, df in [("customers", customers_df), ("orders", orders_df), ("products", products_df)]:
+    print(f"--- {name} ---")
+    print(f"Rows: {df.count()}")
+    df.printSchema()
 ```
 
 **Tags**
+- spark (tool)
+- data-understanding (skill)
 
 ---
 
-## Input 14
+## Input 10
 
 **Type:** Short Answer
 
-**Question:** How many rows are in the dataset? List all 8 column names and their data types as detected by Spark (e.g. `CustomerID: StringType`).
+**Question:** How many rows are in each of the three DataFrames? Name one column in `orders_df` that Spark inferred as a date/timestamp type, and one column it inferred as a string.
 
 **Template:** null
 
@@ -368,7 +282,7 @@ customers_df.show(5, truncate=False)
 
 ---
 
-## Input 15
+## Input 11
 
 **Type:** Choice
 
@@ -392,32 +306,94 @@ Without inferSchema, Spark reads every column as a String. With inferSchema=True
 
 ---
 
-## Input 16
+## Input 12
 
 **Type:** Text
 
 ### Phase B — Spark SQL
 
-First, register the DataFrame as a temporary SQL view:
+Register all three DataFrames as temporary SQL views:
 
 ```python
 customers_df.createOrReplaceTempView("customers")
-print("Temp view 'customers' registered.")
+orders_df.createOrReplaceTempView("orders")
+products_df.createOrReplaceTempView("products")
+print("All three temp views registered.")
 ```
 
-Now answer the following business questions using Spark SQL (use `spark.sql("...")` or a `%sql` cell).
-
-**Payment method distribution:**
+**Business Question 1 — Customer segments:**
 
 ```sql
-SELECT PreferredPaymentMethodID,
+SELECT segment,
        COUNT(*) AS customer_count
 FROM customers
-GROUP BY PreferredPaymentMethodID
+GROUP BY segment
 ORDER BY customer_count DESC
 ```
 
 **Tags**
+- sql (tool)
+- data-wrangling (skill)
+
+---
+
+## Input 13
+
+**Type:** Short Answer
+
+**Question:** Which customer segment has the most customers? How many? Paste your query output.
+
+**Template:** null
+
+**Tags**
+- sql (tool)
+- data-wrangling (skill)
+
+---
+
+## Input 14
+
+**Type:** Code
+
+**Question:** Write a Spark SQL query to count orders by `order_status`, sorted from most common to least common status.
+
+**Language:** sql
+
+**Snippet:**
+
+**Tags**
+- sql (tool)
+- data-wrangling / group-by-aggregate (skill)
+
+---
+
+## Input 15
+
+**Type:** Short Answer
+
+**Question:** Which order status is the most common? Roughly what percentage of all orders does it represent?
+
+**Template:** null
+
+**Tags**
+- sql (tool)
+- data-wrangling (skill)
+
+---
+
+## Input 16
+
+**Type:** Code
+
+**Question:** GlobalMart's marketing team wants to send a "we miss you" email to any customer who has **never placed a single order**. Write a Spark SQL query using a `LEFT JOIN` between `customers` and `orders` (joined on `customer_id`) that returns only customers with zero orders. Hint: filter on `WHERE order_id IS NULL` after the join.
+
+**Language:** sql
+
+**Snippet:**
+
+**Tags**
+- sql (tool)
+- data-wrangling / joins (skill)
 
 ---
 
@@ -425,7 +401,7 @@ ORDER BY customer_count DESC
 
 **Type:** Short Answer
 
-**Question:** Which payment method has the highest number of customers? How many customers prefer it? Paste your query output.
+**Question:** How many customers have never placed an order? List their `customer_id` values.
 
 **Template:** null
 
@@ -439,7 +415,7 @@ ORDER BY customer_count DESC
 
 **Type:** Code
 
-**Question:** Write a Spark SQL query to find how many customers registered in each year. Sort results from most recent year to oldest. Hint: Use the `YEAR()` function on the `RegistrationDate` column.
+**Question:** Write a Spark SQL query to count orders placed in each year, using `YEAR(order_purchase_date)`. Sort from most recent year to oldest.
 
 **Language:** sql
 
@@ -447,8 +423,7 @@ ORDER BY customer_count DESC
 
 **Tags**
 - sql (tool)
-- data-wrangling (skill)
-- data-wrangling / group-by-aggregate (skill)
+- data-wrangling / date-processing (skill)
 
 ---
 
@@ -456,7 +431,7 @@ ORDER BY customer_count DESC
 
 **Type:** Short Answer
 
-**Question:** In which year did the most customers register? How many registered that year?
+**Question:** In which year were the most orders placed? How many orders were placed that year?
 
 **Template:** null
 
@@ -468,97 +443,52 @@ ORDER BY customer_count DESC
 
 ## Input 20
 
-**Type:** Code
+**Type:** Text
 
-**Question:** Write a Spark SQL query to count customers born between 1 January 1990 and 31 December 1999. Hint: Use `WHERE DateOfBirth BETWEEN 'YYYY-MM-DD' AND 'YYYY-MM-DD'`.
+### Phase C — PySpark Transformations
 
-**Language:** sql
+**Task 1 — Calculate delivery time:**
 
-**Snippet:**
+```python
+from pyspark.sql.functions import col, datediff, when, trim, avg, count
+
+delivered_orders = orders_df.filter(col("order_status") == "delivered")
+
+delivered_with_days = delivered_orders.withColumn(
+    "delivery_days",
+    datediff(col("order_delivered_date"), col("order_purchase_date"))
+)
+
+delivered_with_days.agg(
+    avg("delivery_days").alias("avg_delivery_days")
+).show()
+```
 
 **Tags**
-- sql (tool)
-- data-wrangling / filter (skill)
+- spark (tool)
 - data-wrangling / date-processing (skill)
 
 ---
 
 ## Input 21
 
-**Type:** Choice
-
-**Question:** Which Spark SQL function correctly extracts the year from a date column?
-
-**Options:**
-- DATE_YEAR(column)
-- TO_YEAR(column)
-- YEAR(column)
-- EXTRACT_YEAR(column)
-
-**Correct Options:**
-- YEAR(column)
-
-**Solution:**
-YEAR() is a standard SQL function supported in both Spark SQL and most SQL databases. It takes a date or timestamp column and returns the integer year value. Example: YEAR(RegistrationDate) returns 2021 for a date of 2021-06-15.
-
-**Tags**
-- sql (tool)
-- approach (skill)
-
----
-
-## Input 22
-
-**Type:** Text
-
-### Phase C — PySpark Transformations
-
-**Task 1 — Filter and Add Age Column:**
-
-```python
-from pyspark.sql.functions import col, year, floor, datediff, current_date, when, trim, length
-from pyspark.sql.functions import min as spark_min, max as spark_max, avg
-
-# Filter customers who registered 2020 or later
-recent_customers = customers_df.filter(year(col("RegistrationDate")) >= 2020)
-print(f"Customers registered 2020 or later: {recent_customers.count()}")
-
-# Add age column
-customers_with_age = customers_df.withColumn(
-    "age",
-    floor(datediff(current_date(), col("DateOfBirth")) / 365)
-)
-customers_with_age.agg(
-    spark_min("age").alias("youngest"),
-    spark_max("age").alias("oldest"),
-    avg("age").alias("average_age")
-).show()
-```
-
-**Tags**
-
----
-
-## Input 23
-
 **Type:** Short Answer
 
-**Question:** How many customers registered in 2020 or later? What is the age of the youngest customer? The oldest?
+**Question:** What is the average delivery time, in days, for delivered orders?
 
 **Template:** null
 
 **Tags**
 - data-wrangling (skill)
-- data-wrangling / filter (skill)
 - data-wrangling / date-processing (skill)
 
 ---
 
-## Input 24
+## Input 22
 
 **Type:** Code
 
-**Question:** Add a `LoyaltyTier` column to classify customers based on their registration date: registered before 2010 → "Gold", 2010–2019 → "Silver", 2020 or later → "Bronze". Use PySpark's `when / otherwise`. Then count customers in each tier using `groupBy`.
+**Question:** Using `when / otherwise`, add a `delivery_speed` column to `delivered_with_days` that classifies each order as `"Fast"` (3 days or fewer), `"Normal"` (4–7 days), or `"Slow"` (more than 7 days). Then use `groupBy` to count how many orders fall into each tier.
 
 **Language:** python
 
@@ -571,39 +501,50 @@ customers_with_age.agg(
 
 ---
 
-## Input 25
-
-**Type:** Text
-
-### Phase C — Data Quality Fix
-
-The dataset has a data quality issue: some `FirstName` values have trailing spaces (e.g. `"Ahana "` instead of `"Ahana"`). Identify and fix this:
-
-```python
-# Find rows with trailing/leading spaces in FirstName
-dirty = customers_tiered.filter(
-    length(col("FirstName")) != length(trim(col("FirstName")))
-)
-print(f"Rows with spaces in FirstName: {dirty.count()}")
-
-# Fix: trim FirstName and Email
-customers_clean = customers_tiered.withColumn(
-    "FirstName", trim(col("FirstName"))
-).withColumn(
-    "Email", trim(col("Email"))
-)
-customers_clean.select("CustomerID", "FirstName", "Email").show(5, truncate=False)
-```
-
-**Tags**
-
----
-
-## Input 26
+## Input 23
 
 **Type:** Short Answer
 
-**Question:** How many rows had trailing or leading spaces in `FirstName`? Why is it important to fix this before writing data to the Silver layer?
+**Question:** How many delivered orders fall into each delivery speed tier (Fast / Normal / Slow)?
+
+**Template:** null
+
+**Tags**
+- data-wrangling (skill)
+
+---
+
+## Input 24
+
+**Type:** Text
+
+### Phase D — Data Quality Check
+
+Real product catalogs are rarely complete. Check how much of the `products` data is missing a `manufacturer` value:
+
+```python
+total_products = products_df.count()
+missing_manufacturer = products_df.filter(
+    col("manufacturer").isNull() | (trim(col("manufacturer")) == "")
+).count()
+
+pct_missing = round(100 * missing_manufacturer / total_products, 1)
+print(f"Products missing manufacturer: {missing_manufacturer} / {total_products} ({pct_missing}%)")
+
+products_df.groupBy("category").count().orderBy(col("count").desc()).show()
+```
+
+**Tags**
+- data-quality (skill)
+- spark (tool)
+
+---
+
+## Input 25
+
+**Type:** Short Answer
+
+**Question:** What percentage of products are missing a `manufacturer` value? Why is it risky to write this straight to a Bronze table without flagging the gap, even though Bronze is supposed to stay "raw and unmodified"?
 
 **Template:** null
 
@@ -613,37 +554,37 @@ customers_clean.select("CustomerID", "FirstName", "Email").show(5, truncate=Fals
 
 ---
 
-## Input 27
+## Input 26
 
 **Type:** Text
 
-### Phase D — Write to Bronze
+### Phase E — Write to Bronze
 
-Write your cleaned DataFrame to the Bronze layer as a Delta table. Use `overwrite` mode so you can safely re-run this cell without creating duplicates:
+Write all three cleaned DataFrames to the Bronze layer as Delta tables, inside your own Volume. Use `overwrite` mode so you can safely re-run this cell without creating duplicates:
 
 ```python
-customers_clean.write \
-    .format("delta") \
-    .mode("overwrite") \
-    .save(bronze_path)
+bronze_path = f"{volume_path}/bronze"
 
-print(f"Written to: {bronze_path}")
+customers_df.write.format("delta").mode("overwrite").save(f"{bronze_path}/customers")
+orders_df.write.format("delta").mode("overwrite").save(f"{bronze_path}/orders")
+products_df.write.format("delta").mode("overwrite").save(f"{bronze_path}/products")
 
-# Read back to verify
-bronze_df = spark.read.format("delta").load(bronze_path)
-print(f"Bronze row count: {bronze_df.count()}")
-bronze_df.show(3, truncate=False)
+for name in ["customers", "orders", "products"]:
+    bronze_df = spark.read.format("delta").load(f"{bronze_path}/{name}")
+    print(f"bronze/{name}: {bronze_df.count()} rows written")
 ```
 
 **Tags**
+- data-storage (skill)
+- spark (tool)
 
 ---
 
-## Input 28
+## Input 27
 
 **Type:** File Upload
 
-**Question:** Take a screenshot of your Databricks notebook showing the Bronze table write output and the verified row count. Upload it here.
+**Question:** Take a screenshot of your Databricks notebook showing the Bronze write output with all three row counts. Upload it here.
 
 **Max No. of Files:** 1
 
@@ -657,11 +598,11 @@ bronze_df.show(3, truncate=False)
 
 ---
 
-## Input 29
+## Input 28
 
 **Type:** Choice
 
-**Question:** GlobalMart's data engineering team wants to add new customer records that arrive every day to the Bronze table, preserving all historical data. Which of the following commands should they use?
+**Question:** GlobalMart's data engineering team wants to add new order records that arrive every day to the Bronze `orders` table, preserving all historical data. Which of the following commands should they use?
 
 **Options:**
 - df.write.mode("overwrite").format("delta").save(bronze_path)
@@ -673,7 +614,7 @@ bronze_df.show(3, truncate=False)
 - df.write.mode("append").format("delta").save(bronze_path)
 
 **Solution:**
-`overwrite` deletes everything at the destination path and writes fresh data. `append` adds new rows on top of existing data without touching what is already there. Use `overwrite` for small reference tables that are fully refreshed. Use `append` for tables that grow over time, like new daily customer files.
+`overwrite` deletes everything at the destination path and writes fresh data. `append` adds new rows on top of existing data without touching what is already there. Use `overwrite` for small reference tables that are fully refreshed. Use `append` for tables that grow over time, like new daily order files.
 
 **Tags**
 - data-storage (skill)
@@ -681,11 +622,11 @@ bronze_df.show(3, truncate=False)
 
 ---
 
-## Input 30
+## Input 29
 
 **Type:** File Upload
 
-**Question:** Upload your completed Databricks notebook (.ipynb file). Before uploading, replace your real storage account key with the placeholder `YOUR_STORAGE_ACCOUNT_KEY` in the setup cell.
+**Question:** Upload your completed Databricks notebook (.ipynb file). Your notebook never contained a storage account key, so there is nothing to redact before submitting.
 
 **Max No. of Files:** 1
 
