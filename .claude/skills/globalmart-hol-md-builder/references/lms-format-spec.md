@@ -1,3 +1,248 @@
+# LMS-Import `.md` Format — Exact Spec + Worked Example
+
+This is the one format that must be followed exactly, not approximately —
+it's a real import contract with a real LMS, and this project has already
+hit two real, confirmed import failures from getting it wrong:
+
+- **`'name' is required`** — the YAML frontmatter was missing (or had an
+  empty) `name` field.
+- **`Duplicate input number`** — `## Input N` numbering was reset back to 1
+  at the start of a new Scenario, instead of continuing to count up across
+  the whole file.
+
+Both were fixed for real in this repo's history — commits `8094f64` ("Fix
+HOL MD: match LMS import format (## Scenarios, ##### Input N, **Type:**)")
+and `b60d56a` ("Fix HOL MD: YAML frontmatter with name + ## Input N headings
+for LMS import"). Note that `8094f64`'s own commit message still says
+`##### Input N` — an intermediate, still-wrong attempt — and `b60d56a` is
+the commit that corrected it to `## Input N` (H2, not H5). The final,
+proven-correct shape is the one described below and demonstrated in the
+worked example — always verify against the real file
+(`Day1_5_HOL_PySpark_SparkSQL_ADLS.md`), never against a commit message in
+isolation.
+
+**Only ONE known-clean-import file exists to verify this format against:**
+`C:\Yvirinchy\DE notebooks\Day1\Day1_5_HOL_PySpark_SparkSQL_ADLS.md`. It is
+embedded in full at the bottom of this doc so this reference is
+self-contained — but if it's ever been edited since, prefer reading the real
+file directly over this embedded copy.
+
+## The exact structure
+
+```
+---
+name: <required, non-empty — the single most important field>
+content_type: Project
+overview: <1-3 sentence plain-language summary of the whole hands-on>
+learning_objectives:
+  - <bullet>
+  - <bullet>
+prerequisites:
+  - <bullet>
+duration: <e.g. "60 minutes">
+level: Beginner | Intermediate | Advanced
+industries:
+  - e-commerce
+tags:
+  - <tag> (tool|skill)
+  - <tag> (tool|skill)
+---
+
+---
+
+## Scenario 1 — <Name>
+
+**Overview:** <business-narrative framing — see tone-reference.md for style>
+
+**Outcome:** <what the learner will have produced by the end of this Scenario>
+
+---
+
+## Input 1
+
+**Type:** <Text | Short Answer | Choice | Code | File Upload>
+
+<type-specific fields — see below>
+
+**Tags**
+- <at least one tag, never empty>
+
+---
+
+## Input 2
+...
+
+---
+
+## Scenario 2 — <Name>
+
+**Overview:** ...
+
+---
+
+## Input <N+1>
+...
+```
+
+### Frontmatter — hard requirements
+
+- Starts at the very first line of the file with `---`, ends at the next
+  line that is exactly `---`.
+- `name` must be present and non-empty. This is the single field whose
+  absence caused a real, confirmed import failure — never skip it, never
+  leave it blank.
+- The other fields (`content_type`, `overview`, `learning_objectives`,
+  `prerequisites`, `duration`, `level`, `industries`, `tags`) all appear in
+  the one proven-clean file and should be filled in with real content
+  grounded in the sibling `.ipynb`, but `name` is the only one with a known
+  historical hard-failure behind it.
+- A second `---` on its own line appears right after the frontmatter closes,
+  before `## Scenario 1` starts (visible in the worked example below, lines
+  29-30). This is a stylistic horizontal rule in the proven file, not a
+  second frontmatter block — match it for consistency, but don't let a
+  validator or a careless read confuse it with the frontmatter's closing
+  delimiter.
+
+### `## Scenario N — Name` blocks
+
+- Heading level is `##` (H2) — same level as `## Input N`.
+- Each Scenario has a `**Overview:**` field (business-narrative framing) and,
+  in the proven example, often an `**Outcome:**` field describing the
+  concrete deliverable. Neither is machine-validated as strictly required,
+  but both appear in the one confirmed-clean file and should be included for
+  every Scenario you write.
+- A hands-on `.md` can have one Scenario or several. Day 1's has exactly two
+  (`Scenario 1 — Working with Databricks Volumes`, `Scenario 2 — Data
+  Wrangling with PySpark & Spark SQL`).
+
+### `## Input N` — the globally-numbered heading (the critical rule)
+
+- Heading level is `##` (H2) — **never** `#####` (H5). H5 `##### Input N` is
+  the shape used by the incompatible, visually-similar export format in
+  `reference for making the hands/` (a different platform's export, not this
+  LMS's import contract) — if you ever write `#####` here, that is a sign
+  you've drifted into copying the wrong reference's structure.
+- Numbering is **one running counter for the entire file, across every
+  Scenario** — Input 8 in Scenario 1 is followed by Input 9 in Scenario 2,
+  never a reset back to Input 1. Day 1's real file proves this: it runs
+  `## Input 1` through `## Input 25` continuously across its two Scenarios,
+  with the Scenario 2 heading appearing between Input 8 and Input 9 without
+  interrupting the count.
+- Numbers must be strictly sequential starting at 1, with no gaps and no
+  repeats. This is exactly the rule whose violation caused the real
+  `Duplicate input number` failure.
+
+### The 5 known `**Type:**` values and their fields
+
+Every Input has a `**Type:**` line naming exactly one of these 5 values, each
+with its own required fields (all confirmed directly from the worked
+example):
+
+1. **Text** — a pure instructional/informational Input, no learner answer
+   expected. Body is free-form markdown (steps, code to paste, callouts like
+   `>[!IMPORTANT]`). No additional required fields beyond the body itself.
+2. **Short Answer** — `**Question:**` + `**Template:**` (usually `null` in
+   the proven example — a starter-text template for the answer box).
+3. **Choice** — `**Question:**`, `**Options:**` (a bullet list of all
+   choices), `**Correct Options:**` (a bullet list — a subset of Options).
+   Often also a `**Solution:**` explaining why the correct option(s) are
+   correct (present in every Choice Input in the worked example).
+4. **Code** — `**Question:**`, `**Language:**` (e.g. `sql`, `python`),
+   `**Snippet:**` (starter code shown to the learner — can be empty/blank
+   in the proven example, meaning the learner writes from scratch).
+   Optionally `**Solution:**` with the graded reference answer.
+5. **File Upload** — `**Question:**`, `**Max No. of Files:**`,
+   `**Max File Size:**` (in MB), `**Allowed File Types:**` (e.g.
+   `ANY, IMAGE` or `ANY, JUPYTER_NOTEBOOK`).
+
+### `**Tags**` — question-gated: present on questions, ABSENT on Text
+
+Whether an Input has a `**Tags**` heading at all depends on its
+`**Type:**`:
+
+- **Text** (pure instructional, no `**Question:**` field at all) — **no
+  `**Tags**` heading appears anywhere in this Input's block.** Not present,
+  not empty — omitted entirely. Tags exist to classify what's being
+  *assessed*; a Text Input assesses nothing, so a Tags heading on one, even
+  an empty one, is noise, not thoroughness.
+- **Short Answer / Choice / Code / File Upload** (anything with a real
+  question) — a `**Tags**` heading followed by at least one bullet, in the
+  form `<tag-name> (tool)` or `<tag-name> (skill)` (occasionally a nested
+  form like `data-wrangling / joins (skill)`). See
+  `references/tag-vocabulary.md` for the full approved list — draw from it
+  rather than inventing new tags, and never go past 2 levels
+  (`parent / child`, not `parent / child / grandchild`).
+
+`scripts/validate_lms_md.py` checks both directions: a question-bearing
+Input with no Tags heading (or an empty one) fails, and a Text Input with
+any Tags heading at all — even an empty one — also fails. This rule went
+through two tightenings: first "empty but present" on Text Inputs, then
+"absent entirely" after direct user feedback that an empty heading was
+still unwanted. Don't revert to either earlier, looser version.
+
+### Solutions must be complete — never a blank `**Snippet:**`/`**Solution:**`
+
+Every Code and Choice Input ends with a full `**Solution:**`: real, correct
+code (for Code) or a short explanation of why the correct option is correct
+(for Choice), plus 1-3 sentences interpreting the result. An empty Solution
+is not "left for the learner" — it's a defect. Every number stated in a
+Solution (a count, a percentage, a "most common X") must be verified against
+the real source data or notebook, never estimated.
+
+### One Code Input per business question — no "given example, then restate"
+
+The single most common structural mistake in earlier drafts of these files:
+an instructional Text cell fully solves a business question via a worked
+example, and a separate Short-Answer Input then asks the learner to just
+read off that output. This teaches nothing — the learner never wrote the
+code — and wastes an Input. The fix: a Text cell should only demonstrate
+mechanical setup (registering views, deriving one intermediate column) or a
+trivial unrelated sanity check. Every real business question becomes its own
+single `Type: Code` Input, where writing the query/code and reporting the
+finding happen in the same submission.
+
+### State the language, never the technique, in the question
+
+Every Code Input's prompt starts with "Using Spark SQL, ..." or "Using
+PySpark, ...", matching its `**Language:**` field exactly, so the learner
+always knows which cell type to reach for. But the prompt itself stays
+business-language only — never name a specific clause, join type, function,
+or construct (no "Hint: use a LEFT JOIN", no "using YEAR(...)", no "using
+when/otherwise"). That explanation belongs only in the `**Solution:**`,
+after the learner has had to find the approach themselves.
+
+### Keep Solution code simple — reuse earlier concepts over compact tricks
+
+When a Solution needs to compute something, prefer chaining building blocks
+the file has already taught (`filter()`, `groupBy().count()`, `join()`) over
+a more compact technique the learner hasn't seen yet (e.g. conditional
+aggregation with `count(when(condition, 1))`). A per-category percentage
+gap, for example, reads more clearly as "count total per category, count
+missing per category, join the two, divide" than as one dense `.agg()` call
+— even though the dense version is fewer lines. A learner should be able to
+trace every Solution back to concepts the file already introduced them to.
+
+## Table of contents for this doc
+
+- Frontmatter requirements — above
+- Scenario block requirements — above
+- Input numbering rule (the critical one) — above
+- The 5 Type values and their fields — above
+- Tags requirement (question-gated, absent on Text) — above
+- Solutions must be complete — above
+- One Code Input per business question — above
+- State the language, never the technique — above
+- Keep Solution code simple — above
+- Full worked example (`Day1_5_HOL_PySpark_SparkSQL_ADLS.md`) — below
+
+## Full worked example — `Day1_5_HOL_PySpark_SparkSQL_ADLS.md`
+
+This is the complete, real, known-clean-import file, embedded verbatim so
+this reference doc is self-contained. If the real file at
+`C:\Yvirinchy\DE notebooks\Day1\Day1_5_HOL_PySpark_SparkSQL_ADLS.md` has
+since changed, trust the real file over this copy.
+
+~~~markdown
 ---
 name: Day 1 HOL — PySpark & Spark SQL with Databricks Volumes
 content_type: Project
@@ -648,3 +893,4 @@ for name in ["customers", "orders", "products"]:
 
 **Tags**
 - databricks (tool)
+~~~

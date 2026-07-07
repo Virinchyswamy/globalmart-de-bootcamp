@@ -1,0 +1,195 @@
+# Safety Rules — Each With Real Precedent
+
+These rules exist because this repo teaches real mechanics against a real,
+shared Databricks workspace that other cohorts, the instructor, and a
+colleague's (sayli's) own account all touch. A hands-on `.md` that's
+technically correct but tells a learner to write to the wrong place, trigger
+a real job, or paste in a credential is worse than useless — it can break
+class for everyone else mid-session, or leak something it shouldn't. Every
+rule below has a real, verbatim code snippet already living in this repo —
+match the *pattern*, not necessarily the exact variable names, in any new
+hands-on scenario that asks a learner to write code.
+
+## 1. Practice schema / `SHALLOW CLONE` for anything write-heavy on a shared table
+
+**Why:** if a MERGE/SCD/CDF/OPTIMIZE exercise writes directly to a real shared
+`gbmart.*` table, only the *first* person in the whole cohort to run it sees
+real behavior — everyone after (including you, rehearsing before class) sees
+"0 changed rows" and the exercise looks broken. `SHALLOW CLONE` gives an
+independent transaction log over the same real data, so the exercise is
+repeatable forever, for every student, every rehearsal.
+
+**Real precedent — Day 9 HOL 2** (`Day9_5_HOL2_Handling_Incremental_Data_Bronze_Silver.ipynb`):
+```python
+# ─── Personal practice schema — never write directly to shared gbmart tables ────
+PRACTICE_SCHEMA = "main.YOUR_SCHEMA"   # ← replace with a schema you own
+spark.sql(f"CREATE SCHEMA IF NOT EXISTS {PRACTICE_SCHEMA}")
+
+BRONZE_PRACTICE = f"{PRACTICE_SCHEMA}.bronze_payments_practice"
+SILVER_PRACTICE = f"{PRACTICE_SCHEMA}.silver_payments_practice"
+
+# SHALLOW CLONE: same real data as gbmart.bronze/silver.payments right now, but a
+# transaction history that's entirely yours — safe to MERGE into repeatedly.
+spark.sql(f"CREATE OR REPLACE TABLE {BRONZE_PRACTICE} SHALLOW CLONE gbmart.bronze.payments")
+spark.sql(f"CREATE OR REPLACE TABLE {SILVER_PRACTICE} SHALLOW CLONE gbmart.silver.payments")
+spark.sql(f"ALTER TABLE {BRONZE_PRACTICE} SET TBLPROPERTIES (delta.enableChangeDataFeed = true)")
+```
+
+**Real precedent — Day 10 HOL 1** (`Day10_2_HOL1_SCD_Type2_Dim_Customer_MERGE.ipynb`),
+same pattern for a dimension clone, with the markdown explaining *why*:
+```
+## Setup — Clone Your Own Copy
+`SHALLOW CLONE` gives you an independent table (your own transaction log,
+your own history) without copying the underlying data files — instant, and
+safe to write to.
+```
+```python
+SILVER_TABLE = f"{YOUR_SCHEMA}.silver_customers"
+spark.sql(f"CREATE OR REPLACE TABLE {BRONZE_TABLE} SHALLOW CLONE gbmart.bronze.customers")
+spark.sql(f"CREATE OR REPLACE TABLE {SILVER_TABLE} SHALLOW CLONE gbmart.silver.customers")
+```
+
+Applies to: any HOL centered on MERGE/SCD/CDF/OPTIMIZE against a table other
+cohorts also touch. First introduced Day 10, retrofitted into Day 9 HOL 2 and
+Day 4 HOL 2, reused for Day 11's DLQ demo and Day 12's masking demo (as a
+`main.YOUR_SCHEMA` practice table rather than a clone — see rule 5). Any
+hands-on `.md` Input built for one of these sessions should tell the learner
+to set up the same clone/practice-schema step before asking them to write
+anything.
+
+## 2. Never ask a learner to start, trigger, or schedule real job/pipeline/cluster/warehouse compute
+
+**Why:** this repo is a teaching tool, not an operations console. Nothing a
+learner is instructed to run should be able to cost money or disrupt a real
+running system just by completing the hands-on.
+
+- Jobs/Workflow config in any Input's Solution is always an **inspectable,
+  clearly-commented-as-illustrative Python dict**, constructed and printed —
+  never submitted to a real Jobs API.
+- Any streaming `.trigger(...)` a Solution shows either uses
+  `availableNow=True` (terminates on its own) or explicitly calls `.stop()`
+  before the cell finishes. A real gap of exactly this kind (a `.start()` with
+  no matching `.stop()`) was found and fixed in Day 3's cert-prep notebook
+  during a safety audit — that notebook is now the confirmed-fixed example,
+  not a cautionary one.
+- Day 9 HOL 2 Part 2 only **verifies** the real `orders_data_ingestion_cdc`
+  pipeline picked up a change (real precedent below) — it never re-triggers
+  it. A hands-on Input built around this content should ask the learner to
+  verify the same way, never to re-trigger.
+- `VACUUM ... RETAIN 0 HOURS` never appears anywhere in this course (it
+  permanently deletes file history) — any VACUUM shown in a Solution is
+  illustrative/commented-out only.
+
+**Real precedent — Day 9 HOL 2 Part 2**, verification-only against a real
+pipeline (`Day9_5_HOL2_...ipynb`):
+```python
+# Check 3 — Delta history. A new version here, timestamped around when the pipeline
+# last ran, confirms the pipeline actually wrote something (vs. finding nothing new).
+spark.sql("DESCRIBE HISTORY gbmart.bronze.orders") \
+    .select("version", "timestamp", "operation") \
+    .orderBy("version", ascending=False) \
+    .show(5, truncate=False)
+```
+No `pipelines.start_update()`, no `jobs.run_now()` anywhere near it — read-only
+metadata and plain `SELECT`s only.
+
+**Real precedent — Day 12 ILT 1**, `GRANT`/`REVOKE` shown as illustrative
+syntax, never executed (`Day12_1_ILT1_Data_Governance_Unity_Catalog.ipynb`):
+```
+> The GRANT/REVOKE statements above are illustrative syntax only, shown
+> against the practice schema naming pattern — nothing in this notebook
+> actually executes a GRANT or REVOKE against anything. The only thing we
+> execute against real grants is reading them, next.
+```
+
+## 3. Sayli's account — read-only, forever; this skill has no live access at all
+
+**Why:** her workspace was a one-time, read-only export used as an accuracy
+reference. Writing to or triggering anything there would be a real breach of
+trust with a colleague whose real data this project depends on.
+
+This skill (and every hands-on `.md` it produces) **has zero live access to
+sayli's workspace or to the real `gbmart` workspace, period.** If a task
+seems to require confirming something live — "did her pipeline change?",
+"is this still accurate in her workspace today?" — that is a gap to flag to
+the human, not something to fabricate having checked. Never write a report,
+comment, or hands-on claim implying a live check happened.
+
+## 4. Idempotent by default outside clone-based demos
+
+**Why:** rehearsing a hands-on scenario more than once (which will happen —
+instructors rehearse, cohorts repeat) should reproduce the same end state,
+not duplicate rows or corrupt a shared table.
+
+**Real precedent — Day 7 HOL 2**, the actual `fact_sales` build
+(`Day7_3_HOL2_Build_Gold_Layer_Fact_Sales.ipynb`):
+```python
+# overwrite mode -- per ILT 1, this is the simple, always-correct strategy
+# at GlobalMart's current volume. Incremental MERGE-based refresh replaces
+# this in Day 9-10, once you've felt why a full rebuild gets wasteful.
+fact_sales_df.write.format("delta").mode("overwrite").saveAsTable("gbmart.gold.fact_sales")
+```
+Hands-on scenarios that aren't clone-based (Day 4/5 Bronze/Silver builds, this
+Day 7 Gold build) should have their Solutions use `overwrite` or key-based
+`MERGE` — never a plain `append` into a shared table.
+
+## 5. Governance/masking demos never touch real `gbmart` security
+
+**Why:** the instant a row filter or column mask is attached to a real shared
+table, every other student's and the instructor's very next query is
+filtered/masked too — mid-class, with no warning, and it doesn't expire on
+its own (it needs an explicit `DROP` to undo).
+
+**Real precedent — Day 12 ILT 1** (`Day12_1_ILT1_Data_Governance_Unity_Catalog.ipynb`):
+```python
+# --- Practice schema setup -- isolates this demo from the real gbmart catalog --
+# Replace YOUR_SCHEMA with something unique to you if you run this again later
+# (e.g. main.governance_lab) -- main.YOUR_SCHEMA as-is is fine for one live demo.
+YOUR_SCHEMA = "main.YOUR_SCHEMA"
+spark.sql(f"CREATE SCHEMA IF NOT EXISTS {YOUR_SCHEMA}")
+
+PRACTICE_TABLE  = f"{YOUR_SCHEMA}.practice_customers"
+ROW_FILTER_FUNC = f"{YOUR_SCHEMA}.us_region_filter"
+MASK_FUNC       = f"{YOUR_SCHEMA}.email_mask"
+```
+Every `ALTER TABLE ... SET ROW FILTER` / `... SET MASK` / `GRANT` / `REVOKE`
+that actually *executes* in that notebook targets only this practice table —
+the only things run against real `gbmart` are `SHOW GRANTS`, `DESCRIBE
+HISTORY`, and plain `SELECT`s (all non-destructive, read-only). A hands-on
+Input drawn from this content should follow the same shape.
+
+## 6. Never embed a real credential — placeholder + "how to obtain" comment only
+
+**Why:** a real leaked database credential was found in one file in
+`reference for making the hands/*.md` during this project — the cautionary
+example that makes this rule concrete, not hypothetical (see
+`tone-reference.md` for the specifics, so you recognize the shape and never
+repeat it).
+
+**Real precedent — Day 1 HOL** (`Day1_5_HOL_PySpark_SparkSQL_ADLS.ipynb` /
+its matching `.md`), the pattern to copy for anything needing a per-learner
+value:
+```python
+# ─── Volume Setup ───────────────────────────────────────────────────────────
+# HOW TO GET THIS VALUE: Catalog (left sidebar) → your catalog → your schema
+# → raw_data volume → the path is shown at the top of the Volume browser.
+volume_path = "/Volumes/YOUR_CATALOG/YOUR_SCHEMA/raw_data"   # ← replace with your path
+```
+Every credential-shaped value (storage keys, connection strings, tokens,
+per-learner catalog/schema paths) follows this shape: an obviously-fake
+placeholder (`YOUR_CATALOG`, `YOUR_SCHEMA`) plus a comment telling the reader
+exactly where to go get their own real value — never a real key, never even a
+real-looking fake one that could be mistaken for live. This applies just as
+much to a hands-on `.md`'s Input text and Code-type Solutions as it does to a
+notebook cell.
+
+## After writing: re-open and validate, every time
+
+This is the Day 6 incident lesson (see `00_Instructor_Guide_How_To_Use_This_Bootcamp.html`
+Section 7): a background agent once reported success while silently having
+overwritten correct content with stale content, and it was only caught by a
+direct read of the output — not by any failure signal. Never trust a "done"
+report (including your own) without independently re-opening the file. For
+this skill that means: run `scripts/validate_lms_md.py <path>` after writing,
+and actually look at its output, before telling the user the hands-on `.md`
+is ready.

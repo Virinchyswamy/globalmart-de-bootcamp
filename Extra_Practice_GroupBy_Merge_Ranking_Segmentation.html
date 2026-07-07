@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Revision: GroupBy, Merge &amp; Ranking-Based Segmentation</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
+  --green:#3fb950;--yellow:#d29922;--red:#f85149;--purple:#bc8cff;
+  --kw:#ff7b72;--fn:#d2a8ff;--st:#a5d6ff;--cm:#8b949e;--nm:#79c0ff;--var:#ffa657;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+  height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.deck{flex:1;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;padding:2.5rem 3rem;
+  display:flex;flex-direction:column;gap:1.2rem;
+  opacity:0;pointer-events:none;transition:opacity .25s;overflow-y:auto}
+.slide.active{opacity:1;pointer-events:all}
+h1{font-size:2rem;font-weight:700;color:var(--accent)}
+h2{font-size:1.4rem;font-weight:600;color:var(--accent);margin-bottom:.4rem}
+h3{font-size:1.05rem;font-weight:600;color:var(--yellow);margin-bottom:.3rem}
+p,li{font-size:.95rem;line-height:1.6;color:var(--text)}
+ul{padding-left:1.2rem}
+li{margin-bottom:.3rem}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.8rem;
+  font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag.concept{background:#3a2f1e;color:var(--yellow)}
+.tag.revision{background:#1e3a2f;color:var(--green)}
+.tag.walkthrough{background:#1e3050;color:var(--accent)}
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:12px;font-size:.78rem;
+  font-weight:600;margin-right:.4rem}
+.badge.new{background:#1e3a2f;color:var(--green)}
+.badge.warn{background:#3a2f1e;color:var(--yellow)}
+pre{background:#010409;border:1px solid var(--border);border-radius:8px;
+  padding:1rem 1.2rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;
+  line-height:1.7;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.85rem}
+.kw{color:var(--kw)}
+.fn{color:var(--fn)}
+.st{color:var(--st)}
+.cm{color:var(--cm);font-style:italic}
+.nm{color:var(--nm)}
+.var{color:var(--var)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem}
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:1rem 1.2rem}
+.card h3{margin-bottom:.5rem}
+.callout{background:#1a2332;border-left:3px solid var(--accent);
+  border-radius:0 6px 6px 0;padding:.7rem 1rem;font-size:.88rem}
+.callout.green{background:#0d2318;border-color:var(--green)}
+.callout.yellow{background:#2a1f0d;border-color:var(--yellow)}
+.callout.purple{background:#1e1030;border-color:var(--purple)}
+.callout.red{background:#2a0d0d;border-color:var(--red)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#1f2937;color:var(--accent);padding:.5rem .8rem;text-align:left;
+  border:1px solid var(--border)}
+td{padding:.45rem .8rem;border:1px solid var(--border);vertical-align:top}
+tr:nth-child(even) td{background:#0f1117}
+td code{font-size:.8rem}
+.nav{display:flex;align-items:center;gap:1rem;padding:.6rem 3rem;
+  background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.nav button{background:none;border:1px solid var(--border);color:var(--text);
+  padding:.35rem .9rem;border-radius:6px;cursor:pointer;font-size:.85rem}
+.nav button:hover{background:var(--border)}
+#counter{margin-left:auto;color:var(--muted);font-size:.85rem;
+  font-family:'JetBrains Mono',monospace}
+.subtitle{color:var(--muted);font-size:1rem;margin-top:.3rem}
+.step-num{display:inline-block;width:22px;height:22px;border-radius:50%;
+  background:var(--accent);color:#000;font-size:.72rem;font-weight:700;
+  text-align:center;line-height:22px;margin-right:.4rem;flex-shrink:0}
+.step-row{display:flex;align-items:flex-start;gap:.3rem;margin-bottom:.4rem}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <span class="tag revision">Revision · Not Graded</span>
+    <h1 style="margin-top:.5rem">GroupBy, Merge &amp; Ranking-Based Segmentation</h1>
+    <p class="subtitle">A pure revision pass over every concept, syntax pattern, and logic step behind "segment my customers/users into tiers" reports — no quiz, no questions, just a clear walkthrough so the syntax feels familiar when you meet it for real.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>What this deck covers</h3>
+      <div class="step-row"><span class="step-num">1</span><p>Cleaning data before you aggregate it: duplicates, missing keys, date parsing</p></div>
+      <div class="step-row"><span class="step-num">2</span><p><code>groupby().agg()</code> with named aggregations — one row per entity, several stats at once</p></div>
+      <div class="step-row"><span class="step-num">3</span><p><code>np.floor()</code> vs <code>round()</code> vs <code>int()</code> truncation — three different answers from one number</p></div>
+      <div class="step-row"><span class="step-num">4</span><p>Merging several aggregated tables into one wide table with <code>merge()</code></p></div>
+      <div class="step-row"><span class="step-num">5</span><p><code>.rank(method='dense', ascending=...)</code> — ranking within a full column, direction matters</p></div>
+      <div class="step-row"><span class="step-num">6</span><p>Combining two ranks and classifying rows with a custom function + <code>.apply()</code></p></div>
+    </div>
+    <div class="card">
+      <h3>Why this is revision, not practice</h3>
+      <ul>
+        <li>You don't have the real dataset yet, so there's nothing to genuinely "solve" here — any quiz built on made-up numbers would just be guessing, not real practice</li>
+        <li>Instead: every concept is explained clearly with real, runnable-looking code and a worked example showing exactly what goes in and what comes out</li>
+        <li>Read through once, then skim the recap at the end right before you sit down with the real data — that's when this becomes useful</li>
+      </ul>
+      <div class="callout green" style="margin-top:.4rem"><span class="badge new">Goal</span> By the end, seeing a chain of <code>groupby → merge → rank → apply</code> shouldn't feel like a wall of code — it should feel like six small, separate ideas stacked on top of each other.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: WHY THIS PATTERN MATTERS -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Concept</span>
+    <h1 style="margin-top:.5rem">Why "How Often" + "How Much" Get Combined Into One Score</h1>
+    <p class="subtitle">The business idea behind almost every tiering / segmentation report you'll be asked to build.</p>
+  </div>
+  <div class="card">
+    <h3>The shape of the question, in plain English</h3>
+    <p style="margin-bottom:.6rem">A business rarely wants just one number about a customer or a user — it wants a <em>combined</em> picture:</p>
+    <ul>
+      <li><strong>How often do they show up?</strong> (a frequency metric — smaller is usually better here, meaning less time between visits)</li>
+      <li><strong>How much do they spend per visit, on average?</strong> (a value metric — bigger is usually better here)</li>
+      <li><strong>Put those two together into one combined score</strong>, so you can sort everyone from "best" to "worst" using a single number</li>
+      <li><strong>Turn that combined score into a small number of labeled groups</strong> (a "tier") that a non-technical stakeholder can act on</li>
+    </ul>
+  </div>
+  <div class="callout purple">
+    <strong>Why rank instead of just averaging the raw numbers:</strong> "days between orders" and "average order value" are measured in totally different units (days vs. dollars) — you can't average them directly. Converting each one to a <em>rank</em> first (a plain number from 1 upward) puts them on the same scale, so averaging the two ranks actually means something.
+  </div>
+</div>
+
+<!-- SLIDE 3: CONCEPT — value_counts() -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">value_counts() — Count Every Unique Value in a Column</h1>
+    <p class="subtitle">The fastest way to answer "what shows up most often in this column?"</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>The idea</h3>
+      <ul>
+        <li><code>.value_counts()</code> looks at one column, finds every distinct value in it, and counts how many rows have each one</li>
+        <li>The result comes back sorted from most common to least common, automatically</li>
+        <li><code>.reset_index()</code> turns that result from a "Series with a name as its index" back into a plain, ordinary DataFrame with real columns — mostly a cosmetic tidy-up step</li>
+      </ul>
+<pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+df = pd.<span class="fn">read_csv</span>(<span class="st">"some_table.csv"</span>)
+
+<span class="cm"># One line: count every unique value in a column, most common first</span>
+df[<span class="st">'some_category_column'</span>].<span class="fn">value_counts</span>().<span class="fn">reset_index</span>()</pre>
+    </div>
+    <div class="card">
+      <h3>Illustrative result — counting reasons in a made-up column</h3>
+      <table>
+        <tr><th>reason</th><th>count</th></tr>
+        <tr><td>Reason A</td><td>15</td></tr>
+        <tr><td>Reason B</td><td>9</td></tr>
+        <tr><td>Reason C</td><td>6</td></tr>
+        <tr><td>Reason D</td><td>4</td></tr>
+      </table>
+      <p style="margin-top:.5rem">One line of code, no <code>GROUP BY</code>, no manual counting — this is usually the very first thing you run on any categorical column you're seeing for the first time.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: CONCEPT — duplicated / drop_duplicates -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">duplicated() &amp; drop_duplicates() — Clean Before You Count</h1>
+    <p class="subtitle">A repeated row silently gets counted twice in every SUM and COUNT that comes after it.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>Checking first, then fixing</h3>
+<pre><span class="cm"># duplicated() -- True/False per row, True means "this exact row</span>
+<span class="cm"># already appeared earlier in the table"</span>
+df[df.<span class="fn">duplicated</span>()]
+
+<span class="cm"># drop_duplicates() removes those repeats, keeping the first copy</span>
+df = df.<span class="fn">drop_duplicates</span>()
+
+<span class="cm"># You can also check/drop duplicates on just ONE column,</span>
+<span class="cm"># e.g. the same order_id appearing twice by mistake</span>
+df[df[<span class="st">'order_id'</span>].<span class="fn">duplicated</span>()]
+df = df.<span class="fn">drop_duplicates</span>(subset=[<span class="st">'order_id'</span>])</pre>
+    </div>
+    <div class="card">
+      <h3>Why this has to come first, always</h3>
+      <ul>
+        <li>Every <code>groupby().agg()</code> later in this deck trusts that each real-world event (each order, each visit) appears exactly once</li>
+        <li>If one got logged twice by accident, its value gets double-counted in every total, every average, and every rank downstream</li>
+        <li>There's no way to spot this after the fact from the final report — it just quietly looks like a slightly-too-high number</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout yellow">
+    <strong>Habit to build:</strong> run <code>.duplicated()</code> checks on every raw table you load, before you do anything else with it — even if you don't expect duplicates. It costs one line and saves you from an invisible bug.
+  </div>
+</div>
+
+<!-- SLIDE 5: CONCEPT — to_datetime + strftime -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">pd.to_datetime(..., format=...) and .dt.strftime()</h1>
+    <p class="subtitle">Turning date text into a real date pandas can do math on — and turning it back into text when you need to display it.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>Why format=... matters</h3>
+      <ul>
+        <li>A date column loaded from CSV is just text at first — <code>"01/31/23 14:05"</code>, not an actual date pandas understands</li>
+        <li><code>pd.to_datetime()</code> converts that text into a real datetime — but without <code>format=...</code>, pandas has to <em>guess</em> the layout, and can silently guess wrong (swapping day and month, for example)</li>
+        <li>Telling it the exact format up front removes all the guessing</li>
+      </ul>
+<pre>df[<span class="st">'order_date'</span>] = pd.<span class="fn">to_datetime</span>(
+    df[<span class="st">'order_date'</span>], <span class="var">format</span>=<span class="st">'%m/%d/%y %H:%M'</span>
+)</pre>
+    </div>
+    <div class="card">
+      <h3>The format codes you'll actually use</h3>
+      <table>
+        <tr><th>Code</th><th>Means</th></tr>
+        <tr><td><code>%Y</code></td><td>4-digit year (2023)</td></tr>
+        <tr><td><code>%y</code></td><td>2-digit year (23)</td></tr>
+        <tr><td><code>%m</code></td><td>Month number</td></tr>
+        <tr><td><code>%d</code></td><td>Day of month</td></tr>
+        <tr><td><code>%H</code> / <code>%M</code></td><td>Hour (24h) / Minute</td></tr>
+      </table>
+      <p style="margin-top:.5rem"><strong>Going the other direction</strong> — once it's a real datetime, <code>.dt.strftime(...)</code> turns it back into text in whatever layout you want:</p>
+<pre>df[<span class="st">'order_date'</span>].<span class="fn">dt.strftime</span>(<span class="st">'%Y-%m-%d'</span>)
+<span class="cm"># -&gt; "2023-01-31" (readable, sortable, consistent)</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: CONCEPT — boolean filtering -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">Boolean Filtering — Keep Only the Rows You Actually Want</h1>
+    <p class="subtitle">Before aggregating anything, decide which rows even count as "real" activity.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>How it works, one piece at a time</h3>
+<pre>df[<span class="st">'order_status'</span>] == <span class="st">'delivered'</span>
+<span class="cm"># -&gt; a column of True/False, one value per row</span>
+
+delivered = df[df[<span class="st">'order_status'</span>] == <span class="st">'delivered'</span>]
+<span class="cm"># -&gt; wrapping the True/False column in [ ] keeps ONLY the True rows</span></pre>
+    </div>
+    <div class="card">
+      <h3>Why this matters before you aggregate</h3>
+      <ul>
+        <li>A raw table usually contains successful rows <em>and</em> cancelled/failed/returned ones — a cancelled row has no real value to count</li>
+        <li>If you aggregate before filtering, those rows (often stored as 0 or blank) can drag your averages down for no real reason</li>
+        <li>Rule of thumb: decide "which status values count as real, finished activity" first, filter to just those, and <em>then</em> start aggregating</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    This is the exact same idea as a SQL <code>WHERE status = 'delivered'</code> — just written as <code>df[df['status'] == 'delivered']</code> instead.
+  </div>
+</div>
+
+<!-- SLIDE 7: CONCEPT — dropna(subset=...) -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">dropna(subset=[...]) — Remove Rows Missing a KEY Column Only</h1>
+    <p class="subtitle">A blank customer_id makes a row un-groupable — but a blank in an unrelated column shouldn't cost you the whole row.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>Check first, then decide</h3>
+<pre><span class="cm"># See which rows are missing a customer_id</span>
+df[df[<span class="st">'customer_id'</span>].<span class="fn">isna</span>()]
+
+<span class="cm"># Remove ONLY rows missing customer_id -- leave everything else alone</span>
+df = df.<span class="fn">dropna</span>(subset=[<span class="st">'customer_id'</span>])</pre>
+    </div>
+    <div class="card">
+      <h3>The gotcha: forgetting subset=[...]</h3>
+      <ul>
+        <li><code>dropna()</code> with no arguments removes a row if <strong>any</strong> column in it has a missing value — not just the one you care about</li>
+        <li>On a wide table with many optional columns, that can silently delete far more rows than you intended</li>
+        <li><code>subset=['customer_id']</code> says exactly what it means: "only check this one column when deciding whether to drop a row"</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout red">
+    <strong>Always specify subset=[...] when you only care about one or two key columns.</strong> Bare <code>dropna()</code> is one of the easiest ways to accidentally throw away good data.
+  </div>
+</div>
+
+<!-- SLIDE 8: CONCEPT — groupby().agg() named aggregation -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">groupby().agg() — Several Stats, One Row Per Entity, One Line of Code</h1>
+    <p class="subtitle">The single most important pattern in this whole deck — everything else builds on top of it.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>The named-aggregation syntax</h3>
+<pre>summary = (
+    df
+    .<span class="fn">groupby</span>(<span class="st">'customer_id'</span>)
+    .<span class="fn">agg</span>(
+        total_orders=(<span class="st">'order_id'</span>, <span class="st">'count'</span>),
+        total_value=(<span class="st">'order_value'</span>, <span class="st">'sum'</span>),
+        avg_value=(<span class="st">'order_value'</span>, <span class="st">'mean'</span>),
+    )
+    .<span class="fn">reset_index</span>()
+)</pre>
+      <p style="margin-top:.5rem">Read each line as: <code>new_column_name = (source_column, 'how_to_combine_it')</code>. Three completely different summaries, computed in one pass over the data.</p>
+    </div>
+    <div class="card">
+      <h3>Why .reset_index() again?</h3>
+      <ul>
+        <li>Right after <code>.groupby('customer_id')</code>, pandas makes <code>customer_id</code> the table's index, not a normal column</li>
+        <li><code>.reset_index()</code> moves it back into an ordinary column — this matters because you'll need <code>customer_id</code> as a normal column to merge on later</li>
+      </ul>
+      <p style="margin-top:.5rem"><strong>Illustrative result — one row per entity:</strong></p>
+      <table>
+        <tr><th>customer_id</th><th>total_orders</th><th>avg_value</th></tr>
+        <tr><td>C001</td><td>3</td><td>150.00</td></tr>
+        <tr><td>C002</td><td>4</td><td>120.00</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: CONCEPT — floor vs round vs int truncation -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept · The Gotcha</span>
+    <h1 style="margin-top:.5rem">np.floor() vs round() vs int() — Three Different Answers From One Number</h1>
+    <p class="subtitle">Picking the wrong one changes your final report's numbers, silently and consistently.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>What each one actually does</h3>
+      <ul>
+        <li><code>np.floor(x)</code> — always rounds <strong>down</strong>, no matter what the decimal part is</li>
+        <li><code>int(x)</code> — truncates toward zero (chops off the decimal part entirely; same as floor for positive numbers)</li>
+        <li><code>round(x)</code> — rounds to the <em>nearest</em> whole number... except Python uses "banker's rounding" (round half to even) for exact <code>.5</code> values, which surprises almost everyone the first time</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Side by side — verified in a real Python shell</h3>
+      <table style="font-size:.8rem">
+        <tr><th>value</th><th>np.floor(value)</th><th>round(value)</th><th>int(value)</th></tr>
+        <tr><td>9.75</td><td>9.0</td><td>10</td><td>9</td></tr>
+        <tr><td>6.5</td><td>6.0</td><td><strong>6</strong></td><td>6</td></tr>
+        <tr><td>7.5</td><td>7.0</td><td><strong>8</strong></td><td>7</td></tr>
+      </table>
+      <p style="margin-top:.5rem;font-size:.85rem">Notice <code>round(6.5)</code> gives 6, not 7 — the "nearest even number" wins the tie. <code>round(7.5)</code> gives 8, also the nearest even number. This is <strong>not a bug</strong>, it's deliberate — but it will not match your intuition until you've seen it once.</p>
+    </div>
+  </div>
+  <div class="callout yellow">
+    <strong>Rule of thumb for this kind of report:</strong> when a spec says "round down," reach for <code>np.floor()</code> — it's unambiguous. Only use plain <code>round()</code> when you've specifically tested it against a <code>.5</code> value and confirmed it behaves the way you expect.
+  </div>
+</div>
+
+<!-- SLIDE 10: CONCEPT — merge inner/left -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">merge(how='inner') vs merge(how='left')</h1>
+    <p class="subtitle">Combining several one-row-per-entity tables into one wide table — the choice of "how" decides who survives.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>The two you'll use constantly</h3>
+<pre><span class="cm"># 'inner': keep a customer_id ONLY if it exists in BOTH tables</span>
+combined = orders_summary.<span class="fn">merge</span>(
+    value_summary, on=<span class="st">'customer_id'</span>, how=<span class="st">'inner'</span>
+)
+
+<span class="cm"># 'left': keep EVERY row from the table on the left,</span>
+<span class="cm"># even if there's no match on the right (fills NaN instead)</span>
+combined = combined.<span class="fn">merge</span>(
+    returns_summary, on=<span class="st">'customer_id'</span>, how=<span class="st">'left'</span>
+)</pre>
+    </div>
+    <div class="card">
+      <h3>Why the choice actually matters here</h3>
+      <ul>
+        <li>A customer who has never returned a single order simply won't appear in a returns-only table at all</li>
+        <li>If you merged that with <code>how='inner'</code>, that customer would silently vanish from your entire report — not because anything went wrong, but because "inner" only keeps rows present on both sides</li>
+        <li><code>how='left'</code> guards against this: it keeps every customer from your main table no matter what, filling in <code>NaN</code> (missing) wherever there's genuinely nothing to match</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout purple">
+    <strong>A good default:</strong> once you have your main, complete customer list, merge everything else onto it with <code>how='left'</code>. Only use <code>how='inner'</code> when losing unmatched rows is exactly what you want.
+  </div>
+</div>
+
+<!-- SLIDE 11: CONCEPT — date subtraction -> .dt.days -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">Subtracting Two Dates — and Getting a Plain Number of Days Out</h1>
+    <p class="subtitle">Two datetime columns subtracted give you a duration — one more step turns that into a number you can do math with.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>The two-step pattern</h3>
+<pre><span class="cm"># Subtracting one datetime column from another gives a "Timedelta"</span>
+<span class="cm"># -- a SPAN of time, not a plain number</span>
+span = df[<span class="st">'last_order_date'</span>] - df[<span class="st">'first_order_date'</span>]
+
+<span class="cm"># .dt.days pulls out just the whole number of days from that span</span>
+df[<span class="st">'days_active'</span>] = span.<span class="fn">dt.days</span></pre>
+    </div>
+    <div class="card">
+      <h3>Worked example</h3>
+      <p>First order: <code>2023-01-01</code>. Last order: <code>2023-01-31</code>.</p>
+<pre>2023<span class="nm">-01-31</span> - 2023<span class="nm">-01-01</span> = Timedelta(<span class="st">'30 days'</span>)
+.dt.days -&gt; <span class="nm">30</span></pre>
+      <p style="margin-top:.5rem">This "days_active" number becomes the top of the fraction in the very next concept — a frequency metric is always <em>some span of time divided by some count of events</em>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: CONCEPT — rank(method='dense', ascending=...) -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">.rank(method='dense', ascending=...) — Same Idea as SQL's DENSE_RANK()</h1>
+    <p class="subtitle">Now applied directly to a pandas column, no window function syntax required.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>Reading the two arguments</h3>
+      <ul>
+        <li><code>method='dense'</code> — tied values get the same rank, and the next distinct value's rank does <strong>not</strong> skip a number (1, 1, 2 — never 1, 1, 3)</li>
+        <li><code>ascending=True</code> (the default) — the <strong>smallest</strong> value gets rank 1. Use this when a lower number is actually better.</li>
+        <li><code>ascending=False</code> — the <strong>largest</strong> value gets rank 1. Use this when a higher number is better.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Applied to two different metrics, two different directions</h3>
+<pre><span class="cm"># Fewer days between orders = more frequent = better</span>
+<span class="cm"># -&gt; smallest value should win -&gt; ascending=True (default)</span>
+df[<span class="st">'frequency_rank'</span>] = (
+    df[<span class="st">'purchase_frequency'</span>].<span class="fn">rank</span>(method=<span class="st">'dense'</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
+)
+
+<span class="cm"># Bigger average order value = better</span>
+<span class="cm"># -&gt; largest value should win -&gt; ascending=False</span>
+df[<span class="st">'value_rank'</span>] = (
+    df[<span class="st">'avg_value'</span>].<span class="fn">rank</span>(method=<span class="st">'dense'</span>, ascending=<span class="kw">False</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
+)</pre>
+    </div>
+  </div>
+  <div class="callout green">
+    <strong>Before writing any <code>.rank()</code> call, ask yourself one question first:</strong> "for this metric, does a bigger number or a smaller number mean 'better'?" That answer tells you whether <code>ascending</code> should be <code>True</code> or <code>False</code> — get this backwards and every rank in your report is upside down.
+  </div>
+</div>
+
+<!-- SLIDE 13: CONCEPT — combine ranks + custom function + apply -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">Combining Two Ranks, Then Classifying With Your Own Function</h1>
+    <p class="subtitle">apply() lets you run any custom if/elif/else logic, once per row — not just built-in math.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>Step 1 — average the two rank numbers</h3>
+<pre>df[<span class="st">'avg_rank'</span>] = (
+    (df[<span class="st">'frequency_rank'</span>] + df[<span class="st">'value_rank'</span>]) / <span class="nm">2</span>
+).<span class="fn">astype</span>(<span class="fn">int</span>)
+<span class="cm"># .astype(int) truncates any leftover .5 -- see the rounding slide above.</span>
+<span class="cm"># (2 + 3) / 2 = 2.5 -&gt; astype(int) -&gt; 2, NOT 3</span></pre>
+    </div>
+    <div class="card">
+      <h3>Step 2 — a plain function, handed to .apply()</h3>
+<pre><span class="kw">def</span> <span class="fn">classify</span>(rank):
+    <span class="kw">if</span> rank &gt;= <span class="nm">300</span>:
+        <span class="kw">return</span> <span class="st">'Tier C'</span>
+    <span class="kw">elif</span> rank &gt;= <span class="nm">150</span>:
+        <span class="kw">return</span> <span class="st">'Tier B'</span>
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="st">'Tier A'</span>
+
+<span class="cm"># .apply() runs classify() once per row, feeding it that row's avg_rank</span>
+df[<span class="st">'segment'</span>] = df[<span class="st">'avg_rank'</span>].<span class="fn">apply</span>(classify)</pre>
+      <p style="margin-top:.4rem">Whenever your logic needs "if this, then that, otherwise something else" — something a single column formula can't express — write a small function and hand it to <code>.apply()</code>. The exact number and names of the tiers, and where the thresholds sit, will be given to you in the real scenario — the mechanism here is the part worth knowing cold.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: CONCEPT — isin() -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">isin([...]) — Check Membership in a List, Cleanly</h1>
+    <p class="subtitle">The tidy way to say "any of these specific values," without chaining multiple == with |.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>The messy way vs. the clean way</h3>
+<pre><span class="cm"># Works, but gets unwieldy fast</span>
+df[(df[<span class="st">'value_rank'</span>] == <span class="nm">1</span>) | (df[<span class="st">'value_rank'</span>] == <span class="nm">2</span>) | (df[<span class="st">'value_rank'</span>] == <span class="nm">3</span>)]
+
+<span class="cm"># Same result, much cleaner</span>
+df[df[<span class="st">'value_rank'</span>].<span class="fn">isin</span>([<span class="nm">1</span>, <span class="nm">2</span>, <span class="nm">3</span>])]</pre>
+    </div>
+    <div class="card">
+      <h3>When you'll reach for this</h3>
+      <ul>
+        <li>Pulling out "the top N" by rank (ranks 1 through N)</li>
+        <li>Filtering to a specific handful of categories at once, instead of one <code>==</code> per category joined with <code>|</code></li>
+        <li>Reads almost like English: "where value_rank is in this list"</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15: WALKTHROUGH PART 1 -->
+<div class="slide">
+  <div>
+    <span class="tag walkthrough">Walkthrough · Part 1 of 3</span>
+    <h1 style="margin-top:.5rem">Watch the Shape of the Data Change — Cleaning &amp; Aggregating</h1>
+    <p class="subtitle">Every concept above, now traced through in sequence on the same small, illustrative table.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>Start: raw, messy rows (illustrative)</h3>
+      <table style="font-size:.8rem">
+        <tr><th>order_id</th><th>customer_id</th><th>status</th><th>value</th></tr>
+        <tr><td>O1</td><td>C001</td><td>delivered</td><td>100</td></tr>
+        <tr><td>O2</td><td>C001</td><td>delivered</td><td>200</td></tr>
+        <tr><td>O3</td><td>C001</td><td>cancelled</td><td>50</td></tr>
+        <tr><td>O2</td><td>C001</td><td>delivered</td><td>200</td></tr>
+        <tr><td>O4</td><td>NaN</td><td>delivered</td><td>75</td></tr>
+      </table>
+      <p style="margin-top:.5rem;font-size:.85rem;color:var(--muted)">Notice: O2 appears twice (a duplicate), O3 is cancelled (not real activity), and O4 has no customer_id at all.</p>
+    </div>
+    <div class="card">
+      <h3>Clean it, in the order that matters</h3>
+<pre>df = df.<span class="fn">drop_duplicates</span>()
+df = df[df[<span class="st">'status'</span>] == <span class="st">'delivered'</span>]
+df = df.<span class="fn">dropna</span>(subset=[<span class="st">'customer_id'</span>])
+<span class="cm"># O2's duplicate is gone, O3 (cancelled) is gone, O4 (no customer_id) is gone</span>
+<span class="cm"># What's left: O1 and O2, both belonging to C001</span></pre>
+      <p style="margin-top:.5rem"><strong>Then aggregate</strong> — collapse those clean rows into one row per customer:</p>
+<pre>summary = df.<span class="fn">groupby</span>(<span class="st">'customer_id'</span>).<span class="fn">agg</span>(
+    total_orders=(<span class="st">'order_id'</span>, <span class="st">'count'</span>),
+    avg_value=(<span class="st">'value'</span>, <span class="st">'mean'</span>)
+).<span class="fn">reset_index</span>()
+<span class="cm"># C001: total_orders=2, avg_value=150.0  (from 100 and 200)</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16: WALKTHROUGH PART 2 -->
+<div class="slide">
+  <div>
+    <span class="tag walkthrough">Walkthrough · Part 2 of 3</span>
+    <h1 style="margin-top:.5rem">Bringing In Dates and Merging Everything Together</h1>
+    <p class="subtitle">Now add the frequency metric, and combine every separately-aggregated table into one wide row.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>Compute days_active and frequency</h3>
+<pre>duration = df.<span class="fn">groupby</span>(<span class="st">'customer_id'</span>).<span class="fn">agg</span>(
+    first_order=(<span class="st">'order_date'</span>, <span class="st">'min'</span>),
+    last_order=(<span class="st">'order_date'</span>, <span class="st">'max'</span>)
+).<span class="fn">reset_index</span>()
+
+duration[<span class="st">'days_active'</span>] = (
+    duration[<span class="st">'last_order'</span>] - duration[<span class="st">'first_order'</span>]
+).<span class="fn">dt.days</span>
+<span class="cm"># C001: first_order=Jan 1, last_order=Jan 31 -&gt; days_active=30</span></pre>
+    </div>
+    <div class="card">
+      <h3>Merge the pieces into one wide table</h3>
+<pre>result = summary.<span class="fn">merge</span>(duration, on=<span class="st">'customer_id'</span>, how=<span class="st">'inner'</span>)
+
+result[<span class="st">'purchase_frequency'</span>] = np.<span class="fn">floor</span>(
+    result[<span class="st">'days_active'</span>] / result[<span class="st">'total_orders'</span>]
+).<span class="fn">astype</span>(<span class="fn">int</span>)
+<span class="cm"># C001: 30 days_active / 2 total_orders = 15.0 -&gt; floor -&gt; 15</span></pre>
+      <p style="margin-top:.5rem">This is exactly where <code>merge(how='left')</code> would matter more in a real dataset — for example, bringing in a returns table where plenty of customers never appear at all.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 17: WALKTHROUGH PART 3 -->
+<div class="slide">
+  <div>
+    <span class="tag walkthrough">Walkthrough · Part 3 of 3</span>
+    <h1 style="margin-top:.5rem">Ranking Both Metrics, Then Classifying</h1>
+    <p class="subtitle">The final stretch — turn two raw numbers into ranks, average them, and label the result.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>Rank each metric in its correct direction</h3>
+<pre><span class="cm"># Lower purchase_frequency = more frequent = better -&gt; ascending=True</span>
+result[<span class="st">'frequency_rank'</span>] = result[<span class="st">'purchase_frequency'</span>].<span class="fn">rank</span>(
+    method=<span class="st">'dense'</span>
+).<span class="fn">astype</span>(<span class="fn">int</span>)
+
+<span class="cm"># Higher avg_value = better -&gt; ascending=False</span>
+result[<span class="st">'value_rank'</span>] = result[<span class="st">'avg_value'</span>].<span class="fn">rank</span>(
+    method=<span class="st">'dense'</span>, ascending=<span class="kw">False</span>
+).<span class="fn">astype</span>(<span class="fn">int</span>)</pre>
+    </div>
+    <div class="card">
+      <h3>Combine and classify</h3>
+<pre>result[<span class="st">'avg_rank'</span>] = (
+    (result[<span class="st">'frequency_rank'</span>] + result[<span class="st">'value_rank'</span>]) / <span class="nm">2</span>
+).<span class="fn">astype</span>(<span class="fn">int</span>)
+
+result[<span class="st">'segment'</span>] = result[<span class="st">'avg_rank'</span>].<span class="fn">apply</span>(classify)
+
+<span class="cm"># Once every customer has a segment, this is the line that tells you</span>
+<span class="cm"># which group is largest -- the natural last step of a report like this:</span>
+result[<span class="st">'segment'</span>].<span class="fn">value_counts</span>()</pre>
+    </div>
+  </div>
+  <div class="callout red">
+    <strong>A real-world gotcha worth carrying into the actual data:</strong> a customer with only 1 order ever has <code>days_active = 0</code>, which makes <code>purchase_frequency = 0</code> — the smallest possible value. That customer will look "extremely frequent" by the raw number, when really they just don't have enough history yet. Worth noticing in a real report, not something the code fixes on its own.
+  </div>
+</div>
+
+<!-- SLIDE 18: RECAP -->
+<div class="slide">
+  <div>
+    <span class="tag revision">Recap</span>
+    <h1 style="margin-top:.5rem">Everything You Just Revised</h1>
+    <p class="subtitle">Skim this once more right before you sit down with the real data — every piece here will show up.</p>
+  </div>
+  <div class="card">
+    <table>
+      <tr><th>Syntax / Idea</th><th>What it's for</th></tr>
+      <tr><td><code>.value_counts().reset_index()</code></td><td>Count every unique value in a column, sorted most-common-first</td></tr>
+      <tr><td><code>.duplicated()</code> / <code>.drop_duplicates()</code></td><td>Catch and remove repeated rows before they double-count anything</td></tr>
+      <tr><td><code>pd.to_datetime(..., format=...)</code></td><td>Parse date text reliably, without pandas guessing the layout</td></tr>
+      <tr><td><code>df[df['col'] == value]</code></td><td>Keep only the rows that meet a condition, before aggregating</td></tr>
+      <tr><td><code>.dropna(subset=[...])</code></td><td>Drop rows missing a specific key column, without touching others</td></tr>
+      <tr><td><code>.groupby().agg(name=(col, fn))</code></td><td>Multiple named aggregations, one row per group, one line of code</td></tr>
+      <tr><td><code>np.floor()</code> vs <code>round()</code> vs <code>int()</code></td><td>Three different rounding behaviors — pick deliberately, not by habit</td></tr>
+      <tr><td><code>merge(how='inner'/'left')</code></td><td>Combine tables while controlling exactly who survives the join</td></tr>
+      <tr><td><code>(date2 - date1).dt.days</code></td><td>Turn two dates into a plain number of days between them</td></tr>
+      <tr><td><code>.rank(method='dense', ascending=...)</code></td><td>Rank a column, choosing direction based on which end is "better"</td></tr>
+      <tr><td>Custom function + <code>.apply()</code></td><td>Any if/elif/else logic a column formula alone can't express</td></tr>
+      <tr><td><code>.isin([...])</code></td><td>Clean membership check against a list of values</td></tr>
+    </table>
+  </div>
+  <div class="callout green">Nothing on this recap page is specific to any one business scenario — that's the point. These are the tools; the real assessment will hand you the specific column names, thresholds, and category labels to plug into this exact sequence of steps.</div>
+</div>
+
+</div><!-- end deck -->
+
+<div class="nav">
+  <button onclick="go(-1)">← Prev</button>
+  <button onclick="go(1)">Next →</button>
+  <span id="counter"></span>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+function show(n){
+  slides[cur].classList.remove('active');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  document.getElementById('counter').textContent = (cur+1)+' / '+slides.length;
+}
+function go(d){ show(cur+d); }
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') go(-1);
+});
+show(0);
+</script>
+</body>
+</html>
