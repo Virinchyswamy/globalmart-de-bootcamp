@@ -14,7 +14,7 @@ them). If you find yourself typing `#####` anywhere in a new hands-on `.md`,
 stop — that is the wrong file's shape leaking in.
 
 Source files (read for tone, in
-`C:\Yvirinchy\DE notebooks\reference for making the hands\`):
+`C:\Yvirinchy\DE notebooks\reference_materials\reference_data_for_hands_on_docs\`):
 - `5425554a-...salescategoryanalysisreportofglobalmart.md`
 - `539d04c1-...vendorperformanceanalysisandrankingframework.md`
 - (others in the same folder follow the same two patterns below)
@@ -75,7 +75,7 @@ judgment).
 
 ## The cautionary example — why credentials never appear in generated content
 
-One of the source files in `reference for making the hands/` contains a real,
+One of the source files in `reference_materials/reference_data_for_hands_on_docs/` contains a real,
 plaintext database connection detail — a SQL Server hostname, a real
 username, and a real plaintext password — pasted directly into an Input's
 body text as a `>[!NOTE]` callout telling learners "here's the login to use."

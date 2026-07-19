@@ -5,7 +5,7 @@ description: >
   Databricks bootcamp HOL (hands-on lab) session, matching the exact proven
   format (YAML frontmatter + globally-numbered "## Input N" headings that
   never reset across scenarios) that is confirmed to import cleanly into the
-  LMS -- never the visually-similar "reference for making the hands/" export
+  LMS -- never the visually-similar "reference_materials/reference_data_for_hands_on_docs/" export
   format, which is a different platform's export shape and will fail import.
   Use this whenever the user asks to build, generate, write, or fix a
   hands-on .md, LMS import file, graded assessment, or scenario/input file
@@ -24,7 +24,7 @@ description: >
 
 The LMS's `.md` import format looks almost identical to a different
 platform's export format that also lives in this repo
-(`reference for making the hands/`) — same rough idea (frontmatter-ish
+(`reference_materials/reference_data_for_hands_on_docs/`) — same rough idea (frontmatter-ish
 metadata, Scenario/Input structure), but different heading levels and
 different numbering rules. Confusing the two isn't hypothetical: this
 project has two real, git-committed fixes for exactly this confusion
@@ -38,7 +38,7 @@ ever try to import anything.
 
 ### 1. Identify the target HOL session and locate its notebook
 
-Glob `C:\Yvirinchy\DE notebooks\Day{N}\Day{N}_*_HOL*_*.ipynb` for the day the
+Glob `C:\Yvirinchy\DE notebooks\Databricks\Day{N}\Day{N}_*_HOL*_*.ipynb` for the day the
 user names (or the topic they describe — match against the notebook's title
 cell if they give a topic instead of a day number). If more than one HOL
 exists that day, ask which one (or match by topic keyword the user gave)
@@ -186,7 +186,7 @@ and never even a realistic-looking fake one that could be mistaken for live.
 ### 8. Write the file, then validate before declaring success
 
 ```
-python scripts/validate_lms_md.py "Day{N}\Day{N}_{order}_HOL{x}_Topic_Name.md"
+python scripts/validate_lms_md.py "Databricks\Day{N}\Day{N}_{order}_HOL{x}_Topic_Name.md"
 ```
 
 Read its output. This script checks exactly the things known to have broken
@@ -254,7 +254,7 @@ These apply to every hands-on `.md` this skill helps produce, no exceptions:
   isn't covered by anything here, and keep it in the same 2-level
   `parent / child (skill)` shape — never a 3-level tag.
 - `references/architecture-facts.md` — the real `gbmart` environment, the 2
-  ingestion pathways / 7 Bronze tables, the "4 sources" trap, Bronze/Silver
+  ingestion pathways / 8 Bronze tables (incl. two catalogs), the "4 sources" trap, Bronze/Silver
   casing rule. Read for any scenario referencing the pipeline-accurate
   schema.
 - `references/fact-sales-schema.md` — both `fact_sales` framings and the
@@ -262,7 +262,7 @@ These apply to every hands-on `.md` this skill helps produce, no exceptions:
   degenerate-dimension gotchas. Read for any scenario touching `fact_sales`
   or its dimensions.
 - `references/adls-sample-data.md` — real folder/row/column facts for the
-  raw sample data in `reference for making the hands/adls_data_new/`,
+  raw sample data in `reference_materials/reference_data_for_hands_on_docs/adls_data_new/`,
   including the `addresses`-folder vs. `address`-table naming gotcha and the
   note that `returns` is supplementary, not one of the 7 official Bronze
   tables. Read when a scenario has the learner work with raw files directly.

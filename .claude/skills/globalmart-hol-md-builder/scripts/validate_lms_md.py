@@ -9,7 +9,7 @@ This exists because of two real, confirmed import failures on this project:
   2. "Duplicate input number" -- `## Input N` numbering was reset back to 1
      at the start of a new Scenario instead of continuing to count up across
      the whole file (this is exactly what the visually-similar-but-wrong
-     "reference for making the hands/" export format does).
+     "reference_materials/reference_data_for_hands_on_docs/" export format does).
 
 Both were fixed for real in this repo's history (commits `8094f64`,
 `b60d56a`). This script mirrors both failure modes as named checks, plus two
@@ -181,7 +181,7 @@ def validate(path):
             "Input heading level check FAILED: found "
             f"{len(wrong_level)} Input heading(s) that are not H2 "
             f"('## Input N'): {examples}{more}. This is the shape used by "
-            "the incompatible 'reference for making the hands/' export "
+            "the incompatible 'reference_materials/reference_data_for_hands_on_docs/' export "
             "format ('##### Input N', H5) -- never copy that structure into "
             "an LMS-import file."
         )

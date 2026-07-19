@@ -1,4 +1,4 @@
-# Real Hands-On Sample Data — `reference for making the hands/adls_data_new/`
+# Real Hands-On Sample Data — `reference_materials/reference_data_for_hands_on_docs/adls_data_new/`
 
 This is the real, flat-file sample dataset available for writing hands-on
 scenarios that ask a learner to work with raw/ADLS-shaped data directly
@@ -6,7 +6,7 @@ scenarios that ask a learner to work with raw/ADLS-shaped data directly
 in `architecture-facts.md`/`fact-sales-schema.md`). It sits at:
 
 ```
-C:\Yvirinchy\DE notebooks\reference for making the hands\adls_data_new\
+C:\Yvirinchy\DE notebooks\reference_materials\reference_data_for_hands_on_docs\adls_data_new\
 ```
 
 Row counts and columns below were measured directly against the real files
@@ -17,7 +17,7 @@ listed here, go re-check the folder rather than guessing.
 
 The raw folder here is **plural**, `addresses/`, because it mirrors how the
 files land before ingestion. Once ingested through Autoloader, the real
-table is **singular**, `gbmart.silver.address` (see `architecture-facts.md`).
+table is **singular**, `harsh_kumar01_npmentorskool_onmicrosoft_com.silver.address` (see `architecture-facts.md`).
 If a hands-on scenario references both the raw files and the downstream
 table in the same Input, use the correct name for each — don't assume they
 match, and don't silently "fix" one to match the other.
@@ -118,4 +118,4 @@ real dataset, nothing more.
   session's own notebook explicitly does otherwise.
 - Never mix the two in one scenario without checking the sibling `.ipynb`
   first — if the notebook reads from a Volume path, the hands-on `.md`
-  should too; if it reads `gbmart.bronze.customers`, the `.md` should too.
+  should too; if it reads `harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.customers`, the `.md` should too.

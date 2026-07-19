@@ -68,7 +68,18 @@ try:
 except AttributeError:
     pass
 
-CALENDAR_PATH = Path(__file__).resolve().parents[4] / "tred-alch-adv-dbx-chennai-2026-calendar (1).xlsx"
+# 2026-07-19: calendar moved from repo root into calendars/. There are now
+# TWO calendar files there with different Databricks-track wording (SQL &
+# Python sheet is identical between them, only "Databricks (DE)" differs) --
+# neither has been reconciled against the other, and neither's session
+# titles match the real built notebooks verbatim (e.g. this file's own
+# session titles use "Problem Statement & GlobalMart Architecture", which
+# matches neither calendar's Day-1 title exactly). Treat this script's
+# {order}/{x} output as a strong hint, not gospel -- always cross-check
+# with Glob against the real Day{N} folder before finalizing a filename,
+# same as the existing REMINDER at the bottom of this script already says.
+CALENDAR_PATH = Path(__file__).resolve().parents[4] / "calendars" / "tred-alch-adv-dbx-chennai-2026-calendar.xlsx"
+ALT_CALENDAR_PATH = Path(__file__).resolve().parents[4] / "calendars" / "tred-alch-adv-dbx-chennai-2026-calendar (alt-version, Databricks sheet differs - see below).xlsx"
 SHEET_NAME = "Databricks (DE)"
 
 # Activity Type values that actually become a notebook file. Everything else

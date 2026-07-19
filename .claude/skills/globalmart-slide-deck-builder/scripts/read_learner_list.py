@@ -25,7 +25,11 @@ except ImportError:
     print("ERROR: openpyxl is required. Install with: pip install openpyxl", file=sys.stderr)
     sys.exit(1)
 
-LEARNER_LIST_PATH = r"C:\Yvirinchy\Chennai_batch\tred-alch-adv-dbx-chennai-2026-learner list.xlsx"
+# 2026-07-19: Chennai_batch was merged into this repo; the learner list now
+# lives in calendars/ (an exact-duplicate copy also sits alongside it,
+# labeled "(duplicate, identical to the other copy)" -- either is fine, this
+# one is the original).
+LEARNER_LIST_PATH = r"C:\Yvirinchy\DE notebooks\calendars\tred-alch-adv-dbx-chennai-2026-learner list.xlsx"
 SHEET_NAME = "Sheet1"
 
 

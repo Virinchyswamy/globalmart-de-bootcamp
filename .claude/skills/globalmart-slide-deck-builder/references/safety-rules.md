@@ -32,8 +32,8 @@ SILVER_PRACTICE = f"{PRACTICE_SCHEMA}.silver_payments_practice"
 
 # SHALLOW CLONE: same real data as gbmart.bronze/silver.payments right now, but a
 # transaction history that's entirely yours — safe to MERGE into repeatedly.
-spark.sql(f"CREATE OR REPLACE TABLE {BRONZE_PRACTICE} SHALLOW CLONE gbmart.bronze.payments")
-spark.sql(f"CREATE OR REPLACE TABLE {SILVER_PRACTICE} SHALLOW CLONE gbmart.silver.payments")
+spark.sql(f"CREATE OR REPLACE TABLE {BRONZE_PRACTICE} SHALLOW CLONE harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.payments")
+spark.sql(f"CREATE OR REPLACE TABLE {SILVER_PRACTICE} SHALLOW CLONE harsh_kumar01_npmentorskool_onmicrosoft_com.silver.payments")
 spark.sql(f"ALTER TABLE {BRONZE_PRACTICE} SET TBLPROPERTIES (delta.enableChangeDataFeed = true)")
 ```
 
@@ -47,8 +47,8 @@ safe to write to.
 ```
 ```python
 SILVER_TABLE = f"{YOUR_SCHEMA}.silver_customers"
-spark.sql(f"CREATE OR REPLACE TABLE {BRONZE_TABLE} SHALLOW CLONE gbmart.bronze.customers")
-spark.sql(f"CREATE OR REPLACE TABLE {SILVER_TABLE} SHALLOW CLONE gbmart.silver.customers")
+spark.sql(f"CREATE OR REPLACE TABLE {BRONZE_TABLE} SHALLOW CLONE harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.customers")
+spark.sql(f"CREATE OR REPLACE TABLE {SILVER_TABLE} SHALLOW CLONE harsh_kumar01_npmentorskool_onmicrosoft_com.silver.customers")
 ```
 
 Applies to: any HOL centered on MERGE/SCD/CDF/OPTIMIZE against a table other
@@ -84,7 +84,7 @@ pipeline (`Day9_5_HOL2_...ipynb`):
 ```python
 # Check 3 — Delta history. A new version here, timestamped around when the pipeline
 # last ran, confirms the pipeline actually wrote something (vs. finding nothing new).
-spark.sql("DESCRIBE HISTORY gbmart.bronze.orders") \
+spark.sql("DESCRIBE HISTORY harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.orders") \
     .select("version", "timestamp", "operation") \
     .orderBy("version", ascending=False) \
     .show(5, truncate=False)
@@ -163,7 +163,7 @@ real catalog name in the executed statements.
 ## 6. Never embed a real credential — placeholder + "how to obtain" comment only
 
 **Why:** a real leaked database credential was found in one file in
-`reference for making the hands/*.md` during this project — the cautionary
+`reference_materials/reference_data_for_hands_on_docs/*.md` during this project — the cautionary
 example that makes this rule concrete, not hypothetical. A slide is exactly
 as public as a shared screen in a room full of learners; nothing shown on one
 should ever be a real secret.

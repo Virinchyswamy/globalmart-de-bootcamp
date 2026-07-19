@@ -22,7 +22,7 @@ worked example — always verify against the real file
 isolation.
 
 **Only ONE known-clean-import file exists to verify this format against:**
-`C:\Yvirinchy\DE notebooks\Day1\Day1_5_HOL_PySpark_SparkSQL_ADLS.md`. It is
+`C:\Yvirinchy\DE notebooks\Databricks\Day1\Day1_5_HOL_PySpark_SparkSQL_ADLS.md`. It is
 embedded in full at the bottom of this doc so this reference is
 self-contained — but if it's ever been edited since, prefer reading the real
 file directly over this embedded copy.
@@ -119,7 +119,7 @@ tags:
 
 - Heading level is `##` (H2) — **never** `#####` (H5). H5 `##### Input N` is
   the shape used by the incompatible, visually-similar export format in
-  `reference for making the hands/` (a different platform's export, not this
+  `reference_materials/reference_data_for_hands_on_docs/` (a different platform's export, not this
   LMS's import contract) — if you ever write `#####` here, that is a sign
   you've drifted into copying the wrong reference's structure.
 - Numbering is **one running counter for the entire file, across every
@@ -239,7 +239,7 @@ trace every Solution back to concepts the file already introduced them to.
 
 This is the complete, real, known-clean-import file, embedded verbatim so
 this reference doc is self-contained. If the real file at
-`C:\Yvirinchy\DE notebooks\Day1\Day1_5_HOL_PySpark_SparkSQL_ADLS.md` has
+`C:\Yvirinchy\DE notebooks\Databricks\Day1\Day1_5_HOL_PySpark_SparkSQL_ADLS.md` has
 since changed, trust the real file over this copy.
 
 ~~~markdown

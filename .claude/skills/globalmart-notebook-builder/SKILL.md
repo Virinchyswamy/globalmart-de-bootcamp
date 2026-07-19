@@ -4,7 +4,7 @@ description: >
   Builds one Databricks .ipynb teaching notebook (an ILT lecture-demo or a HOL
   hands-on lab) for the GlobalMart Azure Databricks Data Engineering bootcamp
   (Chennai 2026 cohort), for exactly one calendar session at a time, saved into
-  C:\Yvirinchy\DE notebooks\Day{N}\. Use this whenever the user asks to build,
+  C:\Yvirinchy\DE notebooks\Databricks\Day{N}\. Use this whenever the user asks to build,
   write, draft, continue, or fix a Day N notebook, ILT, HOL, hands-on lab, or
   pipeline-accurate PySpark/Spark SQL session for this bootcamp -- including
   phrasings like "build Day 13's notebook", "write the ILT for DLQ replay",
@@ -71,7 +71,7 @@ All of the above is exactly why step 2 below is not optional.
 
 ### 2. Check for filename collisions and reconcile `{order}` — before writing anything
 
-Glob `Day{N}\Day{N}_*` to see what's actually in the folder. Two separate
+Glob `Databricks\Day{N}\Day{N}_*` to see what's actually in the folder. Two separate
 things to check here, not one:
 
 - **Does the target file already exist?** If so, **stop and show what would
@@ -103,7 +103,7 @@ surrounding markdown.
 
 ### 4. Read the immediately-preceding sibling notebook(s) for continuity
 
-Read the notebook(s) that come right before this one in the same `Day{N}\`
+Read the notebook(s) that come right before this one in the same `Databricks\Day{N}\`
 folder (by `{order}`), and the paired ILT if you're building a HOL. A learner
 building today's session has whatever tables/columns/variable names those
 earlier notebooks actually produced — not whatever a fresh derivation from the
@@ -141,7 +141,7 @@ shape doesn't.
 
 Write the `.ipynb`, then run:
 ```
-python scripts/validate_ipynb.py "Day{N}\Day{N}_{order}_{TYPE}{x}_Topic_Name.ipynb"
+python scripts/validate_ipynb.py "Databricks\Day{N}\Day{N}_{order}_{TYPE}{x}_Topic_Name.ipynb"
 ```
 Read its output. A structural failure (bad JSON, missing `cell_type`) means
 the file is broken and needs fixing before anything else. A billable-trigger
@@ -187,7 +187,7 @@ These apply to every notebook this skill helps produce, no exceptions:
 ## Bundled references — when to read each
 
 - `references/architecture-facts.md` — the real `gbmart` environment, the 2
-  ingestion pathways / 7 Bronze tables, the "4 sources" trap, Bronze/Silver
+  ingestion pathways / 8 Bronze tables (incl. two catalogs), the "4 sources" trap, Bronze/Silver
   casing rule. Read for any pipeline-accurate session.
 - `references/fact-sales-schema.md` — both `fact_sales` framings and the
   decision rule between them, full real column list, the natural-key/

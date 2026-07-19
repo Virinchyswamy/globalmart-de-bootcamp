@@ -1,12 +1,14 @@
 # Slide Component Catalog + Tone Notes
 
-Source: verified directly against `Day1\Day1_1_ILT1_GlobalMart_Problem_Statement.html`
+Source: verified directly against `Databricks\Day1\Day1_1_ILT1_GlobalMart_Problem_Statement.html`
 (the approved slide-deck exemplar — a confirmed byte-level CSS/JS match of the
-original `Chennai_batch\day 1\1_basic_sql_revison\basic sql revison.html`),
+original `SQL_Python\Day1\Day1_1_ILT1_Basic_SQL_Revision\basic sql revison.html`
+— this file moved here 2026-07-19 when the standalone `Chennai_batch` repo was
+merged in as the `SQL_Python` track, still the same file, just a new path),
 plus a skim of the original for tone, and a count of slides in
-`Day6\Day6_4_HOL1_Star_Schema_Design.html` (22 slides) and
-`Day9\Day9_1_ILT1_Need_For_Incremental_Loading.html` (14 slides) to confirm
-the rhythm this project has settled into.
+`Databricks\Day6\Day6_4_HOL1_Star_Schema_Design.html` (22 slides) and
+`Databricks\Day9\Day9_1_ILT1_Need_For_Incremental_Loading.html` (14 slides) to
+confirm the rhythm this project has settled into.
 
 ## The non-negotiable rule — read this one first
 

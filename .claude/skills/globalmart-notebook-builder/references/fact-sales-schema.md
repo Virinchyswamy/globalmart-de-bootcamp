@@ -117,7 +117,7 @@ resolves this with a window function ranked per customer, preferring
 address_window = Window.partitionBy("customer_id").orderBy(
     when(col("address_type").contains("Shipping"), 0).otherwise(1)
 )
-address_primary = spark.table("gbmart.silver.address") \
+address_primary = spark.table("harsh_kumar01_npmentorskool_onmicrosoft_com.silver.address") \
     .withColumn("_rank", row_number().over(address_window)) \
     .filter("_rank = 1") \
     .select(col("customer_id").alias("Customer_ID"), col("address_id").alias("Address_ID"))

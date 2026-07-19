@@ -38,7 +38,7 @@ plausible-sounding guess.
 
 ### 1. Identify the target session and locate its siblings
 
-Glob `C:\Yvirinchy\DE notebooks\Day{N}\Day{N}_*_{ILT|HOL}*_*.ipynb` for the
+Glob `C:\Yvirinchy\DE notebooks\Databricks\Day{N}\Day{N}_*_{ILT|HOL}*_*.ipynb` for the
 day/topic the user names. This is the ground truth this deck must reflect —
 if it doesn't exist yet, **stop and tell the user to run
 `globalmart-notebook-builder` first.** Never invent slide content that isn't
@@ -162,7 +162,7 @@ the first navigation click, so it must already be correct on first paint.
 
 Write the `.html`, then run:
 ```
-python scripts/validate_html_deck.py "Day{N}\Day{N}_{order}_{TYPE}{x}_Topic_Name.html"
+python scripts/validate_html_deck.py "Databricks\Day{N}\Day{N}_{order}_{TYPE}{x}_Topic_Name.html"
 ```
 Read its output. A tag-balance error, a missing/modified nav-or-JS snippet, a
 slide-count/counter mismatch, or an external network reference outside a
@@ -212,7 +212,7 @@ These apply to every deck this skill helps produce, no exceptions:
 ## Bundled references — when to read each
 
 - `references/architecture-facts.md` — the real `gbmart` environment, the 2
-  ingestion pathways / 7 Bronze tables, the "4 sources" trap, Bronze/Silver
+  ingestion pathways / 8 Bronze tables (incl. two catalogs), the "4 sources" trap, Bronze/Silver
   casing rule. Read for any pipeline-accurate session's deck.
 - `references/fact-sales-schema.md` — both `fact_sales` framings and the
   decision rule between them, full real column list, the natural-key/
