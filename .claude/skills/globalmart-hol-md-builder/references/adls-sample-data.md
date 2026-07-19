@@ -6,7 +6,7 @@ scenarios that ask a learner to work with raw/ADLS-shaped data directly
 in `architecture-facts.md`/`fact-sales-schema.md`). It sits at:
 
 ```
-C:\Yvirinchy\DE notebooks\reference_materials\reference_data_for_hands_on_docs\adls_data_new\
+C:\Yvirinchy\tred-alch-adv-dbx\reference_materials\reference_data_for_hands_on_docs\adls_data_new\
 ```
 
 Row counts and columns below were measured directly against the real files

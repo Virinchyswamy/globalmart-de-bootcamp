@@ -38,7 +38,7 @@ ever try to import anything.
 
 ### 1. Identify the target HOL session and locate its notebook
 
-Glob `C:\Yvirinchy\DE notebooks\Databricks\Day{N}\Day{N}_*_HOL*_*.ipynb` for the day the
+Glob `C:\Yvirinchy\tred-alch-adv-dbx\Databricks\Day{N}\Day{N}_*_HOL*_*.ipynb` for the day the
 user names (or the topic they describe — match against the notebook's title
 cell if they give a topic instead of a day number). If more than one HOL
 exists that day, ask which one (or match by topic keyword the user gave)

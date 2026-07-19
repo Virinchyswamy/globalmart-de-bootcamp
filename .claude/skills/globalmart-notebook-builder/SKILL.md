@@ -4,7 +4,7 @@ description: >
   Builds one Databricks .ipynb teaching notebook (an ILT lecture-demo or a HOL
   hands-on lab) for the GlobalMart Azure Databricks Data Engineering bootcamp
   (Chennai 2026 cohort), for exactly one calendar session at a time, saved into
-  C:\Yvirinchy\DE notebooks\Databricks\Day{N}\. Use this whenever the user asks to build,
+  C:\Yvirinchy\tred-alch-adv-dbx\Databricks\Day{N}\. Use this whenever the user asks to build,
   write, draft, continue, or fix a Day N notebook, ILT, HOL, hands-on lab, or
   pipeline-accurate PySpark/Spark SQL session for this bootcamp -- including
   phrasings like "build Day 13's notebook", "write the ILT for DLQ replay",

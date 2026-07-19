@@ -38,7 +38,7 @@ plausible-sounding guess.
 
 ### 1. Identify the target session and locate its siblings
 
-Glob `C:\Yvirinchy\DE notebooks\Databricks\Day{N}\Day{N}_*_{ILT|HOL}*_*.ipynb` for the
+Glob `C:\Yvirinchy\tred-alch-adv-dbx\Databricks\Day{N}\Day{N}_*_{ILT|HOL}*_*.ipynb` for the
 day/topic the user names. This is the ground truth this deck must reflect —
 if it doesn't exist yet, **stop and tell the user to run
 `globalmart-notebook-builder` first.** Never invent slide content that isn't

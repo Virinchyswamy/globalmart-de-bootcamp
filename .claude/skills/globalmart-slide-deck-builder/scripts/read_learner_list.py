@@ -29,7 +29,7 @@ except ImportError:
 # lives in calendars/ (an exact-duplicate copy also sits alongside it,
 # labeled "(duplicate, identical to the other copy)" -- either is fine, this
 # one is the original).
-LEARNER_LIST_PATH = r"C:\Yvirinchy\DE notebooks\calendars\tred-alch-adv-dbx-chennai-2026-learner list.xlsx"
+LEARNER_LIST_PATH = r"C:\Yvirinchy\tred-alch-adv-dbx\calendars\tred-alch-adv-dbx-chennai-2026-learner list.xlsx"
 SHEET_NAME = "Sheet1"
 
 
