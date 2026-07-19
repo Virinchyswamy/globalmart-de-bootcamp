@@ -17,3 +17,7 @@ Thumbs.db
 # Databricks Connect local config
 .databricks/
 databricks.yml
+
+# Large generated datasets — regenerate locally via their generator script,
+# never commit (exceeds GitHub's 100MB file limit; stripped from history 2026-07-19)
+Databricks/Day4/retail_sales_dataset.csv
