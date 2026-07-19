@@ -355,7 +355,7 @@ Python:  display(df)   ← Databricks-only: interactive table with charts, filte
   <div class="slide slide-content">
     <h3>Databricks Utilities — <code>dbutils</code></h3>
 <pre><span class="cm"># List files in an ADLS path</span>
-dbutils.<span class="fn">fs</span>.<span class="fn">ls</span>(<span class="str">"abfss://amazon-data@amazonprojectadls.dfs.core.windows.net/raw/"</span>)
+dbutils.<span class="fn">fs</span>.<span class="fn">ls</span>(<span class="str">"abfss://&lt;your-container&gt;@&lt;your-storage-account&gt;.dfs.core.windows.net/raw-data/"</span>)
 
 <span class="cm"># Read a secret from Azure Key Vault (production pattern)</span>
 storage_key = dbutils.<span class="fn">secrets</span>.<span class="fn">get</span>(scope=<span class="str">"globalmart-kv"</span>, key=<span class="str">"adls-key"</span>)
@@ -404,10 +404,10 @@ df = (
 )
 
 <span class="cm"># Read a Delta table from a path</span>
-df = spark.<span class="fn">read</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">load</span>(bronze_path)
+df = spark.<span class="fn">read</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">load</span>(table_path)
 
 <span class="cm"># Read a Delta table by catalog name (Unity Catalog)</span>
-df = spark.<span class="fn">read</span>.<span class="fn">table</span>(<span class="str">"globalmart.bronze.customers"</span>)</pre>
+df = spark.<span class="fn">read</span>.<span class="fn">table</span>(<span class="str">"&lt;your-catalog&gt;.bronze.customers"</span>)</pre>
   </div>
 
   <!-- SLIDE 18: TRANSFORMATIONS TABLE -->
@@ -443,13 +443,13 @@ df.<span class="fn">toPandas</span>()          <span class="cm"># convert to pan
   <div class="slide slide-content">
     <h3>Writing to Delta — Bronze / Silver / Gold</h3>
 <pre><span class="cm"># Full refresh — overwrite everything at this path</span>
-df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">save</span>(bronze_path)
+df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">save</span>(table_path)
 
 <span class="cm"># Incremental — append new rows, keep existing ones</span>
-df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">save</span>(bronze_path)
+df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">save</span>(table_path)
 
 <span class="cm"># Add new columns without breaking readers (schema evolution)</span>
-df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">option</span>(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>).<span class="fn">save</span>(bronze_path)</pre>
+df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">option</span>(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>).<span class="fn">save</span>(table_path)</pre>
   </div>
 
   <!-- SLIDE 21: SPARK SQL -->
@@ -491,11 +491,11 @@ result_df.<span class="fn">show</span>()</pre>
   <div class="slide slide-content">
     <h3>Connecting to ADLS from Databricks</h3>
     <div class="card">
-      <h4>GlobalMart storage account: <code>amazonprojectadls</code> · Container: <code>amazon-data</code></h4>
+      <h4>Your storage account and container (from Day 1 setup)</h4>
       <ol class="order-list">
-        <li>Set the storage key in Spark config, once per session: <code>spark.conf.set("fs.azure.account.key.amazonprojectadls.dfs.core.windows.net", storage_key)</code></li>
-        <li>Build the base path: <code>base_path = "abfss://amazon-data@amazonprojectadls.dfs.core.windows.net"</code></li>
-        <li>Read or write using sub-paths: <code>raw_path = base_path + "/raw"</code> and <code>bronze_path = base_path + "/bronze"</code></li>
+        <li>Set the storage key in Spark config, once per session: <code>spark.conf.set("fs.azure.account.key.&lt;your-storage-account&gt;.dfs.core.windows.net", storage_key)</code></li>
+        <li>Build the base path: <code>base_path = "abfss://&lt;your-container&gt;@&lt;your-storage-account&gt;.dfs.core.windows.net"</code></li>
+        <li>Read raw source files: <code>raw_path = base_path + "/raw-data"</code>. Bronze itself is a Unity Catalog table (<code>&lt;your-catalog&gt;.bronze.&lt;table&gt;</code>), not an ADLS sub-path — built starting Day 4.</li>
       </ol>
     </div>
   </div>

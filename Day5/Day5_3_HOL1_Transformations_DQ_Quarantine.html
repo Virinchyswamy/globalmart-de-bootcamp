@@ -122,7 +122,7 @@
   <div class="logo">DAY 5 · HOL 1 — Transformations + DQ + Quarantine</div>
   <div class="controls">
     <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 11</span>
+    <span class="slide-counter" id="counter">1 / 13</span>
     <button onclick="changeSlide(1)">Next &#8594;</button>
   </div>
 </nav>
@@ -132,15 +132,15 @@
   <!-- SLIDE 1: COVER -->
   <div class="slide slide-cover active">
     <h1>Transformations + DQ + Quarantine</h1>
-    <p class="subtitle">Hands-on: run a DQ scan, fix real formatting errors, make a quarantine call, and lock it in with Delta constraints</p>
+    <p class="subtitle">A fully worked walkthrough of <code>bronze.customers</code> → <code>silver.customers</code>: real DQ issues, real fixes, and the one quarantine call that can't be automated</p>
     <div class="badge">Day 5 &nbsp;·&nbsp; HOL 1 &nbsp;·&nbsp; Hands-On Lab</div>
     <div style="margin-top:18px;">
       <span class="pill pill-blue">60 minutes</span>
       <span class="pill pill-green">Beginner–Intermediate</span>
-      <span class="pill pill-amber">Source: bronze.customers</span>
+      <span class="pill pill-amber">Source: bronze.customers · 20,000 rows</span>
     </div>
     <div style="margin-top:22px; color:#475569; font-size:13px;">
-      Phase A: DQ Scan · Phases B–C: Standardize · Phase D: Quarantine · Phases E–G: Write, Constrain, Verify
+      Notebook: <code>Day5_3_HOL1_Silver_01_Customers_DQ.ipynb</code> — scan → investigate → fix → quarantine → dedup → transform → SCD2 → write → verify
     </div>
   </div>
 
@@ -150,202 +150,279 @@
     <h2>Dataset &amp; Target Tables</h2>
     <table class="sql-table" style="margin-top:20px;">
       <tr><th>Table</th><th>Role</th></tr>
-      <tr><td><code>gbmart.bronze.customers</code></td><td>Source — read only, never modified</td></tr>
-      <tr><td><code>gbmart.silver.customers</code></td><td>Target — rows that pass every DQ rule</td></tr>
-      <tr><td><code>gbmart.silver.customers_quarantine</code></td><td>Target — rows that failed a rule, tagged with why</td></tr>
+      <tr><td><code>&lt;your-catalog&gt;.bronze.customers</code></td><td>Source — 20,000 rows, read only, never modified</td></tr>
+      <tr><td><code>&lt;your-catalog&gt;.silver.customers</code></td><td>Target — 19,920 clean rows, written with <code>mode("append")</code></td></tr>
+      <tr><td><code>&lt;your-catalog&gt;.silver.customers_quarantine</code></td><td>Target — 80 rows that failed a DQ rule, tagged with why</td></tr>
     </table>
     <div class="highlight-box" style="margin-top:18px;">
-      <p><strong style="color:#38bdf8;">Instructions:</strong> run each cell with <strong>Shift + Enter</strong>. Blanks marked <code>#&nbsp;YOUR CODE HERE</code> are for you to complete — the DQ rules and thresholds are given in the comments above each blank.</p>
+      <p><strong style="color:#38bdf8;">This notebook is fully worked</strong> — <code>Day5_3_HOL1_Silver_01_Customers_DQ.ipynb</code> is the instructor's real, already-executed run, not a fill-in-the-blank exercise. Run every cell (<strong>Shift + Enter</strong>) and pay attention to the <em>investigate before fixing</em> pattern at each step — that's exactly the pattern you'll repeat yourself across the 7 remaining sources in HOL 2.</p>
     </div>
   </div>
 
-  <!-- SLIDE 3: PHASE A -->
+  <!-- SLIDE 3: STEP 2-3 -->
   <div class="slide slide-demo">
-    <div class="demo-label">PHASE A · OBSERVE ONLY</div>
+    <div class="demo-label">STEPS 2–3 · READ + OBSERVE ONLY</div>
     <h3>First DQ Scan</h3>
     <div class="two-col">
       <div>
-        <p style="color:#cbd5e1; font-size:14px;">Before fixing anything, read the raw data and tag every row with its first failing rule. Don't fix yet — just observe what's actually there.</p>
+        <p style="color:#cbd5e1; font-size:14px;">Before fixing anything, every one of the 20,000 rows gets tagged with its <strong style="color:#e2e8f0;">first</strong> failing rule, in priority order — an 8-rule triage chain. Nothing gets fixed yet, this pass just builds a complete picture.</p>
         <div class="card" style="margin-top:12px;">
-          <h4>Your task</h4>
-          <p>Complete the priority chain: the <code>INVALID_EMAIL_FORMAT</code> rule is left as a blank — the regex is given, you add the <code>when()</code> line.</p>
+          <h4>The priority chain</h4>
+          <p><code>NULL_CUSTOMER_ID</code> → <code>NULL_FIRST_NAME</code> → <code>NULL_LAST_NAME</code> → <code>NULL_EMAIL</code> → <code>INVALID_EMAIL_FORMAT</code> → <code>NULL_DATE_OF_BIRTH</code> → <code>NULL_REGISTRATION_DATE</code> → <code>REGISTERED_UNDER_18</code></p>
         </div>
       </div>
       <div>
-<pre>bronze_df = spark.<span class="fn">table</span>(BRONZE_TABLE)
+<pre>EMAIL_REGEX = <span class="str">r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$'</span>
 
-dq_scan_df = bronze_df.<span class="fn">withColumn</span>(<span class="str">"_dq_issue"</span>,
-    <span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"CustomerID"</span>).<span class="fn">isNull</span>(),       <span class="fn">lit</span>(<span class="str">"NULL_CUSTOMER_ID"</span>))
-    .<span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"FirstName"</span>).<span class="fn">isNull</span>(),       <span class="fn">lit</span>(<span class="str">"NULL_FIRST_NAME"</span>))
-    .<span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"Email"</span>).<span class="fn">isNull</span>(),           <span class="fn">lit</span>(<span class="str">"NULL_EMAIL"</span>))
-    <span class="cm"># YOUR CODE HERE: INVALID_EMAIL_FORMAT rule</span>
-    .<span class="fn">when</span>(age_at_reg &lt; 18,                    <span class="fn">lit</span>(<span class="str">"REGISTERED_UNDER_18"</span>))
-    .<span class="fn">otherwise</span>(<span class="fn">lit</span>(<span class="kw">None</span>))
-)</pre>
+dq_scan_df = bronze_df \
+    .<span class="fn">withColumn</span>(<span class="str">"_age_at_reg"</span>,
+        <span class="fn">floor</span>(<span class="fn">datediff</span>(reg_date, dob) / 365.25)) \
+    .<span class="fn">withColumn</span>(<span class="str">"_dq_issue"</span>,
+        <span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"CustomerID"</span>).<span class="fn">isNull</span>(),   <span class="fn">lit</span>(<span class="str">"NULL_CUSTOMER_ID"</span>))
+        .<span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"Email"</span>).<span class="fn">isNull</span>(),       <span class="fn">lit</span>(<span class="str">"NULL_EMAIL"</span>))
+        .<span class="fn">when</span>(~<span class="fn">col</span>(<span class="str">"Email"</span>).<span class="fn">rlike</span>(EMAIL_REGEX), <span class="fn">lit</span>(<span class="str">"INVALID_EMAIL_FORMAT"</span>))
+        .<span class="fn">when</span>(<span class="fn">col</span>(<span class="str">"_age_at_reg"</span>) &lt; 18, <span class="fn">lit</span>(<span class="str">"REGISTERED_UNDER_18"</span>))
+        .<span class="fn">otherwise</span>(<span class="fn">lit</span>(<span class="kw">None</span>))
+    )</pre>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 4: PHASE B -->
+  <!-- SLIDE 4: STEPS 4-5 EMAILS -->
   <div class="slide slide-demo">
-    <div class="demo-label">PHASE B · INVESTIGATE BEFORE FIXING</div>
-    <h3>Look Before You Fix</h3>
-    <p style="color:#cbd5e1; font-size:14px; margin-bottom:14px;">Look at the actual <code>INVALID_EMAIL_FORMAT</code> rows before writing a fix. Guessing without looking at real examples is how you "fix" data that wasn't broken.</p>
+    <div class="demo-label">STEPS 4–5 · INVESTIGATE, THEN FIX</div>
+    <h3>Invalid Emails — Two Recoverable Patterns</h3>
     <div class="two-col">
-      <div class="card">
-        <h4>Two real patterns you'll see</h4>
-        <ul>
-          <li>A stray space inserted mid-email (mobile autocorrect)</li>
-          <li>A <code>d'</code> prefix from surnames like D'Souza/D'Silva that most providers strip, but this form accepted</li>
-        </ul>
+      <div>
+        <table class="sql-table">
+          <tr><th>Pattern</th><th>Example</th><th>Root Cause</th></tr>
+          <tr><td>Accidental space</td><td><code>swaminathaninaaya 482@outlook.com</code></td><td>Mobile autocorrect inserts a space after a long name</td></tr>
+          <tr><td>Apostrophe in surname</td><td><code>taran.d'alia307@hotmail.com</code></td><td>D'Souza/D'Silva-style surnames; most providers strip <code>d'</code>, this form didn't</td></tr>
+        </table>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p><strong style="color:#22c55e;">Business decision: fix, don't quarantine.</strong> Both are recoverable formatting errors — quarantining them means losing real customers over a keyboard quirk.</p>
+        </div>
       </div>
-      <div class="highlight-box success">
-        <p><strong style="color:#22c55e;">Business decision: fix, don't quarantine.</strong> Both are recoverable formatting errors — quarantining them would mean losing real customers over a keyboard quirk.</p>
+      <div>
+<pre>remediated_df = bronze_df.<span class="fn">withColumn</span>(<span class="str">"Email"</span>,
+    <span class="fn">regexp_replace</span>(
+        <span class="fn">regexp_replace</span>(
+            <span class="fn">trim</span>(<span class="fn">lower</span>(<span class="fn">col</span>(<span class="str">"Email"</span>))),
+            <span class="str">" "</span>, <span class="str">""</span>                <span class="cm"># Pattern 1: remove space</span>
+        ),
+        <span class="str">"d['’‘]"</span>, <span class="str">""</span>   <span class="cm"># Pattern 2: d + apostrophe variant</span>
+    )
+)
+
+<span class="cm"># Re-validate</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Remaining invalid emails after fix: {still_invalid}"</span>)
+<span class="cm"># Remaining invalid emails after fix: 0</span></pre>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 5: PHASE C -->
+  <!-- SLIDE 5: STEPS 6-7 PHONE -->
   <div class="slide slide-demo">
-    <div class="demo-label">PHASE C · STANDARDIZE</div>
+    <div class="demo-label">STEPS 6–7 · INVESTIGATE, THEN STANDARDIZE</div>
     <h3>Phone Number Format</h3>
     <div class="two-col">
       <div>
-        <p style="color:#cbd5e1; font-size:14px;">Check the length distribution of <code>PhoneNumber</code> before assuming anything about its format. Every number turns out to be 12 digits — GlobalMart's form prepends <code>91</code> without a <code>+</code>.</p>
+        <p style="color:#cbd5e1; font-size:14px;">Every phone number turns out to be exactly 12 digits — GlobalMart's registration form auto-prepends the <code>91</code> India country code but drops the <code>+</code>. <code>917584314890</code> should read <code>+91-7584314890</code>.</p>
         <div class="card" style="margin-top:12px;">
-          <h4>Your task</h4>
-          <p>Reformat 12-digit numbers starting with <code>91</code> into <code>+91-XXXXXXXXXX</code>. Only touch numbers matching that exact shape — never blindly slice a string without confirming length and prefix first.</p>
+          <h4>The BIGINT trap</h4>
+          <p><code>PhoneNumber</code> is stored as <strong>BIGINT</strong> in Bronze. Casting to string first is required before reformatting — and <code>spark.sql.ansi.enabled</code> is set to <code>false</code> at the top of the notebook, or ANSI mode forces the formatted string right back to a number.</p>
         </div>
       </div>
       <div>
-<pre><span class="fn">when</span>(
-    <span class="cm"># YOUR CODE HERE: length == 12 AND starts with "91"</span>
-    <span class="fn">lit</span>(<span class="kw">True</span>),
-    <span class="fn">concat</span>(<span class="fn">lit</span>(<span class="str">"+91-"</span>), <span class="fn">col</span>(<span class="str">"PhoneNumber"</span>).<span class="fn">substr</span>(3, 10))
-).<span class="fn">otherwise</span>(<span class="fn">col</span>(<span class="str">"PhoneNumber"</span>))</pre>
+<pre>spark.conf.<span class="fn">set</span>(<span class="str">"spark.sql.ansi.enabled"</span>, <span class="str">"false"</span>)
+
+remediated_df = remediated_df \
+    .<span class="fn">withColumn</span>(<span class="str">"PhoneNumber"</span>, <span class="fn">col</span>(<span class="str">"PhoneNumber"</span>).<span class="fn">cast</span>(<span class="str">"string"</span>)) \
+    .<span class="fn">withColumn</span>(<span class="str">"PhoneNumber"</span>,
+        <span class="fn">when</span>(
+            (<span class="fn">length</span>(<span class="fn">col</span>(<span class="str">"PhoneNumber"</span>)) == 12) &amp;
+            <span class="fn">col</span>(<span class="str">"PhoneNumber"</span>).<span class="fn">startswith</span>(<span class="str">"91"</span>),
+            <span class="fn">concat</span>(<span class="fn">lit</span>(<span class="str">"+91-"</span>), <span class="fn">col</span>(<span class="str">"PhoneNumber"</span>).<span class="fn">substr</span>(3, 10))
+        ).<span class="fn">otherwise</span>(<span class="fn">col</span>(<span class="str">"PhoneNumber"</span>))
+    )</pre>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 6: PHASE D -->
+  <!-- SLIDE 6: STEPS 8 UNDER18 -->
   <div class="slide slide-demo">
-    <div class="demo-label">PHASE D · THE QUARANTINE DECISION</div>
+    <div class="demo-label">STEP 8 · THE QUARANTINE DECISION</div>
     <h3>REGISTERED_UNDER_18</h3>
     <div class="two-col">
       <div>
-        <p style="color:#cbd5e1; font-size:14px;">Look at the actual flagged rows before deciding anything. Unlike the email fix, these rows can't be "corrected" — we don't know if the DOB is wrong or the customer genuinely registered underage (the form had no age check at the time).</p>
+        <p style="color:#cbd5e1; font-size:14px;"><strong style="color:#e2e8f0;">77 customers</strong> show an age-at-registration under 18. GlobalMart requires 18+ — legal compliance and payment authorization. The registration form had <strong>no age validation</strong> at the time; this is a source-system gap, not a data-entry mistake.</p>
       </div>
       <div>
         <div class="highlight-box warn">
-          <p><strong style="color:#f59e0b;">GlobalMart requires 18+</strong> (legal compliance, payment authorization) — these rows must not reach Silver as valid customers. You justify this call yourself in the notebook; ILT 2 walked through the identical reasoning.</p>
+          <p><strong style="color:#f59e0b;">Why this can't be "fixed" like the email spaces:</strong> we knew the correct email, just cleaned its format. Here we <strong>cannot assume</strong> the DOB is wrong — the customer may genuinely have registered underage. Decision → quarantine. Silver will not include these 77 records; the business team decides what happens next.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 7: PHASE E-F -->
+  <!-- SLIDE 7: STEP 9 SPLIT -->
   <div class="slide slide-demo">
-    <div class="demo-label">PHASE E–F · SPLIT, STANDARDIZE &amp; WRITE</div>
-    <h3>Split Clean vs. Quarantine, Then Write</h3>
+    <div class="demo-label">STEP 9 · FINAL DQ CHECK + SPLIT</div>
+    <h3>20,000 = 19,920 Clean + 80 Quarantine</h3>
     <div class="two-col">
       <div>
 <pre>clean_df      = dq_df.<span class="fn">filter</span>(<span class="fn">col</span>(<span class="str">"_dq_issue"</span>).<span class="fn">isNull</span>())
 quarantine_df = dq_df.<span class="fn">filter</span>(<span class="fn">col</span>(<span class="str">"_dq_issue"</span>).<span class="fn">isNotNull</span>())
 
-<span class="cm"># given -- renames to snake_case, adds SCD2 columns Gold needs</span>
-silver_customers_df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>)
-    .<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">saveAsTable</span>(SILVER_TABLE)
-quarantine_df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>)
-    .<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">saveAsTable</span>(QUARANTINE_TABLE)</pre>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Total rows  : {bronze_df.count():,}"</span>)   <span class="cm"># 20,000</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Clean rows  : {clean_df.count():,}"</span>)   <span class="cm"># 19,920</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Quarantine  : {quarantine_df.count():,}"</span>) <span class="cm"># 80</span></pre>
       </div>
       <div>
-        <div class="highlight-box">
-          <p><strong style="color:#38bdf8;">Correctness check, every time:</strong> clean rows + quarantine rows must always sum to the Bronze total.</p>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">80 quarantined rows</strong> = 77 <code>REGISTERED_UNDER_18</code> + 3 rows failing an earlier null-field rule in the priority chain.</p>
         </div>
         <div class="highlight-box" style="margin-top:12px;">
-          <p>The standardize/enrich step (renames + SCD2 columns) is given code, not a graded blank — Day 6's dimension build depends on these exact column names.</p>
+          <p><strong style="color:#38bdf8;">Non-negotiable check, every table:</strong> clean rows + quarantine rows must always sum to the Bronze total. Here: 19,920 + 80 = 20,000.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 8: PHASE F.5 -->
+  <!-- SLIDE 8: STEP 10 DEDUP -->
   <div class="slide slide-demo">
-    <div class="demo-label">PHASE F.5 · ENFORCE WITH DELTA CONSTRAINTS</div>
-    <h3>Lock In the Guarantee</h3>
+    <div class="demo-label">STEP 10 · DEDUPLICATE</div>
+    <h3>Deduplicate by CustomerID</h3>
     <div class="two-col">
       <div>
-        <p style="color:#cbd5e1; font-size:14px;">The DQ scan already <strong style="color:#e2e8f0;">guarantees</strong> every row in <code>clean_df</code> has a non-null <code>customer_id</code> and a valid, non-null <code>email</code> — that's exactly why those rows are in <code>clean_df</code>, not <code>quarantine_df</code>. Turning that guarantee into a table constraint is safe and permanent.</p>
+        <p style="color:#cbd5e1; font-size:14px;">Bronze is append-only — the same customer can appear across multiple ingested files. Keep the latest record per <code>CustomerID</code>, ranked by <code>_ingested_at</code>.</p>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p><strong style="color:#38bdf8;">Real result this run:</strong> 19,920 rows before dedup, 19,920 after — 0 actual duplicates in this Bronze snapshot. The window-based guard stays in the pipeline anyway: it's cheap insurance for the run where CDC or a re-ingested file <em>does</em> produce one.</p>
+        </div>
       </div>
       <div>
-<pre><span class="kw">ALTER TABLE</span> <span class="tbl">gbmart.silver.customers</span>
-<span class="kw">ALTER COLUMN</span> <span class="col">customer_id</span> <span class="kw">SET NOT NULL</span>;
-<span class="kw">ALTER TABLE</span> <span class="tbl">gbmart.silver.customers</span>
-<span class="kw">ALTER COLUMN</span> <span class="col">email</span> <span class="kw">SET NOT NULL</span>;
+<pre>window_latest = Window.<span class="fn">partitionBy</span>(<span class="str">"CustomerID"</span>) \
+    .<span class="fn">orderBy</span>(<span class="fn">col</span>(<span class="str">"_ingested_at"</span>).<span class="fn">desc</span>())
 
-<span class="kw">ALTER TABLE</span> <span class="tbl">gbmart.silver.customers</span>
-<span class="kw">ADD CONSTRAINT</span> valid_email_shape
-  <span class="kw">CHECK</span> (<span class="col">email</span> <span class="kw">LIKE</span> <span class="str">'%@%.%'</span>);</pre>
+deduped_df = (
+    clean_df
+    .<span class="fn">withColumn</span>(<span class="str">"_row_num"</span>, <span class="fn">row_number</span>().<span class="fn">over</span>(window_latest))
+    .<span class="fn">filter</span>(<span class="fn">col</span>(<span class="str">"_row_num"</span>) == 1)
+    .<span class="fn">drop</span>(<span class="str">"_row_num"</span>)
+)</pre>
       </div>
-    </div>
-    <div class="highlight-box warn" style="margin-top:14px;">
-      <p>Add constraints for rules you've already proven true via the DQ scan — never one you haven't tested. A <code>CHECK</code> that fails on existing data turns the <code>ALTER TABLE</code> itself into a hard error.</p>
     </div>
   </div>
 
-  <!-- SLIDE 9: PHASE G -->
+  <!-- SLIDE 9: STEP 11 TRANSFORM -->
   <div class="slide slide-demo">
-    <div class="demo-label">PHASE G · VERIFY</div>
-    <h3>Confirm It Actually Worked</h3>
+    <div class="demo-label">STEP 11 · TRANSFORM &amp; ENRICH</div>
+    <h3>Derive Business Columns, Conform Names</h3>
     <div class="two-col">
+      <div>
+        <table class="sql-table">
+          <tr><th>Column</th><th>Transformation</th></tr>
+          <tr><td><code>full_name</code></td><td><code>concat_ws(" ", first_name, last_name)</code></td></tr>
+          <tr><td><code>age</code></td><td><code>floor(datediff(today, DOB) / 365.25)</code></td></tr>
+          <tr><td><code>customer_tenure_days</code></td><td><code>datediff(today, registration_date)</code></td></tr>
+        </table>
+      </div>
+      <div class="highlight-box">
+        <p><strong style="color:#38bdf8;">Why compute tenure in Silver, not Gold:</strong> Gold and BI will constantly segment customers as New (&lt;90 days) / Regular (90–365) / Loyal (&gt;365). If every downstream query repeats <code>datediff(current_date, registration_date)</code>, that's duplicated logic across every fact table and dashboard. Compute it once, here.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: STEP 12 SCD2 -->
+  <div class="slide slide-demo">
+    <div class="demo-label">STEP 12 · SCD2 COLUMNS</div>
+    <h3>The Composite Surrogate Key</h3>
+    <div class="two-col">
+      <div>
+        <table class="sql-table">
+          <tr><th>Column</th><th>Initial-load value</th></tr>
+          <tr><td><code>is_current</code></td><td><code>true</code> for every row</td></tr>
+          <tr><td><code>effective_start_date</code></td><td><code>registration_date</code></td></tr>
+          <tr><td><code>effective_end_date</code></td><td><code>null</code></td></tr>
+        </table>
+        <div class="highlight-box warn" style="margin-top:12px;">
+          <p><strong style="color:#f59e0b;">This is the initial full load only.</strong> The incremental <code>MERGE</code> that expires an old row and inserts a new version when email/phone changes is deliberately <strong>not built in this notebook</strong> — that's a later session.</p>
+        </div>
+      </div>
+      <div>
+<pre>customer_sk = <span class="fn">sha2</span>(
+    <span class="fn">concat_ws</span>(<span class="str">"|"</span>, <span class="col">customer_id</span>,
+        <span class="col">effective_start_date</span>.<span class="fn">cast</span>(<span class="str">"string"</span>)),
+    256
+)</pre>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p>Natural key (<code>customer_id</code>) comes from the source. Surrogate key (<code>customer_sk</code>) is owned by the warehouse — generated once in Silver, used everywhere in Gold. When a value changes, a new <code>effective_start_date</code> produces a new <code>customer_sk</code> automatically.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: STEPS 13-14 WRITE + VERIFY -->
+  <div class="slide slide-demo">
+    <div class="demo-label">STEPS 13–14 · WRITE &amp; VERIFY</div>
+    <h3>Write to Silver, Then Confirm It Worked</h3>
+    <div class="two-col">
+      <div>
+<pre>silver_df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">saveAsTable</span>(SILVER_TABLE)
+<span class="cm"># silver.customers: 19,920 rows</span>
+
+quarantine_df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">saveAsTable</span>(QUARANTINE_TABLE)
+<span class="cm"># silver.customers_quarantine: 80 rows</span></pre>
+      </div>
       <div class="card">
-        <h4>Checks to run</h4>
+        <h4>Checks that ran</h4>
         <ul>
-          <li><code>silver.customers</code> row count</li>
-          <li>Remaining invalid emails (expected: 0)</li>
+          <li>Row count: <code>silver.customers</code> = 19,920</li>
+          <li><code>is_current</code> is <code>true</code> for every row (initial load)</li>
+          <li>Min/max/avg <code>age</code> — sanity check, no impossible ages</li>
           <li>Phone numbers formatted <code>+91-XXXXXXXXXX</code></li>
+          <li><code>DESCRIBE HISTORY</code> — confirms the append operation</li>
         </ul>
-      </div>
-      <div class="highlight-box success">
-        <p><strong style="color:#22c55e;">Non-negotiable check:</strong> clean rows + quarantine rows = Bronze total. If it doesn't add up, something was silently dropped or double-counted.</p>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 10: SUBMISSION CHECKLIST -->
+  <!-- SLIDE 12: UNDERSTANDING CHECKLIST -->
   <div class="slide slide-content">
-    <h3>Submission Checklist</h3>
+    <h3>What You Should Be Able to Explain</h3>
     <div class="two-col">
       <div class="card">
         <ul style="list-style:none; padding-left:0;">
-          <li>☐ DQ scan completed — all 5 issue categories tagged correctly</li>
-          <li>☐ Email fix applied and re-validated (0 remaining invalid)</li>
-          <li>☐ Phone number reformatted to <code>+91-XXXXXXXXXX</code></li>
-          <li>☐ REGISTERED_UNDER_18 quarantine decision justified in your own words</li>
+          <li>☐ The 8-rule DQ priority chain, and why first-match-wins matters</li>
+          <li>☐ Both email fixes (space, <code>d'</code>) and why they're fix-not-quarantine</li>
+          <li>☐ Why <code>PhoneNumber</code> needs a string cast + ANSI-mode-off before reformatting</li>
+          <li>☐ Why REGISTERED_UNDER_18 (77 rows) is a quarantine, not a fix</li>
         </ul>
       </div>
       <div class="card">
         <ul style="list-style:none; padding-left:0;">
-          <li>☐ Clean + quarantine row counts sum to the Bronze total</li>
-          <li>☐ <code>silver.customers</code> written and verified</li>
-          <li>☐ <code>silver.customers_quarantine</code> written and verified</li>
-          <li>☐ <code>NOT NULL</code> (customer_id, email) + <code>CHECK</code> (valid_email_shape) constraints added</li>
+          <li>☐ 19,920 clean + 80 quarantine = 20,000 Bronze total</li>
+          <li>☐ Why the dedup window stays even though it removed 0 rows this run</li>
+          <li>☐ The <code>customer_sk</code> formula and why it's owned by Silver, not the source</li>
+          <li>☐ Why the incremental SCD2 <code>MERGE</code> is deliberately not in this notebook</li>
         </ul>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 11: BRIDGE / CLOSING -->
+  <!-- SLIDE 13: BRIDGE / CLOSING -->
   <div class="slide slide-section" style="text-align:center; align-items:center;">
     <div class="section-tag">What's Next</div>
     <h2>You're Ready for HOL 2</h2>
-    <p style="color:#94a3b8; max-width:620px; margin-top:12px; font-size:15px;">
-      Next up: apply this exact pattern across every remaining source — products, address, orders, order_items, payments, payment_methods — plus SCD2 vs. SCD1, a semi-structured source, and cross-table referential integrity.
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      Next up: the same scan → investigate → fix/flag/quarantine → transform → write → verify pattern, across the 7 remaining sources — <code>products, address, orders, order_items, payments, payment_methods, returns</code>. You'll see a semi-structured source, an SCD1-via-MERGE table, and referential integrity checks across tables you build yourself.
     </p>
     <div class="three-col" style="margin-top:32px; max-width:820px;">
       <div class="card">
         <h4>✅ Recap</h4>
-        <p>Scan → investigate → standardize → quarantine → write → constrain → verify</p>
+        <p>Scan → investigate → standardize → quarantine → dedup → transform → SCD2 → write → verify</p>
       </div>
       <div class="card">
         <h4>➡️ Up Next</h4>

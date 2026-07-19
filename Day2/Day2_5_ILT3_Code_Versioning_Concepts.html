@@ -420,12 +420,13 @@ Databricks Repos (your local working copy)
     <div class="demo-label">Change the storage account name in ONE place → every notebook picks it up</div>
 <pre><span class="cm"># config/setup.ipynb — uses the External Location pattern (no storage key)</span>
 <span class="col">STORAGE_ACCOUNT_NAME</span> = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span>
-<span class="col">BASE_PATH</span>   = <span class="fn">f</span><span class="str">"abfss://amazon-data@{STORAGE_ACCOUNT_NAME}.dfs.core.windows.net"</span>
-<span class="col">BRONZE_PATH</span> = <span class="fn">f</span><span class="str">"{BASE_PATH}/raw"</span>
+<span class="col">CONTAINER_NAME</span>       = <span class="str">"YOUR_CONTAINER_NAME"</span>
+<span class="col">BASE_PATH</span> = <span class="fn">f</span><span class="str">"abfss://{CONTAINER_NAME}@{STORAGE_ACCOUNT_NAME}.dfs.core.windows.net"</span>
+<span class="col">RAW_PATH</span>  = <span class="fn">f</span><span class="str">"{BASE_PATH}/raw-data"</span>
 
 <span class="cm"># In any other notebook, instead of repeating all that code:</span>
 <span class="kw">%run</span> ../config/setup
-<span class="cm"># BRONZE_PATH, SILVER_PATH, GOLD_PATH are now ready to use</span></pre>
+<span class="cm"># RAW_PATH and CATALOG are now ready to use (Bronze/Silver/Gold are catalog schemas, not ADLS paths)</span></pre>
   </div>
 
   <!-- SLIDE 19: HANDS-ON CHECKLIST PREVIEW -->

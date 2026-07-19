@@ -291,18 +291,17 @@
     <h3>D2 — config/setup: Shared Connection Config</h3>
     <div class="demo-label">No storage key anywhere in this notebook or in git history</div>
 <pre><span class="col">STORAGE_ACCOUNT_NAME</span> = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span>   <span class="cm"># ← your storage account from Day 1</span>
-<span class="col">CONTAINER_NAME</span>        = <span class="str">"amazon-data"</span>
+<span class="col">CONTAINER_NAME</span>        = <span class="str">"YOUR_CONTAINER_NAME"</span>        <span class="cm"># ← your container from Day 1</span>
 
 <span class="cm"># No spark.conf.set() needed — your External Location from HOL 1</span>
 <span class="cm"># already covers this path; Unity Catalog handles authentication.</span>
-<span class="col">BASE_PATH</span>   = <span class="fn">f</span><span class="str">"abfss://{CONTAINER_NAME}@{STORAGE_ACCOUNT_NAME}.dfs.core.windows.net"</span>
-<span class="col">BRONZE_PATH</span> = <span class="fn">f</span><span class="str">"{BASE_PATH}/raw"</span>
-<span class="col">SILVER_PATH</span> = <span class="fn">f</span><span class="str">"{BASE_PATH}/silver"</span>
-<span class="col">GOLD_PATH</span>   = <span class="fn">f</span><span class="str">"{BASE_PATH}/gold"</span>
+<span class="col">BASE_PATH</span> = <span class="fn">f</span><span class="str">"abfss://{CONTAINER_NAME}@{STORAGE_ACCOUNT_NAME}.dfs.core.windows.net"</span>
+<span class="col">RAW_PATH</span>  = <span class="fn">f</span><span class="str">"{BASE_PATH}/raw-data"</span>   <span class="cm"># one subfolder per entity below this</span>
 
-<span class="cm"># The shared gbmart catalog doesn't need a path — referenced by name:</span>
-<span class="cm"># spark.table("gbmart.bronze.customers")</span>
-<span class="col">GBMART_CATALOG</span> = <span class="str">"gbmart"</span></pre>
+<span class="cm"># Bronze/Silver/Gold are NOT ADLS folders — they're schemas inside your</span>
+<span class="cm"># Unity Catalog catalog, referenced by name only, no path at all:</span>
+<span class="cm"># spark.table(f"{CATALOG}.bronze.customers")</span>
+<span class="col">CATALOG</span> = <span class="str">"YOUR_CATALOG"</span>   <span class="cm"># ← your catalog from Day 1</span></pre>
   </div>
 
   <!-- SLIDE 12: D3 TEST %RUN -->
@@ -311,8 +310,8 @@
     <div class="demo-label">Run from a DIFFERENT notebook in the same repo — not config/setup itself</div>
 <pre><span class="kw">%run</span> ../config/setup
 
-<span class="cm"># After this line runs, BRONZE_PATH / SILVER_PATH / GOLD_PATH /</span>
-<span class="cm"># GBMART_CATALOG are all available — no redefining needed.</span></pre>
+<span class="cm"># After this line runs, RAW_PATH / CATALOG are both available —</span>
+<span class="cm"># no redefining needed.</span></pre>
     <div class="highlight-box" style="margin-top:14px;">
       <p>Adjust the relative path if your notebook doesn't sit directly beside the <code>config/</code> folder.</p>
     </div>

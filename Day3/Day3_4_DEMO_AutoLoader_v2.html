@@ -149,7 +149,7 @@
         </p>
         <div class="card">
           <h4>Output location</h4>
-          <p>Written to a throwaway path: <code>raw-data/_demo/bronze/orders_demo_v2/</code> — never the real <code>gbmart.bronze.orders</code>.</p>
+          <p>Written to a throwaway path: <code>raw-data/_demo/bronze/orders_demo_v2/</code> — never the real <code>&lt;your-catalog&gt;.bronze.orders</code>.</p>
         </div>
       </div>
       <div>
@@ -200,7 +200,7 @@
   <div class="slide slide-content">
     <h3>Setup — Unity Catalog External Location</h3>
 <pre><span class="cm"># No storage key needed — same auth as HOL 2</span>
-EXTERNAL_LOCATION = <span class="str">"abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net/raw-data"</span>
+EXTERNAL_LOCATION = <span class="str">"abfss://&lt;your-container&gt;@&lt;your-storage-account&gt;.dfs.core.windows.net/raw-data"</span>
 
 raw_path        = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_demo/raw"</span>            <span class="cm"># this demo's private "raw/" folder</span>
 staging_path    = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/_demo/staging"</span>        <span class="cm"># holding area, not watched</span>
@@ -245,7 +245,7 @@ schema_path     = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION
     .withColumn(<span class="str">"_ingested_at"</span>, current_timestamp())
     .withColumn(<span class="str">"_source_file"</span>, input_file_name())
 )
-<span class="cm"># shipping_tier.csv has "Cost (Rs)" — clean special characters before writing</span>
+<span class="cm"># one of the demo source files has a "Cost (Rs)" column — clean special characters before writing</span>
 <span class="kw">for</span> c <span class="kw">in</span> raw_stream.columns:
     clean = c.replace(<span class="str">" "</span>, <span class="str">"_"</span>).replace(<span class="str">"("</span>, <span class="str">""</span>).replace(<span class="str">")"</span>, <span class="str">""</span>)
     <span class="kw">if</span> clean != c:
@@ -388,7 +388,7 @@ Phase 4 (file dropped):    orders_new.csv → NEW → PROCESS</pre>
         ▼  Column renaming (Cost (Rs) → Cost_Rs)
         │
         ▼  writeStream → Delta
-  raw-data/_demo/bronze/orders_demo_v2/   (throwaway path, not gbmart.bronze.orders)
+  raw-data/_demo/bronze/orders_demo_v2/   (throwaway path, not &lt;your-catalog&gt;.bronze.orders)
     All rows from all files
     _source_file  = which file this row came from
     _ingested_at  = when Auto Loader ingested it</pre>

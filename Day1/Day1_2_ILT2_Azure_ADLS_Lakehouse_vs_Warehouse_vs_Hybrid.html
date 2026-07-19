@@ -491,22 +491,25 @@
   <!-- SLIDE 18: GLOBALMART'S ADLS STRUCTURE -->
   <div class="slide slide-content">
     <h3>GlobalMart's ADLS Structure</h3>
-    <pre>Storage Account: amazonprojectadls
-   Container: amazon-data
+    <pre>Storage Account: &lt;your-storage-account&gt;
+   Container: &lt;your-container&gt;
 
-      raw/       ← landing zone: CSV files from upstream systems
-                    customers/  orders/  products/  ...
+      raw-data/            ← the ONLY folder ADLS holds for this project
+                    customers/  addresses/  payments/
+                    payment_methods/  products/  returns/
 
-      bronze/    ← raw data converted to Delta, never modified
-                    customers/  orders/  order_items/  ...
+Unity Catalog (inside &lt;your-catalog&gt;) — NOT ADLS folders:
 
-      silver/    ← cleaned, validated, deduplicated Delta tables
-                    dim_customer/  dim_product/  ...
+      bronze schema   ← raw data converted to Delta, never modified
+                    &lt;your-catalog&gt;.bronze.customers, .orders, .order_items, ...
 
-      gold/      ← business-ready star schema for Genie + reports
-                    fact_sales/  dim_date/  dim_address/  ...</pre>
+      silver schema   ← cleaned, validated, deduplicated Delta tables
+                    &lt;your-catalog&gt;.silver.dim_customer, .dim_product, ...
+
+      gold schema     ← business-ready star schema for Genie + reports
+                    &lt;your-catalog&gt;.gold.fact_sales, .dim_date, .dim_address, ...</pre>
     <div class="highlight-box" style="margin-top:14px;">
-      <p><strong style="color:#38bdf8;">One container, four folders.</strong> GlobalMart uses a single container (<code>amazon-data</code>) with <code>raw/</code>, <code>bronze/</code>, <code>silver/</code>, <code>gold/</code> subfolders — one storage key authenticates all four layers.</p>
+      <p><strong style="color:#38bdf8;">One container, one raw folder, three catalog schemas.</strong> GlobalMart uses a single container (<code>&lt;your-container&gt;</code>) with just a <code>raw-data/</code> folder — one storage key authenticates the whole landing zone. <code>bronze</code>, <code>silver</code>, and <code>gold</code> are Unity Catalog schemas inside your catalog, not ADLS folders.</p>
     </div>
   </div>
 
@@ -610,13 +613,14 @@ Unity Catalog governs access for everyone in one place</pre>
     <h3>GlobalMart's Lakehouse Pipeline</h3>
 <pre>Supabase Postgres (orders, order_items)
     → Lakeflow Connect (CDC, continuous)
-    → Bronze → Silver → Gold (fact_sales)
+    → &lt;your-catalog&gt;.bronze → .silver → .gold (fact_sales)
 
-ADLS File Drops (customers, products, payments…)
+ADLS File Drops (customers, addresses, payments,
+payment_methods, products, returns)
     → Autoloader (incremental file pickup)
-    → raw/ landing → Bronze  (same destination as above)</pre>
+    → raw-data/ landing → &lt;your-catalog&gt;.bronze  (same destination as above)</pre>
     <div class="highlight-box" style="margin-top:14px;">
-      <p><strong style="color:#38bdf8;">Databricks path format:</strong> <code>abfss://amazon-data@amazonprojectadls.dfs.core.windows.net/bronze/orders/</code></p>
+      <p><strong style="color:#38bdf8;">ADLS path format:</strong> <code>abfss://&lt;your-container&gt;@&lt;your-storage-account&gt;.dfs.core.windows.net/raw-data/orders/</code> &nbsp;·&nbsp; <strong style="color:#38bdf8;">Bronze table namespace:</strong> <code>&lt;your-catalog&gt;.bronze.orders</code></p>
     </div>
   </div>
 

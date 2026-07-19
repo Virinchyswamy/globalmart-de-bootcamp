@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 8 — Design Your Own Architecture</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  /* PROGRESS + NAV */
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
+  }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  /* HERO */
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 40px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 740px; margin: 0 auto 26px; }
+  .hero .cta { display: inline-block; background: var(--accent); color: #0f172a; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+  .hero .cta:hover { background: #5fd0ff; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
+
+  /* SECTIONS */
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .time-badge { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid rgba(245,158,11,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: none; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 780px; margin-bottom: 30px; }
+
+  /* CARDS */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 800px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+  .card.small { padding: 14px 16px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  /* STEP LIST */
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* TABLE */
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  /* DETAILS / HINTS */
+  details.hint { background: #14243d; border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; padding: 4px 0; }
+  details.hint summary { cursor: pointer; padding: 12px 18px; font-size: 13.5px; font-weight: 700; color: var(--accent2); list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.hint summary::-webkit-details-marker { display: none; }
+  details.hint summary::before { content: '💡'; }
+  details.hint[open] summary { border-bottom: 1px solid var(--border); }
+  details.hint .hint-body { padding: 14px 18px 16px; font-size: 14px; color: #cbd5e1; line-height: 1.7; }
+  details.hint .hint-body p + p { margin-top: 10px; }
+
+  /* CHECKPOINT */
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  /* PHASE / NUMBER BADGE */
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 15px; margin-right: 10px; flex-shrink: 0; }
+  .mini-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #dc2626; color: #fff; font-weight: 800; font-size: 11px; margin-right: 8px; flex-shrink: 0; }
+
+  /* CHECKLIST */
+  .checklist-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; color: #cbd5e1; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--good); flex-shrink: 0; cursor: pointer; }
+  .checklist-item label { cursor: pointer; }
+
+  /* NOTE BOX FOR REASONING */
+  .reasoning-box { background: #1a1030; border: 1px dashed var(--accent2); border-radius: 10px; padding: 14px 18px; margin-top: 14px; font-size: 13.5px; color: var(--muted); }
+  .reasoning-box b { color: var(--accent2); }
+
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
+
+  /* GROUP CARD (problem statement container) */
+  .group-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; margin-bottom: 8px; }
+  .group-card .story p { color: #cbd5e1; font-size: 14.5px; line-height: 1.75; margin-bottom: 10px; }
+  .group-card h3 { font-size: 16px; color: var(--accent2); margin: 22px 0 10px; }
+  .source-list { margin: 10px 0 0; }
+  .source-list li { list-style: none; display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: #cbd5e1; }
+  .source-list li:last-child { border-bottom: none; }
+  .source-list .src-num { min-width: 22px; height: 22px; border-radius: 50%; background: #334155; color: #e2e8f0; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 8 · INDIVIDUAL ACTIVITY — DESIGN YOUR OWN ARCHITECTURE</div>
+    <div class="links">
+      <a href="#howitworks" class="navlink">How It Works</a>
+      <a href="#research" class="navlink">Go Research First</a>
+      <a href="#checklist" class="navlink">Pitch Checklist</a>
+      <a href="#groupA" class="navlink">A · QuickCart</a>
+      <a href="#groupB" class="navlink">B · MedTrack</a>
+      <a href="#groupC" class="navlink">C · StreamPlay</a>
+      <a href="#groupD" class="navlink">D · FreshMart</a>
+      <a href="#buildpitch" class="navlink">Build &amp; Pitch</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Assessment 1 Prep · Individual Activity · No Instructor-Provided Answer</div>
+  <h1>Design Your Own Architecture</h1>
+  <p class="lead">On Day 1, you sat through GlobalMart's own problem statement and watched an architecture get pitched to you — sources, ingestion, medallion layers, governance, one fact table that mattered more than the rest. Today that flips. Your facilitator will hand you, individually, one of four brand-new problem statements below, from a company you've never worked with, in a domain you haven't touched yet. Your job is to research the real platform services that fit, design your own architecture, and pitch it to the whole room — the same shape of pitch, except this time nobody wrote it for you first, and nobody designs it with you.</p>
+  <div class="meta-row">
+    <span class="meta-pill">⏱ Total time: ~3 hr 40 min</span>
+    <span class="meta-pill">🧑 23 learners, 6 tables — seating only, not teams</span>
+    <span class="meta-pill">📄 4 problem statements, one per person, cycled A/B/C/D per table</span>
+  </div>
+  <div style="margin-top:28px;"><a href="#howitworks" class="cta">Start Reading ↓</a></div>
+</header>
+
+<!-- ============================================================ -->
+<!-- HOW THIS WORKS -->
+<!-- ============================================================ -->
+<section class="content" id="howitworks">
+  <div class="wrap">
+    <div class="section-tag">Before You Do Anything Else</div>
+    <h2 class="section-title">How This Works</h2>
+    <p class="section-intro">Read this whole section before you open a single browser tab. This activity is individual, start to finish — read the box below carefully before you assume anything about who you're working with today.</p>
+
+    <div class="highlight-box warn">
+      <p><b>This is not a group project.</b> There are 23 of you, seated at 6 tables (five tables of 4, one table of 3). Your table is a seat, not a team. Everyone at your table will be handed a <i>different</i> one of the four problem statements below — cycled A/B/C/D around the table — specifically so that nobody sitting next to you is working on the same scenario. You research alone, design alone, and build your own pitch page alone. You'll present it solo, to the entire class, not just to the people at your table. The same problem statement will come up again at other tables across the room — that's expected, and it's actually useful, because it means later you can compare two independently-built pitches for the same scenario.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>The Shape of the ~3 Hours 40 Minutes</h4>
+        <ul>
+          <li><b>~20 min</b> — read your assigned problem statement closely, on your own, and start your research.</li>
+          <li><b>~75 min</b> — research the real services that fit each capability your scenario needs, and settle on your own design.</li>
+          <li><b>~25 min</b> — copy <code>Day8_Pitch_Template.html</code> and fill it in with your own researched content. This is your individual pitch deliverable.</li>
+          <li><b>~92 min</b> — the pitch block: all 23 people present, one after another, to the whole room. Each pitch is 3 minutes to present plus up to 1 minute of facilitator-led Q&amp;A — 4 minutes per person × 23 people = 92 minutes.</li>
+          <li><b>~10 min</b> — wrap-up.</li>
+        </ul>
+        <p style="margin-top:10px; font-size:13px; color:var(--muted);"><b>Total: ~220 minutes (about 3 hours 40 minutes).</b> Twenty-three individual pitches take real time — this is the honest number, not a rounded-down one.</p>
+      </div>
+      <div class="card">
+        <h4>The Ground Rules</h4>
+        <ul>
+          <li><b>23 learners, 6 tables (5 of 4, 1 of 3) — seating only.</b> The people at your table are not your project team.</li>
+          <li><b>One problem statement per person.</b> Everyone at your table gets a different one of the four below, cycled A/B/C/D. The same scenario will recur at other tables — that's fine, it's not a duplicate-avoidance thing across the whole room, only within your table.</li>
+          <li>There is <b>no single correct architecture</b> for any of these. Pitches get compared and defended in front of the room — not matched against a hidden answer key.</li>
+          <li>The problem statements below <b>do not name a single Azure or Databricks service, anywhere, on purpose.</b> Figuring out which real service fits which job is the actual assignment, not a detail to skip past.</li>
+          <li>If time is short, the facilitator may compress the pitch block: 2 minutes per person, no live Q&amp;A (one written note from a randomly-picked audience member instead) — that brings the pitch block to ~50 min and the whole activity to about 3 hours.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      <p><b>Why no answer key.</b> Day 1's GlobalMart poster told you what GlobalMart chose and why. That was the right call for Day 1 — you needed a working example before you could build on it for thirteen days. You don't need that anymore. What you need now is practice doing the thing nobody will do for you on the job: reading a business problem, researching what actually exists, and defending a design choice out loud when someone in the room pushes back on it — using your own judgment, not a group's consensus.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- GO RESEARCH FIRST -->
+<!-- ============================================================ -->
+<section class="content" id="research">
+  <div class="wrap">
+    <div class="section-tag">Phase 1 <span class="time-badge">⏱ ~75 min, with design</span></div>
+    <h2 class="section-title">Go Research First</h2>
+    <p class="section-intro">Before you sketch anything, go find real answers in real documentation — Azure, Databricks, and honestly anywhere else if you genuinely think a different platform fits a capability better. Don't work from memory of what a slide said in Week 1. For each data source in your problem statement, and for the shared platform layer underneath it, go answer these questions for real, on your own:</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4><span class="mini-num">1</span>Change Data Capture</h4>
+        <p>If a source is a live transactional database that's continuously updated, what's the real way to capture changes out of it near-real-time, without hammering the source system with repeated full queries? What does that actually look like under the hood — polling, log-reading, something else?</p>
+      </div>
+      <div class="card">
+        <h4><span class="mini-num">2</span>Streaming / High-Frequency Events</h4>
+        <p>If a source fires a high volume of small events continuously — location pings, sensor readings, clickstream — what's built to ingest that volume without falling over or forcing you to batch-poll it? What happens if the pipeline falls behind?</p>
+      </div>
+      <div class="card">
+        <h4><span class="mini-num">3</span>Batch / File-Based Ingestion</h4>
+        <p>If a source is a file dropped on a schedule (or an irregular schedule) into cloud storage, what's the real mechanism for picking up new files incrementally, without reprocessing everything each time? What happens when the files are messy or inconsistently formatted?</p>
+      </div>
+      <div class="card">
+        <h4><span class="mini-num">4</span>Storage</h4>
+        <p>Once data lands, where does it actually live, and why is that the right shape for a lakehouse to build Bronze/Silver/Gold on top of, rather than a plain file share or a relational database?</p>
+      </div>
+      <div class="card">
+        <h4><span class="mini-num">5</span>Transformation / Compute</h4>
+        <p>What actually runs the Bronze → Silver → Gold transformations, on a schedule or continuously, at the volume your scenario implies? What's different about how you'd handle a small nightly file versus a firehose of events?</p>
+      </div>
+      <div class="card">
+        <h4><span class="mini-num">6</span>Orchestration / Scheduling</h4>
+        <p>How do you actually chain "ingest → clean → model → publish" into something that runs on a schedule, retries on failure, and tells someone when it breaks?</p>
+      </div>
+      <div class="card">
+        <h4><span class="mini-num">7</span>Governance / Access Control</h4>
+        <p>What's the real mechanism for controlling who can see which tables, or even which rows or columns, once the data is sitting in your lakehouse? Is "we'll lock it down later" ever actually an acceptable answer?</p>
+      </div>
+      <div class="card">
+        <h4><span class="mini-num">8</span>Serving to a Business Stakeholder</h4>
+        <p>Once your Gold table exists, how does an actual non-technical stakeholder get an answer out of it — a dashboard, a self-serve natural-language query, something else? What's the gap between "the table is correct" and "a stakeholder can use it"?</p>
+      </div>
+    </div>
+
+    <div class="highlight-box warn">
+      <p><b>Be ready to explain, in your own words, what a service actually does.</b> If you name a service in your pitch, someone in the room — a fellow learner or the facilitator — is allowed to ask "what does that actually do, and why not use X instead?" "It was on a slide somewhere" is not a defensible answer. Understand it well enough to explain it without reading off a page.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- WHAT EVERY PITCH MUST COVER -->
+<!-- ============================================================ -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Same Bar For All 23 Pitches</div>
+    <h2 class="section-title">What Every Pitch Must Cover</h2>
+    <p class="section-intro">Every person gets one of four scenarios, but every pitch is judged against the same checklist, whether you're pitching QuickCart or FreshMart. This is also exactly what your <code>Day8_Pitch_Template.html</code> is structured to capture — fill in the template honestly and you'll naturally hit every item below.</p>
+
+    <div class="checklist-card">
+      <div class="checklist-item">
+        <input type="checkbox" id="k1"><label for="k1">For <b>each data source</b> in your problem statement: the ingestion service you chose, and why — grounded in what you actually found in research, not a guess.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="k2"><label for="k2">A <b>Bronze → Silver → Gold plan</b>: what real cleaning/validation Silver needs to do for your specific messy or tricky data, and what the Gold deliverable actually is.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="k3"><label for="k3">At least <b>one proposed Gold fact table</b>: its grain, its measures, and which dimensions it connects to — directly answering your scenario's stated business questions.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="k4"><label for="k4">One <b>real governance / access-control consideration</b>, grounded in a real service you researched — not "we'll add security later."</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="k5"><label for="k5">The <b>filled-in architecture diagram</b> from the template, tracing your whole pipeline source-to-stakeholder.</label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- GROUP A — QUICKCART -->
+<!-- ============================================================ -->
+<section class="content" id="groupA">
+  <div class="wrap">
+    <div class="section-tag">Problem Statement A <span class="pill pill-blue">Scenario A</span></div>
+    <h2 class="section-title">QuickCart Logistics — On-Demand Food Delivery</h2>
+
+    <div class="group-card">
+      <div class="story">
+        <p>QuickCart started in one city, matching riders to nearby restaurants for same-hour delivery. Two years later, it operates in 40 cities — and growth has outpaced QuickCart's ability to agree, internally, on what's actually happening on any given day. Ops, finance, and product each pull their own numbers for the same day, and the three versions don't match. Meetings now spend more time arguing about whose number is right than deciding what to do about it.</p>
+      </div>
+
+      <h3>The Problems</h3>
+      <div class="grid-2">
+        <div class="card small"><h4><span class="mini-num">1</span>Data Silos</h4><p>Trip data lives in the app's own database. Merchant data lives in files. There's no shared way to query both together for one answer.</p></div>
+        <div class="card small"><h4><span class="mini-num">2</span>No Real-Time Visibility</h4><p>By the time anyone can compute "average delivery time by zone right now," the number is already stale.</p></div>
+        <div class="card small"><h4><span class="mini-num">3</span>Inconsistent Merchant Performance View</h4><p>Ops and merchant-partnerships each keep their own spreadsheet of "problem restaurants," and the two lists disagree.</p></div>
+        <div class="card small"><h4><span class="mini-num">4</span>Unclear Data Freshness</h4><p>Nobody can say, with confidence, how current a given dashboard number actually is.</p></div>
+      </div>
+
+      <h3>Data Sources</h3>
+      <ul class="source-list">
+        <li><span class="src-num">1</span><span>A transactional database holding <code>orders</code> and <code>trip_events</code> — continuously updated throughout the day as a trip moves through assigned → picked_up → delivered.</span></li>
+        <li><span class="src-num">2</span><span>Live rider GPS location pings — a high-frequency stream of location updates from the rider app, arriving continuously all day, every day.</span></li>
+        <li><span class="src-num">3</span><span>A restaurant/merchant catalog — a nightly export file dropped into cloud storage by the merchant-onboarding system.</span></li>
+      </ul>
+
+      <div class="highlight-box">
+        <p><b>Business questions QuickCart currently can't answer:</b> What is the average delivery time by zone, kept close to real time? Which restaurants have the highest order-cancellation rate this week? Which riders are under-utilized vs. over-loaded right now?</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- GROUP B — MEDTRACK -->
+<!-- ============================================================ -->
+<section class="content" id="groupB">
+  <div class="wrap">
+    <div class="section-tag">Problem Statement B <span class="pill pill-green">Scenario B</span></div>
+    <h2 class="section-title">MedTrack Clinics — Regional Healthcare Network</h2>
+
+    <div class="group-card">
+      <div class="story">
+        <p>MedTrack runs 12 clinics across the region. Growth has meant more patients and more claims flowing through the business every month — and it's also brought a compliance team into the picture, now asking hard questions about who can actually see what. The systems that run the clinics were never designed with a shared answer to that question, and it's starting to matter.</p>
+      </div>
+
+      <h3>The Problems</h3>
+      <div class="grid-2">
+        <div class="card small"><h4><span class="mini-num">1</span>Billing/Claims Don't Reconcile</h4><p>What's recorded as visits doesn't match what the claims system says was actually billed.</p></div>
+        <div class="card small"><h4><span class="mini-num">2</span>Real Compliance Exposure</h4><p>Patient data currently has no consistent access-control model across teams. This is genuinely regulated data.</p></div>
+        <div class="card small"><h4><span class="mini-num">3</span>Data Silos</h4><p>Three systems, no shared source of truth between them.</p></div>
+        <div class="card small"><h4><span class="mini-num">4</span>Slow, Manual Reporting</h4><p>Compliance and audit reports are assembled by hand every quarter.</p></div>
+      </div>
+
+      <h3>Data Sources</h3>
+      <ul class="source-list">
+        <li><span class="src-num">1</span><span>A transactional database holding <code>patient_visits</code> and <code>diagnoses</code> — continuously updated as visits happen.</span></li>
+        <li><span class="src-num">2</span><span>Nightly lab-result files — an external partner lab drops result files once a night.</span></li>
+        <li><span class="src-num">3</span><span>A third-party insurance-claims system reachable only through a live API call — MedTrack has to pull claim status updates from it, not a file drop.</span></li>
+      </ul>
+
+      <div class="highlight-box">
+        <p><b>Business questions MedTrack currently can't answer:</b> What is the average cost per diagnosis category, and does it match what was actually billed? Which claims were denied last month, and why? Who accessed a given patient's record, and when?</p>
+      </div>
+
+      <div class="highlight-box warn">
+        <p><b>Note if you drew Problem Statement B:</b> governance and access control isn't optional here — make it central to your pitch, not a footnote at the end.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- GROUP C — STREAMPLAY -->
+<!-- ============================================================ -->
+<section class="content" id="groupC">
+  <div class="wrap">
+    <div class="section-tag">Problem Statement C <span class="pill pill-amber">Scenario C</span></div>
+    <h2 class="section-title">StreamPlay Media — Subscription Video Streaming</h2>
+
+    <div class="group-card">
+      <div class="story">
+        <p>StreamPlay has grown to millions of subscribers. Content and Product both claim ownership of "what makes people stay" — but every time either team presents retention numbers, they don't match the other team's version. Nobody fully trusts either one anymore, and decisions about what to renew or cancel are made on gut feel more often than anyone would like to admit.</p>
+      </div>
+
+      <h3>The Problems</h3>
+      <div class="grid-2">
+        <div class="card small"><h4><span class="mini-num">1</span>No Consistent Retention Number</h4><p>Content and Product compute "churn" differently and get different answers.</p></div>
+        <div class="card small"><h4><span class="mini-num">2</span>Event Volume Overwhelms Ad-Hoc Queries</h4><p>Nobody can query the raw event stream directly without it taking forever or falling over.</p></div>
+        <div class="card small"><h4><span class="mini-num">3</span>Data Silos</h4><p>Subscriber, event, and catalog data live in three unconnected systems.</p></div>
+        <div class="card small"><h4><span class="mini-num">4</span>Slow Content Decisions</h4><p>Deciding whether to renew a show's license takes weeks of manual data-pulling.</p></div>
+      </div>
+
+      <h3>Data Sources</h3>
+      <ul class="source-list">
+        <li><span class="src-num">1</span><span>A transactional billing/subscriber database — continuously updated as people subscribe, cancel, or upgrade.</span></li>
+        <li><span class="src-num">2</span><span>App clickstream events — a very high-volume stream of play/pause/skip/finish events, fired many times per second across every active user.</span></li>
+        <li><span class="src-num">3</span><span>Content-catalog metadata — files describing each show/movie (genre, cast, release date), exported whenever the catalog changes.</span></li>
+      </ul>
+
+      <div class="highlight-box">
+        <p><b>Business questions StreamPlay currently can't answer:</b> Which shows correlate with lower subscriber churn? What are daily/monthly active users by region? Which content is underperforming and should be reconsidered?</p>
+      </div>
+
+      <div class="highlight-box warn">
+        <p><b>Note if you drew Problem Statement C:</b> the sheer volume of the clickstream event source is the real design constraint here — a naive approach will not hold up, and that should show clearly in your pitch.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- GROUP D — FRESHMART -->
+<!-- ============================================================ -->
+<section class="content" id="groupD">
+  <div class="wrap">
+    <div class="section-tag">Problem Statement D <span class="pill pill-red">Scenario D</span></div>
+    <h2 class="section-title">FreshMart Grocery — In-Store + Online Retail</h2>
+
+    <div class="group-card">
+      <div class="story">
+        <p>FreshMart runs 60 stores plus an online ordering channel. Leadership has one question that keeps coming up in every planning meeting: why do shelves go empty even when the warehouse system says there's stock? Nobody currently has the data connected in a way that can answer it.</p>
+      </div>
+
+      <h3>The Problems</h3>
+      <div class="grid-2">
+        <div class="card small"><h4><span class="mini-num">1</span>Stockouts Don't Correlate With Anything</h4><p>Nobody can tell if a stockout was a demand spike, a late delivery, or a faulty sensor.</p></div>
+        <div class="card small"><h4><span class="mini-num">2</span>No Single Shrinkage/Waste Number</h4><p>Every store reports waste differently. Some don't report it at all.</p></div>
+        <div class="card small"><h4><span class="mini-num">3</span>Supplier Performance Is Invisible</h4><p>No one can say which suppliers are reliably late or short-shipping.</p></div>
+        <div class="card small"><h4><span class="mini-num">4</span>Messy, Inconsistent Source Files</h4><p>Invoice formats vary so much between suppliers that some are hard to parse at all.</p></div>
+      </div>
+
+      <h3>Data Sources</h3>
+      <ul class="source-list">
+        <li><span class="src-num">1</span><span>A transactional point-of-sale database — continuously updated at every checkout, in-store and online.</span></li>
+        <li><span class="src-num">2</span><span>In-store IoT sensors — shelf-weight and fridge-temperature sensors in every store, emitting a steady stream of readings.</span></li>
+        <li><span class="src-num">3</span><span>Supplier invoices — dropped as a messy mix of file formats (some clean spreadsheets, some barely machine-readable documents), format varies supplier to supplier, and arrival timing is irregular.</span></li>
+      </ul>
+
+      <div class="highlight-box">
+        <p><b>Business questions FreshMart currently can't answer:</b> Which stores have the highest shrinkage/waste this month? Which suppliers have the most late or incomplete deliveries? Could shelf-sensor and point-of-sale data together predict a stockout before it happens?</p>
+      </div>
+
+      <div class="highlight-box warn">
+        <p><b>Note if you drew Problem Statement D:</b> don't wave the messy invoice files away — the pitch needs a real plan for actually handling them, not a hand-wave past the hard part.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- BUILD & PITCH -->
+<!-- ============================================================ -->
+<section class="content" id="buildpitch">
+  <div class="wrap">
+    <div class="section-tag">Phase 2 <span class="time-badge">⏱ ~25 min build, 3 min pitch + 1 min Q&amp;A</span></div>
+    <h2 class="section-title">Build &amp; Pitch</h2>
+    <p class="section-intro">Once your own design is actually settled — not while you're still going back and forth with yourself about ingestion for Source 2 — copy <code>Day8_Pitch_Template.html</code>, rename it to something that identifies you and your problem statement, and fill it in with your own researched content. You'll present directly from that page, solo, to the whole class — the same way GlobalMart's own architecture was pitched to you on Day 1.</p>
+
+    <div class="order-list">
+      <li>Copy <code>Day8_Pitch_Template.html</code> into your own working copy. Every CSS class in it is already styled — replace the <code>REPLACE ME</code> text and diagram nodes, don't invent new markup.</li>
+      <li>Fill in every section yourself: the story, the four problems, why you chose your platform, the diagram, the governance callout, and your fact table spotlight.</li>
+      <li>Make sure your filled-in diagram traces your <i>actual</i> chosen services end to end — source, ingestion, Bronze/Silver/Gold, orchestration, governance, serving.</li>
+      <li>Rehearse it once on your own before your slot — you're presenting solo, so you need to know the whole pitch, not just one part of it.</li>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h4>Pitch Format — 3 Minutes to Present, Up to 1 Minute of Q&amp;A</h4>
+      <ul>
+        <li>Name the ingestion choice for <b>each</b> data source in your problem statement, and be ready to defend it if challenged.</li>
+        <li>Show the filled-in architecture diagram.</li>
+        <li>State your fact table's grain, measures, and dimensions out loud.</li>
+        <li>Name the one governance consideration you built in.</li>
+        <li>You're presenting to the <b>whole class</b>, not just your table — with 23 pitches back to back, keep it tight and stay inside the 3-minute mark so everyone gets their turn.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CLOSING -->
+<!-- ============================================================ -->
+<section class="content" id="closing">
+  <div class="wrap">
+    <div class="section-tag">Closing Note</div>
+    <h2 class="section-title">Same Pitch, Different Seat</h2>
+    <div class="highlight-box success">
+      <p>On Day 1, someone else stood in front of the room and pitched you GlobalMart's problem, GlobalMart's sources, and GlobalMart's architecture — and you spent thirteen days building toward the one table at the center of it. Today, it's your turn to be the one standing up front, on your own, with a design nobody else at your table helped you build. Same shape of pitch. Same kind of questions from the room. The only thing that changed is whose architecture it is — and this time, it's entirely yours.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 8 · Design Your Own Architecture (Individual Activity)
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>

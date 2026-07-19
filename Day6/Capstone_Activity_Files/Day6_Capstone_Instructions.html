@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 6 Capstone — Warehouse Inventory Star Schema (Excel)</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  /* PROGRESS + NAV */
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
+  }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  /* HERO */
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 40px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 700px; margin: 0 auto 26px; }
+  .hero .cta { display: inline-block; background: var(--accent); color: #0f172a; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+  .hero .cta:hover { background: #5fd0ff; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
+
+  /* SECTIONS */
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .time-badge { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid rgba(245,158,11,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: none; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 780px; margin-bottom: 30px; }
+
+  /* CARDS */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 800px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+  .card.small { padding: 14px 16px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  /* STEP LIST */
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* FILE CARDS */
+  .file-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; }
+  .file-card .fname { color: var(--accent); font-family: 'Cascadia Code', Consolas, monospace; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .file-card .fmeta { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .file-card .fcols { font-size: 13px; color: #cbd5e1; }
+
+  /* TABLE */
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  /* DETAILS / HINTS */
+  details.hint { background: #14243d; border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; padding: 4px 0; }
+  details.hint summary { cursor: pointer; padding: 12px 18px; font-size: 13.5px; font-weight: 700; color: var(--accent2); list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.hint summary::-webkit-details-marker { display: none; }
+  details.hint summary::before { content: '💡'; }
+  details.hint[open] summary { border-bottom: 1px solid var(--border); }
+  details.hint .hint-body { padding: 14px 18px 16px; font-size: 14px; color: #cbd5e1; line-height: 1.7; }
+  details.hint .hint-body p + p { margin-top: 10px; }
+
+  /* CHECKPOINT */
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+  .checkpoint .cp-number { color: var(--good); font-weight: 800; font-size: 17px; }
+
+  /* PHASE HEADER */
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 15px; margin-right: 10px; }
+
+  /* CHECKLIST */
+  .checklist-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; color: #cbd5e1; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--good); flex-shrink: 0; cursor: pointer; }
+  .checklist-item label { cursor: pointer; }
+
+  /* NOTE BOX FOR REASONING */
+  .reasoning-box { background: #1a1030; border: 1px dashed var(--accent2); border-radius: 10px; padding: 14px 18px; margin-top: 14px; font-size: 13.5px; color: var(--muted); }
+  .reasoning-box b { color: var(--accent2); }
+
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
+
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 6 · CAPSTONE — WAREHOUSE INVENTORY STAR SCHEMA</div>
+    <div class="links">
+      <a href="#scenario" class="navlink">Scenario</a>
+      <a href="#phase1" class="navlink">1. Grain</a>
+      <a href="#phase2" class="navlink">2. dim_warehouse</a>
+      <a href="#phase3" class="navlink">3. dim_product</a>
+      <a href="#phase4" class="navlink">4. dim_date</a>
+      <a href="#phase5" class="navlink">5. Fact Table</a>
+      <a href="#phase6" class="navlink">6. Verify</a>
+      <a href="#phase7" class="navlink">7. Checklist</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">End-of-Day Capstone · All Excel · No Code</div>
+  <h1>Warehouse Inventory Star Schema</h1>
+  <p class="lead">You've spent today learning grain, dimension design, surrogate keys, SCD types, conformed dimensions, fact table types, and additive vs. semi-additive measures — all through GlobalMart's <b>sales</b> data. Now it's time to find out if any of that actually stuck, or if you were just nodding along with the notebook. This capstone hands you a brand new scenario, <b>warehouse inventory</b>, and brand new raw files. There is no notebook and no cluster — just you, Excel, and whatever Kumar Pratik is about to discover the moment he opens <code>Warehouses_Raw.xlsx</code> and finds a warehouse that appears to exist twice. You will build the entire star schema — three dimension tables, one fact table, and a verification PivotTable — inside Excel, from real messy data, using only formulas and built-in features.</p>
+  <div class="meta-row">
+    <span class="meta-pill">⏱ Target time: 65–70 minutes</span>
+    <span class="meta-pill">🧰 Tool: Excel only</span>
+    <span class="meta-pill">📁 5 files, same folder as this page</span>
+  </div>
+  <div style="margin-top:28px;"><a href="#scenario" class="cta">Start the Capstone ↓</a></div>
+</header>
+
+<!-- ============================================================ -->
+<!-- OVERVIEW / RULES -->
+<!-- ============================================================ -->
+<section class="content" id="overview">
+  <div class="wrap">
+    <div class="section-tag">Before You Open Excel</div>
+    <h2 class="section-title">What You'll Produce &amp; How to Work</h2>
+    <p class="section-intro">This is a self-paced, self-graded activity. Nobody is going to swoop in with the answer halfway through — that's entirely intentional. Read this whole box before you so much as double-click a spreadsheet.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>What you'll produce</h4>
+        <p>By the end, <code>Starter_Workbook.xlsx</code> will have all four tabs fully populated:</p>
+        <ul>
+          <li><code>dim_warehouse</code> — cleaned, deduplicated, 5 rows</li>
+          <li><code>dim_product</code> — cleaned, deduplicated, 34 rows</li>
+          <li><code>dim_date</code> — a 10-day date spine, June 1–10, 2026</li>
+          <li><code>fact_inventory_snapshot</code> — the cleaned, joined fact table, exactly 1,700 rows</li>
+        </ul>
+        <p style="margin-top:10px;">Plus a written grain sentence, a documented data-quality decision on the warehouse duplicate, and a one-sentence explanation of a semi-additive PivotTable result — see Phase 7's checklist.</p>
+      </div>
+      <div class="card">
+        <h4>Rules for working through this</h4>
+        <ul>
+          <li><b>Work the phases in order.</b> Phase 5 (the fact table) needs a finished <code>dim_warehouse</code>, <code>dim_product</code>, and <code>dim_date</code> to look values up against — build the dimensions first.</li>
+          <li><b>Do not skip the grain sentence in Phase 1.</b> Everything downstream — what a row of the fact table means, what's additive vs. not — depends on getting the grain right first, exactly like this morning's ILT2.</li>
+          <li><b>Write your own reasoning before opening any hint.</b> The <code>💡</code> boxes below nudge, they don't answer. Try the sort/filter yourself first — the hint will still be there in thirty seconds.</li>
+          <li><b>This document does not contain the solved values.</b> The correct warehouse names, product names, and final numbers already live in your raw files — your job here is process, not lookup.</li>
+          <li><b>Keep your reasoning notes.</b> Where you make a judgment call (like the WH01 duplicate), write down <i>why</i> — you'll need it for the checklist and it's genuinely good practice.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      <p><b>Why Excel, and why a new scenario?</b> Databricks and PySpark are the production tool — but the <i>concepts</i> (grain, surrogate keys, deduplication, referential integrity, degenerate dimensions, additive vs. semi-additive measures) are tool-independent. Doing them once more, by hand, in a completely different scenario, on a different tool, is the fastest way to find out whether you actually understood today's ideas or just followed along with the notebook.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCENARIO -->
+<!-- ============================================================ -->
+<section class="content" id="scenario">
+  <div class="wrap">
+    <div class="section-tag">The Scenario <span class="time-badge">⏱ 5 min</span></div>
+    <h2 class="section-title">GlobalMart Warehouse Ops Needs an Inventory Star Schema</h2>
+    <p class="section-intro">
+      GlobalMart's warehouse operations team runs five distribution centers across India. Every night, at midnight, an automated job walks every product on every warehouse's shelves and counts how many units are physically on hand. That nightly count gets exported as a raw file and dropped on your desk to process — picture Kumar Pratik opening his inbox tomorrow morning to find three fresh Excel files and a one-line request from warehouse ops, because that's exactly the seat you're sitting in for this activity. Warehouse ops wants a Gold-layer star schema built on top of this data so they can finally answer a question they've been asking for months:
+    </p>
+    <div class="highlight-box">
+      <p><b>The business question driving this build:</b> "How many units of Product X do we have on hand across all our warehouses <i>right now</i>, and how has that changed over the last quarter?"</p>
+    </div>
+    <p class="section-intro" style="margin-top:20px;">
+      That single question is why the fact table exists — every design decision below (grain, what's additive, what isn't) traces back to being able to answer it correctly. You've been handed three raw export files and a starter workbook to build into. Open all three raw files now and skim them before moving to Phase 1 — don't hunt for problems yet, just get familiar with what each one contains. (The problems will find you soon enough.)
+    </p>
+
+    <h3 style="margin:34px 0 14px; font-size:19px;">The raw files you've been given</h3>
+
+    <div class="file-card">
+      <div class="fname">Warehouses_Raw.xlsx</div>
+      <div class="fmeta">Sheet: <code>Warehouses</code> &nbsp;·&nbsp; 6 rows</div>
+      <div class="fcols">Columns: <code>Warehouse_Code</code>, <code>Warehouse_Name</code>, <code>City</code>, <code>Region</code>, <code>Capacity_Units</code></div>
+    </div>
+    <div class="file-card">
+      <div class="fname">Products_Raw.xlsx</div>
+      <div class="fmeta">Sheet: <code>Products</code> &nbsp;·&nbsp; 39 rows</div>
+      <div class="fcols">Columns: <code>Product_ID</code>, <code>Product_Name</code>, <code>Category</code>, <code>Sub_Category</code>, <code>Unit_Cost</code></div>
+    </div>
+    <div class="file-card">
+      <div class="fname">NightlyCounts_Raw.xlsx</div>
+      <div class="fmeta">Sheet: <code>NightlyCounts</code> &nbsp;·&nbsp; 1,742 rows</div>
+      <div class="fcols">Columns: <code>Count_Batch_ID</code>, <code>Warehouse_Code</code>, <code>Product_ID</code>, <code>Count_Date</code>, <code>Units_On_Hand</code></div>
+    </div>
+
+    <p class="section-intro" style="margin-top:22px;">
+      You'll also find <code>Starter_Workbook.xlsx</code> (the workbook you build your answer into — it has a <code>READ ME FIRST</code> tab plus four empty tabs with only headers filled in) and <code>Answer_Key_Star_Schema.xlsx</code> (instructor-only — more on that in the closing note). Row counts and column names above are exact — you don't need to go looking for anything beyond what's listed. Whatever's messy about these files, you'll find it yourself starting in Phase 2.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 1 -->
+<!-- ============================================================ -->
+<section class="content" id="phase1">
+  <div class="wrap">
+    <div class="section-tag">Phase 1 <span class="time-badge">⏱ 10 min</span></div>
+    <h2 class="section-title"><span class="phase-num">1</span>Explore &amp; Declare the Grain</h2>
+    <p class="section-intro">Before you build a single dimension table, sit with the single most important question in fact table design: <b>what does one row of <code>fact_inventory_snapshot</code> actually represent?</b> Get this wrong now and you won't find out until Phase 6, staring at a PivotTable that makes no sense and wondering where it all went sideways — the dimension lookups, the PivotTable, the additive-measures question, all of it traces back to this one sentence.</p>
+
+    <div class="order-list">
+      <li>Open <code>Warehouses_Raw.xlsx</code>, <code>Products_Raw.xlsx</code>, and <code>NightlyCounts_Raw.xlsx</code>. Actually scroll through them — don't just glance at row 1.</li>
+      <li>Look closely at <code>NightlyCounts_Raw.xlsx</code> in particular. For a single <code>Warehouse_Code</code> + <code>Product_ID</code> combination, how many rows exist across the file? What's different between those rows?</li>
+      <li>Ask yourself: does a row get created here only when something happens (like an order being placed), or does a row get created on a fixed schedule regardless of whether anything changed?</li>
+      <li>Write one sentence — the grain declaration — describing exactly what a single row of <code>fact_inventory_snapshot</code> represents. Use the same sentence structure you used this morning for <code>fact_sales</code>: "One row = one &lt;what&gt; for a given &lt;which dimensions&gt;."</li>
+      <li>Keep this sentence somewhere you'll reference it later — you'll need it for the Phase 7 checklist, and it will guide every decision in Phase 5.</li>
+    </div>
+
+    <details class="hint">
+      <summary>Need a nudge?</summary>
+      <div class="hint-body">
+        <p>Look at what actually <i>varies</i> row to row in <code>NightlyCounts_Raw.xlsx</code> for one warehouse/product pair. It isn't quantity-per-transaction the way a sales order line is — there's no "order" happening here at all.</p>
+        <p>Compare this to this morning's <code>fact_sales</code>: a sales fact row exists <i>because</i> a transaction occurred — no sale, no row. Does that same logic hold for <code>NightlyCounts_Raw.xlsx</code>? Or does a row get created every single night for every single warehouse/product pair, whether or not the count actually changed from the night before?</p>
+        <p>That distinction — "a row exists because an event happened" vs. "a row exists because a clock ticked and we checked in" — is exactly the kind of fact table type distinction ILT3 covered this morning. Land on which one this is, and your grain sentence should fall out naturally.</p>
+      </div>
+    </details>
+
+    <div class="checkpoint">
+      <div class="cp-tag">Checkpoint</div>
+      <p>You should have a single, specific sentence written down before moving to Phase 2. If your sentence doesn't mention a warehouse, a product, <i>and</i> a date all in the same breath, it's not specific enough yet — go back and tighten it. Vague grain sentences have a way of coming back to haunt you exactly one phase later.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 2 -->
+<!-- ============================================================ -->
+<section class="content" id="phase2">
+  <div class="wrap">
+    <div class="section-tag">Phase 2 <span class="time-badge">⏱ 10 min</span></div>
+    <h2 class="section-title"><span class="phase-num">2</span>Build <code>dim_warehouse</code></h2>
+    <p class="section-intro">Five real warehouses live in <code>Warehouses_Raw.xlsx</code> — but the raw file has 6 rows and a few data quality issues layered on top. GlobalMart did not, in fact, open a sixth distribution center overnight. Work through the issues in order.</p>
+
+    <div class="order-list">
+      <li>Open <code>Warehouses_Raw.xlsx</code> and sort by <code>Warehouse_Code</code> (Data tab → Sort A→Z). Look at every row carefully.</li>
+      <li><b>Check <code>WH01</code> — you'll find two rows for it.</b> Same warehouse, same code, same city, but the <code>Capacity_Units</code> value differs between the two rows. There's no timestamp column to tell you which row is "newer" or more authoritative.</li>
+      <li>Decide which <code>Capacity_Units</code> value to trust for <code>WH01</code>, and <b>write a one-line note documenting your decision and your reasoning</b> — literally type it into a spare cell or a text box in the workbook. There is no way to know for certain which value is correct from the data alone; that's the point. In real data-quality work, when two rows genuinely conflict and you can't arbitrate with a timestamp or a second source, the right move is to make your best independent judgment call (e.g., cross-check against the warehouse's known scale, or simply pick the value that looks more complete/plausible) and <i>document it openly</i> — so anyone downstream can see the assumption and challenge it later if needed. Don't just silently pick one and move on.</li>
+      <li>Fix the inconsistent city casing. One row's <code>City</code> is all-lowercase, another is ALL-CAPS. Use <code>=PROPER(cell)</code> in a helper column to standardize casing across the whole column, then paste the results back as values.</li>
+      <li>Find the warehouse with a <b>blank <code>Region</code> cell</b> and fill it in. With only 5 warehouses in the table, you can resolve this with a quick manual look — check the warehouse's city and fill in the region that matches the pattern of the other rows.</li>
+      <li>Once you have exactly 5 clean, deduplicated rows with consistent casing and no blanks, copy them into the <code>dim_warehouse</code> tab of <code>Starter_Workbook.xlsx</code>.</li>
+      <li>Assign a <code>warehouse_sk</code> to each row: a plain sequential integer, 1 through 5, typed down the column (or generated with <code>=ROW()-1</code> if your table starts on row 2). This is your surrogate key.</li>
+    </div>
+
+    <div class="highlight-box">
+      <p><b>Excel-native surrogate keys, vs. this morning's <code>sha2()</code>.</b> In Databricks this morning, you generated surrogate keys with <code>sha2(natural_key, 256)</code> — a hash of the natural key, deterministic and collision-resistant at scale. Excel has no equivalent hash function suited to this, and no, you don't need to hand-type a SHA-256 hash to feel like a real data engineer. The Excel-native way to get the <i>same concept</i> — an ID that the dimension table owns, that's meaningless outside that table, that exists purely as a stable join target — is simpler: after the table is fully deduplicated and cleaned, just number the rows sequentially, 1, 2, 3... The mechanism changed because the tool changed. The concept — a stable, table-owned surrogate identifier used only for joining — did not.</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">Checkpoint</div>
+      <p>You should have exactly <span class="cp-number">5 rows</span> in <code>dim_warehouse</code>, each with a unique <code>warehouse_sk</code> from 1–5, consistent title-case city names, and no blank cells anywhere. If you have 6 rows, you still have the WH01 duplicate sitting in there — go back to step 2. It won't resolve itself.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 3 -->
+<!-- ============================================================ -->
+<section class="content" id="phase3">
+  <div class="wrap">
+    <div class="section-tag">Phase 3 <span class="time-badge">⏱ 10 min</span></div>
+    <h2 class="section-title"><span class="phase-num">3</span>Build <code>dim_product</code></h2>
+    <p class="section-intro"><code>Products_Raw.xlsx</code> has 39 rows behind 34 real products — 5 rows too many, from two different kinds of duplication. Handle them one at a time; don't try to spot both at once, or you'll end up chasing two different ghosts simultaneously.</p>
+
+    <div class="order-list">
+      <li>Open <code>Products_Raw.xlsx</code>. First pass: remove the easy duplicates. Select the full data range, go to <b>Data tab → Remove Duplicates</b>, and check all columns. This handles rows that are <i>exact</i> duplicates — identical in every single column, a re-export artifact. This should remove <b>3 rows</b>.</li>
+      <li>Second pass: after the exact duplicates are gone, sort or filter by <code>Product_ID</code> (Data tab → Sort, or turn on AutoFilter). Look for any <code>Product_ID</code> that still appears twice. <code>Remove Duplicates</code> won't catch these — they aren't identical rows.</li>
+      <li>For each repeated <code>Product_ID</code> you find, compare the two rows column by column. You're looking for a case-sensitivity mismatch — the same category spelled with different capitalization between the two occurrences (e.g. one row says the category in Proper Case, the other in all-lowercase). Since they refer to the same real product, treat them as one product: keep the properly-cased version and delete the other row.</li>
+      <li>Once resolved, you should have <b>34 unique products</b> left, one row per <code>Product_ID</code>.</li>
+      <li>Copy the 34 clean rows into the <code>dim_product</code> tab of <code>Starter_Workbook.xlsx</code>.</li>
+      <li>Assign <code>product_sk</code> as a sequential integer, 1 through 34, exactly the same approach as <code>warehouse_sk</code> in Phase 2.</li>
+    </div>
+
+    <details class="hint">
+      <summary>Need a nudge on finding the near-duplicates?</summary>
+      <div class="hint-body">
+        <p>After removing the 3 exact duplicates, sort the whole table by <code>Product_ID</code> ascending. A true near-duplicate will show up as two rows sitting right next to each other with the same <code>Product_ID</code> — everything else about them will look almost identical except for the casing in one column. Scan down the sorted list for any <code>Product_ID</code> you see twice.</p>
+        <p>An alternative: use conditional formatting (Home tab → Conditional Formatting → Highlight Cell Rules → Duplicate Values) on just the <code>Product_ID</code> column to visually flag any code that still appears more than once.</p>
+      </div>
+    </details>
+
+    <div class="checkpoint">
+      <div class="cp-tag">Checkpoint</div>
+      <p>You should have exactly <span class="cp-number">34 rows</span> in <code>dim_product</code>, each with a unique <code>Product_ID</code> and consistent casing throughout. If you have 35 or 36, one of the near-duplicate pairs is still hiding in the table — go find it before it finds you in Phase 5's lookups.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 4 -->
+<!-- ============================================================ -->
+<section class="content" id="phase4">
+  <div class="wrap">
+    <div class="section-tag">Phase 4 <span class="time-badge">⏱ 5–8 min</span></div>
+    <h2 class="section-title"><span class="phase-num">4</span>Build <code>dim_date</code></h2>
+    <p class="section-intro">Unlike the other two dimensions, <code>dim_date</code> isn't cleaned from a raw file — it's generated, which makes this the closest thing to a breather you'll get in this activity. The observed date range across the nightly counts is June 1–10, 2026 (10 nights), so this dimension needs exactly 10 rows, one per calendar day in that range. Enjoy it — Phase 5 is next.</p>
+
+    <div class="order-list">
+      <li>In the <code>dim_date</code> tab of <code>Starter_Workbook.xlsx</code>, fill the <code>date</code> column with 10 consecutive real Excel dates: <code>6/1/2026</code> through <code>6/10/2026</code>. Type the first date, then use Fill → Series (or drag the fill handle) to generate the rest — don't type all 10 by hand.</li>
+      <li>Build <code>date_key</code> as a readable integer: <code>=VALUE(TEXT(date,"YYYYMMDD"))</code> (the <code>TEXT()</code> produces a string like <code>"20260601"</code>; wrapping it in <code>VALUE()</code> converts that string into a true number). Paste the results as values once done.</li>
+      <li>Build <code>day_of_week</code> with <code>=TEXT(date,"dddd")</code> — this returns the full weekday name (e.g. "Monday").</li>
+      <li>Build <code>month</code> with <code>=MONTH(date)</code>.</li>
+      <li>Build <code>quarter</code> with <code>=ROUNDUP(MONTH(date)/3,0)</code>.</li>
+      <li>Build <code>year</code> with <code>=YEAR(date)</code>.</li>
+      <li>Convert every formula column to static values (copy → Paste Special → Values) once you've confirmed all 10 rows look correct.</li>
+    </div>
+
+    <div class="highlight-box">
+      <p><b>Why <code>date_key</code> isn't a sequential integer.</b> Every other surrogate key in this activity (<code>warehouse_sk</code>, <code>product_sk</code>) is a meaningless sequential number. <code>date_key</code> is the deliberate exception, and it was the exception this morning too: a human-readable <code>YYYYMMDD</code> integer sorts correctly, is instantly recognizable in a filter or a chart axis, and lets you range-filter (<code>date_key BETWEEN 20260601 AND 20260610</code>) without ever joining back to the date table. Same reasoning ILT2 gave this morning for why date dimensions get the one exception to "surrogate keys should be meaningless."</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">Checkpoint</div>
+      <p><code>dim_date</code> should have exactly <span class="cp-number">10 rows</span> — June 1 through June 10, 2026 — with all six columns populated and no formulas left live (values only). Ten rows, six columns, zero drama — savor it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 5 -->
+<!-- ============================================================ -->
+<section class="content" id="phase5">
+  <div class="wrap">
+    <div class="section-tag">Phase 5 — The Core of This Activity <span class="time-badge">⏱ 20 min</span></div>
+    <h2 class="section-title"><span class="phase-num">5</span>Build <code>fact_inventory_snapshot</code></h2>
+    <p class="section-intro">This is where all three finished dimensions finally get put to work — and where the activity earns its "core" label. <code>NightlyCounts_Raw.xlsx</code> has 1,742 rows, and it carries three distinct data-quality problems stacked on top of each other. Work through them in the exact order below — don't skip ahead to the lookups before the raw data is actually clean, however tempting that shortcut looks.</p>
+
+    <div class="order-list">
+      <li><b>Stage the raw data.</b> Open <code>NightlyCounts_Raw.xlsx</code> and copy all 1,742 rows into a new, blank scratch sheet inside <code>Starter_Workbook.xlsx</code> (not directly into the <code>fact_inventory_snapshot</code> tab — you need a working area to clean in before the final paste).</li>
+      <li><b>Remove exact duplicates.</b> Select the full range on your scratch sheet, go to <b>Data tab → Remove Duplicates</b>, and check all 5 columns (<code>Count_Batch_ID</code>, <code>Warehouse_Code</code>, <code>Product_ID</code>, <code>Count_Date</code>, <code>Units_On_Hand</code>). This is a system export glitch — the same warehouse+product+date+count repeated verbatim. This step should remove <b>20 rows</b>.</li>
+      <li><b>Normalize <code>Count_Date</code>.</b> This column mixes three different formats in the same column: real Excel date values, US-style text like <code>06/10/2026</code>, and long text like <code>June 7, 2026</code>. Add a helper column with:
+        <br><br><code>=IF(ISNUMBER(Count_Date), Count_Date, DATEVALUE(Count_Date))</code>
+        <br><br>
+        <code>ISNUMBER()</code> is the key check here: a cell that's already a real Excel date stores internally as a number, and wrapping an already-real date in <code>DATEVALUE()</code> will throw an error — so the formula only calls <code>DATEVALUE()</code> on the rows that actually need text-to-date conversion. Once the helper column looks correct for all rows, paste it as values and replace the original <code>Count_Date</code> column.</li>
+      <li><b>⚠️ Check your locale before trusting <code>DATEVALUE()</code> on the slash-format rows.</b> <code>DATEVALUE("06/10/2026")</code> was written as a US-style <code>MM/DD/YYYY</code> string (June 10), but <code>DATEVALUE()</code>'s parsing depends on <i>your</i> Excel's regional date setting, not the string's intent. On a day-first regional setting (<code>DD/MM/YYYY</code> — common on Excel installs configured for India), Excel will silently read <code>"06/10/2026"</code> as <b>10 June</b> reversed to day=6, month=10 → <b>6 October</b> — no error, just a wrong date. <b>Spot-check it:</b> after building the helper column, filter it and confirm every resulting date's month is June. If you find dates outside June, your Excel is parsing day-first, and the plain <code>DATEVALUE()</code> formula from the previous step isn't safe.
+        <br><br>
+        If that's the case, replace the whole helper-column formula with this three-way version instead of just patching the slash case — a single flat <code>DATEVALUE()</code> replacement would fix the slash rows but silently break the long-text rows in the process (<code>LEFT("June 7, 2026", 2)</code> isn't a number, so a naive fixed-position formula applied to <i>every</i> row would turn working rows into new errors):
+        <br><br>
+        <code>=IF(ISNUMBER(Count_Date), Count_Date, IF(ISNUMBER(SEARCH("/",Count_Date)), DATE(VALUE(RIGHT(Count_Date,4)), VALUE(LEFT(Count_Date,2)), VALUE(MID(Count_Date,4,2))), DATEVALUE(Count_Date)))</code>
+        <br><br>
+        Read it as three branches: already a real date → keep it; contains a <code>/</code> → pull year/month/day out of the known <code>MM/DD/YYYY</code> positions explicitly, ignoring Excel's locale guess entirely; otherwise (the long-text rows like <code>"June 7, 2026"</code>) → <code>DATEVALUE()</code> is safe here, a month name has no day/month ambiguity to misparse.</li>
+      <li><b>Find and exclude the blank-warehouse rows.</b> Use <code>=COUNTBLANK()</code> on the <code>Warehouse_Code</code> column, or turn on AutoFilter and filter that column to blanks, to locate them. You'll find <b>12 rows</b> with no <code>Warehouse_Code</code> at all. <b>Delete these rows entirely — do not guess which warehouse they belong to.</b> There is nothing else in the row that reveals which warehouse it came from, and a fact row that can't be safely joined to <code>dim_warehouse</code> is a fact row that shouldn't exist in the final table. This is exactly the referential-integrity principle from this morning's Silver-layer work: if you can't join it safely, you quarantine it rather than fabricate a value.</li>
+      <li><b>Find and exclude the negative-count rows.</b> Filter <code>Units_On_Hand</code> for values less than 0. You'll find <b>10 rows</b> with a negative unit count. <b>Delete these rows too.</b> A warehouse cannot physically hold −23 units of anything — this is a data-entry error, not a valid measurement, and a real data engineer excludes physically impossible values rather than passing them downstream.</li>
+      <li><b>Look up <code>warehouse_sk</code>.</b> Against your finished <code>dim_warehouse</code> tab, use <code>=XLOOKUP(Warehouse_Code, dim_warehouse!Warehouse_Code_column, dim_warehouse!warehouse_sk_column)</code> (or <code>=VLOOKUP(Warehouse_Code, dim_warehouse!A:F, [warehouse_sk column number], FALSE)</code> if you're on an Excel version without <code>XLOOKUP</code>) for every remaining row.</li>
+      <li><b>Look up <code>product_sk</code>.</b> Same approach, against your finished <code>dim_product</code> tab, matching on <code>Product_ID</code>.</li>
+      <li><b>Look up <code>date_key</code>.</b> Against your finished <code>dim_date</code> tab, matching your normalized <code>Count_Date</code> value to the <code>date</code> column, returning <code>date_key</code>. If a large chunk of rows come back <code>#N/A</code> here (not just one or two), don't start debugging the lookup formula itself first — go back to the locale check two steps ago. A systematic block of <code>#N/A</code>s is the signature of dates that got parsed into the wrong month, not a broken <code>XLOOKUP</code>.</li>
+      <li><b>Leave <code>count_batch_id</code> exactly as-is — no lookup.</b> Notice this column doesn't get resolved against any dimension table at all, unlike the other three keys. That's deliberate: <code>count_batch_id</code> is a <b>degenerate dimension</b>. It's an identifier that lives directly on the fact row (one batch per night, shared by every warehouse/product row counted that night) but has no dimension table of its own — there's nothing to describe about a batch beyond its own ID, so it never gets a surrogate key or a lookup, just like <code>Order_ID</code> in this morning's ILT3 pattern, except here there's truly no competing dimension trying to claim the label.</li>
+      <li><b>Paste the final 5 columns as values</b> — <code>warehouse_sk</code>, <code>product_sk</code>, <code>date_key</code>, <code>count_batch_id</code>, <code>units_on_hand</code> — into the real <code>fact_inventory_snapshot</code> tab of <code>Starter_Workbook.xlsx</code>. Use Paste Special → Values so no formulas or lookups remain live.</li>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">Checkpoint — the single most important number in this activity</div>
+      <p>Your finished <code>fact_inventory_snapshot</code> tab should have exactly <span class="cp-number">1,700 rows</span>. Not 1,699, not 1,701 — exactly 1,700.</p>
+      <p style="margin-top:10px;">Work backward if it doesn't match: <code>1,742 raw rows − 20 exact duplicates − 12 blank-warehouse rows − 10 negative-units rows = 1,700</code>. If your count is off, you either kept a duplicate you should have removed, deleted a valid row by mistake, or missed one of the two exclusion filters. Don't move on to Phase 6 until this number is exactly 1,700.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 6 -->
+<!-- ============================================================ -->
+<section class="content" id="phase6">
+  <div class="wrap">
+    <div class="section-tag">Phase 6 <span class="time-badge">⏱ 10 min</span></div>
+    <h2 class="section-title"><span class="phase-num">6</span>Verify With a PivotTable</h2>
+    <p class="section-intro">A finished fact table isn't proven correct just because the row count matches — 1,700 is necessary, not sufficient. This phase makes the additive vs. semi-additive distinction from this morning's ILT3 concrete, using your own data instead of a slide.</p>
+
+    <h3 style="margin:24px 0 10px; font-size:18px;">Step 1 — Build the PivotTable</h3>
+    <div class="order-list">
+      <li>Click anywhere inside your finished <code>fact_inventory_snapshot</code> tab.</li>
+      <li>Go to <b>Insert tab → PivotTable</b>, and place it on a new worksheet.</li>
+      <li>Drag <code>warehouse_sk</code> and <code>product_sk</code> into <b>Rows</b>, <code>date_key</code> into <b>Columns</b>, and <code>units_on_hand</code> into <b>Values</b>, set to <b>Sum</b>.</li>
+    </div>
+
+    <h3 style="margin:30px 0 10px; font-size:18px;">Step 2 — Confirm a safe additive summary</h3>
+    <p style="color:#cbd5e1; font-size:14.5px; max-width:760px; margin-bottom:14px;">Remove <code>date_key</code> from Columns for a moment, and just look at total <code>units_on_hand</code> grouped by <code>warehouse_sk</code>, or grouped by <code>product_sk</code>, for a <i>single date</i> (filter <code>date_key</code> down to one value first). Confirm the sum looks sensible — e.g. total units of a product across all 5 warehouses on one given night is a real, meaningful number. Summing <i>across warehouses</i> for a fixed point in time is safe.</p>
+
+    <h3 style="margin:30px 0 10px; font-size:18px;">Step 3 — Break it on purpose</h3>
+    <p style="color:#cbd5e1; font-size:14.5px; max-width:760px; margin-bottom:14px;">Now do the opposite: pick one single <code>warehouse_sk</code> + <code>product_sk</code> combination, and instead sum <code>units_on_hand</code> <b>across all 10 dates</b> for that one combination. Look at the total the PivotTable gives you.</p>
+
+    <div class="highlight-box warn">
+      <p><b>That total is meaningless — and that's the point.</b> <code>Units_On_Hand</code> is a snapshot balance, not a transaction amount. Summing it across 10 nights doesn't give you "10 nights of activity" the way summing <code>Sales</code> across 10 days would — it gives you the same physical stock counted, and added to itself, 10 separate times. GlobalMart does not have ten times as much stock as it thinks it does; your PivotTable just lied to you politely. This is the semi-additive measure problem from ILT3, made real: safe to sum across warehouses or products at a fixed point in time, meaningless to sum across time itself.</p>
+    </div>
+
+    <div class="order-list" style="margin-top:20px;">
+      <li>In your workbook (a spare cell, sticky note, or text box near the PivotTable), write <b>one sentence</b> explaining why summing <code>units_on_hand</code> across all 10 dates for one warehouse/product is wrong.</li>
+      <li>In the same note, state what the <i>correct</i> way to look at this measure over time would be instead — think about what ILT3 taught for semi-additive measures on an inventory snapshot: not a sum, but something like the period-end value, or an average across the period.</li>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">Checkpoint</div>
+      <p>You should have a working PivotTable, one confirmed-sensible additive summary (by warehouse or by product, at a single point in time), and one written sentence explaining why summing across dates for a single warehouse/product is invalid — plus what the correct alternative aggregation would be.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 7 — CHECKLIST -->
+<!-- ============================================================ -->
+<section class="content" id="phase7">
+  <div class="wrap">
+    <div class="section-tag">Phase 7 — Before You Submit</div>
+    <h2 class="section-title">Submission Checklist</h2>
+    <p class="section-intro">Go through every item honestly before you consider this done — no partial credit for "close enough." Every number here is checkable against your own workbook, so there's no ambiguity in whether you've actually met it.</p>
+
+    <div class="checklist-card">
+      <div class="checklist-item">
+        <input type="checkbox" id="c1"><label for="c1">Grain sentence for <code>fact_inventory_snapshot</code> is written down (from Phase 1) and names warehouse, product, and date together.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="c2"><label for="c2"><code>dim_warehouse</code> has exactly <b>5 rows</b>, with the WH01 duplicate resolved and the decision documented in a note.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="c3"><label for="c3"><code>dim_product</code> has exactly <b>34 rows</b>, with both the exact duplicates and the casing near-duplicates resolved.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="c4"><label for="c4"><code>dim_date</code> has exactly <b>10 rows</b> (June 1–10, 2026) with all six columns populated as static values.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="c5"><label for="c5"><code>fact_inventory_snapshot</code> has exactly <b>1,700 rows</b> — the raw 1,742 minus 20 duplicates minus 12 blank-warehouse minus 10 negative-units rows.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="c6"><label for="c6">PivotTable built, and the semi-additive observation (summing <code>units_on_hand</code> across dates is meaningless) is written down in one sentence, along with the correct alternative.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="c7"><label for="c7">Degenerate dimension identified by name — <code>count_batch_id</code> — with a sentence explaining why it never gets a surrogate-key lookup.</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="c8"><label for="c8">Excel-native surrogate key approach (sequential integer) explained in your own words, contrasted against this morning's <code>sha2()</code> approach in Databricks.</label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CLOSING -->
+<!-- ============================================================ -->
+<section class="content" id="closing">
+  <div class="wrap">
+    <div class="section-tag">Closing Note</div>
+    <h2 class="section-title">Self-Grading, After Everyone Submits</h2>
+    <div class="highlight-box success">
+      <p>Once everyone has submitted their completed <code>Starter_Workbook.xlsx</code>, the facilitator will share <code>Answer_Key_Star_Schema.xlsx</code> — the fully solved version, including a <code>DQ_Summary</code> tab that walks through the reasoning behind every data-quality decision in this activity (the WH01 conflict, both product near-duplicates, and the fact table exclusions). You'll use it to self-grade your own workbook.</p>
+      <p style="margin-top:10px;">It is <b>not</b> shared before submission, on purpose — the value of this activity is in making the judgment calls yourself, the same way you'll have to on the job. Submit first, compare after.</p>
+      <p style="margin-top:10px;">Word from a past cohort: Kumar Pratik's note on the WH01 conflict didn't try to guess the "right" capacity — it just laid out the reasoning and picked a value "until proven otherwise," which is exactly the instinct this activity is trying to build. Ask around after you submit and you'll probably hear a few different judgment calls on WH01, all defensible, which is rather the point. And if your row count lands on 1,700 on the first try the way Aman Thapliyal's reportedly did — nice work, but the answer key still isn't coming out early.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 6 Capstone · Warehouse Inventory Star Schema (Excel)
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>

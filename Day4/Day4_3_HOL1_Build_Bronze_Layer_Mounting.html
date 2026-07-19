@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 4 | HOL 1 — Build Bronze Layer via Mounting</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 4 · HOL 1 — Build Bronze Layer (Mounting)</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 21</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Build the Bronze Layer — the Mounting Path</h1>
+    <p class="subtitle">Why this session mounts <code>wasbs://</code> instead of using an External Location, and how 3 real notebooks turn that into 6 live Bronze tables</p>
+    <div class="badge">Day 4 &nbsp;·&nbsp; HOL 1 &nbsp;·&nbsp; Hands-On Lab</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → Mounting vs External Location · Checkpoint Layout: Code vs Comment · multiLine Fixes · Pre-Flight Checks · Change Data Feed
+    </div>
+  </div>
+
+  <!-- SLIDE 2: SECTION - OBJECTIVES + AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>Session Objectives</h2>
+    <div class="two-col" style="margin-top:20px;">
+      <div class="card">
+        <h4>By the End of This Session</h4>
+        <ul>
+          <li>Explain why this build mounts the container with <code>wasbs://</code> instead of using an External Location with <code>abfss://</code></li>
+          <li>Verify a claimed checkpoint/schema path pattern by tracing the actual code — not just trusting a markdown comment</li>
+          <li>Trace the real <code>CF_FAILED_TO_INFER_SCHEMA</code> error this build hit on <code>products</code>, and how <code>multiLine</code> fixed it — for both a CSV embedded-newline case and a JSON pretty-printed-array case</li>
+          <li>Explain the format-aware pre-flight check that prevents <code>CF_EMPTY_DIR_FOR_SCHEMA_INFERENCE</code></li>
+          <li>Enable Change Data Feed on Bronze tables and explain why Silver needs it</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Today's 3 Notebooks, in Order</h4>
+        <table class="sql-table">
+          <tr><th>#</th><th>Notebook</th><th>Builds</th></tr>
+          <tr><td>1</td><td><code>...Mounting</code></td><td>Mount + <code>bronze.customers</code></td></tr>
+          <tr><td>2</td><td><code>...Addresses</code></td><td><code>bronze.addresses</code> (reuses mount)</td></tr>
+          <tr><td>3</td><td><code>...Remaining_Sources</code></td><td>4 more tables + CDF on all 6</td></tr>
+        </table>
+        <p style="margin-top:12px;">Run them in this exact order — 2 and 3 both fail fast if the mount from notebook 1 isn't active.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: TWO WAYS TO REACH BLOB STORAGE -->
+  <div class="slide slide-content">
+    <h3>Two Ways to Reach the Same Storage Account</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Other Bronze notebooks in this course use an <strong style="color:#e2e8f0;">External Location</strong>. This session deliberately uses a different, older pattern instead — worth knowing as a real alternative, not a downgrade.</p>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;"><strong style="color:#e2e8f0;">Why bother, if Day 2 called mounting a legacy anti-pattern?</strong> Day 2 was right that nobody sets up a <em>new</em> mount for a governed, ongoing pipeline anymore — External Locations exist precisely to replace it. But plenty of real workspaces still have old mounts sitting around from before that shift, and you'll be expected to recognize the pattern, know its trade-offs, and migrate off it when asked. That's why it's still worth building once, hands-on, even though it's not where you'd start a brand-new pipeline today.</p>
+    <table class="sql-table">
+      <tr><th></th><th>External Location version</th><th>This (Mounting) version</th></tr>
+      <tr><td>Connection</td><td>Unity Catalog Storage Credential + External Location</td><td><code>dbutils.fs.mount()</code> with a storage account key</td></tr>
+      <tr><td>Protocol</td><td><code>abfss://</code> + <code>.dfs.core.windows.net</code></td><td><code>wasbs://</code> + <code>.blob.core.windows.net</code></td></tr>
+      <tr><td>Requires</td><td>ADLS Gen2 / Hierarchical Namespace</td><td>Plain Blob Storage — no HNS needed</td></tr>
+      <tr><td>Catalog</td><td><code>&lt;your-catalog&gt;</code> (same catalog as the External Location walkthrough)</td><td>A separate practice catalog — different from the one above</td></tr>
+      <tr><td>Checkpoint/schema</td><td>Shared root <code>_checkpoints/&lt;table&gt;/</code></td><td>Also shared root — same layout (a markdown cell in this version claims nesting; the code doesn't do that — see Slide 7)</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 4: WHY WASBS HERE -->
+  <div class="slide slide-content">
+    <h3>Why <code>wasbs://</code> and Not <code>abfss://</code> Here</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Think of it like two doors into the same warehouse: one door (<code>abfss://</code>) only opens if the building has a specific newer lock installed (Hierarchical Namespace). The other door (<code>wasbs://</code>) is the older lock — works everywhere, just less feature-rich.</p>
+    <div class="highlight-box warn">
+      <p><strong style="color:#f59e0b;">The real constraint:</strong> <code>abfss://</code> only works for mounting/reading against a storage account with <strong>Hierarchical Namespace (ADLS Gen2)</strong> enabled. If the storage account doesn't have that enabled, or the workspace's mount setup doesn't support <code>abfss://</code> mounting, <code>wasbs://</code> against the <code>.blob.core.windows.net</code> endpoint is the working alternative — same underlying data, older Blob Storage protocol.</p>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h4>Why This Is Worth Knowing, Not Just a Workaround</h4>
+      <p>Not every storage account you'll meet on a real project has HNS turned on. Knowing the mounting fallback means you're never blocked by that — you have a second working path.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: DEMO - MOUNT CELL -->
+  <div class="slide slide-demo">
+    <h3>Live in the Workspace — Mounting the Container</h3>
+    <div class="demo-label">From Notebook 1, Step 0 — check-then-mount, never re-mount blindly</div>
+<pre><span class="cm"># Storage Details</span>
+STORAGE_ACCOUNT = <span class="str">"ecomdata"</span>
+CONTAINER = <span class="str">"raw-demo-data"</span>
+MOUNT_POINT = <span class="str">"/mnt/virinchy_gbmart_data"</span>
+
+STORAGE_ACCOUNT_KEY = <span class="str">"YOUR_STORAGE_ACCOUNT_KEY"</span>  <span class="cm"># ← paste your own key, never commit a real one</span>
+
+configs = {
+    <span class="str">f"fs.azure.account.key.{STORAGE_ACCOUNT}.blob.core.windows.net"</span>: STORAGE_ACCOUNT_KEY
+}
+
+<span class="cm"># Check if already mounted</span>
+<span class="kw">if</span> any(m.mountPoint == MOUNT_POINT <span class="kw">for</span> m <span class="kw">in</span> dbutils.fs.mounts()):
+    print(<span class="str">f"✅ {MOUNT_POINT} is already mounted."</span>)
+<span class="kw">else</span>:
+    dbutils.fs.mount(
+        source=<span class="str">f"wasbs://{CONTAINER}@{STORAGE_ACCOUNT}.blob.core.windows.net/"</span>,
+        mount_point=MOUNT_POINT,
+        extra_configs=configs
+    )</pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Get your key from <strong>Azure Portal → Storage accounts → your account → Security + networking → Access keys</strong>. Paste it in, run the cell, then replace it back with the placeholder before saving — never leave a real key in a shareable notebook.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: CONFIG + CATALOG -->
+  <div class="slide slide-content">
+    <h3>Step 1 Configuration — a Different Catalog on Purpose</h3>
+    <div class="two-col">
+      <div>
+<pre>MOUNT_BASE = MOUNT_POINT
+SOURCE_FOLDER = <span class="str">"customers"</span>
+
+CATALOG = <span class="str">"harsh_kumar01_npmentorskool_onmicrosoft_com"</span>
+SCHEMA = <span class="str">"bronze"</span>
+TABLE = <span class="str">"customers"</span>
+TARGET_TABLE = <span class="str">f"{CATALOG}.{SCHEMA}.{TABLE}"</span>
+
+SOURCE_PATH = <span class="str">f"{MOUNT_BASE}/{SOURCE_FOLDER}/"</span></pre>
+      </div>
+      <div class="card">
+        <h4>This Isn't the Same Catalog as the External Location Version — and That's Expected</h4>
+        <p>The External Location Bronze notebooks write to your one shared catalog. This mounting-based build writes to a separate practice catalog instead — a real, distinct catalog name in the actual run, kept intentionally different.</p>
+        <p style="margin-top:8px;">This is a genuinely different setup, not a typo — mounting with a storage key doesn't go through Unity Catalog's External Location machinery at all, so there's no reason it would land in the same catalog.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: CHECKPOINT LAYOUT - CODE VS COMMENT -->
+  <div class="slide slide-content">
+    <h3>The Checkpoint Layout — Trust the Code, Not Just the Comment</h3>
+    <div class="two-col">
+      <div>
+<pre>CHECKPOINT_PATH =
+  f"{MOUNT_BASE}/_checkpoints/{SOURCE_FOLDER}/"
+
+<span class="cm"># resolves to:</span>
+/mnt/virinchy_gbmart_data/
+├── customers/              <span class="cm">← source data (SOURCE_PATH)</span>
+│     customers_010626.csv
+├── _checkpoints/           <span class="cm">← SIBLING, not inside customers/</span>
+│     └── customers/
+└── _schemas/
+      └── customers/</pre>
+      </div>
+      <div class="highlight-box warn">
+        <p><strong style="color:#f59e0b;">The notebook's own Step 1 markdown claims checkpoint/schema state is nested <em>inside</em> each table's folder</strong> (<code>customers/_checkpoints/</code>). The actual code disagrees: <code>CHECKPOINT_PATH</code> is built from <code>MOUNT_BASE</code>, making <code>_checkpoints/</code> a sibling of <code>customers/</code> — the same shared-root layout used elsewhere in the course.</p>
+        <p style="margin-top:8px;">The Addresses and Remaining-Sources notebooks confirm shared-root is the real, standardized layout — one of them even cleans up leftover nested clutter from an earlier iteration. <strong>Lesson:</strong> when a comment and the code it's attached to disagree, trace the actual variable — the code is always the ground truth.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: DEMO - CUSTOMERS AUTOLOADER -->
+  <div class="slide slide-demo">
+    <h3>Live in the Workspace — Customers via Auto Loader</h3>
+    <div class="demo-label">From Notebook 1, Step 4 — read, then write with <code>availableNow</code></div>
+<pre>customers_df = spark.readStream\
+        .format(<span class="str">"cloudFiles"</span>)\
+        .option(<span class="str">"cloudFiles.format"</span>,              <span class="str">"csv"</span>)\
+        .option(<span class="str">"cloudFiles.schemaLocation"</span>,      SCHEMA_PATH)\
+        .option(<span class="str">"cloudFiles.inferColumnTypes"</span>,    <span class="str">"true"</span>)\
+        .option(<span class="str">"cloudFiles.schemaEvolutionMode"</span>, <span class="str">"addNewColumns"</span>)\
+        .option(<span class="str">"header"</span>,                         <span class="str">"true"</span>)\
+        .load(SOURCE_PATH)\
+        .withColumn(<span class="str">"_source_file"</span>, col(<span class="str">"_metadata.file_path"</span>))\
+        .withColumn(<span class="str">"_ingested_at"</span>, current_timestamp())
+
+customers_df.writeStream\
+        .format(<span class="str">"delta"</span>)\
+        .outputMode(<span class="str">"append"</span>)\
+        .option(<span class="str">"checkpointLocation"</span>, CHECKPOINT_PATH)\
+        .option(<span class="str">"mergeSchema"</span>,        <span class="str">"true"</span>)\
+        .trigger(availableNow=<span class="kw">True</span>)\
+        .toTable(TARGET_TABLE)</pre>
+  </div>
+
+  <!-- SLIDE 9: ADDRESSES - REUSING THE MOUNT -->
+  <div class="slide slide-content">
+    <h3>Notebook 2 — Addresses Reuses the Mount, Doesn't Recreate It</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Fail Fast, Not Confusingly</h4>
+        <p>Notebook 2 never calls <code>dbutils.fs.mount()</code>. It checks <code>dbutils.fs.mounts()</code> first — if the mount from Notebook 1 isn't active in this session, it raises a clear <code>RuntimeError</code> immediately instead of a cryptic file-not-found error two cells later.</p>
+      </div>
+      <div>
+<pre>mount_exists = any(m.mountPoint == MOUNT_POINT
+                    <span class="kw">for</span> m <span class="kw">in</span> dbutils.fs.mounts())
+<span class="kw">if</span> <span class="kw">not</span> mount_exists:
+    <span class="kw">raise</span> RuntimeError(
+        <span class="str">f"{MOUNT_POINT} is not mounted in this session. "</span>
+        <span class="str">f"Run the customers notebook's mount cell first."</span>
+    )</pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p>Teaching point: a shared resource (the mount) set up by one notebook and consumed by later ones needs an explicit, readable guard — not a hope that the earlier notebook already ran.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: MULTILINE FIX 1 - ADDRESSLINE1 -->
+  <div class="slide slide-content">
+    <h3>multiLine Fix #1 — Embedded Newlines in <code>AddressLine1</code></h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">A CSV reader normally assumes one record per line. Real address data breaks that assumption the moment a field itself contains a line break — e.g. a multi-line street address typed with an <code>Enter</code> in the middle.</p>
+    <table class="sql-table">
+      <tr><th>Option</th><th>Value</th><th>Why</th></tr>
+      <tr><td><code>multiLine</code></td><td><code>true</code></td><td>lets a single CSV record span multiple physical lines</td></tr>
+      <tr><td><code>escape</code></td><td><code>'"'</code></td><td>handles quoted fields correctly alongside the embedded newline</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p>Without both options together, rows silently split mid-address — you'd see more rows than source records, with garbage in the extra ones, not a clean error.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: DEMO - ADDRESSES AUTOLOADER -->
+  <div class="slide slide-demo">
+    <h3>Live in the Workspace — Addresses With multiLine</h3>
+    <div class="demo-label">From Notebook 2, Step 4 — same shape as customers, two extra options</div>
+<pre>addresses_df = spark.readStream\
+        .format(<span class="str">"cloudFiles"</span>)\
+        .option(<span class="str">"cloudFiles.format"</span>,              <span class="str">"csv"</span>)\
+        .option(<span class="str">"cloudFiles.schemaLocation"</span>,      SCHEMA_PATH)\
+        .option(<span class="str">"cloudFiles.inferColumnTypes"</span>,    <span class="str">"true"</span>)\
+        .option(<span class="str">"cloudFiles.schemaEvolutionMode"</span>, <span class="str">"addNewColumns"</span>)\
+        .option(<span class="str">"header"</span>,                         <span class="str">"true"</span>)\
+        .option(<span class="str">"multiLine"</span>,                      <span class="str">"true"</span>)\
+        .option(<span class="str">"escape"</span>,                         <span class="str">'"'</span>)\
+        .load(SOURCE_PATH)\
+        .withColumn(<span class="str">"_source_file"</span>, col(<span class="str">"_metadata.file_path"</span>))\
+        .withColumn(<span class="str">"_ingested_at"</span>, current_timestamp())</pre>
+  </div>
+
+  <!-- SLIDE 12: SECTION - REMAINING SOURCES -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Notebook 3</div>
+    <h2>Remaining Sources — a Config-Driven Loop</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      Instead of hand-copying the customers cell 4 more times, <code>BRONZE_SOURCES</code> is a list — one entry per source folder — and one reusable function ingests all of them.
+    </p>
+  </div>
+
+  <!-- SLIDE 13: PRODUCTS JSON DEBUGGING STORY -->
+  <div class="slide slide-content">
+    <h3>multiLine Fix #2 — the <code>products</code> JSON Story</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Auto Loader's default JSON reader assumes <strong style="color:#e2e8f0;">NDJSON</strong> — one object per line. The real <code>products_010626.json</code> file is a pretty-printed <strong style="color:#e2e8f0;">array</strong> instead. That mismatch surfaced as a real, specific error: <code>CF_FAILED_TO_INFER_SCHEMA</code>.</p>
+    <div class="card">
+      <h4>How It Was Actually Diagnosed</h4>
+      <p>Santosh's approach: don't guess — read the raw bytes. <code>dbutils.fs.head(path, 500)</code> printed the file's first 500 characters. It started with <code>[</code>, not <code>{</code> — confirming a JSON array, not NDJSON, and pointing straight at the fix: <code>cloudFiles.multiLine = "true"</code>.</p>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p><strong style="color:#38bdf8;">The debugging habit worth keeping:</strong> when a schema-inference error is confusing, look at the raw file before touching the reader options. The file's shape usually tells you the fix directly.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: DEMO - HEAD PREVIEW + JSON BRANCH -->
+  <div class="slide slide-demo">
+    <h3>Live in the Workspace — Preview, Then Fix</h3>
+    <div class="demo-label">From Notebook 3, Step 2 diagnostic + Step 4 JSON branch</div>
+<pre><span class="cm"># Preview the raw content before trusting any reader assumption</span>
+preview_path = <span class="str">"/mnt/virinchy_gbmart_data/products/products_010626.json"</span>
+raw_preview = dbutils.fs.head(preview_path, 500)
+
+<span class="kw">if</span> raw_preview.strip().startswith(<span class="str">"["</span>):
+    print(<span class="str">"Starts with '[' -- JSON ARRAY. Needs multiLine=true."</span>)
+
+<span class="cm"># --- JSON branch of the ingestion function ---</span>
+source_df = (
+    spark.readStream
+    .format(<span class="str">"cloudFiles"</span>)
+    .option(<span class="str">"cloudFiles.format"</span>, <span class="str">"json"</span>)
+    .option(<span class="str">"cloudFiles.schemaLocation"</span>, schema_path)
+    .option(<span class="str">"cloudFiles.inferColumnTypes"</span>, <span class="str">"true"</span>)
+    .option(<span class="str">"cloudFiles.schemaEvolutionMode"</span>, <span class="str">"addNewColumns"</span>)
+    .option(<span class="str">"multiLine"</span>, <span class="str">"true"</span>)  <span class="cm"># ← the actual fix for CF_FAILED_TO_INFER_SCHEMA</span>
+    .load(source_path)
+)</pre>
+  </div>
+
+  <!-- SLIDE 15: FORMAT-AWARE PRE-FLIGHT CHECK -->
+  <div class="slide slide-content">
+    <h3>The Format-Aware Pre-Flight Check</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;"><code>dbutils.fs.ls()</code> returning entries doesn't mean Auto Loader can actually see files to ingest — Auto Loader's own file discovery filters for the expected format. A folder that looks non-empty to <code>ls()</code> can still look empty to Auto Loader if nothing inside actually matches.</p>
+    <div class="highlight-box warn">
+      <p><strong style="color:#f59e0b;">That mismatch is exactly what causes <code>CF_EMPTY_DIR_FOR_SCHEMA_INFERENCE</code></strong> — a genuinely confusing error if you haven't seen it before, since the folder clearly isn't empty.</p>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <h4>The Fix — <code>source_has_files()</code></h4>
+      <p>Checks for files matching the expected extension <em>before</em> Auto Loader ever starts. A missing folder, an empty folder, or a folder with only non-matching files is reported and skipped — never a notebook-stopping exception.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 16: DEMO - SOURCE_HAS_FILES -->
+  <div class="slide slide-demo">
+    <h3>Live in the Workspace — the Pre-Flight Function</h3>
+    <div class="demo-label">From Notebook 3, Step 3b</div>
+<pre><span class="kw">def</span> <span class="fn">source_has_files</span>(source_folder, source_path, file_format):
+    entries = dbutils.fs.ls(source_path)  <span class="cm"># wrapped in try/except upstream</span>
+
+    <span class="kw">if</span> len(entries) == 0:
+        print(<span class="str">f"  Skipping {source_folder} because the folder is empty."</span>)
+        <span class="kw">return</span> <span class="kw">False</span>
+
+    extension = <span class="str">f".{file_format}"</span>
+    matching_files = [
+        e <span class="kw">for</span> e <span class="kw">in</span> entries
+        <span class="kw">if</span> <span class="kw">not</span> e.isDir() <span class="kw">and</span> e.name.lower().endswith(extension)
+    ]
+
+    <span class="kw">if</span> <span class="kw">not</span> matching_files:
+        print(<span class="str">f"  Skipping {source_folder}: no files ending in '{extension}'"</span>)
+        <span class="kw">return</span> <span class="kw">False</span>
+
+    print(<span class="str">f"  {source_folder}: {len(matching_files)} matching file(s) — OK to ingest."</span>)
+    <span class="kw">return</span> <span class="kw">True</span></pre>
+  </div>
+
+  <!-- SLIDE 17: RESET HELPER -->
+  <div class="slide slide-content">
+    <h3><code>reset_bronze_table()</code> — Clean Re-Runs on Demand</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>What It Does</h4>
+        <ul>
+          <li>Removes the table's checkpoint folder</li>
+          <li>Removes the table's schema folder</li>
+          <li>Drops the Bronze table itself</li>
+        </ul>
+        <p style="margin-top:8px;">Every step is wrapped so a folder that can't be deleted (common on Blob Storage) doesn't stop the notebook — it logs a warning and moves on.</p>
+      </div>
+      <div class="card">
+        <h4>Why It Exists</h4>
+        <p>Rehearsing or re-teaching this build shouldn't require manually hunting down stale checkpoint/schema folders. It's also used automatically at the start of Notebook 3 to clean up a known stale checkpoint on <code>addresses</code> before re-ingesting <code>products</code> after fixing the JSON schema-inference failure.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 18: CDF - WHY -->
+  <div class="slide slide-content">
+    <h3>Closing Step — Change Data Feed on Every Bronze Table</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Notebook 3 ends by enabling <strong style="color:#e2e8f0;">Change Data Feed (CDF)</strong> on all 6 Bronze tables — <code>customers</code>, <code>addresses</code>, <code>payments</code>, <code>payment_methods</code>, <code>products</code>, <code>returns</code>.</p>
+    <div class="highlight-box success">
+      <p><strong style="color:#22c55e;">Why this matters downstream:</strong> without CDF, Silver would have to re-scan and re-diff the entire Bronze table on every run to find what changed. With CDF on, Silver can read only the row-level changes since its last run — <code>MERGE</code>-based incremental loads instead of full rebuilds.</p>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <h4>Set It Once, at the End of Bronze — Not Later</h4>
+      <p>CDF only captures changes from the point it's enabled forward. Turning it on as the last step of the Bronze build (rather than an afterthought in Silver) means no history is missed.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 19: DEMO - CDF ENABLEMENT -->
+  <div class="slide slide-demo">
+    <h3>Live in the Workspace — Enabling CDF</h3>
+    <div class="demo-label">From Notebook 3, final cell</div>
+<pre>CATALOG = <span class="str">"harsh_kumar01_npmentorskool_onmicrosoft_com"</span>
+SCHEMA  = <span class="str">"bronze"</span>
+
+BRONZE_TABLES = [
+    <span class="str">"customers"</span>, <span class="str">"addresses"</span>, <span class="str">"payments"</span>, <span class="str">"payment_methods"</span>,
+    <span class="str">"products"</span>, <span class="str">"returns"</span>
+]
+
+<span class="kw">for</span> table <span class="kw">in</span> BRONZE_TABLES:
+    full_name = <span class="str">f"{CATALOG}.{SCHEMA}.{table}"</span>
+    spark.sql(<span class="str">f"""</span>
+<span class="str">        ALTER TABLE {full_name}</span>
+<span class="str">        SET TBLPROPERTIES (delta.enableChangeDataFeed = true)</span>
+<span class="str">    """</span>)
+    print(<span class="str">f"CDF enabled: {full_name}"</span>)</pre>
+  </div>
+
+  <!-- SLIDE 20: CATALOG CALLOUT -->
+  <div class="slide slide-content">
+    <h3>One Honest Callout — Two Catalog Names in One Course</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Every table you build across these 3 notebooks lands in <strong style="color:#e2e8f0;">one</strong> catalog — but it's not the same catalog every other Bronze/Gold notebook in this course uses.</p>
+    <table class="sql-table">
+      <tr><th>Layer</th><th>Real catalog used in this build</th></tr>
+      <tr><td>Bronze / Silver (this session's tables)</td><td><code>harsh_kumar01_npmentorskool_onmicrosoft_com</code></td></tr>
+      <tr><td>Gold (later in the course)</td><td><code>gbmart</code></td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Your own catalog name will differ from both</strong> — what matters is the pattern: pick your catalog once, use it consistently across your own Bronze → Silver chain, and know which catalog each layer of the real teaching pipeline actually lives in when you go looking for a table.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 21: RECAP / CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Recap</div>
+    <h2>You've Built the Mounting-Based Bronze Layer</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      6 Bronze tables, one mount, two real schema-inference bugs fixed the way you'd actually fix them on a real project.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:900px;">
+      <div class="card">
+        <h4>✅ Recap</h4>
+        <p><code>wasbs://</code> mounting as a real alternative to External Locations, trusting code over comments for the real checkpoint layout, two real <code>multiLine</code> fixes, a format-aware pre-flight check, and CDF enabled on all 6 tables for Silver.</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>Run the 3 notebooks in order: Mounting + Customers → Addresses → Remaining Sources + CDF.</p>
+      </div>
+      <div class="card">
+        <h4>🎤 Closing Check</h4>
+        <p>Why does <code>abfss://</code> need Hierarchical Namespace? What does <code>dbutils.fs.head()</code> tell you that a failed schema-inference error alone doesn't? Why enable CDF now, not later?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

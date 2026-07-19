@@ -122,7 +122,7 @@
   <div class="logo">DAY 3 · HOL 1 — Public API + GraphDB Exploration</div>
   <div class="controls">
     <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 17</span>
+    <span class="slide-counter" id="counter">1 / 18</span>
     <button onclick="changeSlide(1)">Next &#8594;</button>
   </div>
 </nav>
@@ -215,7 +215,7 @@
     <div class="two-col">
       <div>
 <pre><span class="cm"># Same Unity Catalog External Location as ILT 1</span>
-EXTERNAL_LOCATION = <span class="str">"abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net"</span>
+EXTERNAL_LOCATION = <span class="str">"abfss://&lt;your-container&gt;@&lt;your-storage-account&gt;.dfs.core.windows.net"</span>
 sandbox_path = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/sandbox/api_graphdb"</span>
 
 base_currencies = [<span class="str">"USD"</span>, <span class="str">"EUR"</span>, <span class="str">"GBP"</span>]  <span class="cm"># GlobalMart's storefront currencies</span>
@@ -280,45 +280,82 @@ multi_base_df = spark.<span class="fn">createDataFrame</span>(all_rows)</pre>
 
   <!-- SLIDE: STEP 1 AURADB -->
   <div class="slide slide-content">
-    <h3>Step 1 — Create Your Free Neo4j AuraDB Instance</h3>
+    <h3>Step 1 — Create Your Free Neo4j AuraDB Account</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">You don't have a GraphDB account yet — here's exactly how to get real, usable credentials.</p>
     <ol class="order-list">
-      <li>Go to <code>neo4j.com/cloud/aura</code>, sign up for a free account</li>
-      <li>Click <strong>Create Free Instance</strong> (AuraDB Free tier — no credit card required)</li>
-      <li>Name it, e.g. <code>globalmart-graph-demo</code></li>
-      <li>Copy the connection <strong>URI</strong>, <strong>username</strong> (always <code>neo4j</code>), and <strong>generated password</strong> — shown only once</li>
+      <li>Go to <code>neo4j.com/cloud/aura</code>, click <strong>Start Free</strong> — sign up with email or Google/GitHub (no credit card required)</li>
+      <li>In the Aura Console, click <strong>Create instance</strong> → choose <strong>AuraDB Free</strong></li>
+      <li>Name it, e.g. <code>globalmart-graph-demo</code> → <strong>Create instance</strong></li>
+      <li>A dialog shows the <strong>URI</strong>, <strong>username</strong> (always <code>neo4j</code>), and <strong>generated password</strong> — the password is shown <strong>only once</strong>. Click <strong>Download credentials</strong> now.</li>
       <li>Wait ~1–2 minutes for status to turn from "Creating" to "Running"</li>
       <li>Click <strong>Open</strong> to launch the Neo4j Browser</li>
     </ol>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p><strong style="color:#f59e0b;">These 3 values are the real credentials</strong> you'll paste into the notebook later — replacing the <code>YOUR_INSTANCE_ID</code> / <code>YOUR_AURADB_PASSWORD</code> placeholders.</p>
+    </div>
   </div>
 
-  <!-- SLIDE: STEP 2 SEED -->
-  <div class="slide slide-demo">
-    <h3>Step 2 — Seed the Graph</h3>
-    <div class="demo-label">PASTE INTO NEO4J BROWSER — NOT DATABRICKS</div>
+  <!-- SLIDE: STEP 2 CSV FILES -->
+  <div class="slide slide-content">
+    <h3>Step 2 — Prepare the 4 CSV Files You'll Upload</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">Instead of typing Cypher by hand, build this graph the way you'd actually get real data: upload CSV files.</p>
     <div class="two-col">
       <div>
-<pre><span class="cm">// Nodes</span>
-<span class="kw">CREATE</span> (c1:Customer {customer_id: <span class="str">'CUST-001'</span>, name: <span class="str">'Raj Patel'</span>, city: <span class="str">'Mumbai'</span>})
-<span class="kw">CREATE</span> (p1:Product {product_id: <span class="str">'PRD-001'</span>, name: <span class="str">'Wireless Mouse'</span>})
-<span class="kw">CREATE</span> (s1:Supplier {supplier_id: <span class="str">'SUP-001'</span>, name: <span class="str">'TechDistributors Inc'</span>})
-<span class="kw">CREATE</span> (o1:Order {order_id: <span class="str">'ORD-001'</span>, order_date: <span class="str">'2026-06-01'</span>})
-<span class="cm">// ... 2 more of each (3 customers, 3 products, 2 suppliers, 3 orders total)</span></pre>
+<pre><span class="cm">customers.csv</span>
+customer_id,name,city
+CUST-001,Raj Patel,Mumbai
+CUST-002,Priya Singh,Bangalore
+CUST-003,Arjun Mehta,Delhi
+
+<span class="cm">suppliers.csv</span>
+supplier_id,name
+SUP-001,TechDistributors Inc
+SUP-002,HomeOffice Supplies</pre>
       </div>
       <div>
-<pre><span class="cm">// Relationships — wire nodes together with MATCH + CREATE</span>
-<span class="kw">MATCH</span> (c:Customer {customer_id: <span class="str">'CUST-001'</span>}), (o:Order {order_id: <span class="str">'ORD-001'</span>})
-<span class="kw">CREATE</span> (c)-[:PLACED]->(o)
-<span class="cm">// ... same pattern for CONTAINS and SUPPLIED_BY ...</span></pre>
-        <div class="highlight-box" style="margin-top:14px;">
-          <p>Run <code>MATCH (n) RETURN n</code> afterwards to see the graph visualization — <strong style="color:#38bdf8;">11 nodes, 9 relationships</strong>.</p>
-        </div>
+<pre><span class="cm">products.csv</span>  <span class="cm">← supplier_id drives SUPPLIED_BY</span>
+product_id,name,category,supplier_id
+PRD-001,Wireless Mouse,Electronics,SUP-001
+PRD-002,Office Chair,Furniture,SUP-002
+PRD-003,Desk Lamp,Furniture,SUP-002
+
+<span class="cm">orders.csv</span>  <span class="cm">← customer_id/product_id drive PLACED/CONTAINS</span>
+order_id,order_date,customer_id,product_id
+ORD-001,2026-06-01,CUST-001,PRD-001
+ORD-002,2026-06-03,CUST-002,PRD-002
+ORD-003,2026-06-05,CUST-001,PRD-003</pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Same 11-node, 9-relationship graph as before — just delivered as files, the way you'd actually receive graph data on a real project.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE: STEP 3 DATA IMPORTER -->
+  <div class="slide slide-demo">
+    <h3>Step 3 — Upload &amp; Build the Graph With Neo4j Data Importer</h3>
+    <div class="demo-label">NO-CODE TOOL — MAPS CSV COLUMNS TO NODES + RELATIONSHIPS</div>
+    <div class="two-col">
+      <div>
+        <ol class="order-list">
+          <li>From the Aura Console, open your instance → <strong>Import Data</strong> (or <code>data-importer.neo4j.io</code>, connect with your URI/username/password)</li>
+          <li><strong>Add data source → Upload files</strong> → select all 4 CSVs at once</li>
+          <li>Map each file to a node table: <code>customers→Customer</code>, <code>suppliers→Supplier</code>, <code>products→Product</code>, <code>orders→Order</code> — each keyed on its <code>_id</code> column</li>
+        </ol>
+      </div>
+      <div>
+        <ol class="order-list" start="4">
+          <li>Draw 3 relationships on the canvas: <strong>Customer→Order</strong> (<code>PLACED</code>), <strong>Order→Product</strong> (<code>CONTAINS</code>), <strong>Product→Supplier</strong> (<code>SUPPLIED_BY</code>)</li>
+          <li>Click <strong>Run import</strong> — writes every node + relationship into AuraDB in one batch, no Cypher typed by hand</li>
+          <li>Back in the Neo4j Browser: <code>MATCH (n) RETURN n</code> — confirm <strong style="color:#38bdf8;">11 nodes, 9 relationships</strong></li>
+        </ol>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE: STEP 3 QUERY -->
+  <!-- SLIDE: STEP 4 QUERY -->
   <div class="slide slide-content">
-    <h3>Step 3 — Query in the Neo4j Browser</h3>
+    <h3>Step 4 — Query in the Neo4j Browser</h3>
     <div class="two-col">
       <div>
 <pre><span class="cm">// Which products did each customer buy?</span>
@@ -411,7 +448,8 @@ graph_df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"
       <tr><th>Deliverable</th></tr>
       <tr><td>Multi-base-currency FX table saved → <code>sandbox/fx_rates_multi_base</code></td></tr>
       <tr><td>Historical FX table saved (append mode) → <code>sandbox/fx_rates_historical</code></td></tr>
-      <tr><td>Neo4j AuraDB Free instance created, graph seeded (11 nodes, 9 relationships)</td></tr>
+      <tr><td>Neo4j AuraDB Free account + instance created, credentials saved</td></tr>
+      <tr><td>4 CSV files prepared and imported via Neo4j Data Importer (11 nodes, 9 relationships)</td></tr>
       <tr><td>Customer → Order → Product query run in Neo4j Browser</td></tr>
       <tr><td>Same query run from Databricks via the <code>neo4j</code> Python driver</td></tr>
       <tr><td>Result saved → <code>sandbox/graph_customer_orders</code></td></tr>

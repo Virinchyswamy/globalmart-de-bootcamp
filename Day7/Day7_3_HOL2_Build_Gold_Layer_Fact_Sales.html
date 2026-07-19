@@ -132,10 +132,10 @@
   <!-- SLIDE 1: COVER -->
   <div class="slide slide-cover active">
     <h1>Build Gold Layer — fact_sales</h1>
-    <p class="subtitle">Step by step, from the order_items grain to two business-facing views — the real, running GlobalMart fact table</p>
+    <p class="subtitle">Step by step, from the order_items grain to a written Gold table — the real, running GlobalMart fact_sales build</p>
     <div class="badge">Day 7 &nbsp;·&nbsp; HOL 2 &nbsp;·&nbsp; Hands-On Lab &nbsp;·&nbsp; ~2.5 hours</div>
     <div style="margin-top:36px; color:#475569; font-size:13px;">
-      Follows ILT 1 → Steps 1–8 Build the fact table · Step 9 Serve it through views
+      Follows ILT 1 → Steps 1–8 build fact_sales here · views are served by a separate sibling notebook
     </div>
   </div>
 
@@ -156,15 +156,15 @@
         <h4>🔢 Watch the Row Counts</h4>
         <ul>
           <li>Print and check a count after every join</li>
-          <li>6+ joins is exactly where fan-outs hide</li>
+          <li>5 joins is exactly where fan-outs hide</li>
           <li>Catch them mid-build, not after</li>
         </ul>
       </div>
       <div class="card">
-        <h4>📊 Serve It</h4>
+        <h4>📊 What's Next: Serve It</h4>
         <ul>
-          <li>Two business-facing Gold views</li>
-          <li>One agreed definition, not per-analyst joins</li>
+          <li>Preview: two business-facing Gold views</li>
+          <li>Built in a separate sibling notebook, once fact_sales exists</li>
         </ul>
       </div>
     </div>
@@ -211,7 +211,7 @@
       </div>
       <div>
         <div class="highlight-box warn">
-          <p><strong style="color:#f59e0b;">A build with 6+ joins is exactly where silent fan-outs hide.</strong> If a count jumps unexpectedly, stop and re-check that join before continuing — don't push through to the end and debug backwards.</p>
+          <p><strong style="color:#f59e0b;">A build with 5 joins is exactly where silent fan-outs hide.</strong> If a count jumps unexpectedly, stop and re-check that join before continuing — don't push through to the end and debug backwards.</p>
         </div>
       </div>
     </div>
@@ -334,14 +334,17 @@ fact_sales_df.write.format(<span class="str">"delta"</span>).mode(<span class="s
 <span class="fn">print</span>(<span class="fn">f</span><span class="str">"Written: {spark.table('gbmart.gold.fact_sales').count():,} rows"</span>)</pre>
   </div>
 
-  <!-- SLIDE 12: STEP 9 INTRO -->
+  <!-- SLIDE 12: VIEWS NOTEBOOK PREVIEW -->
   <div class="slide slide-content">
-    <h3>Step 9 — Serve It: Business-Facing Gold Views</h3>
+    <h3>Coming Next — Serving fact_sales via Views</h3>
     <div class="two-col">
       <div>
         <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
           Nobody drinks straight from the reservoir — water goes through a treatment plant and a shared set of taps first. <code>fact_sales</code> is the reservoir. <strong style="color:#e2e8f0;">Views are the taps</strong>: one agreed-upon definition everyone reports against, instead of every analyst writing a slightly different join and getting a slightly different number.
         </p>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">These views live in their own notebook:</strong> <code>Day7_3_HOL2_Build_Gold_Layer_Views.ipynb</code> — a separate, sibling HOL 2 notebook you run after this one, once <code>fact_sales</code> is written. They are not additional steps inside this notebook. The next two slides preview what it builds.</p>
+        </div>
       </div>
       <div>
         <div class="highlight-box">
@@ -406,7 +409,7 @@ fact_sales_df.write.format(<span class="str">"delta"</span>).mode(<span class="s
   <div class="slide slide-content">
     <h3>Why a VIEW, Not a Materialized Table?</h3>
     <div class="highlight-box success">
-      <p>At <code>fact_sales</code>'s current size, a <code>VIEW</code> recomputes fresh on every query — no separate refresh job to schedule or monitor, and it always reflects whatever's currently in <code>fact_sales</code>. If a dashboard ever gets slow at much larger scale, <em>that's</em> the point where you'd promote one to a materialized table — not before.</p>
+      <p>At <code>fact_sales</code>'s current size (~377K rows), a <code>VIEW</code> recomputes fresh on every query — no separate refresh job to schedule or monitor, and it always reflects whatever's currently in <code>fact_sales</code>. If a dashboard ever gets slow at much larger scale, <em>that's</em> the point where you'd promote one to a materialized table — not before.</p>
     </div>
   </div>
 
@@ -414,10 +417,11 @@ fact_sales_df.write.format(<span class="str">"delta"</span>).mode(<span class="s
   <div class="slide slide-content">
     <h3>Key Takeaways</h3>
     <ol class="order-list">
-      <li>Verify the row count after every single join — a fact-table build with 6+ joins is exactly where silent fan-outs hide, and they're cheaper to catch mid-build than after the table is "done."</li>
+      <li>Verify the row count after every single join — a fact-table build with 5 joins is exactly where silent fan-outs hide, and they're cheaper to catch mid-build than after the table is "done."</li>
       <li><code>is_current = true</code> filters are not optional wherever you join to an SCD2 dimension from a fact table.</li>
       <li>Natural-key joins were a deliberate choice, not a shortcut — you now know exactly what it costs (no point-in-time accuracy) and why it was still the right call for this program.</li>
-      <li>These two views ARE the actual deliverable for most downstream consumers — nobody outside the data team queries <code>fact_sales</code> directly day to day.</li>
+      <li>Of the 5 lookups in this build, only <code>gold.dim_date</code> is an actual Gold dimension table — <code>Customer_ID</code>, <code>Product_ID</code>, <code>Address_ID</code>, and <code>Payment_ID</code> all come straight from Silver.</li>
+      <li>The two business-facing views ARE the actual deliverable for most downstream consumers — built in the separate <code>Day7_3_HOL2_Build_Gold_Layer_Views.ipynb</code> notebook; nobody outside the data team queries <code>fact_sales</code> directly day to day.</li>
     </ol>
   </div>
 
@@ -425,11 +429,16 @@ fact_sales_df.write.format(<span class="str">"delta"</span>).mode(<span class="s
   <div class="slide slide-content">
     <h3>Submission Checklist</h3>
     <div class="card">
+      <h4>This notebook — fact_sales</h4>
       <ul>
         <li>☐ Every step's printed row count reviewed — no unexplained jumps</li>
         <li>☐ <code>gbmart.gold.fact_sales</code> written successfully</li>
+        <li>☐ Screenshot of the Step 8 write confirmation for submission</li>
+      </ul>
+      <h4 style="margin-top:16px;">Sibling notebook — <code>Day7_3_HOL2_Build_Gold_Layer_Views.ipynb</code></h4>
+      <ul>
         <li>☐ Both <code>vw_monthly_category_sales</code> and <code>vw_regional_sales</code> created and queried</li>
-        <li>☐ Screenshot of the Step 8 write confirmation + one view's output for submission</li>
+        <li>☐ Screenshot of one view's output for submission</li>
       </ul>
     </div>
   </div>
@@ -439,16 +448,16 @@ fact_sales_df.write.format(<span class="str">"delta"</span>).mode(<span class="s
     <div class="section-tag">What's Next</div>
     <h2>You're Ready for ILT 2</h2>
     <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
-      <code>fact_sales</code> now exists. Next up: Performance in Modelling — Z-ORDER, joins, and aggregations, applied specifically to the fact table you just built.
+      <code>fact_sales</code> now exists. Run the sibling <code>Day7_3_HOL2_Build_Gold_Layer_Views.ipynb</code> next to serve it. Then: Performance in Modelling — Z-ORDER, joins, and aggregations, applied specifically to the fact table you just built.
     </p>
     <div class="three-col" style="margin-top:32px; max-width:820px;">
       <div class="card">
         <h4>✅ Recap</h4>
-        <p><code>fact_sales</code> built · 6+ joins verified · 2 Gold views serving it</p>
+        <p><code>fact_sales</code> built · 5 joins verified · written to Gold</p>
       </div>
       <div class="card">
         <h4>➡️ Up Next</h4>
-        <p>ILT 2: Performance in Modelling</p>
+        <p>Views notebook, then ILT 2: Performance in Modelling</p>
       </div>
       <div class="card">
         <h4>🎤 Closing Check</h4>

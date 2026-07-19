@@ -1,0 +1,83 @@
+[
+  {
+    "product_id": "PRD-00001",
+    "product_name": "MRF Mobile Accessories - Pro Series",
+    "category": "Electronics",
+    "sub_category": "Mobile Accessories",
+    "actual_price_inr": 1359.0,
+    "discounted_price_inr": 1070.0,
+    "rating": 4.6,
+    "num_ratings": 3097,
+    "last_updated": "2026-06-26T10:00:00Z",
+    "specs": {
+      "power_source": "USB-C",
+      "country_of_origin": "China",
+      "color_options": ["Blue", "Black"],
+      "is_returnable": true,
+      "return_window_days": 10,
+      "material": null,
+      "warranty_months": 24,
+      "weight_kg": 3.63
+    },
+    "supplier_info": {
+      "supplier_id": "SUP-02",
+      "name": "Greenwood Supplies",
+      "city": "Delhi"
+    },
+    "tags": ["electronics", "gadget", "tech", "mobile-accessories"]
+  },
+  {
+    "product_id": "PRD-00002",
+    "product_name": "MRF Mobile Accessories - Everyday Essential",
+    "category": "Electronics",
+    "sub_category": "Mobile Accessories",
+    "actual_price_inr": 965.0,
+    "discounted_price_inr": 780.0,
+    "rating": 3.9,
+    "num_ratings": 3449,
+    "last_updated": "2026-06-26T10:00:00Z",
+    "specs": {
+      "power_source": "USB-C",
+      "country_of_origin": "China",
+      "color_options": ["Gray"],
+      "is_returnable": true,
+      "return_window_days": 7,
+      "material": null,
+      "warranty_months": 24,
+      "weight_kg": 4.83
+    },
+    "supplier_info": {
+      "supplier_id": "SUP-10",
+      "name": "Wilson Solutions",
+      "city": "Lucknow"
+    },
+    "tags": ["electronics", "gadget", "tech", "mobile-accessories"]
+  },
+  {
+    "product_id": "PRD-00501",
+    "product_name": "Wildcraft Travel Backpack - Pro Series",
+    "category": "Bags & Luggage",
+    "sub_category": "Backpacks",
+    "actual_price_inr": 3499.0,
+    "discounted_price_inr": 2899.0,
+    "rating": 4.3,
+    "num_ratings": 0,
+    "last_updated": "2026-06-26T10:00:00Z",
+    "specs": {
+      "power_source": null,
+      "country_of_origin": "India",
+      "color_options": ["Black", "Grey"],
+      "is_returnable": true,
+      "return_window_days": 15,
+      "material": "Polyester",
+      "warranty_months": 12,
+      "weight_kg": 0.85
+    },
+    "supplier_info": {
+      "supplier_id": "SUP-07",
+      "name": "Wildcraft India",
+      "city": "Bengaluru"
+    },
+    "tags": ["travel", "bags", "luggage"]
+  }
+]

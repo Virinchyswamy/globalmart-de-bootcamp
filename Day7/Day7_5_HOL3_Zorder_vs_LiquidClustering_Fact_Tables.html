@@ -5,360 +5,554 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 7 | HOL 3 — Z-ORDER vs Liquid Clustering on Fact Tables</title>
 <style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
 
-  /* --- NAV --- */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: #1e293b; border-bottom: 1px solid #334155;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 24px;
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
   }
-  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
-  nav .controls { display: flex; gap: 10px; align-items: center; }
-  nav button {
-    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
-    border-radius: 6px; cursor: pointer; font-size: 13px;
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
   }
-  nav button:hover { background: #38bdf8; color: #0f172a; }
-  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
 
-  /* --- SLIDES --- */
-  .deck { padding-top: 60px; }
-  .slide {
-    display: none; min-height: 100vh; padding: 48px 60px;
-    animation: fadeIn 0.3s ease;
-  }
-  .slide.active { display: flex; flex-direction: column; justify-content: center; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 38px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 740px; margin: 0 auto 26px; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
 
-  /* --- SLIDE TYPES --- */
-  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
-  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
-  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
-  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 800px; margin-bottom: 30px; }
 
-  .slide-section { background: #1e293b; }
-  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
-  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+  .card.bad-fit h4 { color: var(--bad); }
+  .card.good-fit h4 { color: var(--good); }
 
-  .slide-content { background: #0f172a; }
-  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
-
-  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
-  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
-  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
-
-  /* --- COMPONENTS --- */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
-  .card {
-    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
-    padding: 20px 24px;
-  }
-  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
-  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
-  .card ul, .card ol { padding-left: 16px; }
-
-  .highlight-box {
-    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
-    padding: 16px 20px; margin-top: 16px;
-  }
-  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
-  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
   .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+  table.spec td.win { color: var(--good); font-weight: 700; }
+  table.spec td.lose { color: var(--bad); }
+
+  details.qa-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; padding: 4px 0; }
+  details.qa-card summary { cursor: pointer; padding: 14px 18px; font-size: 14px; font-weight: 600; color: var(--text); list-style: none; }
+  details.qa-card summary::-webkit-details-marker { display: none; }
+  details.qa-card summary::before { content: "Q — "; color: var(--accent); font-weight: 700; }
+  details.qa-card[open] summary { color: #7dd3fc; border-bottom: 1px solid var(--border); }
+  details.qa-card .qa-answer { padding: 14px 18px 16px; color: #cbd5e1; font-size: 13.5px; line-height: 1.7; }
+  details.qa-card .qa-answer::before { content: "A — "; color: var(--good); font-weight: 700; }
 
   pre {
     background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
     padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
-    font-size: 13px; line-height: 1.7; color: #e6edf3;
+    font-size: 13px; line-height: 1.7; color: #e6edf3; margin-top: 14px;
   }
   .kw { color: #ff7b72; font-weight: bold; }
   .fn { color: #d2a8ff; }
   .str { color: #a5d6ff; }
   .cm { color: #6e7681; font-style: italic; }
-  .col { color: #79c0ff; }
   .tbl { color: #ffa657; }
 
-  .pill {
-    display: inline-block; padding: 3px 12px; border-radius: 20px;
-    font-size: 12px; font-weight: 600; margin: 2px;
-  }
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 14px; margin-right: 10px; flex-shrink: 0; }
+  .phase-card { display: flex; gap: 0; align-items: flex-start; }
+  .phase-card .phase-body h4 { display: flex; align-items: center; color: var(--text); font-size: 15.5px; margin-bottom: 6px; }
+  .phase-card .phase-body .phase-outcome { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .phase-card .phase-body .phase-outcome b { color: var(--accent2); }
+
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
   .pill-blue { background: #1d4ed8; color: #bfdbfe; }
   .pill-green { background: #15803d; color: #bbf7d0; }
   .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
 
-  .order-list { counter-reset: steps; list-style: none; padding: 0; }
-  .order-list li {
-    counter-increment: steps; display: flex; align-items: flex-start;
-    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
-    font-size: 14px; color: #cbd5e1; line-height: 1.6;
-  }
-  .order-list li::before {
-    content: counter(steps);
-    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; flex-shrink: 0;
-  }
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
 
-  table.sql-table {
-    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  @media (max-width: 640px) {
+    nav.topnav .links { display: none; }
+    .hero h1 { font-size: 27px; }
   }
-  table.sql-table th {
-    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
-  }
-  table.sql-table td {
-    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
-    background: #111827;
-  }
-  table.sql-table tr:nth-child(even) td { background: #0f172a; }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">DAY 7 · HOL 3 — Z-ORDER vs Liquid Clustering</div>
-  <div class="controls">
-    <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 11</span>
-    <button onclick="changeSlide(1)">Next &#8594;</button>
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 7 · HOL 3 — Z-ORDER vs LIQUID CLUSTERING</div>
+    <div class="links">
+      <a href="#problem" class="navlink">The Problem</a>
+      <a href="#concepts" class="navlink">Two Techniques</a>
+      <a href="#safety" class="navlink">Stay Isolated</a>
+      <a href="#walkthrough" class="navlink">Walkthrough</a>
+      <a href="#queries" class="navlink">Query Shapes</a>
+      <a href="#realtest" class="navlink">Real Test</a>
+      <a href="#qa" class="navlink">Quick Check</a>
+      <a href="#checklist" class="navlink">Before You Start</a>
+    </div>
   </div>
 </nav>
 
-<div class="deck">
-
-  <!-- SLIDE 1: COVER -->
-  <div class="slide slide-cover active">
-    <h1>Z-ORDER vs Liquid Clustering on Fact Tables</h1>
-    <p class="subtitle">Apply ILT 2's Z-ORDER columns to a real fact-table-shaped query, then compare it against Liquid Clustering — safely, on your own practice copy</p>
-    <div class="badge">Day 7 &nbsp;·&nbsp; HOL 3 &nbsp;·&nbsp; Hands-On Lab &nbsp;·&nbsp; 60 minutes</div>
-    <div style="margin-top:36px; color:#475569; font-size:13px;">
-      Follows ILT 2 → Copy &amp; Fragment · Baseline · OPTIMIZE+ZORDER · Liquid Clustering
-    </div>
+<header class="hero">
+  <div class="eyebrow">Day 7 · Hands-On Lab 3 · Advanced · 120 minutes</div>
+  <h1>Z-ORDER vs. Liquid Clustering — Which One Actually Fits <code style="font-size:0.85em;">fact_sales</code>?</h1>
+  <p class="lead">
+    <code style="font-size:0.85em;">fact_sales</code> isn't a table you build once and walk away from — Day 9–10
+    refreshes it with new orders every single day. This page is the concept primer: read it before you open the
+    hands-on <code style="font-size:0.85em;">.md</code>. It builds the mental model — what a "small file problem"
+    actually is, what these two techniques really do about it, and why the difference between them can look almost
+    invisible on your first measurement but compounds every day after.
+  </p>
+  <div class="meta-row">
+    <span class="meta-pill">🔒 Isolated Practice Lab — SHALLOW CLONE Only</span>
+    <span class="meta-pill">📋 6 Scenarios · 19 Inputs</span>
+    <span class="meta-pill">➡️ Follows ILT 2 &amp; Day 4 HOL 2</span>
   </div>
+</header>
 
-  <!-- SLIDE 2: SAFETY -->
-  <div class="slide slide-content">
-    <h3>Before You Start — Cost &amp; Safety Note</h3>
-    <div class="highlight-box warn">
-      <p>You saw the mechanics of <code>OPTIMIZE</code>/<code>ZORDER</code>/Liquid Clustering on a generic practice table back in Day 4 HOL 2. Today applies the exact same commands specifically to a <code>fact_sales</code>-shaped table — but <strong style="color:#f59e0b;">still only ever against your own personal copy</strong>, never the shared <code>gbmart.gold.fact_sales</code> table itself.</p>
-    </div>
-    <div class="two-col" style="margin-top:20px;">
-      <div class="card">
-        <h4>Do</h4>
-        <ul>
-          <li>Replace <code>YOUR_SCHEMA</code> with something actually yours (e.g. <code>main.virinchy_practice</code>) before running anything</li>
-          <li>Read <code>gbmart.gold.fact_sales</code> only — never write to it</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h4>Don't</h4>
-        <ul>
-          <li>Run <code>OPTIMIZE</code>/<code>ZORDER</code> against the shared table</li>
-          <li>Start a new cluster, job, or pipeline — every cell here runs on your already-running cluster</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+<!-- SECTION: THE PROBLEM -->
+<section class="content" id="problem">
+  <div class="wrap">
+    <div class="section-tag">Why This Lab Exists</div>
+    <h2 class="section-title">The Small-File Problem — and Why <code style="font-size:0.8em;">fact_sales</code> Is Especially Prone to It</h2>
+    <p class="section-intro">
+      Every technique in this lab exists to solve one physical problem: too many small files. Understand that
+      problem first, and Z-ORDER and Liquid Clustering both become obvious — they're just two different answers
+      to "how do I keep this table's files organized as it keeps growing?"
+    </p>
 
-  <!-- SLIDE 3: AGENDA -->
-  <div class="slide slide-section">
-    <div class="section-tag">Overview</div>
-    <h2>What We're Covering</h2>
-    <div class="three-col" style="margin-top:24px;">
+    <div class="grid-2">
       <div class="card">
-        <h4>📋 Copy &amp; Fragment</h4>
-        <ul>
-          <li>Copy <code>fact_sales</code> into your own schema</li>
-          <li>Deliberately fragment it into small files</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h4>⏱️ Baseline &amp; Z-ORDER</h4>
-        <ul>
-          <li>Time the real business query, not a simple filter</li>
-          <li><code>OPTIMIZE ... ZORDER BY</code> on ILT 2's columns</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h4>💧 Liquid Clustering</h4>
-        <ul>
-          <li>Compare against <code>CLUSTER BY</code></li>
-          <li>Decide which fits fact_sales's future</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- SLIDE 4: PHASE 1 -->
-  <div class="slide slide-demo">
-    <h3>Phase 1 — Copy fact_sales Into Your Own Practice Schema</h3>
-    <div class="demo-label">Live build · deliberately fragment it first</div>
-    <div class="two-col">
-      <div>
-        <p style="color:#94a3b8; font-size:13px; margin-bottom:10px;">
-          Imagine tearing one bound book into 200 loose, shuffled pages, then timing how much longer it takes to find a chapter. That's what <code>repartition(200)</code> does here — it simulates the small-file state <code>fact_sales</code> would reach after months of incremental appends (Day 9–10's <code>MERGE</code>-based refresh), without waiting months to actually get there.
+        <h4>📖 The book-torn-into-pages analogy</h4>
+        <p>
+          Imagine one bound book containing everything you'd ever want to look up, versus that same content torn
+          into 200 loose, shuffled pages. Finding one chapter in the bound book is fast — you flip to roughly the
+          right spot. Finding it in 200 shuffled pages means checking pages one at a time, because you no longer
+          know where anything is. Delta tables work the same way: a query has to <i>open</i> every file that
+          might contain a matching row. Fewer, well-organized files means fewer opens. Many small, disorganized
+          files means the engine wastes time opening files that turn out to have nothing useful in them.
         </p>
       </div>
-      <div>
-<pre>PRACTICE_SCHEMA = <span class="str">"main.YOUR_SCHEMA"</span>   <span class="cm"># e.g. "main.virinchy_practice"</span>
-FACT_TABLE = <span class="fn">f</span><span class="str">"{PRACTICE_SCHEMA}.fact_sales_practice"</span>
-
-source_df = spark.table(<span class="str">"gbmart.gold.fact_sales"</span>)
-(
-    source_df
-    .repartition(<span class="tbl">200</span>)
-    .write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>)
-    .saveAsTable(FACT_TABLE)
-)
-<span class="cm"># Practice fact table written, deliberately fragmented</span></pre>
+      <div class="card">
+        <h4>🔁 Why fact_sales gets there — and a one-time table doesn't</h4>
+        <p>
+          Day 4 HOL 2 introduced <code>OPTIMIZE</code>/<code>ZORDER</code>/Liquid Clustering on a practice table
+          that was built once and never touched again — a closed book. <code>fact_sales</code> is the opposite:
+          starting Day 9–10, it gets refreshed <b style="color:#f8fafc;">incrementally</b>, via <code>MERGE</code>,
+          every time new orders land. Each refresh run typically writes a handful of new, small files. Repeat that
+          daily for months, and the table slowly tears itself back into loose pages — even if it started out
+          perfectly compact.
+        </p>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 5: PHASE 2 -->
-  <div class="slide slide-demo">
-    <h3>Phase 2 — Baseline: Time the Real Business Query</h3>
-    <div class="demo-label">Live build · the join-and-aggregate shape, not a simple filter</div>
-    <p style="color:#94a3b8; font-size:13px; margin-bottom:10px;">Day 4 HOL 2 measured a single-column filter. Today measures something closer to what actually happens in production: the exact join-and-aggregate shape of <code>vw_monthly_category_sales</code> from HOL 2, run against the fragmented practice table.</p>
-<pre><span class="kw">def</span> <span class="fn">run_category_query</span>(fact_table_name):
-    <span class="kw">return</span> spark.sql(<span class="fn">f</span><span class="str">"""</span>
-<span class="str">        SELECT p.category, d.month, SUM(f.Sales_amount) AS revenue</span>
-<span class="str">        FROM {fact_table_name} f</span>
-<span class="str">        JOIN gbmart.gold.dim_product p ON f.Product_ID = p.product_id AND p.is_current = true</span>
-<span class="str">        JOIN gbmart.gold.dim_date d    ON f.Time_ID = d.date_key</span>
-<span class="str">        GROUP BY p.category, d.month</span>
-<span class="str">    """</span>)
-
-start = time.time()
-result_count = run_category_query(FACT_TABLE).count()
-baseline_seconds = time.time() - start</pre>
-  </div>
-
-  <!-- SLIDE 6: PHASE 3 -->
-  <div class="slide slide-demo">
-    <h3>Phase 3 — OPTIMIZE + Z-ORDER on the Columns ILT 2 Identified</h3>
-    <div class="demo-label">Live build · not a guess — a conclusion from real view definitions</div>
-<pre>spark.sql(<span class="fn">f</span><span class="str">"OPTIMIZE {FACT_TABLE} ZORDER BY (Product_ID, Time_ID)"</span>)
-
-file_count_after = spark.sql(<span class="fn">f</span><span class="str">"DESCRIBE DETAIL {FACT_TABLE}"</span>).select(<span class="str">"numFiles"</span>).collect()[<span class="tbl">0</span>][<span class="tbl">0</span>]
-
-start = time.time()
-result_count = run_category_query(FACT_TABLE).count()
-zorder_seconds = time.time() - start
-<span class="cm"># Compare zorder_seconds to baseline_seconds -- the gap grows sharply</span>
-<span class="cm"># at GlobalMart's real fact_sales scale, even if modest here.</span></pre>
-    <div class="highlight-box" style="margin-top:14px;">
-      <p>ILT 2 identified <code>Product_ID</code> and <code>Time_ID</code> as the right Z-ORDER columns for exactly this query shape — a conclusion drawn from the real view definitions, not a guess.</p>
+    <div class="highlight-box">
+      <p>
+        This hands-on can't make you wait months to see that effect, so it fakes it on purpose:
+        <code>repartition(200)</code> deliberately re-writes your practice copy across 200 small files in one
+        shot — instantly reproducing the "torn apart" end state a real incrementally-refreshed table reaches
+        naturally over time. Everything you measure afterward is measuring a recovery from <i>that</i> starting
+        point.
+      </p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 7: PHASE 4 -->
-  <div class="slide slide-demo">
-    <h3>Phase 4 — Liquid Clustering as an Alternative</h3>
-    <div class="demo-label">Live build · a new table with CLUSTER BY</div>
-<pre>spark.sql(<span class="fn">f</span><span class="str">"""</span>
-<span class="str">    CREATE TABLE {LIQUID_TABLE}</span>
-<span class="str">    CLUSTER BY (Product_ID, Time_ID)</span>
-<span class="str">    AS SELECT * FROM {FACT_TABLE}</span>
-<span class="str">"""</span>)
+<!-- SECTION: THE TWO TECHNIQUES -->
+<section class="content" id="concepts">
+  <div class="wrap">
+    <div class="section-tag">The Core Concept</div>
+    <h2 class="section-title">Two Techniques, No Jargon</h2>
+    <p class="section-intro">
+      Both techniques do the exact same underlying thing at a high level: physically group rows together in the
+      same files based on the columns you tell them to care about, so a query filtering or joining on those
+      columns can skip whole files it doesn't need to open at all. Where they genuinely differ is
+      <b style="color:#f8fafc;">how expensive it is to keep that grouping up to date as the table keeps changing</b>
+      — and that difference is the entire point of this lab.
+    </p>
 
-<span class="cm"># OPTIMIZE on a clustered table applies clustering incrementally --</span>
-<span class="cm"># no ZORDER BY re-spec needed</span>
-spark.sql(<span class="fn">f</span><span class="str">"OPTIMIZE {LIQUID_TABLE}"</span>)</pre>
-    <table class="sql-table" style="margin-top:14px;">
-      <tr><th>Run</th><th>Query time</th></tr>
-      <tr><td>Baseline (fragmented)</td><td><code>baseline_seconds</code></td></tr>
-      <tr><td>OPTIMIZE + ZORDER</td><td><code>zorder_seconds</code></td></tr>
-      <tr><td>Liquid Clustering</td><td><code>liquid_seconds</code></td></tr>
+    <div class="grid-2">
+      <div class="card bad-fit">
+        <h4>🗂️ Z-ORDER — a one-time, full-library re-shelving</h4>
+        <p>
+          Picture re-shelving an entire library by author and genre, in one huge weekend effort. When you run
+          <code>OPTIMIZE ... ZORDER BY (colA, colB)</code>, Spark looks at <i>every file in the table</i> and
+          rewrites it so rows with similar values of <code>colA</code>/<code>colB</code> end up physically near
+          each other. That's genuinely powerful — but it's a full-table operation every single time you run it.
+          A week later, ten new books arrive. To keep the whole library properly shelved, you take the
+          <i>entire library</i> back down and re-shelve it again from scratch — not just the ten new books.
+        </p>
+      </div>
+      <div class="card good-fit">
+        <h4>💧 Liquid Clustering — a librarian who tidies continuously</h4>
+        <p>
+          <code>CLUSTER BY (colA, colB)</code> is set once, at table creation (or via <code>ALTER TABLE</code>) —
+          it's a standing property of the table, not a one-time command. From then on, every
+          <code>OPTIMIZE</code> call clusters <i>incrementally</i>: when ten new books arrive, only those ten
+          (and maybe the shelf immediately around where they belong) get touched. The rest of the library, already
+          properly shelved, is left completely alone.
+        </p>
+      </div>
+    </div>
+
+    <table class="spec">
+      <tr><th>Question</th><th>Z-ORDER</th><th>Liquid Clustering</th></tr>
+      <tr><td>How is it invoked?</td><td><code>OPTIMIZE t ZORDER BY (...)</code> — every time, must restate columns</td><td><code>CLUSTER BY (...)</code> once at table level, then plain <code>OPTIMIZE t</code></td></tr>
+      <tr><td>What does each <code>OPTIMIZE</code> touch?</td><td class="lose">The whole table, every run</td><td class="win">Only new/affected files</td></tr>
+      <tr><td>Cost of one run</td><td class="lose">Grows with total table size</td><td class="win">Tied to how much actually changed</td></tr>
+      <tr><td>Best fit for...</td><td>A table built once, rarely touched again</td><td class="win">A table refreshed incrementally, over and over</td></tr>
     </table>
-  </div>
 
-  <!-- SLIDE 8: PHASE 5 -->
-  <div class="slide slide-content">
-    <h3>Phase 5 — Why This Matters More Here Than in Day 4</h3>
-    <div class="two-col">
-      <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
-          Day 4's practice table was a one-time snapshot photo — built once, never touched again. <code>fact_sales</code> is a living document: Day 9–10 refreshes it incrementally via <code>MERGE</code> every time new orders land, meaning new small files get added continuously — exactly the fragmentation pattern this HOL just simulated.
-        </p>
+    <div class="highlight-box warn">
+      <p>
+        <b>This is the whole reason this lab exists.</b> On a table that's touched once, Z-ORDER and Liquid
+        Clustering can look basically identical — the "full re-shelve" cost only happens once either way. On a
+        table refreshed daily forever, like the real <code>fact_sales</code> will be from Day 9–10 onward, that
+        cost either resets to zero every day (Liquid Clustering) or gets paid in full, again, every single day
+        (Z-ORDER). The gap doesn't show up in one query — it shows up over months of daily runs.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: STAY ISOLATED -->
+<section class="content" id="safety">
+  <div class="wrap">
+    <div class="section-tag">Before You Touch Anything</div>
+    <h2 class="section-title">Why You Never Run This Against <code style="font-size:0.8em;">gbmart</code> Directly</h2>
+    <p class="section-intro">
+      Every command in this lab physically rewrites data files — that's what makes it dangerous to run against
+      a table other people rely on, and it's why the hands-on's very first scenario is entirely about getting
+      you off of it.
+    </p>
+
+    <ol class="order-list">
+      <li>
+        <div><b>Clone what you need, once.</b> Scenario 1 uses <code>SHALLOW CLONE</code> to copy
+        <code>fact_sales</code>, <code>dim_product</code>, and <code>dim_date</code> into a schema only you
+        own. A shallow clone gets its own independent transaction log without physically duplicating the
+        underlying data files — instant, and safe to <code>OPTIMIZE</code>/<code>ZORDER</code>/<code>CLUSTER BY</code>
+        against, repeatedly, without the source table ever being affected.</div>
+      </li>
+      <li>
+        <div><b>A fourth table joins later, the same way.</b> The regional query (Scenario 3) needs
+        <code>dim_address</code> too — that one gets shallow-cloned right when it's first needed, not bundled
+        into Scenario 1's setup. Same rule either way: the <i>only</i> thing this lab ever does against real
+        <code>gbmart</code> tables is a one-time, read-only <code>SHALLOW CLONE</code>.</div>
+      </li>
+      <li>
+        <div><b>Everything after that is yours alone.</b> Every fragment, <code>OPTIMIZE</code>, <code>ZORDER</code>,
+        <code>CLUSTER BY</code>, and simulated new-order append happens only against tables living in your own
+        practice schema. You will not see <code>gbmart.gold.*</code> written to anywhere in this lab, ever.</div>
+      </li>
+    </ol>
+
+    <div class="highlight-box">
+      <p>
+        <b>Why this matters more here than it might seem:</b> <code>gbmart.gold.fact_sales</code> is shared
+        by your whole cohort and the instructor. If this lab told you to <code>OPTIMIZE</code> it directly, only
+        the very first person to ever run the exercise would see a real "before" state — everyone after
+        (including you, if you rehearse it twice) would find it already compacted and see nothing happen.
+        Cloning is what makes this lab honestly repeatable, for you and for every other learner, every time.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: WALKTHROUGH -->
+<section class="content" id="walkthrough">
+  <div class="wrap">
+    <div class="section-tag">What's Actually In The .md</div>
+    <h2 class="section-title">The Lab, Scenario by Scenario</h2>
+    <p class="section-intro">
+      Six scenarios, in a strict build-up: isolate → fragment → baseline → Z-ORDER → Liquid Cluster → conclude.
+      Each one only makes sense once the one before it is done — don't skip ahead.
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="phase-card">
+          <span class="phase-num">1</span>
+          <div class="phase-body">
+            <h4>Build a Fully Isolated Practice Copy</h4>
+            <p>Shallow-clone <code>fact_sales</code>, <code>dim_product</code>, and <code>dim_date</code> into your own schema. Nothing past this point reads or writes real <code>gbmart</code> tables.</p>
+            <div class="phase-outcome"><b>Outcome →</b> three independent practice tables, same data, your own transaction history.</div>
+          </div>
+        </div>
       </div>
-      <div>
-        <div class="highlight-box success">
-          <p><strong style="color:#22c55e;">This is precisely why Liquid Clustering is the more natural fit for <code>fact_sales</code> specifically:</strong> it re-clusters incrementally on every <code>OPTIMIZE</code>, without needing to re-specify <code>ZORDER BY</code> columns or worry about full-table rewrites growing more expensive as the table grows.</p>
+      <div class="card">
+        <div class="phase-card">
+          <span class="phase-num">2</span>
+          <div class="phase-body">
+            <h4>Simulate Realistic File Fragmentation</h4>
+            <p><code>repartition(200)</code> deliberately tears your practice fact table into 200 small files — reproducing months of incremental refresh in one instant rewrite.</p>
+            <div class="phase-outcome"><b>Outcome →</b> a fact table with exactly 200 measurably small files, ready to be timed.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="phase-card">
+          <span class="phase-num">3</span>
+          <div class="phase-body">
+            <h4>Baseline Three Real Query Shapes</h4>
+            <p>Before touching <code>OPTIMIZE</code> at all, time three genuinely different ways <code>fact_sales</code> gets queried in real reporting — and predict, in writing, which will benefit most before you know the answer.</p>
+            <div class="phase-outcome"><b>Outcome →</b> three honest "before" timings, plus a prediction you can't quietly revise later.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="phase-card">
+          <span class="phase-num">4</span>
+          <div class="phase-body">
+            <h4>OPTIMIZE + Z-ORDER</h4>
+            <p>Apply <code>ZORDER BY (Product_ID, Time_ID)</code> — the exact columns ILT 2 derived from real view definitions, not a guess — and re-measure all three queries.</p>
+            <div class="phase-outcome"><b>Outcome →</b> a compacted, Z-ordered table and three "after" timings to compare against the baseline.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="phase-card">
+          <span class="phase-num">5</span>
+          <div class="phase-body">
+            <h4>Liquid Clustering, and What Happens When New Data Lands</h4>
+            <p>Build a <code>CLUSTER BY</code> twin, measure it the same way — then append a batch of simulated new orders to <i>both</i> tables and time how expensive re-<code>OPTIMIZE</code> is on each. This is the scenario the whole lab is really about.</p>
+            <div class="phase-outcome"><b>Outcome →</b> the one measurement — incremental re-optimize cost — that actually separates the two techniques.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="phase-card">
+          <span class="phase-num">6</span>
+          <div class="phase-body">
+            <h4>Final Comparison and Recommendation</h4>
+            <p>Bring every timing together into one table, revisit your Scenario 3 prediction, and write a recommendation for the real <code>fact_sales</code> table — grounded in what you actually measured, not guessed.</p>
+            <div class="phase-outcome"><b>Outcome →</b> a consolidated comparison and a defensible, evidence-based recommendation.</div>
+          </div>
         </div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 9: KEY TAKEAWAYS -->
-  <div class="slide slide-content">
-    <h3>Key Takeaways</h3>
-    <ol class="order-list">
-      <li>Z-ORDER columns should come from real query patterns (ILT 2's view definitions), not guesswork.</li>
-      <li>Measuring a join-and-aggregate query is more realistic than a simple filter for a fact table — that's how <code>fact_sales</code> actually gets queried in production.</li>
-      <li>Liquid Clustering is the better long-term fit for <code>fact_sales</code> specifically because it will be incrementally refreshed (Day 9–10) — it stays cheap to re-cluster as new data arrives.</li>
-      <li>Every experiment ran against a personal practice copy — running <code>OPTIMIZE</code>/<code>ZORDER</code> against the real shared <code>gbmart.gold.fact_sales</code> mid-cohort would affect everyone else's work.</li>
-    </ol>
+<!-- SECTION: QUERY SHAPES -->
+<section class="content" id="queries">
+  <div class="wrap">
+    <div class="section-tag">Know These Before You Time Anything</div>
+    <h2 class="section-title">The Three Query Shapes You'll Measure</h2>
+    <p class="section-intro">
+      A single query timing only tells you about one access pattern. This lab deliberately measures three
+      genuinely different ways <code>fact_sales</code> gets queried in real reporting, so the comparison isn't
+      an accident of picking a lucky (or unlucky) example.
+    </p>
+
+    <div class="grid-3">
+      <div class="card">
+        <h4>📊 Category / Month Rollup</h4>
+        <p>Joins <code>dim_product</code> (on <code>Product_ID</code>) and <code>dim_date</code> (on <code>Time_ID</code>), groups by category and month. Mirrors <code>vw_monthly_category_sales</code> from HOL 2.</p>
+        <span class="pill pill-blue">Touches Product_ID + Time_ID</span>
+      </div>
+      <div class="card">
+        <h4>🗺️ Regional Rollup</h4>
+        <p>Joins <code>dim_address</code> on <code>Address_ID</code>, groups by state and city. Mirrors <code>vw_regional_sales</code>.</p>
+        <span class="pill pill-amber">Touches Address_ID only</span>
+      </div>
+      <div class="card">
+        <h4>🔍 Single-Product Point Lookup</h4>
+        <p>Filters on one exact <code>Product_ID</code> and a narrow <code>Time_ID</code> range — the shape a support or merchandising tool would run.</p>
+        <span class="pill pill-blue">Touches Product_ID + Time_ID</span>
+      </div>
+    </div>
+
+    <div class="highlight-box warn">
+      <p>
+        <b>The one rule that predicts everything in Scenarios 4 and 5:</b> Z-ORDER (and Liquid Clustering) only
+        help a query that actually filters or joins on the exact columns you named — <code>Product_ID</code> and
+        <code>Time_ID</code> here. A query that filters or joins on some <i>other</i> column is querying rows
+        that are still scattered across files exactly as randomly as before, because nothing about how those
+        rows are physically arranged changed for that column.
+      </p>
+      <p style="margin-top:10px;">
+        Notice which two of the three query shapes above touch <code>Product_ID</code>/<code>Time_ID</code>, and
+        which one doesn't. That's the entire reasoning tool you need for Input 6's prediction — work it out
+        yourself there before you run a single timing.
+      </p>
+    </div>
   </div>
+</section>
 
-  <!-- SLIDE 10: SUBMISSION CHECKLIST -->
-  <div class="slide slide-content">
-    <h3>Submission Checklist</h3>
+<!-- SECTION: THE REAL TEST -->
+<section class="content" id="realtest">
+  <div class="wrap">
+    <div class="section-tag">The Measurement That Actually Settles It</div>
+    <h2 class="section-title">Why the First Timing Isn't the Interesting One</h2>
+    <p class="section-intro">
+      On a table clustered for the very first time, Z-ORDER and Liquid Clustering are doing something visually
+      similar — both are physically grouping the same two columns, just with a different mechanism underneath.
+      Don't be surprised if Scenario 4 and the first half of Scenario 5 come back looking roughly comparable.
+      That's expected, and it's not the point.
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>What Scenario 5 actually does next</h4>
+        <p>
+          After both tables are clustered once, the lab appends a small batch of simulated new orders — a stand-in
+          for one day of Day 9–10's real incremental <code>MERGE</code> refresh — to <i>both</i> tables, then
+          re-runs <code>OPTIMIZE</code> on each and times it.
+        </p>
+      </div>
+      <div class="card">
+        <h4>What that number actually reveals</h4>
+        <p>
+          Re-<code>OPTIMIZE ... ZORDER BY</code> re-evaluates clustering across the <i>whole</i> table again — its
+          cost is tied to total table size, not to how much actually changed. Plain <code>OPTIMIZE</code> on a
+          Liquid-clustered table only reorganizes the files touched by the new rows. That gap — not the first-pass
+          query speed — is the real, sustainable difference between the two techniques.
+        </p>
+      </div>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Concept check</div>
+      <p>
+        At this lab's small practice scale, that gap might look modest in seconds. It's the same gap, though,
+        that Day 9–10 will pay <i>every single day, for as long as fact_sales exists</i>, once real incremental
+        refresh is running against it. A small per-run difference, repeated daily for years, is exactly the kind
+        of cost that's invisible in a demo and very visible in a production bill.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: QUICK CHECK -->
+<section class="content" id="qa">
+  <div class="wrap">
+    <div class="section-tag">Reinforce Before You Open the .md</div>
+    <h2 class="section-title">Quick-Fire Concept Check</h2>
+    <p class="section-intro">Click to reveal each answer. If any of these surprise you, re-read the section above before starting Scenario 1.</p>
+
+    <details class="qa-card">
+      <summary>Why does this lab use SHALLOW CLONE instead of a plain "copy the table" (CREATE TABLE ... AS SELECT)?</summary>
+      <div class="qa-answer">A deep copy physically rewrites every row into new files — real time and real storage, every time you wanted a fresh practice copy. SHALLOW CLONE creates a new table pointing at the <i>same</i> underlying files, with its own brand-new transaction log layered on top — instant, and the source table's files are never touched by anything you do to the clone.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>If Z-ORDER and Liquid Clustering give roughly the same query speed on the very first pass, why does it matter which one you pick for fact_sales?</summary>
+      <div class="qa-answer">Because "the same speed" is a one-time snapshot, and fact_sales is never queried just once — it's refreshed daily, forever, starting Day 9–10. What actually compounds over time isn't the first query's speed, it's the cost of <i>re-clustering</i> after every one of those daily refreshes — and that cost is where the two techniques genuinely diverge.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Do you have to re-run CLUSTER BY every time you want a Liquid-clustered table re-organized?</summary>
+      <div class="qa-answer">No. CLUSTER BY is set once, as a property of the table (at CREATE TABLE, or via ALTER TABLE). After that, a plain OPTIMIZE with no ZORDER BY clause automatically clusters incrementally on those same columns — the table already remembers what it's clustered on.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Why would a query that filters on Address_ID barely improve after Z-ORDERing by (Product_ID, Time_ID)?</summary>
+      <div class="qa-answer">Z-ORDER physically co-locates rows by the exact columns you name — it did nothing to how rows are arranged with respect to Address_ID. Rows matching a given Address_ID are still scattered across files just as randomly as before. Compaction (fewer, bigger files) gives that query a small indirect benefit from less file-open overhead, but nowhere near the direct data-skipping benefit a query gets when it filters or joins on the columns that were actually Z-ordered.</div>
+    </details>
+  </div>
+</section>
+
+<!-- SECTION: CHECKLIST -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Before You Start</div>
+    <h2 class="section-title">Have This Ready Before You Open the Hands-On</h2>
     <div class="card">
       <ul>
-        <li>☐ Practice copies built in your own schema, not <code>gbmart.*</code></li>
-        <li>☐ Baseline, Z-ORDER, and Liquid Clustering timings all captured</li>
-        <li>☐ Can explain why Liquid Clustering fits <code>fact_sales</code>'s future (incremental refresh) better than one-time Z-ORDER</li>
+        <li>☐ A catalog/schema you have <code>CREATE</code> permission on — never <code>gbmart</code> itself</li>
+        <li>☐ Read access confirmed to <code>gbmart.gold.fact_sales</code>, <code>dim_product</code>, <code>dim_date</code>, and <code>dim_address</code></li>
+        <li>☐ You can explain, in your own words, what a small file problem is and why <code>fact_sales</code> is exposed to it</li>
+        <li>☐ You can state the difference between Z-ORDER and Liquid Clustering without looking it up — the re-shelving analogy above, or your own version of it</li>
+        <li>☐ You remember Day 7 ILT 2's two Z-ORDER columns for <code>fact_sales</code>: <code>Product_ID</code> and <code>Time_ID</code></li>
       </ul>
     </div>
-  </div>
-
-  <!-- SLIDE 11: CLOSING -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
-    <div class="section-tag">Day 7 Complete</div>
-    <h2>Gold Layer: Built, Verified, and Tuned</h2>
-    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      Today you verified 6 dimensions, understood bridge tables, built <code>fact_sales</code> with natural keys, and compared Z-ORDER against Liquid Clustering. Day 9–10 comes back to this exact table to replace today's full <code>overwrite</code> with an incremental <code>MERGE</code>-based refresh.
-    </p>
-    <div class="three-col" style="margin-top:32px; max-width:820px;">
-      <div class="card">
-        <h4>✅ Recap</h4>
-        <p>fact_sales built · Z-ORDER measured · Liquid Clustering compared</p>
-      </div>
-      <div class="card">
-        <h4>➡️ Looking Ahead</h4>
-        <p>Day 9–10: incremental MERGE-based refresh</p>
-      </div>
-      <div class="card">
-        <h4>🎤 Closing Check</h4>
-        <p>Why will <code>fact_sales</code> specifically benefit more from Liquid Clustering than a one-time Z-ORDER?</p>
-      </div>
+    <div class="highlight-box success" style="margin-top:20px;">
+      <p>
+        Once all five are checked, open <code>Day7_5_HOL3_Zorder_vs_LiquidClustering_Fact_Tables.md</code> and start
+        at Scenario 1. Every command in it runs safely against your own practice schema — nothing you do there can
+        affect the shared <code>gbmart</code> catalog or anyone else's work.
+      </p>
     </div>
   </div>
+</section>
 
-</div><!-- /deck -->
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 7 · Hands-On Lab 3 — Z-ORDER vs. Liquid Clustering on Fact Tables
+</footer>
 
 <script>
-  let current = 0;
-  const slides = document.querySelectorAll('.slide');
-  const counter = document.getElementById('counter');
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
 
-  function showSlide(n) {
-    slides[current].classList.remove('active');
-    current = (n + slides.length) % slides.length;
-    slides[current].classList.add('active');
-    counter.textContent = (current + 1) + ' / ' + slides.length;
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
   }
-
-  function changeSlide(dir) { showSlide(current + dir); }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
-  });
+  window.addEventListener('scroll', onScroll);
+  onScroll();
 </script>
+
 </body>
 </html>

@@ -149,7 +149,7 @@
         <ul>
           <li>GlobalMart — a mid-sized e-commerce company</li>
           <li>~10,000+ customers, ~100,000+ products</li>
-          <li>10 tables, 2 data sources, 13-day build</li>
+          <li>8 tables, 2 data sources, 13-day build</li>
         </ul>
       </div>
       <div class="card">
@@ -184,9 +184,7 @@
           <ul>
             <li>Sells products across many categories (electronics, clothing, home goods)</li>
             <li>Has customers placing orders online</li>
-            <li>Works with multiple suppliers</li>
             <li>Offers multiple payment options (card, UPI, cash on delivery)</li>
-            <li>Offers multiple shipping tiers (standard, express, same-day)</li>
             <li>Handles product returns and refunds</li>
           </ul>
         </div>
@@ -200,7 +198,7 @@
             <tr><td>Products in catalog</td><td>~100,000+ (products.csv is 100&nbsp;MB!)</td></tr>
             <tr><td>Orders per day</td><td>Thousands</td></tr>
             <tr><td>Data sources</td><td>2 (Postgres + ADLS files)</td></tr>
-            <tr><td>Tables we work with</td><td>10</td></tr>
+            <tr><td>Tables we work with</td><td>8</td></tr>
             <tr><td>Learning journey</td><td>13 days</td></tr>
           </table>
         </div>
@@ -220,7 +218,7 @@
         <table class="sql-table">
           <tr><th>Source System</th><th>Data Stored</th><th>Tool</th></tr>
           <tr><td>Supabase PostgreSQL</td><td>orders, order_items (continuously updated)</td><td>Lakeflow Connect</td></tr>
-          <tr><td>ADLS File Drops</td><td>products, customers, payments, addresses, suppliers, returns, payment_methods, shipping_tier</td><td>Autoloader</td></tr>
+          <tr><td>ADLS File Drops</td><td>products, customers, payments, addresses, returns, payment_methods</td><td>Autoloader</td></tr>
         </table>
         <div class="highlight-box warn" style="margin-top:14px;">
           <p><strong style="color:#f59e0b;">Day 3 side-exploration only</strong> — REST API (exchange rates) + GraphDB (customer relationships) are useful patterns you'll see later, but they do <strong>not</strong> feed this pipeline.</p>
@@ -310,7 +308,7 @@
 (orders, order_items)  ── Lakeflow ──►  Bronze → Silver → Gold (fact_sales)
                             Connect                            ↓
 ADLS File Drops        ── Autoloader ──► Bronze → Silver ──►  Genie
-(10 CSV files)                                                 ↓
+(6 source tables)                                               ↓
                                                     DC / Warehouse Manager</pre>
         <div class="highlight-box success" style="margin-top:14px;">
           <p><strong style="color:#22c55e;">End Goal:</strong> One Gold Table (<code>fact_sales</code>) → One Revenue Number → One Version of the Truth.</p>
@@ -366,11 +364,11 @@ DELETE <span class="cm">→ row just vanishes — nothing to trigger on, MISSED<
     <h3>Source 2 — ADLS File Drops via Autoloader</h3>
     <div class="two-col">
       <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Reference and enrichment files land as CSVs in an ADLS folder (<code>raw/</code>). These are file drops, not live database connections — they arrive periodically.</p>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Reference and enrichment files land in an ADLS folder (<code>raw-data/</code>), inside 6 source subfolders — one per table. These are file drops, not live database connections — they arrive periodically.</p>
         <div class="highlight-box">
           <p><strong style="color:#38bdf8;">Autoloader</strong> (<code>cloudFiles</code>) is Databricks' incremental file ingestion tool. It watches a folder and picks up new files automatically — without re-reading files it already processed.</p>
         </div>
-<pre style="margin-top:14px;">New file lands in raw/  → Autoloader detects it
+<pre style="margin-top:14px;">New file lands in raw-data/  → Autoloader detects it
                         → Reads the new file only (checkpoint)
                         → Writes to Bronze as Delta
                         → Updates checkpoint</pre>
@@ -380,7 +378,7 @@ DELETE <span class="cm">→ row just vanishes — nothing to trigger on, MISSED<
           <h4>Source Details</h4>
           <table class="sql-table">
             <tr><td>Technology</td><td>ADLS Gen2 file drops (CSV)</td></tr>
-            <tr><td>Tables ingested</td><td>customers, products, payments, addresses, suppliers, returns, payment_methods, shipping_tier</td></tr>
+            <tr><td>Tables ingested</td><td>customers, products, payments, addresses, returns, payment_methods</td></tr>
             <tr><td>Frequency</td><td>Periodic — files dropped as batches</td></tr>
             <tr><td>Tool</td><td><strong>Autoloader</strong> (cloudFiles)</td></tr>
             <tr><td>Method</td><td>Checkpoint-based — new files only</td></tr>
@@ -411,26 +409,24 @@ DELETE <span class="cm">→ row just vanishes — nothing to trigger on, MISSED<
 
   <!-- SLIDE 11: DATASET -->
   <div class="slide slide-content">
-    <h3>Our Dataset — 10 Tables, 2 Tools</h3>
-    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Every table GlobalMart has boils down to just these 10 files. Notice only the first 2 come from the live database — everything else is a file drop:</p>
+    <h3>Our Dataset — 8 Tables, 2 Tools</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Every table GlobalMart has boils down to just these 8 tables. Notice only the first 2 come from the live database — everything else is a file drop:</p>
     <table class="sql-table">
-      <tr><th>File</th><th>Tool</th></tr>
-      <tr><td>orders.csv</td><td>Lakeflow Connect</td></tr>
-      <tr><td>order_items.csv</td><td>Lakeflow Connect</td></tr>
-      <tr><td>customers.csv</td><td>Autoloader</td></tr>
-      <tr><td>products.csv</td><td>Autoloader</td></tr>
-      <tr><td>payments.csv</td><td>Autoloader</td></tr>
-      <tr><td>addresses.csv</td><td>Autoloader</td></tr>
-      <tr><td>returns.csv</td><td>Autoloader</td></tr>
-      <tr><td>suppliers.csv</td><td>Autoloader</td></tr>
-      <tr><td>payment_methods.csv</td><td>Autoloader</td></tr>
-      <tr><td>shipping_tier.csv</td><td>Autoloader</td></tr>
+      <tr><th>Table</th><th>Tool</th></tr>
+      <tr><td>orders</td><td>Lakeflow Connect</td></tr>
+      <tr><td>order_items</td><td>Lakeflow Connect</td></tr>
+      <tr><td>customers</td><td>Autoloader</td></tr>
+      <tr><td>products</td><td>Autoloader</td></tr>
+      <tr><td>payments</td><td>Autoloader</td></tr>
+      <tr><td>addresses</td><td>Autoloader</td></tr>
+      <tr><td>returns</td><td>Autoloader</td></tr>
+      <tr><td>payment_methods</td><td>Autoloader</td></tr>
     </table>
   </div>
 
   <!-- SLIDE 12: FACT_SALES -->
   <div class="slide slide-content">
-    <h3>Where All 10 Tables End Up: fact_sales</h3>
+    <h3>Where All 8 Tables End Up: fact_sales</h3>
     <div class="two-col">
       <div>
 <pre>            dim_customer      dim_product
@@ -506,7 +502,7 @@ DELETE <span class="cm">→ row just vanishes — nothing to trigger on, MISSED<
       <li><strong>3:30 PM — Hands-On</strong> — Create ADLS, upload data, connect Databricks, write first Delta tables</li>
     </ol>
     <div class="highlight-box" style="margin-top:16px;">
-      <p><strong style="color:#38bdf8;">By end of day:</strong> you'll have your own ADLS Gen2 storage set up, all 10 GlobalMart files uploaded, and your first Delta table written. That's a big Day 1 achievement.</p>
+      <p><strong style="color:#38bdf8;">By end of day:</strong> you'll have your own ADLS Gen2 storage set up, all 6 ADLS GlobalMart source tables uploaded to <code>raw-data/</code>, and your first Delta table written. That's a big Day 1 achievement.</p>
     </div>
   </div>
 

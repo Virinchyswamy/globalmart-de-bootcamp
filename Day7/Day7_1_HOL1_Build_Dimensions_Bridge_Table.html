@@ -209,7 +209,7 @@
     <div class="two-col">
       <div>
         <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
-          Every Day 6 dimension joins to <code>fact_sales</code> with a clean <strong style="color:#e2e8f0;">many-to-one</strong> relationship — many order lines share one customer, many share one product. A plain foreign key handles that perfectly.
+          Every Day 6 dimension relates to <code>fact_sales</code> with a clean <strong style="color:#e2e8f0;">many-to-one</strong> relationship — many order lines share one customer, many share one product. (In the real build, most of these IDs come straight from Silver rather than an actual join to the Gold dimension table — <code>gold.dim_date</code> is the one real Gold-table join — but the many-to-one <em>shape</em> of the relationship is the same either way.) A plain foreign key handles that shape perfectly.
         </p>
         <div class="card">
           <h4>The classic textbook case: joint bank accounts</h4>

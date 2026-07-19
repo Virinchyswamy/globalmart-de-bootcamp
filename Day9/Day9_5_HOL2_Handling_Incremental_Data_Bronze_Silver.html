@@ -5,75 +5,95 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 9 | HOL 2 — Handling Incremental Data: Bronze &amp; Silver</title>
 <style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
 
-  /* --- NAV --- */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: #1e293b; border-bottom: 1px solid #334155;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 24px;
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
   }
-  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
-  nav .controls { display: flex; gap: 10px; align-items: center; }
-  nav button {
-    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
-    border-radius: 6px; cursor: pointer; font-size: 13px;
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
   }
-  nav button:hover { background: #38bdf8; color: #0f172a; }
-  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
 
-  /* --- SLIDES --- */
-  .deck { padding-top: 60px; }
-  .slide {
-    display: none; min-height: 100vh; padding: 48px 60px;
-    animation: fadeIn 0.3s ease;
-  }
-  .slide.active { display: flex; flex-direction: column; justify-content: center; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 38px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 740px; margin: 0 auto 26px; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
 
-  /* --- SLIDE TYPES --- */
-  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
-  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
-  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
-  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 800px; margin-bottom: 30px; }
 
-  .slide-section { background: #1e293b; }
-  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
-  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+  .card.bad-fit h4 { color: var(--bad); }
+  .card.good-fit h4 { color: var(--good); }
 
-  .slide-content { background: #0f172a; }
-  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
-
-  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
-  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
-  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
-
-  /* --- COMPONENTS --- */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
-  .card {
-    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
-    padding: 20px 24px;
-  }
-  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
-  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
-  .card ul, .card ol { padding-left: 16px; }
-
-  .highlight-box {
-    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
-    padding: 16px 20px; margin-top: 16px;
-  }
-  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
-  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
   .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+  table.spec td.win { color: var(--good); font-weight: 700; }
+  table.spec td.lose { color: var(--bad); }
+
+  details.qa-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; padding: 4px 0; }
+  details.qa-card summary { cursor: pointer; padding: 14px 18px; font-size: 14px; font-weight: 600; color: var(--text); list-style: none; }
+  details.qa-card summary::-webkit-details-marker { display: none; }
+  details.qa-card summary::before { content: "Q — "; color: var(--accent); font-weight: 700; }
+  details.qa-card[open] summary { color: #7dd3fc; border-bottom: 1px solid var(--border); }
+  details.qa-card .qa-answer { padding: 14px 18px 16px; color: #cbd5e1; font-size: 13.5px; line-height: 1.7; }
+  details.qa-card .qa-answer::before { content: "A — "; color: var(--good); font-weight: 700; }
 
   pre {
     background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
     padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
-    font-size: 13px; line-height: 1.7; color: #e6edf3;
+    font-size: 13px; line-height: 1.7; color: #e6edf3; margin-top: 14px;
   }
   .kw { color: #ff7b72; font-weight: bold; }
   .fn { color: #d2a8ff; }
@@ -82,232 +102,418 @@
   .col { color: #79c0ff; }
   .tbl { color: #ffa657; }
 
-  .pill {
-    display: inline-block; padding: 3px 12px; border-radius: 20px;
-    font-size: 12px; font-weight: 600; margin: 2px;
-  }
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 14px; margin-right: 10px; flex-shrink: 0; }
+  .phase-card { display: flex; gap: 0; align-items: flex-start; }
+  .phase-card .phase-body h4 { display: flex; align-items: center; color: var(--text); font-size: 15.5px; margin-bottom: 6px; }
+  .phase-card .phase-body .phase-outcome { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .phase-card .phase-body .phase-outcome b { color: var(--accent2); }
+
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
   .pill-blue { background: #1d4ed8; color: #bfdbfe; }
   .pill-green { background: #15803d; color: #bbf7d0; }
   .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
 
-  .order-list { counter-reset: steps; list-style: none; padding: 0; }
-  .order-list li {
-    counter-increment: steps; display: flex; align-items: flex-start;
-    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
-    font-size: 14px; color: #cbd5e1; line-height: 1.6;
-  }
-  .order-list li::before {
-    content: counter(steps);
-    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; flex-shrink: 0;
-  }
+  .callout-day3 { background: #1c1533; border: 1.5px dashed var(--accent2); border-radius: 12px; padding: 18px 22px; margin-top: 16px; }
+  .callout-day3 .cd3-tag { color: var(--accent2); font-weight: 800; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .callout-day3 p { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
 
-  table.sql-table {
-    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+
+  @media (max-width: 640px) {
+    nav.topnav .links { display: none; }
+    .hero h1 { font-size: 27px; }
   }
-  table.sql-table th {
-    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
-  }
-  table.sql-table td {
-    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
-    background: #111827;
-  }
-  table.sql-table tr:nth-child(even) td { background: #0f172a; }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">DAY 9 · HOL 2 — Handling Incremental Data</div>
-  <div class="controls">
-    <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 11</span>
-    <button onclick="changeSlide(1)">Next &#8594;</button>
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 9 · HOL 2 — Handling Incremental Data</div>
+    <div class="links">
+      <a href="#overview" class="navlink">Overview</a>
+      <a href="#part1-why" class="navlink">Part 1 — Why Payments</a>
+      <a href="#part1-clone" class="navlink">Practice Clone</a>
+      <a href="#part1-pattern" class="navlink">6-Step Pattern</a>
+      <a href="#part1-scd2" class="navlink">Not SCD2</a>
+      <a href="#part2" class="navlink">Part 2 — Verify</a>
+      <a href="#schema-callback" class="navlink">Day 3 Callback</a>
+      <a href="#qa" class="navlink">Quick Check</a>
+      <a href="#checklist" class="navlink">Submission</a>
+    </div>
   </div>
 </nav>
 
-<div class="deck">
-
-  <!-- SLIDE 1: COVER -->
-  <div class="slide slide-cover active">
-    <h1>Handling Incremental Data: Bronze &amp; Silver</h1>
-    <p class="subtitle">Build a real CDF-based Bronze → Silver refresh for payments, then verify the watermark pipeline the way an on-call engineer would</p>
-    <div class="badge">Day 9 &nbsp;·&nbsp; HOL 2 &nbsp;·&nbsp; Hands-On Lab</div>
-    <div style="margin-top:36px; color:#475569; font-size:13px;">
-      What you'll build today → CDF Refresh for payments · Practice Clones · Watermark Pipeline Verification
-    </div>
+<header class="hero">
+  <div class="eyebrow">Day 9 · Hands-On Lab 2 · ~2 hours</div>
+  <h1>Handling Incremental Data — Bronze &amp; Silver</h1>
+  <p class="lead">
+    Two halves, two strategies, both real. Part 1: build a genuine CDF-based Bronze → Silver refresh for
+    <code>payments</code>, on your own practice clone. Part 2: verify — never rebuild — the real
+    <code>orders_data_ingestion_cdc</code> pipeline, the way an on-call engineer actually checks a production job.
+  </p>
+  <div class="meta-row">
+    <span class="meta-pill">🔒 Part 1 — SHALLOW CLONE Only</span>
+    <span class="meta-pill">👀 Part 2 — Read-Only Verification</span>
+    <span class="meta-pill">➡️ Follows ILT 3 — CDF-Based Incremental Loading</span>
   </div>
+</header>
 
-  <!-- SLIDE 2: TWO PARTS -->
-  <div class="slide slide-section">
-    <div class="section-tag">Overview</div>
-    <h2>Two Parts, Two Strategies</h2>
-    <div class="two-col" style="margin-top:24px;">
+<!-- SECTION: OVERVIEW -->
+<section class="content" id="overview">
+  <div class="wrap">
+    <div class="section-tag">Why This Lab Has Two Halves</div>
+    <h2 class="section-title">Two Parts, Two Strategies This Course Actually Uses</h2>
+    <p class="section-intro">
+      GlobalMart doesn't ingest everything the same way. Some sources come in through Autoloader, so CDF is the
+      natural incremental strategy. One source — <code>orders</code>/<code>order_items</code> — comes in through
+      a managed CDC pipeline instead, so watermark-style verification is the right check. This lab gives you one
+      real, hands-on rep of each.
+    </p>
+
+    <div class="grid-2">
       <div class="card">
-        <h4>Part 1 — CDF Path</h4>
-        <p>Build a real incremental Bronze → Silver refresh for <code>gbmart.payments</code>, using Delta CDF + <code>MERGE</code> — a plain upsert, not the SCD2 dimension-history version (that's Day 10's job).</p>
+        <h4>Part 1 — CDF Path (you build it)</h4>
+        <p>Build a real incremental Bronze → Silver refresh for <code>gbmart.payments</code>, using Delta CDF +
+        <code>MERGE</code> — a plain upsert, not the SCD2 dimension-history version. That's Day 10's job.</p>
       </div>
       <div class="card">
-        <h4>Part 2 — Watermark Path</h4>
-        <p>Verify the real <code>orders</code>/<code>order_items</code> Lakeflow Connect pipeline actually picked up a change, using the same checks a production on-call engineer would run.</p>
+        <h4>Part 2 — Watermark Path (you verify it)</h4>
+        <p>Confirm the real <code>orders_data_ingestion_cdc</code> Lakeflow Connect pipeline actually picked up a
+        change — the same checks a production on-call engineer would run, all read-only.</p>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 3: WHY PAYMENTS -->
-  <div class="slide slide-content">
-    <h3>Part 1 — Why <code>payments</code>?</h3>
-    <div class="two-col">
-      <div>
-        <p style="color:#94a3b8; font-size:14px;"><code>payments</code> is a good first CDF target: it's 1:1 with <code>orders</code>, and — unlike <code>customers</code>/<code>products</code> — doesn't need SCD2 history. When a payment record changes, Silver just needs the current value, not every past version.</p>
+<!-- SECTION: PART 1 - WHY PAYMENTS -->
+<section class="content" id="part1-why">
+  <div class="wrap">
+    <div class="section-tag">Part 1 — Setting Up</div>
+    <h2 class="section-title">Why <code style="font-size:0.8em;">payments</code>, of All Tables?</h2>
+    <p class="section-intro">
+      Very simple version first: <code>payments</code> is a good first CDF target because a payment record only
+      ever needs to show its <i>current</i> value. Nobody needs to know what a payment record looked like three
+      versions ago — they just need to know what it says right now.
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>1:1 with orders, no history needed</h4>
+        <p><code>payments</code> is 1:1 with <code>orders</code>, and — unlike <code>customers</code>/<code>products</code>
+        — doesn't need SCD2 history. When a payment record changes, Silver just needs the current value, not every
+        past version.</p>
       </div>
-      <div>
-        <div class="card">
-          <h4>The Simplest Form of the Pattern</h4>
-          <p>That makes this a plain <strong style="color:#38bdf8;">upsert MERGE</strong> — the simplest version of the CDF pattern you saw in ILT 3.</p>
-        </div>
+      <div class="card">
+        <h4>The simplest form of the pattern</h4>
+        <p>That makes this a plain <strong style="color:#38bdf8;">upsert MERGE</strong> — the simplest version of
+        the CDF pattern from ILT 3. Update matched rows, insert new ones, done.</p>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 4: WHY A PRACTICE CLONE -->
-  <div class="slide slide-content">
-    <h3>Why a Practice Clone, Not the Real Table?</h3>
-    <div class="two-col">
+<!-- SECTION: PRACTICE CLONE -->
+<section class="content" id="part1-clone">
+  <div class="wrap">
+    <div class="section-tag">Before You Touch Anything</div>
+    <h2 class="section-title">Why a Practice Clone, Not the Real Table?</h2>
+    <p class="section-intro">
+      Think of it like a shared whiteboard with one eraser. The first person to test "erase then redraw" gets to
+      see the real before/after. Everyone after them just sees a blank board — the interesting part already
+      happened. That's exactly the trap of running a MERGE demo against a shared table.
+    </p>
+
+    <div class="grid-2">
       <div>
-        <p style="color:#94a3b8; font-size:14px;">This exercise's whole point is watching a MERGE consume a batch of pending changes, then run again and find nothing left. Against the real shared table, only the <em>first</em> person to run this in the whole cohort would ever see a non-zero merge — everyone after (including you, rehearsing before class) would see "0 changed rows," and the exercise would look broken.</p>
+        <p style="color:#94a3b8; font-size:14px;">
+          This exercise's whole point is watching a MERGE consume a batch of pending changes, then run again and
+          find nothing left. Against the real shared <code>gbmart.silver.payments</code>, only the <i>first</i>
+          person to run this in the whole cohort would ever see a non-zero merge — everyone after (including you,
+          rehearsing before class) would see "0 changed rows," and the exercise would look broken.
+        </p>
       </div>
       <div>
 <pre><span class="kw">CREATE OR REPLACE TABLE</span> <span class="tbl">bronze_payments_practice</span>
   <span class="kw">SHALLOW CLONE</span> <span class="tbl">gbmart.bronze.payments</span>;
 
 <span class="kw">CREATE OR REPLACE TABLE</span> <span class="tbl">silver_payments_practice</span>
-  <span class="kw">SHALLOW CLONE</span> <span class="tbl">gbmart.silver.payments</span>;</pre>
+  <span class="kw">SHALLOW CLONE</span> <span class="tbl">gbmart.silver.payments</span>;
+
+<span class="kw">ALTER TABLE</span> <span class="tbl">bronze_payments_practice</span>
+  <span class="kw">SET TBLPROPERTIES</span> (delta.enableChangeDataFeed = <span class="kw">true</span>);</pre>
       </div>
     </div>
     <div class="highlight-box">
-      <p>A <code>SHALLOW CLONE</code> in your own schema gives you the same real data and the same real CDF mechanics, but a version history that's entirely yours — repeatable every time, for every student, forever.</p>
+      <p>
+        A <code>SHALLOW CLONE</code> in your own schema gives you the same real data and the same real CDF
+        mechanics, but a version history that's entirely yours — repeatable every time, for every student, forever.
+        Everything you write in Part 1 stays inside <code>main.YOUR_SCHEMA</code> — never a direct write against
+        shared <code>gbmart.*</code> tables.
+      </p>
+    </div>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p>
+        A control table tracks progress for real — <code>main.YOUR_SCHEMA._incremental_control</code> stores one
+        row per source, with <code>last_bronze_version</code>. This isn't a hardcoded number anywhere in the code;
+        every run reads the real stored value, so the exercise is genuinely safe to re-run as many times as you like.
+      </p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 5: 6-STEP PATTERN -->
-  <div class="slide slide-content">
-    <h3>The 6-Step Refresh Pattern</h3>
+<!-- SECTION: 6-STEP PATTERN -->
+<section class="content" id="part1-pattern">
+  <div class="wrap">
+    <div class="section-tag">The Function You'll Run</div>
+    <h2 class="section-title">The 6-Step Refresh Pattern, in <code style="font-size:0.75em;">refresh_silver_payments()</code></h2>
+    <p class="section-intro">
+      Same shape as every incremental loader in this course, whether it's watermark-based (ILT 2) or CDF-based
+      (ILT 3): read the marker, pull only what's new, process it, write it, move the marker forward.
+    </p>
+
     <ol class="order-list">
-      <li>Read last processed Bronze version from your schema's control table</li>
-      <li>Read Bronze's CDF since <code>last_version + 1</code></li>
-      <li>Drop <code>update_preimage</code> rows</li>
-      <li>Standardize columns (same logic as the Day 5 full load)</li>
-      <li><code>MERGE</code> into your <code>silver_payments_practice</code> clone — update matched, insert new</li>
-      <li>Advance the control table to the newest version processed</li>
+      <li>Read <code>last_bronze_version</code> from the control table — a real stored value, not a hardcoded number.</li>
+      <li>Read Bronze's CDF since <code>last_version + 1</code>.</li>
+      <li>Drop <code>_change_type == 'update_preimage'</code> rows — keep only each row's current state.</li>
+      <li>Rename columns to match Silver's shape: <code>OrderID</code> → <code>order_id</code>, <code>PaymentID</code> → <code>payment_id</code>.</li>
+      <li><code>MERGE</code> into <code>silver_payments_practice</code> — <code>whenMatchedUpdateAll()</code> / <code>whenNotMatchedInsertAll()</code>. A plain upsert, nothing more.</li>
+      <li>Advance the control table to the newest Bronze version just processed.</li>
     </ol>
-  </div>
 
-  <!-- SLIDE 6: DEMO - RUN TWICE -->
-  <div class="slide slide-demo">
-    <h3>Running the Refresh — Twice</h3>
-    <div class="demo-label">Run against your own practice clones</div>
-    <pre><span class="cm"># Run 1 (first ever run, last_bronze_version = -1): reprocesses all history — expected.</span>
+    <div class="card">
+      <h4>Running it — twice</h4>
+      <p style="margin-bottom:8px;">Sukrit Ghosh's first run reprocesses every payments row ever written — expected, because his control table starts at <code>-1</code>, same as everyone's does. His second run, immediately after, is the real proof:</p>
+<pre><span class="cm"># Run 1 (first ever run, last_bronze_version = -1): reprocesses all history — expected.</span>
 <span class="fn">refresh_silver_payments</span>()
 
 <span class="cm"># Run 2 (immediately after, nothing changed): expect "Changed rows since last run: 0"</span>
 <span class="fn">refresh_silver_payments</span>()</pre>
-    <div class="highlight-box" style="margin-top:14px;">
-      <p>Run 2 finding zero changes is the real proof this is incremental — not a coincidence of running it once.</p>
+      <p style="margin-top:8px;">Run 2 finding zero changes — not run 1 — is what actually proves this is incremental.</p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 7: SECTION - PART 2 -->
-  <div class="slide slide-section">
-    <div class="section-tag">On-Call Verification</div>
-    <h2>Part 2 — Verify the Watermark Pipeline</h2>
-    <p style="color:#94a3b8; max-width:680px; margin-top:12px; font-size:15px;">
-      Unlike Part 1, you don't build the ingestion yourself here — the real <code>orders_data_ingestion_cdc</code> pipeline (Day 2) already owns it. Your job is to verify it actually picked up a change, the same way a production on-call engineer would.
+<!-- SECTION: NOT SCD2 -->
+<section class="content" id="part1-scd2">
+  <div class="wrap">
+    <div class="section-tag">Scope Check</div>
+    <h2 class="section-title">This Is a Plain Upsert. On Purpose.</h2>
+    <p class="section-intro">
+      Very simple version: an upsert answers "what does this row look like <i>right now</i>?" SCD2 answers "show
+      me <i>every</i> version this row has ever had." Those are genuinely different jobs — Part 1 only does the
+      first one.
     </p>
-  </div>
-
-  <!-- SLIDE 8: VERIFICATION TABLE -->
-  <div class="slide slide-content">
-    <h3>Three Verification Checks</h3>
-    <table class="sql-table">
-      <tr><th>Check</th><th>Confirms</th></tr>
-      <tr><td>Row counts on <code>orders</code> / <code>order_items</code></td><td>Compare before/after a re-trigger</td></tr>
-      <tr><td>Top rows by <code>updated_at DESC</code></td><td>Which rows the most recent run picked up</td></tr>
-      <tr><td><code>DESCRIBE HISTORY</code></td><td>A new version confirms the pipeline actually wrote something</td></tr>
-    </table>
-    <div class="highlight-box">
-      <p>If your instructor makes a change in the source Postgres tables and re-triggers the pipeline during class, run these checks <em>after</em> that happens. If not, run them anyway to see the current state — the counts just won't have moved.</p>
+    <div class="highlight-box warn">
+      <p>
+        <b>Not a preview of SCD2.</b> ILT 3 walked through the real CDF-driven SCD2 MERGE pattern for
+        <code>dim_product</code>/<code>dim_customer</code> — read-only, watching history rows accumulate. That's a
+        different, harder pattern (keep every past version) built for a different reason (dimension history). Full
+        hands-on SCD2 with history-tracking is <b>Day 10's job</b>. This lab's Part 1 build is a plain upsert
+        <i>on purpose</i> — do not extend it into SCD2 here.
+      </p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 9: NEXT STEP -->
-  <div class="slide slide-content">
-    <h3>Next Step</h3>
-    <div class="highlight-box success">
-      <p>Once Bronze <code>orders</code>/<code>order_items</code> are confirmed current, the next action in a real pipeline is re-running Silver's <code>orders</code>/<code>order_items</code> incremental notebook so its own <code>MERGE INTO</code> picks up whatever just landed. Day 10 covers exactly this for the SCD-tracked tables (<code>dim_customer</code>, <code>dim_product</code>), plus an incremental <code>fact_sales</code> refresh.</p>
-    </div>
-  </div>
+<!-- SECTION: PART 2 -->
+<section class="content" id="part2">
+  <div class="wrap">
+    <div class="section-tag">On-Call Verification</div>
+    <h2 class="section-title">Part 2 — Verify the Watermark Pipeline</h2>
+    <p class="section-intro">
+      Unlike Part 1, you don't build the ingestion yourself here — the real <code>orders_data_ingestion_cdc</code>
+      Lakeflow Connect pipeline (Day 2) already owns it, reading straight from Postgres via CDC. Your job is to
+      confirm it actually picked up a change — five real, read-only checks, nothing you run here writes anything.
+    </p>
 
-  <!-- SLIDE 10: SUBMISSION CHECKLIST -->
-  <div class="slide slide-content">
-    <h3>Submission Checklist</h3>
     <div class="card">
-      <h4>Before You Submit</h4>
+      <h4>The real scenario behind these checks</h4>
+      <p>At authoring time, the instructor made a real change in source Postgres — an <code>UPDATE</code> on order
+      <code>OR-000478</code> (delivery date + status), and two new orders inserted, <code>OR-900001</code> and
+      <code>OR-900002</code> — then re-triggered the pipeline. If your instructor repeats this live during class,
+      run the checks below <i>after</i> that happens; you may see this exact pattern, or a fresh one your
+      instructor set up. If not, run them anyway to see the current state — the counts just won't have moved.</p>
+    </div>
+
+    <table class="spec" style="margin-top:20px;">
+      <tr><th>#</th><th>Check</th><th>Confirms</th></tr>
+      <tr><td>1</td><td>Point lookup on <code>OR-000478</code></td><td>The UPDATE landed — <code>actualdeliverydate</code> populated, <code>updated_at</code> recent</td></tr>
+      <tr><td>2</td><td>Point lookup on <code>OR-900001</code>/<code>OR-900002</code></td><td>Both new orders landed — 2 rows expected</td></tr>
+      <tr><td>3</td><td>Row counts, <code>orders</code> + <code>order_items</code></td><td>Live totals via <code>COUNT(*)</code>, compared against a stated baseline</td></tr>
+      <tr><td>4</td><td>Top 5 rows by <code>updated_at DESC</code></td><td>Which rows the most recent pipeline run actually touched</td></tr>
+      <tr><td>5</td><td><code>DESCRIBE HISTORY</code></td><td>A new version confirms the pipeline actually wrote something</td></tr>
+    </table>
+
+    <div class="highlight-box">
+      <p>
+        <b>About those row-count numbers:</b> at authoring time, the stated baseline was <code>126,036</code>
+        orders (<code>126,038</code> once the 2 new orders land) and <code>377,866</code> order_items (unchanged,
+        or <code>377,868</code> if the matching order_items insert was also run). Those are the pipeline's
+        <i>reference</i> numbers from when this lab was written — not something to hardcode or assert against. The
+        real cohort table keeps growing as other students and instructor demos run against it, so always verify
+        live with <code>COUNT(*)</code>, exactly the way Check 3 does it.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: SCHEMA EVOLUTION CALLBACK -->
+<section class="content" id="schema-callback">
+  <div class="wrap">
+    <div class="section-tag">Callback, Not New Teaching</div>
+    <h2 class="section-title">Remember Day 3's Schema Evolution Modes?</h2>
+    <p class="section-intro">
+      Day 3 ILT 2 already taught <code>addNewColumns</code> vs. <code>rescue</code> in full — this section does
+      not re-teach that. It's a short, real receipt that it actually happened at GlobalMart, not just on a slide.
+    </p>
+
+    <div class="callout-day3">
+      <div class="cd3-tag">↩ Callback to Day 3 ILT 2 — Schema Evolution Concepts</div>
+      <p>
+        A real practice file, <code>customers_schema_evolution_exp.py</code>, ran Autoloader against
+        <code>customers</code> source files <b>twice</b> — first with <code>cloudFiles.schemaEvolutionMode =
+        "addNewColumns"</code>, then again with <code>schemaEvolutionMode = "rescue"</code> — each time against a
+        source file that had genuinely gained one new column, <code>third_party_data_sharing</code>. Everything ran
+        against <code>gbmart.bronze_practice.customers_exp</code>, an isolated practice schema — production
+        <code>gbmart.bronze.customers</code> was never touched.
+      </p>
+    </div>
+
+    <div class="grid-2" style="margin-top:18px;">
+      <div class="card">
+        <h4>Pass 1 — addNewColumns</h4>
+        <p>T Nikshitha's read of this pass is the simple case: the new column just shows up as a normal column,
+        no code change needed to see it.</p>
+<pre><span class="fn">customers_df</span> = spark.readStream \
+    .format(<span class="str">"cloudFiles"</span>) \
+    .option(<span class="str">"cloudFiles.schemaEvolutionMode"</span>, <span class="str">"addNewColumns"</span>) \
+    .load(SOURCE_PATH)</pre>
+      </div>
+      <div class="card">
+        <h4>Pass 2 — rescue</h4>
+        <p>Same source, same target table, only the mode changes. Unexpected/new columns get captured into a side
+        <code>_rescued_data</code> column instead of being added outright.</p>
+<pre><span class="fn">customers_df</span> = spark.readStream \
+    .format(<span class="str">"cloudFiles"</span>) \
+    .option(<span class="str">"cloudFiles.schemaEvolutionMode"</span>, <span class="str">"rescue"</span>) \
+    .load(SOURCE_PATH)</pre>
+      </div>
+    </div>
+
+    <div class="highlight-box success">
+      <p>
+        Sujit Kumar's proof query is the simplest possible check that this happened:
+        <code>SELECT * FROM gbmart.bronze_practice.customers_exp WHERE third_party_data_sharing IS NOT NULL</code>
+        — rows with a value there arrived after the new column existed. That one file, run twice, is the receipt:
+        schema evolution isn't just a Day 3 slide, it's something this course's own practice pipeline actually did,
+        safely, in a schema built only for practicing it. <b>Nothing to build here</b> — just something to recognize.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: NEXT STEP -->
+<section class="content" id="next-step">
+  <div class="wrap">
+    <div class="section-tag">Where This Feeds Into</div>
+    <h2 class="section-title">Next Step</h2>
+    <div class="highlight-box success">
+      <p>
+        Once Bronze <code>orders</code>/<code>order_items</code> are confirmed current, the next action in a real
+        pipeline is re-running Silver's <code>orders</code>/<code>order_items</code> incremental notebook so its own
+        <code>MERGE INTO</code> picks up whatever just landed. Day 10 covers exactly this for the SCD-tracked tables
+        (<code>dim_customer</code>, <code>dim_product</code>), plus an incremental <code>fact_sales</code> refresh.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: QUICK CHECK -->
+<section class="content" id="qa">
+  <div class="wrap">
+    <div class="section-tag">Reinforce Before You Open the Notebook</div>
+    <h2 class="section-title">Quick-Fire Concept Check</h2>
+    <p class="section-intro">Click to reveal each answer. If any of these surprise you, re-read the section above before starting.</p>
+
+    <details class="qa-card">
+      <summary>Why does Part 1 use a SHALLOW CLONE instead of writing straight into gbmart.silver.payments?</summary>
+      <div class="qa-answer">Because the exercise's whole point is watching a MERGE consume pending changes, then find nothing left on a second run. Against the real shared table, only the first person in the whole cohort would ever see a non-zero merge — everyone after would see "0 changed rows" and the exercise would look broken. A SHALLOW CLONE gives every student the same real data and CDF mechanics, but a version history that's entirely their own.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Is Part 1's refresh_silver_payments() an SCD2 build?</summary>
+      <div class="qa-answer">No — it's a plain upsert, on purpose. It answers "what does this row look like right now," using whenMatchedUpdateAll()/whenNotMatchedInsertAll(). ILT 3 already walked through the real SCD2 pattern for dim_product/dim_customer, read-only. Full hands-on SCD2 with history-tracking is Day 10's job, not this lab's.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Part 2's markdown states "126,036 + 2 = 126,038" orders. Should your code assert that exact number?</summary>
+      <div class="qa-answer">No. That's the pipeline's stated baseline at authoring time — a reference point, not a fixed truth. The real cohort table keeps growing as other students and instructor demos run against it. Always verify live with COUNT(*), which is exactly what Check 3 does — it never hardcodes the expected count.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Do you need to build anything for the Day 3 schema-evolution callback section?</summary>
+      <div class="qa-answer">No. It's a callback, not a new hands-on exercise — a short proof that addNewColumns and rescue mode, taught in Day 3 ILT 2, actually ran for real against a genuinely new column (third_party_data_sharing) in an isolated practice schema. Read it, recognize it, move on.</div>
+    </details>
+  </div>
+</section>
+
+<!-- SECTION: SUBMISSION CHECKLIST -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Before You Submit</div>
+    <h2 class="section-title">Submission Checklist</h2>
+    <div class="card">
       <ul>
         <li>☐ Practice clones <code>bronze_payments_practice</code> / <code>silver_payments_practice</code> created in your own schema</li>
         <li>☐ Control table <code>main.YOUR_SCHEMA._incremental_control</code> created</li>
         <li>☐ <code>refresh_silver_payments()</code> run once — initial load completed</li>
-        <li>☐ Run a second time — confirmed 0 changed rows</li>
-        <li>☐ Part 2 checks run against the real <code>orders</code> / <code>order_items</code> Bronze tables</li>
-        <li>☐ Notebook run top-to-bottom, no errors</li>
+        <li>☐ <code>refresh_silver_payments()</code> run a second time — confirmed 0 changed rows</li>
+        <li>☐ Part 2 — all 5 checks run against the real <code>orders</code>/<code>order_items</code> Bronze tables (<code>OR-000478</code> update, <code>OR-900001</code>/<code>OR-900002</code> new orders, row counts, most-recent <code>updated_at</code>, <code>DESCRIBE HISTORY</code>)</li>
+        <li>☐ Read the Day 3 schema-evolution callback — no build required</li>
+        <li>☐ Notebook run top-to-bottom with no errors</li>
       </ul>
     </div>
-  </div>
-
-  <!-- SLIDE 11: BRIDGE / CLOSING -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
-    <div class="section-tag">Day 9 Complete</div>
-    <h2>You're Ready for Day 10</h2>
-    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
-      Next up: dimensional modelling — designing the star schema these incremental feeds will populate.
-    </p>
-    <div class="three-col" style="margin-top:32px; max-width:820px;">
-      <div class="card">
-        <h4>✅ Recap</h4>
-        <p>3 strategies, end to end: file checkpoint, hand-built watermark loader, and a real CDF-based Bronze → Silver refresh</p>
-      </div>
-      <div class="card">
-        <h4>➡️ Up Next</h4>
-        <p>Day 10: Dimensional Modelling — Star Schema Design</p>
-      </div>
-      <div class="card">
-        <h4>🎤 Closing Check</h4>
-        <p>Why does a practice clone, not the shared table, make this exercise repeatable for every student?</p>
-      </div>
+    <div class="highlight-box success" style="margin-top:20px;">
+      <p>
+        Once every box is checked, you're ready for Day 10 — dimensional modelling, and the SCD2 pattern Part 1
+        deliberately left for later.
+      </p>
     </div>
   </div>
+</section>
 
-</div><!-- /deck -->
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 9 · Hands-On Lab 2 — Handling Incremental Data: Bronze &amp; Silver
+</footer>
 
 <script>
-  let current = 0;
-  const slides = document.querySelectorAll('.slide');
-  const counter = document.getElementById('counter');
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
 
-  function showSlide(n) {
-    slides[current].classList.remove('active');
-    current = (n + slides.length) % slides.length;
-    slides[current].classList.add('active');
-    counter.textContent = (current + 1) + ' / ' + slides.length;
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
   }
-
-  function changeSlide(dir) { showSlide(current + dir); }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
-  });
+  window.addEventListener('scroll', onScroll);
+  onScroll();
 </script>
+
 </body>
 </html>

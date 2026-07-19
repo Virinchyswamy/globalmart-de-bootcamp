@@ -1,0 +1,429 @@
+<title>Day 8 — Design Your Own Architecture — Facilitator Guide</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-alt: #111827;
+    --border: #334155;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --code-bg: #0b1220;
+    --code-text: #7dd3fc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 0 80px 0;
+  }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  header.page-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 36px 24px 28px 24px;
+    margin-bottom: 8px;
+  }
+  header.page-header .wrap { max-width: 1100px; }
+  h1 {
+    color: #fff;
+    font-size: 1.9em;
+    margin: 0 0 8px 0;
+  }
+  .facilitator-flag {
+    display: inline-block;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    font-weight: 600;
+    font-size: 0.95em;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 1.05em;
+    margin-top: 6px;
+  }
+  h2 {
+    color: var(--accent);
+    font-size: 1.5em;
+    margin-top: 56px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+  }
+  h2 .section-num {
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-right: 10px;
+  }
+  h3 {
+    color: #f1f5f9;
+    font-size: 1.15em;
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+  h4 {
+    color: #f1f5f9;
+    font-size: 1em;
+    margin-top: 18px;
+    margin-bottom: 8px;
+  }
+  p { color: var(--text); }
+  .lede {
+    color: var(--text-dim);
+    font-size: 1.02em;
+  }
+  code, .code-inline {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.92em;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin: 16px 0;
+  }
+  .card.decision { border-left: 4px solid var(--accent); }
+  .card.warning {
+    border-left: 4px solid var(--amber);
+    background: rgba(245, 158, 11, 0.06);
+  }
+  .card.good {
+    border-left: 4px solid var(--green);
+    background: rgba(34, 197, 94, 0.06);
+  }
+  .card.scenario {
+    border-left: 4px solid var(--purple);
+  }
+  .card h3 { margin-top: 0; }
+  .card h4 { margin-top: 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 22px 0;
+    background: var(--card-alt);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.94em;
+  }
+  th {
+    background: #1e293b;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 0.03em;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(56, 189, 248, 0.04); }
+  .table-scroll { overflow-x: auto; }
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .pill.scenario-a { background: rgba(56, 189, 248, 0.15); color: var(--accent); border: 1px solid var(--accent); }
+  .pill.scenario-b { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid var(--red); }
+  .pill.scenario-c { background: rgba(167, 139, 250, 0.15); color: var(--purple); border: 1px solid var(--purple); }
+  .pill.scenario-d { background: rgba(34, 197, 94, 0.15); color: var(--green); border: 1px solid var(--green); }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 8px; }
+  .timing-table td:first-child, .timing-table th:first-child { white-space: nowrap; }
+  .strong-shallow {
+    display: flex;
+    gap: 16px;
+    margin: 14px 0;
+  }
+  .strong-shallow .col {
+    flex: 1;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .strong-shallow .strong-col {
+    background: rgba(34, 197, 94, 0.06);
+    border: 1px solid var(--green);
+  }
+  .strong-shallow .shallow-col {
+    background: rgba(248, 113, 113, 0.06);
+    border: 1px solid var(--red);
+  }
+  .strong-shallow .tag {
+    display: inline-block;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+  .strong-shallow .strong-col .tag { color: var(--green); }
+  .strong-shallow .shallow-col .tag { color: var(--red); }
+  .strong-shallow ul { margin-left: 18px; font-size: 0.92em; }
+  .debrief-list li {
+    background: var(--card-alt);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    list-style: none;
+    border-left: 3px solid var(--accent);
+  }
+  .debrief-list { padding-left: 0; }
+  .debrief-list .q { color: var(--accent); font-weight: 600; }
+  .callback-box {
+    background: var(--card-alt);
+    border: 2px solid var(--purple);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+  .callback-box .label {
+    color: var(--purple);
+    font-weight: 700;
+    font-size: 0.85em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.85em;
+    text-align: center;
+  }
+  strong { color: #fff; }
+  .dim-label {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    margin-bottom: -6px;
+  }
+  .no-key-banner {
+    background: rgba(167, 139, 250, 0.08);
+    border: 1px solid var(--purple);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    color: var(--text);
+  }
+  .no-key-banner strong { color: var(--purple); }
+</style>
+
+<header class="page-header">
+  <div class="wrap">
+    <h1>Day 8 — "Design Your Own Architecture" — Facilitator Guide</h1>
+    <div class="facilitator-flag">FACILITATOR-ONLY — do not share with learners</div>
+    <div class="subtitle">Timing, seating &amp; assignment logistics, per-scenario evaluation guidance, and debrief talking points for the Day 8 individual architecture-pitch activity. This is not an answer key — there is no single correct architecture for any of the four scenarios.</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="no-key-banner">
+  <strong>Read this before anything else:</strong> unlike the Day 6 capstone (which has one gold-standard spreadsheet answer), this activity has <strong>no hidden correct architecture to match against</strong>. All 23 learners work solo — each produces their own defensible pitch, and because the same problem statement is deliberately assigned to more than one learner, you'll see several independent, differing answers to the identical scenario. Your job as facilitator is to evaluate the <em>reasoning</em> a learner demonstrates — did they correctly identify what makes each of their sources hard, did they research real services rather than guess, can they defend their choices under questioning — not to check their diagram against a key you're holding. If a learner asks "is this the right answer," the correct response is "defend it," not a yes/no.
+</div>
+
+<h2><span class="section-num">1</span>Timing &amp; Room Logistics</h2>
+
+<div class="card warning">
+  <h3>Tables are seating only. They are NOT project teams.</h3>
+  <p>This is an <strong>individual</strong> activity. All 23 learners research, design, and build their own pitch page solo — nobody at a table collaborates on a shared design, and nobody splits up the work with a tablemate. The room is arranged as <strong>6 tables (five tables of 4, one table of 3 — 5&times;4 + 3 = 23)</strong> purely so people have a place to sit and work quietly; the table has no bearing on who owns which design. Say this out loud at kickoff, explicitly, before anyone opens a laptop: "you are sitting with these people, you are not working with these people — everyone at your table has a different problem statement and builds their own pitch page." Watch for accidental collaboration during circulation (people at the same table comparing notes on the same scenario) — it shouldn't happen if assignment was done correctly, since nobody at a table shares a scenario with a tablemate, but flag it fast if you see it.</p>
+</div>
+
+<h3>Time blocks</h3>
+<div class="table-scroll">
+<table class="timing-table">
+  <tr><th>Block</th><th>Duration</th><th>What's happening</th></tr>
+  <tr><td>Read + research kickoff</td><td>20 min</td><td>Each learner reads their own assigned problem statement, confirms they understand the sources described, and starts listing what they don't yet know (this is intentional — the problem statements name zero tools on purpose).</td></tr>
+  <tr><td>Individual research + design</td><td>75 min</td><td>Each learner researches real Azure/Databricks services on their own and sketches an architecture: which service handles which source, how data flows through medallion layers, what governance looks like, what the fact table is.</td></tr>
+  <tr><td>Individual build of the pitch page</td><td>25 min</td><td>Each learner fills in their own copy of <code>Day8_Pitch_Template.html</code> with their story, problems, chosen platform, architecture diagram, governance plan, and fact table spotlight.</td></tr>
+  <tr><td>Pitch block (whole class, individual)</td><td>92 min</td><td>All 23 learners present one after another to the entire room — 3 min to present + up to 1 min of facilitator-led Q&amp;A = 4 min/person. 23 &times; 4 = 92 min. This is not small-group pitching; every learner presents to everyone.</td></tr>
+  <tr><td>Wrap-up / debrief</td><td>10 min</td><td>Cross-learner debrief using the question bank in Section 3.</td></tr>
+</table>
+</div>
+<p><strong>Total: 20 + 75 + 25 + 92 + 10 = 220 minutes (~3 hours 40 minutes)</strong> at the full 3-min-pitch + 1-min-Q&amp;A format for all 23 learners.</p>
+<p><strong>Compression option, if you're time-constrained:</strong> cap each pitch at 2 minutes with no live Q&amp;A — instead, one randomly-picked audience member writes a single note/question on a card and hands it to the presenter afterward instead of asking it live. That drops the pitch block to roughly 50 min, bringing the total to <strong>~180 minutes (~3 hours)</strong>: 20 + 75 + 25 + 50 + 10 = 180. Don't silently shrink the pitch block without deciding on purpose — the defend-under-questions part (live or written) is the actual assessment moment of this activity, not a wrap-up formality. If you compress, make sure the written-note mechanism still forces every presenter to produce a real answer to a real question, even if it isn't spoken aloud to the room.</p>
+
+<h3>Seating &amp; problem-statement assignment</h3>
+<p>Roster is 23 learners across 6 tables: five tables of 4, one table of 3. Every problem statement (A/B/C/D) should show up multiple times across the room — that's expected and useful, since it means several people independently tackle the same scenario, which is genuinely valuable for the debrief comparison in Section 3. The only hard constraint is: <strong>nobody at the same table gets the same problem statement as a tablemate.</strong></p>
+
+<div class="card decision">
+  <h3>The no-math assignment scheme</h3>
+  <p>Go around your seating chart table by table. Within each table, label the seats in order 1, 2, 3, 4 (looping back to 1 if a table somehow has more than 4). Assign problem statements by seat number, the same way at every table:</p>
+  <ul>
+    <li>Seat 1 = Problem Statement A (QuickCart Logistics)</li>
+    <li>Seat 2 = Problem Statement B (MedTrack Clinics)</li>
+    <li>Seat 3 = Problem Statement C (StreamPlay Media)</li>
+    <li>Seat 4 = Problem Statement D (FreshMart Grocery)</li>
+  </ul>
+  <p>At the one table of 3, just stop at seat 3 — that table gets A, B, C and skips D (or pick whichever letter you'd rather that table skip; it doesn't matter which, since coverage stays roughly even either way). No division, no remainder-counting, no live math — just walk the room and hand out A-B-C-D, A-B-C-D... in order, table by table.</p>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Table</th><th>Seats</th><th>Assignment</th></tr>
+    <tr><td>Table 1</td><td>4</td><td>A, B, C, D</td></tr>
+    <tr><td>Table 2</td><td>4</td><td>A, B, C, D</td></tr>
+    <tr><td>Table 3</td><td>4</td><td>A, B, C, D</td></tr>
+    <tr><td>Table 4</td><td>4</td><td>A, B, C, D</td></tr>
+    <tr><td>Table 5</td><td>4</td><td>A, B, C, D</td></tr>
+    <tr><td>Table 6</td><td>3</td><td>A, B, C (D skipped at this table)</td></tr>
+  </table>
+  </div>
+  <p>Result: A &times; 6, B &times; 6, C &times; 6, D &times; 5 = 23 learners total, every table internally scenario-unique, and all four scenarios still get recurring, independent coverage across the room for the debrief. You don't need to rebalance across cohorts or track which letter got dropped last time unless you want to — dropping the same letter (D) every run is fine, since the point is roughly-even coverage, not perfectly-even coverage.</p>
+</div>
+
+<h3>The one hard rule during circulation</h3>
+<div class="card warning">
+  <h3>Never name the service. Nudge toward the research category.</h3>
+  <p>The entire point of this activity is that the problem statements name zero tools — learners have to figure out on their own what category of service they even need before they can go look one up. If a learner is stuck, resist the pull to just tell them "use Autoloader" or "use Lakeflow Connect." Instead, nudge toward the <em>question</em> that would lead them there: "what would you look for if you needed to capture changes from a database continuously, without querying it directly yourself?" or "if this file lands once a night and this other thing is happening every few seconds, should those two be handled by the same mechanism?" Let them do the searching and the naming. If a learner pitches a technically wrong or suboptimal service, that's fine — the Q&amp;A is where that surfaces and gets defended or revised, not something to correct mid-research.</p>
+</div>
+
+<h2><span class="section-num">2</span>Per-Scenario Evaluation Guidance</h2>
+<p class="lede">One subsection per problem statement. Each lists the real tension baked into that scenario and what separates a strong pitch from a shallow one on that specific point — not a checklist of "correct" services. A learner can name a different service than another learner solving the same tension and both be strong, as long as the reasoning holds up under a follow-up question. Because the same problem statement now goes to several different learners around the room, you'll get to see this play out directly — use it.</p>
+
+<div class="card scenario">
+  <h3><span class="pill scenario-a">Scenario A</span> QuickCart Logistics — food delivery</h3>
+  <p><strong>Sources:</strong> a continuously-updated transactional orders/trip_events database, live high-frequency rider GPS pings, and a nightly merchant-catalog file drop.</p>
+  <p><strong>Real tension:</strong> the GPS pings (and arguably the orders/trip_events DB too) need near-real-time capture, but it would be easy — and wrong — for a learner to give all three sources the exact same batch-file treatment as the merchant catalog.</p>
+  <div class="strong-shallow">
+    <div class="col strong-col">
+      <div class="tag">Strong pitch</div>
+      <ul>
+        <li>Explicitly separates the GPS stream's ingestion needs from the orders DB's needs from the merchant file's needs — does not lump all three into one "just run Autoloader on everything" answer.</li>
+        <li>Can explain, in their own words, what their chosen mechanism for continuous DB capture actually does differently from a plain nightly export (e.g. what it's watching, how it knows something changed).</li>
+        <li>Treats the GPS stream as a genuinely different ingestion pattern from a file drop, even if they land on a specific service you wouldn't have picked.</li>
+      </ul>
+    </div>
+    <div class="col shallow-col">
+      <div class="tag">Shallow pitch</div>
+      <ul>
+        <li>One ingestion box in the diagram feeding all three sources, with no distinction drawn between them.</li>
+        <li>Says "we'll use CDC" or names a continuous-capture service but can't say what it's actually watching or how it differs from re-exporting the whole table nightly.</li>
+        <li>Treats "near-real-time" as a label to put on the diagram rather than a design decision that changes which service is appropriate.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card scenario">
+  <h3><span class="pill scenario-b">Scenario B</span> MedTrack Clinics — healthcare</h3>
+  <p><strong>Sources:</strong> a transactional patient_visits/diagnoses database, nightly lab-result files from an external partner, and a live insurance-claims REST API that must be pulled on a schedule (not pushed).</p>
+  <p><strong>Real tension:</strong> this is regulated PII/PHI data with no existing access-control model described, plus a live pull-based API integration pattern none of the other three scenarios have.</p>
+  <div class="strong-shallow">
+    <div class="col strong-col">
+      <div class="tag">Strong pitch</div>
+      <ul>
+        <li>Treats governance as load-bearing — a dedicated part of the pitch with real substance, not a single footnote sentence at the end.</li>
+        <li>Names a real access-control mechanism and states specifically what it restricts and for whom (e.g. who can see raw diagnoses vs. an aggregated view).</li>
+        <li>Has an explicit, concrete plan for pulling from a REST API on a schedule — recognizes this is not a file-drop problem, so "Autoloader" alone is not an answer to this source.</li>
+      </ul>
+    </div>
+    <div class="col shallow-col">
+      <div class="tag">Shallow pitch</div>
+      <ul>
+        <li>One generic line like "we'll secure the data" with no named mechanism or explanation of what it actually restricts.</li>
+        <li>Applies the same ingestion box/service to the REST API as to the lab-result files, without addressing that pulling from an API on a schedule is a different problem than watching a folder for new files.</li>
+        <li>PII/PHI mentioned once in the story section and never referenced again in the architecture or governance sections.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card scenario">
+  <h3><span class="pill scenario-c">Scenario C</span> StreamPlay Media — streaming</h3>
+  <p><strong>Sources:</strong> a transactional subscriber/billing database, a genuinely very-high-volume clickstream event stream, and catalog-metadata files from a CMS.</p>
+  <p><strong>Real tension:</strong> the clickstream's raw volume will break a naive "just query it directly" or "treat it like any other continuously-updated source" approach.</p>
+  <div class="strong-shallow">
+    <div class="col strong-col">
+      <div class="tag">Strong pitch</div>
+      <ul>
+        <li>Says something concrete about handling high event volume — an aggregation strategy, why scanning the raw stream directly doesn't hold up at this scale, or explicit streaming-vs-micro-batch reasoning.</li>
+        <li>Treats the clickstream as a distinct problem from the subscriber DB's change-capture needs, rather than folding it into the same "continuously updated source" bucket.</li>
+        <li>Can explain what happens to clickstream volume as it moves through Bronze/Silver/Gold — where does it get reduced, and why there.</li>
+      </ul>
+    </div>
+    <div class="col shallow-col">
+      <div class="tag">Shallow pitch</div>
+      <ul>
+        <li>Draws the clickstream as just another CDC-style source feeding the same pipeline as the billing DB, with no acknowledgment of the volume difference.</li>
+        <li>Names a streaming-capable service because it's the "obvious" choice for a stream, but can't explain what would actually go wrong if they tried to process it in the same way as the billing DB.</li>
+        <li>No mention of aggregation, windowing, or volume reduction anywhere in the pitch.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card scenario">
+  <h3><span class="pill scenario-d">Scenario D</span> FreshMart Grocery — grocery</h3>
+  <p><strong>Sources:</strong> a transactional POS database, a steady IoT sensor stream (shelf-weight, fridge temperature), and supplier invoices dropped as a genuinely messy mix of file formats — some barely machine-readable — arriving irregularly.</p>
+  <p><strong>Real tension:</strong> two different "hard" sources in one scenario — a sensor stream and messy, irregular, semi-structured files — and it's easy for a learner to only really solve one of them.</p>
+  <div class="strong-shallow">
+    <div class="col strong-col">
+      <div class="tag">Strong pitch</div>
+      <ul>
+        <li>Has a real, specific plan for the messy invoices — names how schema drift or inconsistent formats get handled (e.g. quarantine for unparseable rows, a defined process for reconciling format differences), not just "we'll clean it in Silver" with no detail behind it.</li>
+        <li>Treats the IoT sensor stream as ingestion-distinct from the POS DB, addressing that a continuous sensor feed and a transactional database don't need the same capture mechanism.</li>
+        <li>Acknowledges the invoices arrive irregularly (not on a fixed nightly schedule) and that this affects how ingestion should be triggered.</li>
+      </ul>
+    </div>
+    <div class="col shallow-col">
+      <div class="tag">Shallow pitch</div>
+      <ul>
+        <li>"We'll clean it in Silver" as the entire plan for the messy invoices, with no mention of what specifically is messy about them or how it gets detected and handled.</li>
+        <li>POS DB and IoT sensor stream drawn as the same ingestion box with no distinction.</li>
+        <li>Treats "irregular arrival" as identical to "nightly batch" without noticing the difference matters for how ingestion gets triggered.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h2><span class="section-num">3</span>Cross-Learner Debrief Question Bank</h2>
+<p class="lede">Ask these after all 23 learners have pitched. These are designed to surface patterns <em>across</em> individuals that no single learner's pitch would reveal on its own. Because several different learners were independently assigned the same problem statement, a number of these questions specifically use that overlap — lean on it, it's the most distinctive teaching opportunity this year's individual format creates.</p>
+<ul class="debrief-list">
+  <li><span class="q">Two or three people each got Problem Statement A (QuickCart Logistics) independently.</span> Did they land on similar ingestion choices for the real-time GPS-ping source, or did their approaches diverge? What does that tell us about whether there's one right answer here — did they converge because there's a genuinely "correct" pattern for that kind of source, or diverge because the problem is more open than it looks?</li>
+  <li><span class="q">Do the same comparison for everyone who got Problem Statement B (MedTrack Clinics).</span> Did every one of them independently treat governance as load-bearing, or did some of them only get there because a follow-up question pushed them? If PHI-handling converged across independent pitches but the REST-API pull pattern diverged, what does that split tell us about which parts of this problem are more constrained than others?</li>
+  <li><span class="q">Every learner had one continuously-updated transactional database somewhere in their scenario.</span> Did they all choose the same kind of ingestion approach for it, or did some effectively treat it like a batch file source? If some did, is that a mistake or a defensible simplification given their scenario's actual latency needs — and did they say so out loud, or was it just an oversight?</li>
+  <li><span class="q">Compare everyone who pitched Problem Statement B (regulated PII/PHI) against everyone else in the room.</span> Was governance genuinely central to every B pitch, or was it an afterthought everywhere except B? What does it say about a pipeline design if governance only gets real attention when the problem statement forces it?</li>
+  <li><span class="q">Compare how the learners who got Problem Statement C (huge clickstream volume) and the learners who got Problem Statement A (real-time GPS pings) each reasoned about their high-frequency source.</span> Did they land on similar approaches or different ones — and can the room articulate why a genuine difference between the two sources (aggregate-and-analyze volume vs. track-individual-entity-location) might justify different answers, rather than assuming one of them must be wrong?</li>
+  <li><span class="q">Compare every Problem Statement D pitch's plan for the messy supplier invoices against how this course's own Bronze layer handles messy real data</span> (schema drift, quarantine, the DQ patterns from Day 4/5). Did these learners independently reinvent something close to what we already built, or did they solve it differently from each other and from us — and either way, does each plan actually hold up against a genuinely inconsistent file format?</li>
+  <li><span class="q">Ask the room directly:</span> for the source in your own scenario that felt "obviously batch" or "obviously streaming," how much of that was based on something the problem statement actually said, versus a guess based on what sounded technically impressive to research?</li>
+  <li><span class="q">Pick two learners who named different services for a similar-sounding problem</span> — whether or not they had the same scenario letter (e.g. two different continuous-capture mechanisms, or two different governance tools). Ask each to defend their choice to the other, live, for two minutes. Is there actually a wrong answer here, or are both defensible given slightly different scenario details?</li>
+  <li><span class="q">Ask everyone:</span> what's the one service or feature you found while researching that you considered and deliberately did NOT use? Why not? (This surfaces whether people actually explored alternatives or just went with the first search result.)</li>
+  <li><span class="q">Ask the room to self-assess:</span> which part of your own pitch would fall apart fastest under a skeptical follow-up question, and why didn't you fix it before presenting?</li>
+</ul>
+
+<h2><span class="section-num">4</span>Explicit Callback Note</h2>
+<div class="callback-box">
+  <div class="label">Worth saying out loud during the debrief</div>
+  <p>This activity is deliberately the same shape as how GlobalMart's own problem statement and architecture were pitched to this cohort on Day 1 (<code>Day1_1_ILT1_GlobalMart_Problem_Statement.ipynb</code> / the accompanying <code>globalmart_problem_statement_architecture (1).html</code> poster). On Day 1, learners were handed a business situation with real problems and watched an architecture get proposed, justified, and defended in that same poster format — sources, ingestion choices, medallion layers, governance, a spotlighted fact table, one closing sentence. Day 8 hands that same structure back to the learners themselves, cold, on a brand-new domain, with none of the tool names filled in for them this time. It's worth naming this explicitly in the debrief: "you just did to your own problem statement what we did to you on Day 1" — it reframes the whole 13-day arc as something they can now reproduce independently, not just follow.</p>
+</div>
+
+<footer>
+  Day 8 — Design Your Own Architecture — Facilitator Guide — GlobalMart Databricks Bootcamp, Chennai 2026 cohort. Internal use only.
+</footer>
+
+</div>

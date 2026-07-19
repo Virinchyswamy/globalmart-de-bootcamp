@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>REPLACE ME — [Company Name] — Problem Statement &amp; Architecture</title>
+<style>
+  /*
+    BLANK PITCH TEMPLATE — Day 8 "Design Your Own Architecture"
+    ================================================================
+    This is a structural copy of the same poster format used to pitch
+    GlobalMart's own architecture on Day 1 (globalmart_problem_statement_
+    architecture (1).html). Every visual class below is real and already
+    styled — you only need to replace the placeholder TEXT (anything
+    marked REPLACE ME) and the number of cards/rows where noted. Do not
+    invent new CSS classes; reuse what's here the same way every other
+    section of this course does.
+  */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 32px;
+  }
+  .canvas { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; color: #1f3864; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  h2 {
+    font-size: 17px; color: #1f3864; margin: 34px 0 12px;
+    border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;
+  }
+  p { font-size: 13.5px; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+
+  /* ── story box ── */
+  .story-box {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* ── problems grid (adjust grid-template-columns to match how many cards you actually use) ── */
+  .problems-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .problem-card {
+    background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+    padding: 12px 14px; font-size: 12px; color: #7f1d1d; line-height: 1.5;
+  }
+  .problem-card .num {
+    display: inline-block; width: 20px; height: 20px; border-radius: 50%;
+    background: #dc2626; color: #fff; font-size: 11px; font-weight: 700;
+    text-align: center; line-height: 20px; margin-bottom: 6px;
+  }
+  .problem-card b { color: #450a0a; }
+  .trust-line {
+    margin-top: 12px; font-size: 13px; font-weight: 600; color: #7f1d1d;
+    background: #fff1f2; border: 1px dashed #fca5a5; border-radius: 8px;
+    padding: 10px 14px;
+  }
+
+  /* ── why this platform: before/after ── */
+  .before-after { display: flex; gap: 16px; }
+  .ba-card { flex: 1; border-radius: 10px; padding: 16px 18px; }
+  .before { background: #f3f4f6; border: 1px solid #d1d5db; }
+  .after { background: #ecfdf5; border: 1px solid #a7f3d0; }
+  .ba-card .tag {
+    display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .04em; padding: 2px 8px; border-radius: 4px; color: #fff; margin-bottom: 10px;
+  }
+  .before .tag { background: #6b7280; }
+  .after .tag { background: #047857; }
+  .ba-card ul { margin-left: 18px; font-size: 12.5px; line-height: 1.8; color: #374151; }
+
+  /* ── architecture diagram — plain labeled boxes + arrows, no SVG editing required ── */
+  .icon-diagram-wrap {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 32px 28px; margin-top: 10px; overflow-x: auto;
+  }
+  .icon-flow { display: flex; align-items: center; gap: 16px; min-width: 1120px; }
+  .icon-flow-col { display: flex; flex-direction: column; gap: 26px; justify-content: center; }
+  .source-row { display: flex; align-items: center; gap: 10px; }
+  .icon-node {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    width: 110px; text-align: center;
+  }
+  .icon-glyph {
+    font-size: 26px; line-height: 1; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px;
+  }
+  .icon-node .icon-label { font-size: 11px; color: #1f2937; font-weight: 600; line-height: 1.3; }
+  .icon-node .icon-sub { font-size: 9px; color: #6b7280; line-height: 1.3; }
+  .icon-arrow { color: #9ca3af; font-size: 20px; flex-shrink: 0; }
+  .icon-arrow-lg { color: #9ca3af; font-size: 28px; flex-shrink: 0; }
+
+  .platform-box {
+    border: 2px solid #1f2937; border-radius: 16px; padding: 26px 28px 18px; position: relative;
+  }
+  .platform-label {
+    position: absolute; top: -11px; left: 20px; background: #fff; padding: 0 8px;
+    font-size: 11px; font-weight: 700; color: #1f2937; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .platform-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px 30px;
+  }
+
+  .diagram-note {
+    margin-top: 16px; font-size: 11.5px; color: #6b7280; font-style: italic;
+    border-top: 1px dashed #d1d5db; padding-top: 10px;
+  }
+  .fact-callout {
+    margin-top: 14px; background: #1f3864; color: #fff; border-radius: 8px;
+    padding: 12px 16px; font-size: 12.5px; line-height: 1.6;
+  }
+  .fact-callout b { color: #fde68a; }
+
+  /* ── governance callout ── */
+  .governance-box {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+    padding: 16px 20px;
+  }
+  .governance-box h4 { color: #92400e; font-size: 13.5px; margin-bottom: 8px; }
+  .governance-box p, .governance-box li { font-size: 13px; color: #78350f; }
+  .governance-box ul { margin-left: 18px; }
+
+  /* ── fact table spotlight ── */
+  .spotlight {
+    background: #1f3864; color: #fff; border-radius: 12px; padding: 22px 26px; margin-top: 6px;
+  }
+  .spotlight h3 { font-size: 16px; margin-bottom: 10px; color: #fde68a; }
+  .spotlight-grid { display: flex; gap: 20px; }
+  .spotlight-col { flex: 1; font-size: 12.5px; line-height: 1.7; color: #e5e7eb; }
+  .spotlight-col b { color: #fff; }
+  .spotlight-col ul { margin-left: 16px; }
+  .spotlight-note {
+    margin-top: 14px; font-size: 12.5px; line-height: 1.6; color: #fde68a;
+    background: rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 14px;
+  }
+
+  .legend {
+    margin-top: 26px; font-size: 11.5px; color:#6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>REPLACE ME — [Company Name] — Problem Statement &amp; Architecture</h1>
+  <div class="subtitle">REPLACE ME — e.g. "[Your Name] &nbsp;|&nbsp; Problem Statement [A/B/C/D] &nbsp;|&nbsp; Day 8 Architecture Pitch"</div>
+  <p style="font-size:11.5px; color:#9ca3af; margin:-18px 0 20px;">This is your own individual design — even if you're sitting at a table with others, this page is not a shared/group project.</p>
+
+  <!-- ───────────── THE STORY ───────────── -->
+  <h2>1. The Story</h2>
+  <div class="story-box">
+    <p>REPLACE ME — retell the company's situation from your problem statement in your own words. 2-3 sentences: what the company does, how it grew, why the data situation became a problem.</p>
+  </div>
+
+  <!-- ───────────── THE PROBLEMS ───────────── -->
+  <h2>2. The Problems</h2>
+  <!-- Use as many .problem-card divs as your problem statement actually has -->
+  <div class="problems-grid">
+    <div class="problem-card"><span class="num">1</span><br><b>REPLACE ME — problem name</b><br>REPLACE ME — one line describing it, in your own words.</div>
+    <div class="problem-card"><span class="num">2</span><br><b>REPLACE ME — problem name</b><br>REPLACE ME</div>
+    <div class="problem-card"><span class="num">3</span><br><b>REPLACE ME — problem name</b><br>REPLACE ME</div>
+    <div class="problem-card"><span class="num">4</span><br><b>REPLACE ME — problem name</b><br>REPLACE ME</div>
+  </div>
+  <div class="trust-line">REPLACE ME — one sentence on what these problems cost the business today (a decision, a number, trust).</div>
+
+  <!-- ───────────── WHY THIS PLATFORM ───────────── -->
+  <h2>3. Why This Platform?</h2>
+  <p>REPLACE ME — one sentence naming the platform(s)/services you researched and chose, and why they fit better than the alternatives you considered.</p>
+  <div class="before-after">
+    <div class="ba-card before">
+      <span class="tag">Before</span>
+      <p style="margin-bottom:8px;">REPLACE ME — how the company handles this data today, without your proposed platform.</p>
+      <ul>
+        <li>REPLACE ME</li>
+        <li>REPLACE ME</li>
+        <li>REPLACE ME</li>
+      </ul>
+    </div>
+    <div class="ba-card after">
+      <span class="tag">After</span>
+      <p style="margin-bottom:8px;">REPLACE ME — what your chosen platform/services actually do for them, one line per capability.</p>
+      <ul>
+        <li>Ingestion — REPLACE ME (name the real service you researched)</li>
+        <li>Storage &amp; transformation — REPLACE ME</li>
+        <li>Orchestration — REPLACE ME</li>
+        <li>Governance — REPLACE ME</li>
+        <li>Serving / reporting — REPLACE ME</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ───────────── ARCHITECTURE ───────────── -->
+  <h2>4. The Architecture — What We're Proposing</h2>
+  <p>REPLACE ME — one sentence orienting the reader to the diagram below: how many sources, what kind of data each one produces.</p>
+
+  <div class="icon-diagram-wrap">
+    <div class="icon-flow">
+
+      <!-- One .source-row per data source in your problem statement. Copy/paste
+           this block, change the glyph/labels, add or remove rows as needed. -->
+      <div class="icon-flow-col">
+        <div class="source-row">
+          <div class="icon-node">
+            <div class="icon-glyph">🗄️</div>
+            <div class="icon-label">REPLACE ME — Source 1 name</div>
+            <div class="icon-sub">REPLACE ME — what data it holds</div>
+          </div>
+          <div class="icon-arrow">&#8594;</div>
+          <div class="icon-node">
+            <div class="icon-glyph">🔧</div>
+            <div class="icon-label">REPLACE ME — ingestion service you chose</div>
+            <div class="icon-sub">REPLACE ME — one word: why (e.g. "CDC", "streaming", "batch files")</div>
+          </div>
+        </div>
+
+        <div class="source-row">
+          <div class="icon-node">
+            <div class="icon-glyph">📁</div>
+            <div class="icon-label">REPLACE ME — Source 2 name</div>
+            <div class="icon-sub">REPLACE ME — what data it holds</div>
+          </div>
+          <div class="icon-arrow">&#8594;</div>
+          <div class="icon-node">
+            <div class="icon-glyph">🔧</div>
+            <div class="icon-label">REPLACE ME — ingestion service you chose</div>
+            <div class="icon-sub">REPLACE ME</div>
+          </div>
+        </div>
+
+        <!-- add a third .source-row here if your problem statement has a third source -->
+      </div>
+
+      <div class="icon-arrow-lg">&#8594;</div>
+
+      <!-- ───── platform box — the compute/storage/orchestration layer you chose ───── -->
+      <div class="platform-box">
+        <span class="platform-label">REPLACE ME — platform name</span>
+        <div class="platform-grid">
+          <div class="icon-node">
+            <div class="icon-glyph">⚙️</div>
+            <div class="icon-label">REPLACE ME — orchestration service</div>
+          </div>
+          <div class="icon-node">
+            <div class="icon-glyph">🥉</div>
+            <div class="icon-label">Bronze</div>
+          </div>
+          <div class="icon-node">
+            <div class="icon-glyph">🥈</div>
+            <div class="icon-label">Silver</div>
+          </div>
+          <div class="icon-node">
+            <div class="icon-glyph">🥇</div>
+            <div class="icon-label">Gold</div>
+          </div>
+          <div class="icon-node">
+            <div class="icon-glyph">🔐</div>
+            <div class="icon-label">REPLACE ME — governance service</div>
+          </div>
+          <div class="icon-node">
+            <div class="icon-glyph">📊</div>
+            <div class="icon-label">REPLACE ME — serving/BI service</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="icon-arrow-lg">&#8594;</div>
+
+      <!-- ───── output ───── -->
+      <div class="icon-flow-col">
+        <div class="icon-node" style="width:130px;">
+          <div class="icon-glyph">💡</div>
+          <div class="icon-label">REPLACE ME — [Your Fact Table] via [serving tool]</div>
+        </div>
+      </div>
+
+      <div class="icon-arrow-lg">&#8594;</div>
+
+      <div class="icon-flow-col">
+        <div class="icon-node" style="width:130px;">
+          <div class="icon-glyph">🧑‍💼</div>
+          <div class="icon-label">REPLACE ME — who actually consumes this (a role, from your problem statement)</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="diagram-note">REPLACE ME (optional) — name any service you researched but deliberately did NOT choose, and one line on why.</div>
+  </div>
+
+  <div class="fact-callout">
+    <b>REPLACE ME — [Your Fact Table]</b> is the deliverable this pipeline exists to produce. REPLACE ME — one or two sentences on what question it answers and why everything upstream exists to make it correct and current.
+  </div>
+
+  <!-- ───────────── GOVERNANCE ───────────── -->
+  <h2>5. Governance &amp; Access Control</h2>
+  <div class="governance-box">
+    <h4>REPLACE ME — the one governance/access consideration your pitch must cover</h4>
+    <p>REPLACE ME — who should and shouldn't see this data, and what real feature/service you researched that enforces it (not just "we'll add security later").</p>
+  </div>
+
+  <!-- ───────────── FACT TABLE SPOTLIGHT ───────────── -->
+  <h2>6. [Your Fact Table] — The Business Requirement</h2>
+  <div class="spotlight">
+    <h3>REPLACE ME — why this table is the point of the whole pipeline</h3>
+    <div class="spotlight-grid">
+      <div class="spotlight-col">
+        <b>Grain:</b> REPLACE ME — one row per what?<br><br>
+        <b>Measures:</b>
+        <ul>
+          <li>REPLACE ME</li>
+          <li>REPLACE ME</li>
+        </ul>
+      </div>
+      <div class="spotlight-col">
+        <b>Connects to:</b>
+        <ul>
+          <li>REPLACE ME — dim_?</li>
+          <li>REPLACE ME — dim_?</li>
+          <li>REPLACE ME — dim_?</li>
+        </ul>
+      </div>
+      <div class="spotlight-col">
+        <b>Answers the business question(s):</b>
+        <ul>
+          <li>REPLACE ME — tie back to a business question from your problem statement</li>
+          <li>REPLACE ME</li>
+        </ul>
+      </div>
+    </div>
+    <div class="spotlight-note">REPLACE ME (optional) — any closing note on how this compares to what the company does today.</div>
+  </div>
+
+  <!-- ───────────── CLOSING ───────────── -->
+  <h2>7. Your Architecture, In One Sentence</h2>
+  <p>REPLACE ME — one sentence chaining your whole pipeline together (source → ingestion → medallion layers → output), the same way the roadmap line works in the original GlobalMart poster.</p>
+
+  <div class="legend">
+    REPLACE ME — [Your Name] &nbsp;|&nbsp; Table [X] &nbsp;|&nbsp; Problem Statement [A/B/C/D] &nbsp;|&nbsp; Day 8 — Design Your Own Architecture
+  </div>
+
+</div>
+</body>
+</html>

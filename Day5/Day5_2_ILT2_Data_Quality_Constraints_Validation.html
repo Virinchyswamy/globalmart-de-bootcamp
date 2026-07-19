@@ -137,7 +137,7 @@
     <div style="margin-top:18px;">
       <span class="pill pill-blue">90 minutes</span>
       <span class="pill pill-green">Concept + Worked Examples</span>
-      <span class="pill pill-amber">Catalog: gbmart</span>
+      <span class="pill pill-amber">Catalog: your own (code shows GlobalMart's real run)</span>
     </div>
     <div style="margin-top:22px; color:#475569; font-size:13px;">
       What we'll cover today → The DQ Scan Pattern · Fix vs. Flag vs. Quarantine · Delta Constraints · Quarantine Tables
@@ -325,7 +325,7 @@ Shipped   : June 15, 00:30 IST  -&gt;  stored as June 15
 
   <!-- SLIDE 12: DELTA CONSTRAINTS CODE -->
   <div class="slide slide-content">
-    <h3>Real Example — From the silver.products DQ Rules</h3>
+    <h3>Applying This to silver.products (Illustrative — Not in the Real Notebook Today)</h3>
     <div class="two-col">
       <div>
 <pre><span class="kw">ALTER TABLE</span> <span class="tbl">gbmart.silver.products</span>
@@ -337,7 +337,7 @@ Shipped   : June 15, 00:30 IST  -&gt;  stored as June 15
   <span class="kw">CHECK</span> (<span class="col">rating</span> <span class="kw">BETWEEN</span> 0 <span class="kw">AND</span> 5);</pre>
       </div>
       <div>
-        <p style="color:#94a3b8; font-size:14px;">The products DQ scan already checks <code>NULL_PRODUCT_ID</code>, <code>INVALID_PRICE</code>, <code>DISCOUNT_EXCEEDS_PRICE</code>, and <code>INVALID_RATING</code>. These are exactly the rules that belong as table constraints once Silver is stable — turning a scan you have to remember into a guarantee the table enforces on its own.</p>
+        <p style="color:#94a3b8; font-size:14px;">The products DQ scan already checks <code>NULL_PRODUCT_ID</code>, <code>INVALID_PRICE</code>, <code>DISCOUNT_EXCEEDS_PRICE</code>, and <code>INVALID_RATING</code> — real checks, run in the real notebook. These would be good candidates to promote into table constraints once Silver is stable, turning a scan you have to remember into a guarantee the table enforces on its own — <strong style="color:#f59e0b;">but the real <code>silver.products</code> build doesn't add these constraints today</strong>; this slide shows the pattern, not something already running.</p>
         <div class="highlight-box" style="margin-top:12px;">
           <p><strong style="color:#38bdf8;">A constraint is a backstop, not a replacement</strong> for the scan. The scan runs before the write and routes bad rows to quarantine gracefully; a constraint just fails the whole write if violated.</p>
         </div>

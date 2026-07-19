@@ -122,7 +122,7 @@
   <div class="logo">DAY 2 · ILT 1 — CDC Concepts: WAL &amp; Logical Replication</div>
   <div class="controls">
     <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 16</span>
+    <span class="slide-counter" id="counter">1 / 22</span>
     <button onclick="changeSlide(1)">Next &#8594;</button>
   </div>
 </nav>
@@ -135,7 +135,7 @@
     <p class="subtitle">WAL and Logical Replication — how change data capture actually works under the hood, using Supabase PostgreSQL</p>
     <div class="badge">Day 2 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; Trainer-Led Session</div>
     <div style="margin-top:36px; color:#475569; font-size:13px;">
-      What we'll cover today → Why CDC · PostgreSQL WAL · Logical Replication · CDC Architecture · Live JDBC Demo · Prep for HOL 2
+      What we'll cover today → Ingestion Patterns · Why CDC · PostgreSQL WAL · Logical Replication · CDC Architecture · Live JDBC Demo · Prep for HOL 2
     </div>
   </div>
 
@@ -144,6 +144,14 @@
     <div class="section-tag">Overview</div>
     <h2>What We're Covering Today</h2>
     <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>Ingestion Patterns</h4>
+        <ul>
+          <li>What "ingestion" actually means</li>
+          <li>Full Load vs Incremental Load</li>
+          <li>Common ingestion issues to expect</li>
+        </ul>
+      </div>
       <div class="card">
         <h4>Why CDC?</h4>
         <ul>
@@ -170,12 +178,61 @@
     </div>
   </div>
 
-  <!-- SLIDE 3: THE PROBLEM -->
+  <!-- SLIDE 3: SECTION - INTRO TO INGESTION PATTERNS -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 1 · Foundations</div>
+    <h2>Intro to Ingestion Patterns</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
+      Before we go deep on CDC, let's zoom out — what does "ingestion" even mean, and what choices does every pipeline have to make?
+    </p>
+  </div>
+
+  <!-- SLIDE 4: WHAT IS INGESTION -->
   <div class="slide slide-content">
-    <h3>Recall Incremental Load — It Has a Blind Spot</h3>
+    <h3>What Is Ingestion?</h3>
     <div class="two-col">
       <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">From Day 1: <strong style="color:#e2e8f0;">Incremental Load</strong> reads only new rows using a watermark (a date filter). It works great for <strong>inserts</strong>. But watch what happens with an update:</p>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;"><strong style="color:#e2e8f0;">Ingestion</strong> is the act of bringing data from a source system into the lakehouse — before any cleaning, joining, or modeling happens. It's the very first hop: source → Bronze.</p>
+        <div class="highlight-box">
+          <p>Every CSV you've read with <code>spark.read.csv(...)</code> since Day 1 was already ingestion — just the simplest possible form: a one-time full file drop.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Every ingestion pattern makes 2 decisions</h4>
+          <ol class="order-list">
+            <li><strong>How much</strong> data to bring each run — <strong>Full</strong> or <strong>Incremental</strong>?</li>
+            <li><strong>How continuously</strong> — <strong>Batch</strong> (scheduled runs) or <strong>Streaming</strong> (continuous, row-by-row)?</li>
+          </ol>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p>Get these two decisions right per source, and the rest of the pipeline (Silver, Gold) barely has to think about where the data came from.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: FULL VS INCREMENTAL LOAD -->
+  <div class="slide slide-content">
+    <h3>Decision 1 — Full Load vs Incremental Load</h3>
+    <table class="sql-table">
+      <tr><th></th><th>Full Load</th><th>Incremental Load</th></tr>
+      <tr><td><strong>What it reads</strong></td><td>The entire source, every run</td><td>Only new/changed rows since last run</td></tr>
+      <tr><td><strong>How</strong></td><td>Overwrite the whole table</td><td>A watermark filter, e.g. <code>WHERE created_at &gt; last_run</code></td></tr>
+      <tr><td><strong>Cost</strong></td><td>Wasteful at scale, but simple &amp; safe</td><td>Cheap and fast, but only as good as the filter</td></tr>
+      <tr><td><strong>Good for</strong></td><td>Small reference tables (<code>payment_methods</code>)</td><td>Tables that only ever grow (new orders, new signups)</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">A quick, honest preview:</strong> a plain incremental watermark only catches new <em>inserts</em>. When a source needs every <strong>UPDATE</strong> and <strong>DELETE</strong> captured too, there's a stronger pattern called <strong>CDC (Change Data Capture)</strong> — that's the rest of today's session.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: THE PROBLEM (moved) -->
+  <div class="slide slide-content">
+    <h3>Incremental Load's Blind Spot, in Practice</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">As we just saw: <strong style="color:#e2e8f0;">Incremental Load</strong> reads only new rows using a watermark (a date filter). It works great for <strong>inserts</strong>. But watch what happens with an update:</p>
 <pre>Day 1:  CustomerID=C001, email=raj@old.com, city=Mumbai   <span class="cm">← loaded to Bronze</span>
 Day 5:  CustomerID=C001, email=raj@new.com, city=Delhi    <span class="cm">← customer UPDATED</span></pre>
       </div>
@@ -191,7 +248,66 @@ Day 5:  CustomerID=C001, email=raj@new.com, city=Delhi    <span class="cm">← c
     </div>
   </div>
 
-  <!-- SLIDE 4: 3 CHANGE TYPES -->
+  <!-- SLIDE 7: BATCH VS STREAMING -->
+  <div class="slide slide-content">
+    <h3>Decision 2 — Batch Focus, Streaming Parked</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>Batch</h4>
+          <p>Runs on a schedule or a trigger — read a chunk of data, process it, stop. Simple to reason about, easy to re-run, easy to debug.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;">
+          <p><strong style="color:#22c55e;">Every ingestion pattern we build hands-on in this bootcamp is batch</strong> — including today's Lakeflow Connect pipeline and Day 3/4's Autoloader.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Streaming</h4>
+          <p>Processes each event continuously, as it happens — sub-second latency, but far more operational complexity (always-on compute, checkpointing, backpressure).</p>
+        </div>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p>We'll <strong style="color:#38bdf8;">mention it again</strong> when it's relevant (Structured Streaming touches Week 3's ops/governance material) — but we won't build a streaming pipeline in this course. Parked, not ignored.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: COMMON INGESTION ISSUES -->
+  <div class="slide slide-content">
+    <h3>Common Ingestion Issues You'll Hit in the Real World</h3>
+    <table class="sql-table">
+      <tr><th>Issue</th><th>What Happens</th></tr>
+      <tr><td><strong>Schema evolution</strong></td><td>Source adds, removes, or renames a column mid-course</td></tr>
+      <tr><td><strong>Duplicates</strong></td><td>The same row lands twice — a retried job, an overlapping incremental window</td></tr>
+      <tr><td><strong>Late-arriving data</strong></td><td>A row logically "for yesterday" only shows up in today's batch</td></tr>
+      <tr><td><strong>Format mismatches</strong></td><td>CSV vs JSON vs Parquet, inconsistent date formats, encoding issues</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">This is exactly why Bronze stays raw and untouched</strong> — these issues get handled deliberately in Silver, not silently patched over during ingestion. Full preview of that cleanup logic is Day 5.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: BRIDGE - TWO SOURCES -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Bridge</div>
+    <h2>GlobalMart's Two Ingestion Sources</h2>
+    <div class="two-col" style="margin-top:28px; max-width:900px; text-align:left;">
+      <div class="card">
+        <h4>Postgres (Supabase)</h4>
+        <p>Live transactional database — <code>orders</code>, <code>order_items</code>. Rows are inserted, updated, and deleted continuously. Needs a <strong>database-aware</strong> approach.</p>
+        <div class="highlight-box" style="margin-top:10px;"><p style="font-size:13px;">→ CDC / Lakeflow Connect — the rest of today, plus ILT 2</p></div>
+      </div>
+      <div class="card">
+        <h4>ADLS (File Drops)</h4>
+        <p><code>customers</code>, <code>products</code>, <code>addresses</code>, <code>payments</code>, and more — files land in a folder periodically. Needs a <strong>file-aware</strong> approach.</p>
+        <div class="highlight-box" style="margin-top:10px;"><p style="font-size:13px;">→ Autoloader — continues Day 3/4</p></div>
+      </div>
+    </div>
+    <p style="color:#64748b; max-width:600px; margin-top:24px; font-size:14px;">Same goal (get data into Bronze), two different tools because the sources behave completely differently. Today's deep dive is the Postgres half.</p>
+  </div>
+
+  <!-- SLIDE 10: 3 CHANGE TYPES -->
   <div class="slide slide-content">
     <h3>The 3 Change Types CDC Captures</h3>
     <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">Any change to a database row is one of exactly three operations:</p>
@@ -206,7 +322,7 @@ Day 5:  CustomerID=C001, email=raj@new.com, city=Delhi    <span class="cm">← c
     </div>
   </div>
 
-  <!-- SLIDE 5: WHAT IS WAL - ANALOGY -->
+  <!-- SLIDE 11: WHAT IS WAL - ANALOGY -->
   <div class="slide slide-content">
     <h3>What Is WAL? Think "Bank Transaction Journal"</h3>
     <div class="two-col">
@@ -230,7 +346,7 @@ Day 5:  CustomerID=C001, email=raj@new.com, city=Delhi    <span class="cm">← c
     </div>
   </div>
 
-  <!-- SLIDE 6: LOGICAL REPLICATION -->
+  <!-- SLIDE 12: LOGICAL REPLICATION -->
   <div class="slide slide-content">
     <h3>Logical Replication — Making WAL Readable</h3>
     <div class="two-col">
@@ -256,7 +372,7 @@ After decoding:    <span class="str">{"op": "UPDATE", "table": "customers",
     </div>
   </div>
 
-  <!-- SLIDE 7: SECTION - CDC ARCHITECTURE -->
+  <!-- SLIDE 13: SECTION - CDC ARCHITECTURE -->
   <div class="slide slide-section" style="text-align:center; align-items:center;">
     <div class="section-tag">Section 3</div>
     <h2>CDC Architecture for GlobalMart</h2>
@@ -265,7 +381,7 @@ After decoding:    <span class="str">{"op": "UPDATE", "table": "customers",
     </p>
   </div>
 
-  <!-- SLIDE 8: FULL PIPELINE OPTIONS -->
+  <!-- SLIDE 14: FULL PIPELINE OPTIONS -->
   <div class="slide slide-content">
     <h3>Full CDC Pipeline — 3 Ways to Read the WAL Stream</h3>
 <pre>Supabase PostgreSQL
@@ -284,7 +400,7 @@ After decoding:    <span class="str">{"op": "UPDATE", "table": "customers",
     </div>
   </div>
 
-  <!-- SLIDE 9: WHAT GLOBALMART ACTUALLY USES -->
+  <!-- SLIDE 15: WHAT GLOBALMART ACTUALLY USES -->
   <div class="slide slide-content">
     <h3>What GlobalMart Actually Uses</h3>
     <div class="two-col">
@@ -310,7 +426,7 @@ After decoding:    <span class="str">{"op": "UPDATE", "table": "customers",
     </div>
   </div>
 
-  <!-- SLIDE 10: COMPARISON TABLE -->
+  <!-- SLIDE 16: COMPARISON TABLE -->
   <div class="slide slide-content">
     <h3>Comparing the Approaches</h3>
     <table class="sql-table">
@@ -327,7 +443,7 @@ After decoding:    <span class="str">{"op": "UPDATE", "table": "customers",
     </div>
   </div>
 
-  <!-- SLIDE 11: DEMO - JDBC SETUP -->
+  <!-- SLIDE 17: DEMO - JDBC SETUP -->
   <div class="slide slide-demo">
     <h3>Live Demo — Connecting to Supabase via JDBC</h3>
     <div class="demo-label">Setup cell — teaching pattern, not production practice</div>
@@ -356,7 +472,7 @@ After decoding:    <span class="str">{"op": "UPDATE", "table": "customers",
     </div>
   </div>
 
-  <!-- SLIDE 12: DEMO - READING TABLES -->
+  <!-- SLIDE 18: DEMO - READING TABLES -->
   <div class="slide slide-demo">
     <h3>Live Demo — Reading Tables Directly From Supabase</h3>
     <div class="demo-label">No CSV file needed — Spark queries the live database</div>
@@ -385,13 +501,13 @@ After decoding:    <span class="str">{"op": "UPDATE", "table": "customers",
     </div>
   </div>
 
-  <!-- SLIDE 13: DEMO - SIMULATE FULL PIPELINE -->
+  <!-- SLIDE 19: DEMO - SIMULATE FULL PIPELINE -->
   <div class="slide slide-demo">
     <h3>Live Demo — Simulating a Full Ingestion Pipeline by Hand</h3>
     <div class="demo-label">What a managed pipeline does under the hood</div>
-<pre><span class="col">tables_to_ingest</span> = [<span class="str">"customers"</span>, <span class="str">"orders"</span>, <span class="str">"orders_items"</span>, <span class="str">"products"</span>,
-                    <span class="str">"payments"</span>, <span class="str">"addresses"</span>, <span class="str">"returns"</span>, <span class="str">"suppliers"</span>,
-                    <span class="str">"payment_methods"</span>, <span class="str">"shipping_tier"</span>]
+<pre><span class="col">tables_to_ingest</span> = [<span class="str">"customers"</span>, <span class="str">"orders"</span>, <span class="str">"order_items"</span>, <span class="str">"products"</span>,
+                    <span class="str">"payments"</span>, <span class="str">"addresses"</span>, <span class="str">"returns"</span>,
+                    <span class="str">"payment_methods"</span>]
 
 <span class="kw">for</span> table_name <span class="kw">in</span> tables_to_ingest:
     df = <span class="fn">spark</span>.<span class="fn">read</span>.<span class="fn">jdbc</span>(url=<span class="col">jdbc_url</span>, table=table_name, properties=<span class="col">connection_properties</span>)
@@ -401,7 +517,7 @@ After decoding:    <span class="str">{"op": "UPDATE", "table": "customers",
     </div>
   </div>
 
-  <!-- SLIDE 14: PREP FOR HOL 2 -->
+  <!-- SLIDE 20: PREP FOR HOL 2 -->
   <div class="slide slide-content">
     <h3>Prep for HOL 2 — Enabling Logical Replication</h3>
     <div class="two-col">
@@ -436,11 +552,13 @@ automate instead of the query-based mode HOL 1 uses</pre>
     </div>
   </div>
 
-  <!-- SLIDE 15: RECAP -->
+  <!-- SLIDE 21: RECAP -->
   <div class="slide slide-content">
     <h3>Recap</h3>
     <table class="sql-table">
       <tr><th>Topic</th><th>Key Takeaway</th></tr>
+      <tr><td>Ingestion</td><td>Bringing data from a source into Bronze — every pattern picks Full/Incremental and Batch/Streaming</td></tr>
+      <tr><td>Common ingestion issues</td><td>Schema evolution, duplicates, late-arriving data, format mismatches — handled in Silver, not Bronze</td></tr>
       <tr><td>Why CDC</td><td>Incremental load misses UPDATEs and DELETEs — CDC captures all 3</td></tr>
       <tr><td>WAL</td><td>PostgreSQL's change log — the source of all CDC, originally built for crash recovery</td></tr>
       <tr><td>Logical replication</td><td>Decodes WAL into readable INSERT/UPDATE/DELETE events</td></tr>
@@ -450,7 +568,7 @@ automate instead of the query-based mode HOL 1 uses</pre>
     </table>
   </div>
 
-  <!-- SLIDE 16: BRIDGE / CLOSING -->
+  <!-- SLIDE 22: BRIDGE / CLOSING -->
   <div class="slide slide-section" style="text-align:center; align-items:center;">
     <div class="section-tag">What's Next</div>
     <h2>You're Ready for ILT 2</h2>

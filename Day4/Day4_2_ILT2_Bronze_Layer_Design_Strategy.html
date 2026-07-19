@@ -151,7 +151,7 @@
           <li>Apply the 3 Golden Rules of Bronze design</li>
           <li>Define the standard audit columns every Bronze table needs</li>
           <li>Choose the correct write mode per pathway</li>
-          <li>Describe how CDC events are stored — as a log, not current state</li>
+          <li>Describe how GlobalMart's real Lakeflow Connect pipeline lands data — upserted latest state, not an event log</li>
         </ul>
       </div>
       <div class="card">
@@ -162,8 +162,8 @@
           <tr><td>1:40</td><td>The 3 Golden Rules of Bronze</td></tr>
           <tr><td>1:50</td><td>Audit columns — what, why, which</td></tr>
           <tr><td>2:05</td><td>Table naming conventions</td></tr>
-          <tr><td>2:15</td><td>Write modes — append vs overwrite</td></tr>
-          <tr><td>2:25</td><td>CDC Bronze design</td></tr>
+          <tr><td>2:15</td><td>Write modes — append vs upsert vs overwrite</td></tr>
+          <tr><td>2:25</td><td>Lakeflow Connect Bronze design</td></tr>
           <tr><td>2:40</td><td>GlobalMart's 6 Bronze table designs</td></tr>
           <tr><td>2:55</td><td>What NOT to do + Q&amp;A</td></tr>
         </table>
@@ -251,9 +251,8 @@ GOLD    = Business-ready aggregates
       <div class="card">
         <h4>✅ Bronze DOES</h4>
         <ul>
-          <li>Append incoming data</li>
+          <li>Land incoming data</li>
           <li>Add audit columns</li>
-          <li>Store CDC events as-is</li>
           <li>Preserve source column names</li>
           <li>Handle schema evolution</li>
         </ul>
@@ -287,26 +286,29 @@ Run 3: products_v2.csv → 12,040 rows (only 40 new rows added)</pre>
         <p>Achieved via <strong>checkpoint</strong> — tracks every file already processed.</p>
       </div>
       <div class="card">
-        <h4>Postgres CDC</h4>
-        <p>Achieved via <strong>WAL offset</strong> — Lakeflow Connect tracks the last consumed event via the replication slot.</p>
+        <h4>Postgres Lakeflow Connect</h4>
+        <p>Achieved via the <strong>cursor's last-seen value</strong> — Lakeflow Connect re-queries <code>WHERE updated_at &gt; last_seen_value</code> each run and only touches rows that actually changed.</p>
       </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Read the code, not just the comment, when tracing a checkpoint path.</strong> HOL 1's mounting-based notebooks (<code>dbutils.fs.mount()</code> + <code>wasbs://</code>) have a markdown cell claiming the checkpoint/schema state is nested <em>inside</em> each table's own source folder (e.g. <code>customers/_checkpoints/</code>) — but the actual path variable, <code>f"{MOUNT_BASE}/_checkpoints/{SOURCE_FOLDER}/"</code>, builds a shared root instead: <code>_checkpoints/&lt;table&gt;/</code>, a sibling of the data folder, same as the standard pattern above. When a notebook's prose and its code disagree, the code is the ground truth — worth the habit of double-checking.</p>
     </div>
   </div>
 
   <!-- SLIDE 9: RULE 3 -->
   <div class="slide slide-content">
-    <h3>Rule 3 — Never Delete, Only Append</h3>
+    <h3>Rule 3 — Bronze Never Manually Deletes a Row</h3>
     <div class="card">
-      <h4>Both Pathways Are Append-Only in Bronze</h4>
+      <h4>Both Pathways Honor This, Differently</h4>
       <ul>
-        <li>Never delete rows from Bronze</li>
-        <li>If Postgres deletes an order → Bronze stores the DELETE <em>event</em> (a new row with <code>_cdc_op = 'DELETE'</code>)</li>
-        <li>If a corrected <code>products.csv</code> is dropped → Bronze appends the new file's rows alongside the old ones</li>
-        <li>Silver handles MERGE / dedup to reflect the true current state</li>
+        <li><strong>Autoloader</strong> (products, customers, address, payments): literally append-only — every file's rows land as new rows, nothing overwritten or removed</li>
+        <li><strong>Lakeflow Connect</strong> (orders, order_items): upserts the latest row per key — but still never issues a manual DELETE</li>
+        <li>If an order is hard-deleted in Postgres, Bronze doesn't remove it either — it simply stops being updated and goes stale</li>
+        <li>Nothing tells the pipeline to delete a stale row, and nothing does</li>
       </ul>
     </div>
     <div class="highlight-box warn" style="margin-top:16px;">
-      <p>Neither pathway ever overwrites Bronze wholesale. There is no "full snapshot, overwrite daily" source in GlobalMart's real pipeline — every table here is naturally append-only.</p>
+      <p>Neither pathway ever overwrites Bronze wholesale. There is no "full snapshot, overwrite daily" source in GlobalMart's real pipeline.</p>
     </div>
   </div>
 
@@ -316,18 +318,17 @@ Run 3: products_v2.csv → 12,040 rows (only 40 new rows added)</pre>
     <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Every Bronze table adds these during ingestion — deliberately minimal, not a kitchen-sink of "just in case" columns.</p>
     <table class="sql-table">
       <tr><th>Column</th><th>Type</th><th>Value</th><th>Which Pathway</th></tr>
-      <tr><td><code>_ingested_at</code></td><td>timestamp</td><td><code>current_timestamp()</code></td><td>Both</td></tr>
+      <tr><td><code>_ingested_at</code></td><td>timestamp</td><td><code>current_timestamp()</code></td><td>Autoloader</td></tr>
       <tr><td><code>_source_file</code></td><td>string</td><td><code>col("_metadata.file_path")</code></td><td>Autoloader only</td></tr>
-      <tr><td><code>_cdc_op</code></td><td>string</td><td>INSERT / UPDATE / DELETE</td><td>CDC only</td></tr>
     </table>
+    <p style="color:#94a3b8; font-size:14px; margin-top:10px;">Lakeflow Connect's Bronze tables (<code>orders</code>, <code>order_items</code>) need no manual audit columns — Databricks governs the table (lineage, history, access) for you.</p>
 <pre style="margin-top:14px;"><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> current_timestamp, col
 
 <span class="cm"># Autoloader sources:</span>
 df = (df.withColumn(<span class="str">"_ingested_at"</span>, current_timestamp())
         .withColumn(<span class="str">"_source_file"</span>, col(<span class="str">"_metadata.file_path"</span>)))
 
-<span class="cm"># CDC sources — _cdc_op comes from the CDC event itself:</span>
-df = df.withColumn(<span class="str">"_ingested_at"</span>, current_timestamp())</pre>
+<span class="cm"># Lakeflow Connect sources — no notebook code in production, Databricks manages the write:</span></pre>
   </div>
 
   <!-- SLIDE 11: WHY MINIMAL -->
@@ -344,7 +345,7 @@ df = df.withColumn(<span class="str">"_ingested_at"</span>, current_timestamp())
         <h4>Why Each "Obvious" Extra Column Is Redundant Here</h4>
         <ul>
           <li><code>_source_file</code> already answers "which pathway, which file, when" for Autoloader — the path itself encodes the source folder</li>
-          <li><code>_cdc_op</code> already answers "what kind of change" for CDC — there's only one CDC source, so <code>_source_system</code> would be the same literal value on every row: zero information content</li>
+          <li>Lakeflow Connect needs no manual audit columns at all — Databricks already governs lineage and history for the managed table</li>
         </ul>
       </div>
     </div>
@@ -356,91 +357,106 @@ df = df.withColumn(<span class="str">"_ingested_at"</span>, current_timestamp())
     <div class="two-col">
       <div>
 <pre><span class="cm">-- Fully qualified: CATALOG.SCHEMA.TABLE</span>
-<span class="tbl">gbmart</span>.<span class="col">bronze</span>.orders
-<span class="tbl">gbmart</span>.<span class="col">bronze</span>.products
-<span class="tbl">gbmart</span>.<span class="col">silver</span>.orders    <span class="cm">-- cleaned</span>
-<span class="tbl">gbmart</span>.<span class="col">gold</span>.fact_sales  <span class="cm">-- business-ready</span></pre>
+<span class="tbl">&lt;your-catalog&gt;</span>.<span class="col">bronze</span>.orders
+<span class="tbl">&lt;your-catalog&gt;</span>.<span class="col">bronze</span>.products
+<span class="tbl">&lt;your-catalog&gt;</span>.<span class="col">silver</span>.orders    <span class="cm">-- cleaned</span>
+<span class="tbl">&lt;your-catalog&gt;</span>.<span class="col">gold</span>.fact_sales  <span class="cm">-- business-ready</span></pre>
       </div>
       <div>
         <div class="card">
           <h4>Why No Source Prefix?</h4>
           <p>A common instinct coming from path-based storage is to encode layer and source into the table name itself (<code>bronze_adls_products</code>). In Unity Catalog, don't — the three-level namespace already carries that information.</p>
-          <p style="margin-top:10px;"><code>gbmart.bronze.bronze_adls_products</code> is redundant. Just <code>gbmart.bronze.products</code> — the schema already says "bronze," the catalog already says "GlobalMart."</p>
+          <p style="margin-top:10px;"><code>&lt;your-catalog&gt;.bronze.bronze_adls_products</code> is redundant. Just <code>&lt;your-catalog&gt;.bronze.products</code> — the schema already says "bronze," the catalog already says which project.</p>
         </div>
       </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Honest note on catalog names:</strong> the real run of this course used <code>gbmart</code> as the shared catalog for the Gold layer, but the mounting-based Bronze/Silver build in HOL 1 writes to a different, personal catalog (<code>harsh_kumar01_npmentorskool_onmicrosoft_com</code> in the real run) — because mounting with a storage key never goes through Unity Catalog's External Location path that <code>gbmart</code> is set up under. <strong>Your own catalog name will differ from both</strong> — what matters is the pattern: <code>catalog.schema.table</code>, used consistently within your own chain.</p>
     </div>
   </div>
 
   <!-- SLIDE 13: WRITE MODES -->
   <div class="slide slide-content">
-    <h3>Write Modes — Append vs Overwrite</h3>
+    <h3>Write Modes — Append vs Upsert vs Overwrite</h3>
     <div class="two-col">
       <div>
         <div class="card">
-          <h4>Append — GlobalMart's Default, Every Table</h4>
-          <p>Use append when the source produces an ordered stream of events or a new batch of rows. Postgres CDC events append; Auto Loader file rows append.</p>
+          <h4>Append — Autoloader (4 of 6 tables)</h4>
+          <p>Use append when the source produces a new batch of rows with nothing to reconcile against — every Auto Loader file's rows land as new rows.</p>
+        </div>
+        <div class="card" style="margin-top:12px;">
+          <h4>Upsert — Lakeflow Connect (orders, order_items)</h4>
+          <p>GlobalMart's real pipeline does <strong>not</strong> append — it upserts. Each run re-queries the cursor column and merges the result: new keys inserted, existing keys updated in place (history tracking Off / SCD1). Databricks manages this write for you.</p>
         </div>
         <div class="highlight-box" style="margin-top:12px;">
-          <p><strong style="color:#38bdf8;">Overwrite would only apply</strong> to a full-state snapshot source with no event log — GlobalMart has none today. Know the pattern anyway; you'll meet it on other projects.</p>
+          <p><strong style="color:#38bdf8;">Overwrite would only apply</strong> to a full-state snapshot source with no way to identify just the changed rows — GlobalMart has none today. Know the pattern anyway; you'll meet it on other projects.</p>
         </div>
       </div>
       <div>
-<pre>❌ Wrong: overwriting Bronze orders daily
-   Day 1: 1,400,000 rows → Bronze = 1,400,000
-   Day 2: 1,500,000 rows → Bronze overwritten
+<pre>❌ Wrong: overwriting Bronze products daily
+   Day 1: 12,000 rows → Bronze = 12,000
+   Day 2: 12,040 rows → Bronze overwritten
    Day 3: Day 1 bug found → CANNOT go back
 
-✅ Correct: appending every day
-   Day 1: 1,400,000 rows appended
-   Day 2: 100,000 new rows appended
-   Day 3: time travel back to Day 1 state</pre>
+✅ Correct: appending every day (Autoloader)
+   Day 1: 12,000 rows appended
+   Day 2: 40 new rows appended
+   Day 3: time travel back to Day 1 state
+
+✅ Correct: upserting every run (Lakeflow Connect)
+   Run 1: ~126,000 orders upserted (full snapshot)
+   Run 2: 40 changed orders upserted in place
+          — row count grows only for genuinely new orders</pre>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 14: SECTION - CDC BRONZE DESIGN -->
+  <!-- SLIDE 14: SECTION - LAKEFLOW CONNECT BRONZE DESIGN -->
   <div class="slide slide-section" style="text-align:center; align-items:center;">
     <div class="section-tag">Section 6</div>
-    <h2>CDC Bronze Design</h2>
+    <h2>Lakeflow Connect Bronze Design</h2>
     <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      CDC produces an <strong style="color:#38bdf8;">event log</strong> — not the current state of the table. Bronze stores every event; Silver decides what "current" means.
+      GlobalMart's real pipeline (query/cursor-based, history tracking Off) lands <strong style="color:#38bdf8;">current state</strong> — not an event log. Worth being precise about which one you're building.
     </p>
   </div>
 
-  <!-- SLIDE 15: EVENT LOG EXAMPLE -->
+  <!-- SLIDE 15: UPSERTED STATE EXAMPLE -->
   <div class="slide slide-content">
-    <h3>What CDC Events Look Like in Bronze</h3>
-<pre>_cdc_op  | _ingested_at          | order_id  | customer_id | ...
----------|------------------------|-----------|-------------|----
-INSERT   | 2026-06-15 09:00:00   | ORD-001   | CUST-001    | ...
-UPDATE   | 2026-06-15 10:15:00   | ORD-001   | CUST-001    | ...  ← status changed
-DELETE   | 2026-06-15 12:30:00   | ORD-002   | CUST-002    | ...  ← cancelled</pre>
+    <h3>What Bronze Actually Looks Like</h3>
+<pre>&lt;your-catalog&gt;.bronze.orders (upserted, one row per order_id):
+
+order_id  | customer_id | order_channel | ...   (no _cdc_op column)
+----------|-------------|----------------|----
+ORD-001   | CUST-001    | Shipped        | ...
+ORD-002   | CUST-002    | Delivered      | ...
+
+When ORD-001's status later changes Shipped → Delivered:
+  the SAME row updates in place — still exactly one row for ORD-001.</pre>
     <div class="highlight-box" style="margin-top:16px;">
-      <p><strong style="color:#38bdf8;">Bronze stores ALL events</strong> — it does not apply MERGE. For <code>ORD-001</code>, Bronze has 2 rows (INSERT + UPDATE); Silver's MERGE takes the latest event per <code>order_id</code>, so <code>gbmart.silver.orders</code> ends up with exactly 1 row for it.</p>
+      <p><strong style="color:#38bdf8;">This is NOT an event log.</strong> There's no MERGE in Silver to collapse multiple rows into one, because Bronze never had multiple rows for the same <code>order_id</code> — Lakeflow Connect already upserted it for you. Silver just reads the current state and applies its own transformations.</p>
     </div>
   </div>
 
-  <!-- SLIDE 16: WHY STORE ALL EVENTS + _cdc_op VALUES -->
+  <!-- SLIDE 16: THE ONE REAL GAP -->
   <div class="slide slide-content">
-    <h3>Why Store Every Event? And What <code>_cdc_op</code> Means</h3>
+    <h3>The One Real Gap: Hard Deletes</h3>
     <div class="two-col">
       <div class="card">
-        <h4>Why Keep the Full Event Log</h4>
+        <h4>What Happens When an Order Is Deleted</h4>
         <ol class="order-list">
-          <li><strong>Audit trail</strong> — see every change ever made to any order</li>
-          <li><strong>Replayability</strong> — Silver can be rebuilt with any version of the transformation logic</li>
-          <li><strong>Debugging</strong> — trace wrong Silver data back to the exact CDC event</li>
-          <li><strong>Compliance</strong> — financial regulations often require full event logs</li>
+          <li>It stops matching the cursor query (<code>WHERE updated_at &gt; last_seen_value</code>)</li>
+          <li>Lakeflow Connect never sees a "this row is gone" event — there isn't one</li>
+          <li>The row stays in Bronze exactly as it last was, silently going stale</li>
+          <li>No downstream layer is told about the deletion</li>
         </ol>
       </div>
-      <div>
-        <table class="sql-table">
-          <tr><th><code>_cdc_op</code></th><th>Meaning</th><th>Silver Action</th></tr>
-          <tr><td>INSERT</td><td>New row</td><td>INSERT into Silver</td></tr>
-          <tr><td>UPDATE</td><td>Row was modified</td><td>MERGE (update) into Silver</td></tr>
-          <tr><td>DELETE</td><td>Row deleted at source</td><td>MERGE (delete) or soft-delete flag</td></tr>
-        </table>
+      <div class="card">
+        <h4>Why Use It Anyway?</h4>
+        <p>No manual scheduling code, a governed Unity Catalog table with lineage and access control out of the box, and far less to maintain than a hand-rolled JDBC script — the same blind spot as a watermark either way, but someone else maintains the pipeline.</p>
       </div>
+    </div>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p>This is the real, named limitation of query/cursor-based capture — see Day 2 for the full explanation and what a log-based (WAL) connector would do differently.</p>
     </div>
   </div>
 
@@ -449,16 +465,14 @@ DELETE   | 2026-06-15 12:30:00   | ORD-002   | CUST-002    | ...  ← cancelled<
     <h3>GlobalMart's 6 Bronze Table Designs</h3>
     <div class="two-col">
       <div>
-<pre><span class="tbl">gbmart.bronze.orders</span>:
-  _cdc_op          STRING
-  _ingested_at     TIMESTAMP
+<pre><span class="tbl">&lt;your-catalog&gt;.bronze.orders</span>:  (upserted — no manual audit columns to add)
   order_id         STRING
   customer_id      STRING
   order_date       STRING  <span class="cm">← kept STRING, Silver casts</span>
   ... (all source columns)</pre>
       </div>
       <div>
-<pre><span class="tbl">gbmart.bronze.products</span>:
+<pre><span class="tbl">&lt;your-catalog&gt;.bronze.products</span>:
   _ingested_at     TIMESTAMP
   _source_file     STRING
   product_id       STRING
@@ -468,7 +482,7 @@ DELETE   | 2026-06-15 12:30:00   | ORD-002   | CUST-002    | ...  ← cancelled<
       </div>
     </div>
     <div class="highlight-box" style="margin-top:14px;">
-      <p>CDC pathway (<code>orders</code>, <code>order_items</code>) carries <code>_cdc_op</code> + <code>_ingested_at</code>. Autoloader pathway (<code>products</code>, <code>customers</code>, <code>addresses</code>, <code>payments</code>) carries <code>_source_file</code> + <code>_ingested_at</code>. Everything else is the entity's own source columns, untouched.</p>
+      <p>Lakeflow Connect pathway (<code>orders</code>, <code>order_items</code>) carries no manual audit columns at all — upserted, governed by Databricks. Autoloader pathway (<code>products</code>, <code>customers</code>, <code>addresses</code>, <code>payments</code>) carries <code>_source_file</code> + <code>_ingested_at</code>. Everything else is the entity's own source columns, untouched.</p>
     </div>
   </div>
 
@@ -497,11 +511,11 @@ DELETE   | 2026-06-15 12:30:00   | ORD-002   | CUST-002    | ...  ← cancelled<
       </div>
       <div class="card">
         <h4>3 Golden Rules</h4>
-        <p>Land raw, idempotent writes, never delete — every GlobalMart Bronze table is append-only.</p>
+        <p>Land raw, idempotent writes, never manually delete a row — Lakeflow Connect's upserted tables just go stale, never explicitly delete.</p>
       </div>
       <div class="card">
         <h4>Minimal Audit Columns</h4>
-        <p><code>_ingested_at</code> always, plus <code>_source_file</code> (Autoloader) or <code>_cdc_op</code> (CDC) — nothing without a real downstream use.</p>
+        <p><code>_ingested_at</code> + <code>_source_file</code> on Autoloader tables — Lakeflow Connect tables need none, Databricks governs them for you.</p>
       </div>
     </div>
   </div>
@@ -516,15 +530,15 @@ DELETE   | 2026-06-15 12:30:00   | ORD-002   | CUST-002    | ...  ← cancelled<
     <div class="three-col" style="margin-top:32px; max-width:820px;">
       <div class="card">
         <h4>✅ Recap</h4>
-        <p>3 Golden Rules, minimal audit columns, append-only, no source prefix in table names</p>
+        <p>3 Golden Rules, minimal audit columns, append (Autoloader) / upsert (Lakeflow Connect), no source prefix in table names</p>
       </div>
       <div class="card">
         <h4>➡️ Up Next</h4>
-        <p>HOL 1: Build the Bronze Layer</p>
+        <p>HOL 1: Build the Bronze Layer — closes by enabling <strong>Change Data Feed (CDF)</strong> on every Bronze table, so Silver can read only what changed instead of re-scanning the whole table.</p>
       </div>
       <div class="card">
         <h4>🎤 Closing Check</h4>
-        <p>Name the 3 Golden Rules. Which audit column is CDC-only? Why no overwrite mode?</p>
+        <p>Name the 3 Golden Rules. Why does Lakeflow Connect's Bronze table need no manual audit columns? Why can't it capture a hard DELETE?</p>
       </div>
     </div>
   </div>

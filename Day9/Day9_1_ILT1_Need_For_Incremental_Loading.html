@@ -5,75 +5,96 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 9 | ILT 1 — Need for Incremental Loading — Strategies &amp; Trade-offs</title>
 <style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
 
-  /* --- NAV --- */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: #1e293b; border-bottom: 1px solid #334155;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 24px;
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
   }
-  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
-  nav .controls { display: flex; gap: 10px; align-items: center; }
-  nav button {
-    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
-    border-radius: 6px; cursor: pointer; font-size: 13px;
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
   }
-  nav button:hover { background: #38bdf8; color: #0f172a; }
-  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
 
-  /* --- SLIDES --- */
-  .deck { padding-top: 60px; }
-  .slide {
-    display: none; min-height: 100vh; padding: 48px 60px;
-    animation: fadeIn 0.3s ease;
-  }
-  .slide.active { display: flex; flex-direction: column; justify-content: center; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 38px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 740px; margin: 0 auto 26px; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
 
-  /* --- SLIDE TYPES --- */
-  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
-  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
-  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
-  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 800px; margin-bottom: 30px; }
 
-  .slide-section { background: #1e293b; }
-  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
-  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+  .card.bad-fit h4 { color: var(--bad); }
+  .card.good-fit h4 { color: var(--good); }
+  .card.miss h4 { color: var(--bad); }
 
-  .slide-content { background: #0f172a; }
-  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
-
-  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
-  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
-  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
-
-  /* --- COMPONENTS --- */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
-  .card {
-    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
-    padding: 20px 24px;
-  }
-  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
-  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
-  .card ul, .card ol { padding-left: 16px; }
-
-  .highlight-box {
-    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
-    padding: 16px 20px; margin-top: 16px;
-  }
-  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
-  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
   .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+  table.spec td.win { color: var(--good); font-weight: 700; }
+  table.spec td.lose { color: var(--bad); font-weight: 700; }
+
+  details.qa-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; padding: 4px 0; }
+  details.qa-card summary { cursor: pointer; padding: 14px 18px; font-size: 14px; font-weight: 600; color: var(--text); list-style: none; }
+  details.qa-card summary::-webkit-details-marker { display: none; }
+  details.qa-card summary::before { content: "Q — "; color: var(--accent); font-weight: 700; }
+  details.qa-card[open] summary { color: #7dd3fc; border-bottom: 1px solid var(--border); }
+  details.qa-card .qa-answer { padding: 14px 18px 16px; color: #cbd5e1; font-size: 13.5px; line-height: 1.7; }
+  details.qa-card .qa-answer::before { content: "A — "; color: var(--good); font-weight: 700; }
 
   pre {
     background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
     padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
-    font-size: 13px; line-height: 1.7; color: #e6edf3;
+    font-size: 13px; line-height: 1.7; color: #e6edf3; margin-top: 14px;
   }
   .kw { color: #ff7b72; font-weight: bold; }
   .fn { color: #d2a8ff; }
@@ -82,341 +103,375 @@
   .col { color: #79c0ff; }
   .tbl { color: #ffa657; }
 
-  .pill {
-    display: inline-block; padding: 3px 12px; border-radius: 20px;
-    font-size: 12px; font-weight: 600; margin: 2px;
-  }
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 14px; margin-right: 10px; flex-shrink: 0; }
+  .phase-card { display: flex; gap: 0; align-items: flex-start; }
+  .phase-card .phase-body h4 { display: flex; align-items: center; color: var(--text); font-size: 15.5px; margin-bottom: 6px; }
+  .phase-card .phase-body .phase-outcome { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .phase-card .phase-body .phase-outcome b { color: var(--accent2); }
+
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
   .pill-blue { background: #1d4ed8; color: #bfdbfe; }
   .pill-green { background: #15803d; color: #bbf7d0; }
   .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
 
-  .order-list { counter-reset: steps; list-style: none; padding: 0; }
-  .order-list li {
-    counter-increment: steps; display: flex; align-items: flex-start;
-    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
-    font-size: 14px; color: #cbd5e1; line-height: 1.6;
-  }
-  .order-list li::before {
-    content: counter(steps);
-    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; flex-shrink: 0;
-  }
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
 
-  table.sql-table {
-    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  @media (max-width: 640px) {
+    nav.topnav .links { display: none; }
+    .hero h1 { font-size: 27px; }
   }
-  table.sql-table th {
-    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
-  }
-  table.sql-table td {
-    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
-    background: #111827;
-  }
-  table.sql-table tr:nth-child(even) td { background: #0f172a; }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">DAY 9 · ILT 1 — Need for Incremental Loading</div>
-  <div class="controls">
-    <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 14</span>
-    <button onclick="changeSlide(1)">Next &#8594;</button>
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 9 · ILT 1 — NEED FOR INCREMENTAL LOADING</div>
+    <div class="links">
+      <a href="#problem" class="navlink">The Problem</a>
+      <a href="#three" class="navlink">Three Strategies</a>
+      <a href="#strat1" class="navlink">File Checkpoint</a>
+      <a href="#strat2" class="navlink">Watermark</a>
+      <a href="#strat3" class="navlink">CDF</a>
+      <a href="#tradeoffs" class="navlink">Trade-offs</a>
+      <a href="#discussion" class="navlink">Discussion</a>
+    </div>
   </div>
 </nav>
 
-<div class="deck">
-
-  <!-- SLIDE 1: COVER -->
-  <div class="slide slide-cover active">
-    <h1>Need for Incremental Loading</h1>
-    <p class="subtitle">Why full re-scans stop working as data grows, and the three different strategies GlobalMart's real pipeline already uses to answer "what's new?"</p>
-    <div class="badge">Day 9 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; Trainer-Led Session</div>
-    <div style="margin-top:36px; color:#475569; font-size:13px;">
-      What we'll cover today → The Full-Load Problem · 3 Real Strategies · Trade-offs · Live Bronze Counts
-    </div>
+<header class="hero">
+  <div class="eyebrow">Day 9 · ILT 1 · Concept Session · 60 minutes</div>
+  <h1>Why Re-Reading Everything, Every Time, Stops Working</h1>
+  <p class="lead">
+    Every notebook so far has done a full load: read everything, rebuild everything. That's fine at 500 rows.
+    It stops being fine once a table has 126,000 rows and keeps growing. GlobalMart's real pipeline already
+    solves this three different ways — this session is about understanding all three before Day 9's hands-on
+    labs make you build two of them yourself.
+  </p>
+  <div class="meta-row">
+    <span class="meta-pill">🔒 Concept Session — Read-Only Against gbmart</span>
+    <span class="meta-pill">📋 3 Strategies, 1 Trade-off Table</span>
+    <span class="meta-pill">➡️ Follows Day 2 (CDC), Day 3-4 (Autoloader), Day 5-6 (full loads)</span>
   </div>
+</header>
 
-  <!-- SLIDE 2: DAY 9 SCHEDULE -->
-  <div class="slide slide-section">
-    <div class="section-tag">Overview</div>
-    <h2>Today's Five Sessions</h2>
-    <ol class="order-list" style="margin-top:14px; max-width:820px;">
-      <li><strong>ILT 1 (now)</strong> — Need for Incremental Loading: strategies &amp; trade-offs</li>
-      <li><strong>ILT 2</strong> — Watermark-Based Incremental Loading</li>
-      <li><strong>HOL 1</strong> — Implement Watermark-Based Incremental Load (Control Table)</li>
-      <li><strong>ILT 3</strong> — CDF-Based Incremental Loading</li>
-      <li><strong>HOL 2</strong> — Handling Incremental Data: Bronze &amp; Silver</li>
-    </ol>
-  </div>
+<!-- SECTION: THE PROBLEM -->
+<section class="content" id="problem">
+  <div class="wrap">
+    <div class="section-tag">Why This Session Exists</div>
+    <h2 class="section-title">The Full-Load Trap</h2>
+    <p class="section-intro">
+      Every pipeline you've written up to Day 9 does the same thing: read the whole source, transform all of it,
+      overwrite or rebuild the target. That's not a mistake — it's the simplest thing that works, and at small
+      scale it's completely fine. The problem shows up only once the table stops being small.
+    </p>
 
-  <!-- SLIDE 3: AGENDA FOR THIS SESSION -->
-  <div class="slide slide-content">
-    <h3>What We're Covering in This Session</h3>
-    <div class="three-col" style="margin-top:24px;">
+    <div class="grid-2">
       <div class="card">
-        <h4>The Problem</h4>
-        <ul>
-          <li>Full loads re-read everything, every run</li>
-          <li>Fine at 500 rows, not fine at 126,000+</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h4>3 Real Strategies</h4>
-        <ul>
-          <li>File checkpoint, cursor/watermark, Delta CDF</li>
-          <li>All three already run in GlobalMart's pipeline</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h4>The Trade-offs</h4>
-        <ul>
-          <li>What each one catches</li>
-          <li>What each one silently misses</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- SLIDE 4: THE PROBLEM -->
-  <div class="slide slide-content">
-    <h3>The Problem: Why Full Re-Scans Stop Scaling</h3>
-    <div class="two-col">
-      <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
-          Imagine re-reading an entire 500-page book from page one — every single time — just to find the one new sentence someone added at the end. That's exactly what a <strong style="color:#e2e8f0;">full load</strong> does: read the entire source, transform all of it, overwrite or rebuild the target, on every run.
+        <h4>📖 The bookmark analogy</h4>
+        <p>
+          Imagine re-reading an entire 500-page book from page 1 every single morning, just to find the one new
+          paragraph someone added overnight. That's what a full load does. Incremental loading is the equivalent
+          of a bookmark — you jump straight to where you left off, and only read what's new.
         </p>
-        <div class="card">
-          <h4>Why This Breaks Down at Scale</h4>
-          <ul>
-            <li>Fine when a table is 500 rows</li>
-            <li>Not fine when a table is 126,000+ rows and growing by a few hundred a day</li>
-            <li>Re-processing everything to catch ~200 new rows wastes compute and time</li>
-            <li>At real production scale (millions of rows), a 2-minute job can become a 2-hour job</li>
-          </ul>
-        </div>
-      </div>
-      <div>
-        <div class="card">
-          <h4>GlobalMart's Real Bronze Scale</h4>
-          <table class="sql-table">
-            <tr><th>Table</th><th>Approx. Rows</th></tr>
-            <tr><td>gbmart.bronze.orders</td><td>126,000+</td></tr>
-            <tr><td>gbmart.bronze.order_items</td><td>377,000+</td></tr>
-          </table>
-        </div>
-        <div class="highlight-box">
-          <p><strong style="color:#38bdf8;">Why this matters:</strong> that cost only grows as GlobalMart grows — which is exactly why "just re-read everything" stops being viable.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SLIDE 5: WHAT INCREMENTAL LOADING MEANS -->
-  <div class="slide slide-content">
-    <h3>What "Incremental Loading" Actually Means</h3>
-    <div class="two-col">
-      <div>
-        <div class="card">
-          <h4>The Definition</h4>
-          <p>On every run, touch only the rows that are new or changed since the last run — nothing more.</p>
-        </div>
-        <div class="highlight-box">
-          <p>The hard part isn't the definition — it's knowing <strong style="color:#38bdf8;">which rows those are</strong>. It turns out there's more than one way to answer that question.</p>
-        </div>
-      </div>
-      <div>
-        <div class="card">
-          <h4>GlobalMart Already Has 3 Answers</h4>
-          <p>The real pipeline doesn't use one incremental strategy — it uses <strong style="color:#38bdf8;">three</strong>, for three different reasons. This session walks through all three before Day 9's hands-on labs build two of them yourself.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SLIDE 6: SECTION - THREE STRATEGIES -->
-  <div class="slide slide-section">
-    <div class="section-tag">Section 2</div>
-    <h2>The Three Strategies Already Running in GlobalMart's Pipeline</h2>
-    <div class="three-col" style="margin-top:24px;">
-      <div class="card">
-        <h4>1 · File Checkpoint</h4>
-        <p>Tracks which <em>files</em> have already been read. Autoloader, for 6 of 8 Bronze file-drop sources.</p>
       </div>
       <div class="card">
-        <h4>2 · Cursor / Watermark</h4>
-        <p>Tracks which <em>rows</em> have a business timestamp newer than last time. Lakeflow Connect, for <code>orders</code> / <code>order_items</code>.</p>
-      </div>
-      <div class="card">
-        <h4>3 · Delta Change Data Feed</h4>
-        <p>Tracks row-level Delta transactions, including deletes. Used for the Bronze → Silver refresh.</p>
+        <h4>⏱️ What Aviskar hit last week</h4>
+        <p>
+          <b style="color:#f8fafc;">Aviskar M Dhavale</b> ran into this exact wall: a Bronze full-reload job that
+          used to finish in under 2 minutes was suddenly taking 40 minutes. Nothing about the code had changed —
+          the source table had just kept growing, run after run, while the job kept re-reading all of it from
+          scratch, every single time. That's the failure mode this whole session exists to fix.
+        </p>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 7: STRATEGIES TABLE -->
-  <div class="slide slide-content">
-    <h3>The Three Strategies, Side by Side</h3>
-    <table class="sql-table">
-      <tr><th>#</th><th>Strategy</th><th>What It Tracks</th><th>Where GlobalMart Uses It</th><th>Taught In</th></tr>
-      <tr><td>1</td><td>File checkpoint (Autoloader)</td><td>Which files have already been read</td><td>customers, products, addresses, payments, payment_methods, returns</td><td>Day 3-4</td></tr>
-      <tr><td>2</td><td>Cursor / watermark column</td><td>Rows with a business timestamp newer than last time</td><td><code>orders</code>, <code>order_items</code> — via <code>orders_data_ingestion_cdc</code></td><td>Day 2 (concept), Day 9 (build it)</td></tr>
-      <tr><td>3</td><td>Delta Change Data Feed (CDF)</td><td>Row-level Delta transactions, including deletes</td><td>Bronze → Silver refresh</td><td>Day 9</td></tr>
-    </table>
     <div class="highlight-box">
-      <p>These are genuinely different mechanisms solving genuinely different problems — not three names for the same idea. The rest of this session is about <em>why</em> GlobalMart needed three, not just one.</p>
+      <p>
+        <b>The real numbers:</b> <code>gbmart.bronze.orders</code> is around 126,000 rows and grows by a few
+        hundred a day. Re-processing all 126,000 rows just to pick up 200 new ones wastes compute and wastes
+        time — and at real production scale (millions of rows), that same pattern can turn a 2-minute job into a
+        2-hour job. <b>Incremental loading</b> means: on every run, touch only the rows that are new or changed
+        since the last run. The hard part is knowing <i>which rows those are</i> — and GlobalMart's real
+        pipeline answers that question three different ways, for three different reasons.
+      </p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 8: DEMO - LIVE ROW COUNTS -->
-  <div class="slide slide-demo">
-    <h3>Live Check — Real Bronze Row Counts</h3>
-    <div class="demo-label">Run against real gbmart.bronze — read-only</div>
-    <pre><span class="cm"># Shows the real scale that makes "just re-read everything" expensive.</span>
-<span class="col">orders_count</span> = spark.<span class="fn">sql</span>(<span class="str">"SELECT COUNT(*) AS c FROM gbmart.bronze.orders"</span>).<span class="fn">collect</span>()[0][<span class="str">"c"</span>]
-<span class="col">order_items_count</span> = spark.<span class="fn">sql</span>(<span class="str">"SELECT COUNT(*) AS c FROM gbmart.bronze.order_items"</span>).<span class="fn">collect</span>()[0][<span class="str">"c"</span>]
+<!-- SECTION: THREE STRATEGIES -->
+<section class="content" id="three">
+  <div class="wrap">
+    <div class="section-tag">The Big Picture First</div>
+    <h2 class="section-title">The Three Strategies Already Running in GlobalMart's Pipeline</h2>
+    <p class="section-intro">
+      These are genuinely different mechanisms solving genuinely different problems — not three names for the
+      same idea. The rest of this session is about <i>why</i> GlobalMart needed three, not just one.
+    </p>
 
-<span class="fn">print</span>(<span class="str">f"gbmart.bronze.orders       : {orders_count:,} rows"</span>)
-<span class="fn">print</span>(<span class="str">f"gbmart.bronze.order_items  : {order_items_count:,} rows"</span>)</pre>
-    <div class="highlight-box" style="margin-top:14px;">
-      <p>A full re-scan of <code>order_items</code> to find ~200 new rows means reading all of the above — every single run, forever. That cost only grows as GlobalMart grows.</p>
-    </div>
+    <table class="spec">
+      <tr><th>#</th><th>Strategy</th><th>What it tracks</th><th>Where GlobalMart uses it</th><th>Taught in</th></tr>
+      <tr>
+        <td>1</td>
+        <td><b>File checkpoint</b> (Autoloader)</td>
+        <td><i>Which files</i> have already been read</td>
+        <td><code>customers</code>, <code>products</code>, <code>addresses</code>, <code>payments</code>, <code>payment_methods</code>, <code>returns</code> — all ADLS file drops</td>
+        <td>Day 3-4</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><b>Cursor / watermark column</b></td>
+        <td><i>Which rows</i> have a business timestamp newer than last time</td>
+        <td><code>orders</code>, <code>order_items</code> — via the real Lakeflow Connect pipeline <code>orders_data_ingestion_cdc</code></td>
+        <td>Day 2 (concept), Day 9 (build it yourself)</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><b>Delta Change Data Feed (CDF)</b></td>
+        <td><i>Which rows</i> changed, at the Delta-transaction level, including deletes</td>
+        <td>Bronze → Silver refresh, once CDF is enabled</td>
+        <td>Day 9</td>
+      </tr>
+    </table>
   </div>
+</section>
 
-  <!-- SLIDE 9: STRATEGY 1 RECAP -->
-  <div class="slide slide-content">
-    <h3>Strategy 1 (Recap) — File Checkpoint (Autoloader)</h3>
-    <div class="two-col">
-      <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Already fully covered in Day 3-4: Autoloader's <code>cloudFiles.schemaLocation</code> + <code>checkpointLocation</code> remember which <strong style="color:#e2e8f0;">files</strong> have already been streamed into Bronze. Drop a new file in, re-run — only the new file gets processed.</p>
-        <div class="card">
-          <h4>What It's Good At</h4>
-          <p>Cheap, simple, works great when each new batch of data arrives as a brand-new file — a new day's <code>customers_020626.csv</code>, a new <code>products_020626.json</code>.</p>
-        </div>
+<!-- SECTION: STRATEGY 1 -->
+<section class="content" id="strat1">
+  <div class="wrap">
+    <div class="section-tag">Strategy 1 · Recap From Day 3-4</div>
+    <h2 class="section-title">File Checkpoint (Autoloader)</h2>
+    <p class="section-intro">
+      Already fully covered in Day 3-4: Autoloader's <code>cloudFiles.schemaLocation</code> +
+      <code>checkpointLocation</code> remember which <b style="color:#f8fafc;">files</b> have already been
+      streamed into Bronze. Drop a new file in, re-run, only the new file gets processed.
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>📋 Simple way to think about it</h4>
+        <p>
+          It's like a checklist of filenames you've already opened. Autoloader only ever asks
+          "<i>is this filename new to me?</i>" — never "<i>did the contents of a filename I already checked off
+          actually change?</i>"
+        </p>
+        <p style="margin-top:10px;"><b style="color:var(--good);">What it's good at:</b> cheap, simple, works
+        great when each new batch of data arrives as a brand-new file (a new day's
+        <code>customers_020626.csv</code>, a new <code>products_020626.json</code>).</p>
       </div>
-      <div>
-        <div class="highlight-box warn">
-          <p><strong style="color:#f59e0b;">Silently misses:</strong> a change made <em>inside</em> a file Autoloader already processed. If someone hand-edited a file after it landed and re-uploaded it with the same name, the checkpoint would skip it — as far as Autoloader is concerned, that file is already done. File-level tracking has no idea what happened inside a file it already saw.</p>
-        </div>
+      <div class="card miss">
+        <h4>🕳️ What it silently misses</h4>
+        <p>
+          A change made <i>inside</i> a file Autoloader has already processed. <b style="color:#f8fafc;">Bysani
+          Karthik</b> caught this while reviewing the Bronze <code>payment_methods</code> job: someone had
+          hand-corrected a typo inside an already-ingested <code>payment_methods</code> file and re-uploaded it
+          under the exact same filename, expecting Bronze to pick up the fix on the next run.
+        </p>
+        <p style="margin-top:10px;">It didn't. As far as Autoloader's checkpoint is concerned, that filename is
+        already done. File-level tracking has no idea what happened <i>inside</i> a file it already saw.</p>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 10: STRATEGY 2 -->
-  <div class="slide slide-content">
-    <h3>Strategy 2 — Cursor / Watermark Column</h3>
-    <div class="two-col">
-      <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">This is what the real <code>orders_data_ingestion_cdc</code> pipeline does (Day 2). Instead of tracking files, it tracks a <strong style="color:#e2e8f0;">business column</strong> — <code>updated_at</code> — and on every run asks the source: <em>"give me every row where <code>updated_at</code> is newer than the last value I saw."</em></p>
-<pre><span class="col">table_configuration</span>: {
+<!-- SECTION: STRATEGY 2 -->
+<section class="content" id="strat2">
+  <div class="wrap">
+    <div class="section-tag">Strategy 2 · New Today</div>
+    <h2 class="section-title">Cursor / Watermark Column</h2>
+    <p class="section-intro">
+      This is what the real <code>orders_data_ingestion_cdc</code> pipeline does (Day 2). Instead of tracking
+      files, it tracks a <b style="color:#f8fafc;">business column</b> — <code>updated_at</code> — and on every
+      run asks the source: <i>"give me every row where <code>updated_at</code> is newer than the last value I
+      saw."</i> The pipeline remembers that last value (its "watermark" or "cursor") and advances it after each
+      successful run.
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>📚 Simple way to think about it</h4>
+        <p>
+          It's like asking a librarian "show me every book returned after 3pm yesterday" instead of re-checking
+          every book in the library. It only works because the library reliably stamps a return time on every
+          book — in GlobalMart's case, that reliable stamp is a real Postgres trigger,
+          <code>trg_orders_updated_at</code>, which auto-bumps <code>updated_at</code> on every single update to
+          <code>orders</code>. No trigger, no trustworthy watermark.
+        </p>
+      </div>
+      <div class="card">
+        <h4>✅ What it's good at</h4>
+        <p>
+          Works on any table with a reliable, always-bumped timestamp column — doesn't require the source to
+          support anything special (no logical replication, no CDF, just a <code>WHERE updated_at &gt; X</code>
+          query). This is exactly why it's the right choice for reading a Postgres OLTP table over a plain
+          connection.
+        </p>
+      </div>
+    </div>
+
+    <pre><span class="col">table_configuration</span>: {
   <span class="col">primary_keys</span>: [<span class="str">"orderid"</span>],
   <span class="col">query_based_connector_config</span>: { <span class="col">cursor_columns</span>: [<span class="str">"updated_at"</span>] }
 }</pre>
-      </div>
-      <div>
-        <div class="card">
-          <h4>What It's Good At</h4>
-          <p>Works on any table with a reliable, always-bumped timestamp column — no logical replication or CDF needed on the source, just a <code>WHERE updated_at &gt; X</code> query. Exactly why it's the right choice for reading a Postgres OLTP table over a plain connection.</p>
-        </div>
-        <div class="highlight-box warn" style="margin-top:14px;">
-          <p><strong style="color:#f59e0b;">Silently misses:</strong> a hard DELETE. No row is left with a newer <code>updated_at</code> to signal the row is gone — it just vanishes from the next query result. GlobalMart's real <code>orders_data_ingestion_cdc</code> pipeline has exactly this blind spot today.</p>
-        </div>
-      </div>
+
+    <div class="highlight-box warn">
+      <p>
+        <b>What it silently misses — the trade-off worth remembering from Day 2:</b> a <b>hard DELETE</b>. If a
+        row is deleted from the source table, there's no row left with a newer <code>updated_at</code> to signal
+        that — the deleted row just vanishes from the next query result, and the cursor-based pipeline has no
+        event to tell it "this row is gone."
+      </p>
+      <p style="margin-top:10px;">
+        <b style="color:#f8fafc;">Amardeep meena</b> flagged exactly this gap while walking through the Day 2
+        pipeline design with the finance team: if an order is ever hard-deleted in Postgres,
+        <code>orders_data_ingestion_cdc</code> will not remove it from Bronze — it will just quietly stop
+        appearing in future <i>changes</i>, while the old row stays behind. GlobalMart's real
+        <code>orders_data_ingestion_cdc</code> pipeline has exactly this blind spot today.
+      </p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 11: STRATEGY 3 -->
-  <div class="slide slide-content">
-    <h3>Strategy 3 — Delta Change Data Feed (CDF)</h3>
-    <div class="two-col">
-      <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">CDF doesn't watch files, and it doesn't rely on a business column at all. It's a <strong style="color:#e2e8f0;">Delta Lake feature</strong> — once turned on for a table, every INSERT / UPDATE / DELETE is automatically recorded as a row-level change event, tagged with <code>_change_type</code>, <code>_commit_version</code>, and <code>_commit_timestamp</code>. A downstream reader asks Delta "give me everything that changed since version N" and gets back exactly that.</p>
+<!-- SECTION: STRATEGY 3 -->
+<section class="content" id="strat3">
+  <div class="wrap">
+    <div class="section-tag">Strategy 3 · New Today</div>
+    <h2 class="section-title">Delta Change Data Feed (CDF)</h2>
+    <p class="section-intro">
+      CDF is different from both strategies above: it doesn't watch files, and it doesn't rely on a business
+      column at all. It's a <b style="color:#f8fafc;">Delta Lake feature</b> — once turned on for a table, every
+      <code>INSERT</code> / <code>UPDATE</code> / <code>DELETE</code> against that table is automatically
+      recorded as a row-level change event, tagged with <code>_change_type</code>, <code>_commit_version</code>,
+      and <code>_commit_timestamp</code>. A downstream reader asks Delta "give me everything that changed since
+      version N" and gets back exactly that — including deletes, which is the one thing Strategy 2 can't see.
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>📹 Simple way to think about it</h4>
+        <p>
+          Think of it as a security camera pointed at the table instead of a snapshot photo of it. A snapshot
+          only shows you what the table looks like <i>right now</i> — a camera shows you every single thing that
+          happened to it, in order, including things that got deleted and are no longer visible in any snapshot.
+        </p>
+        <p style="margin-top:10px; font-style: italic; color: var(--muted);">
+          "CDF is the only one of the three that would actually tell you a row got deleted — not just that it's
+          missing." — <b style="color:#f8fafc; font-style: normal;">Aman Shankar Verma</b>, explaining it to the
+          cohort.
+        </p>
       </div>
-      <div>
-        <div class="card">
-          <h4>What It's Good At</h4>
-          <p>The most complete picture — inserts, updates, <em>and</em> deletes, all captured automatically with zero reliance on the source having a well-behaved timestamp column.</p>
-        </div>
-        <div class="highlight-box warn" style="margin-top:14px;">
-          <p><strong style="color:#f59e0b;">What it costs:</strong> only works between two Delta tables (Bronze → Silver, Silver → Gold) — not something you can point at an external Postgres source. It also has a retention/storage cost — the changelog must eventually be vacuumed with a retention window in mind, same as time-travel history.</p>
-        </div>
+      <div class="card good-fit">
+        <h4>✅ What it's good at</h4>
+        <p>
+          The most complete picture — inserts, updates, <i>and</i> deletes, all captured automatically with zero
+          reliance on the source having a well-behaved timestamp column.
+        </p>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 12: TRADE-OFF TABLE -->
-  <div class="slide slide-content">
-    <h3>Side-by-Side Trade-offs</h3>
-    <table class="sql-table">
+    <div class="highlight-box">
+      <p>
+        <b>What it costs:</b> it's Delta-to-Delta only — it's not something you can point at an external
+        Postgres source. In GlobalMart's real pipeline, CDF is enabled today on <b>Bronze</b>, and Silver reads
+        it to refresh incrementally from Bronze. CDF is <i>also</i> enabled on <b>Silver</b>, but nothing
+        consumes it yet: Gold (<code>dim_*</code> / <code>fact_sales</code>) is still built by full overwrite,
+        not incremental <code>MERGE</code>. Enabling CDF on Silver now is about staging it for Day 12's
+        incremental SCD work — it's ready, it's just not being read yet. It also has a retention/storage cost
+        (<code>delta.enableChangeDataFeed</code> keeps a changelog you must eventually vacuum with a retention
+        window in mind, same as <code>VACUUM</code> and time-travel history).
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: TRADE-OFFS -->
+<section class="content" id="tradeoffs">
+  <div class="wrap">
+    <div class="section-tag">Bringing It Together</div>
+    <h2 class="section-title">Side-by-Side Trade-offs</h2>
+    <p class="section-intro">
+      There's no single "best" strategy — each one is the right tool for a specific kind of source and a
+      specific kind of gap you're willing to accept.
+    </p>
+
+    <table class="spec">
       <tr><th></th><th>File Checkpoint</th><th>Cursor / Watermark</th><th>Delta CDF</th></tr>
       <tr><td>Tracks</td><td>Files already read</td><td>Rows newer than a timestamp</td><td>Row-level Delta transactions</td></tr>
-      <tr><td>Catches inserts</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
-      <tr><td>Catches updates</td><td>Only if in a new file</td><td>Yes, if <code>updated_at</code> bumped</td><td>Yes, always</td></tr>
-      <tr><td>Catches hard deletes</td><td>No</td><td>No</td><td>Yes</td></tr>
-      <tr><td>Works against</td><td>File drops (ADLS)</td><td>Any queryable source</td><td>Delta tables only</td></tr>
-      <tr><td>Setup cost</td><td>Low (built into Autoloader)</td><td>Low-medium (trustworthy timestamp + trigger)</td><td>Low (one <code>ALTER TABLE</code>), Delta-only</td></tr>
+      <tr><td>Catches inserts</td><td class="win">Yes (new file)</td><td class="win">Yes</td><td class="win">Yes</td></tr>
+      <tr><td>Catches updates</td><td>Only if in a new file</td><td>Yes, if <code>updated_at</code> bumped</td><td class="win">Yes, always</td></tr>
+      <tr><td>Catches hard deletes</td><td class="lose">No</td><td class="lose">No</td><td class="win">Yes</td></tr>
+      <tr><td>Works against</td><td>File drops (ADLS)</td><td>Any queryable source (e.g. Postgres)</td><td>Delta tables only</td></tr>
+      <tr><td>Setup cost</td><td class="win">Low (built into Autoloader)</td><td>Low-medium (needs a trustworthy timestamp column + trigger)</td><td>Low (one <code>ALTER TABLE</code>), but Delta-only</td></tr>
       <tr><td>Used in GlobalMart for</td><td>6 of 8 Bronze sources</td><td><code>orders</code> / <code>order_items</code> ingestion</td><td>Bronze → Silver refresh</td></tr>
     </table>
-    <div class="highlight-box success">
-      <p><strong style="color:#22c55e;">The takeaway:</strong> there's no single "best" strategy — each is the right tool for a specific kind of source and a specific kind of gap you're willing to accept. Day 9's two hands-on labs build the watermark strategy yourself and wire up real CDF-based Bronze → Silver incremental loading.</p>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ The takeaway</div>
+      <p>
+        Day 9's two hands-on labs build the watermark strategy yourself (so the Day 2 pipeline stops being a
+        black box) and wire up real CDF-based Bronze→Silver incremental loading. Neither lab writes against
+        real <code>gbmart</code> tables directly in this concept session — this hour is about understanding the
+        <i>why</i> before you touch any code.
+      </p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 13: DISCUSSION QUESTIONS -->
-  <div class="slide slide-content">
-    <h3>Instructor Discussion Questions</h3>
-    <ol class="order-list">
-      <li>GlobalMart's finance team asks: "can we trust <code>fact_sales</code> if a customer cancels and deletes their account?" Which strategy would silently miss that, and where in the pipeline would you check?</li>
-      <li>Why might GlobalMart choose the cursor/watermark strategy for <code>orders</code> from Postgres, rather than enabling something CDF-like inside Postgres itself?</li>
-      <li>If <code>payment_methods</code> (currently Autoloader/file-checkpoint) started receiving in-place row edits instead of new files, what would break — and which strategy would fix it?</li>
-    </ol>
+<!-- SECTION: DISCUSSION -->
+<section class="content" id="discussion">
+  <div class="wrap">
+    <div class="section-tag">Instructor Discussion</div>
+    <h2 class="section-title">Talk It Through Before Day 9's Labs</h2>
+    <p class="section-intro">Click to reveal a discussion angle for each question — work through your own answer first.</p>
+
+    <details class="qa-card">
+      <summary>GlobalMart's finance team asks: "can we trust fact_sales if a customer cancels and deletes their account?" Which strategy would silently miss that, and where would you need to check?</summary>
+      <div class="qa-answer">Whichever strategy sits upstream of the deleted row matters most. If the delete happens in Postgres on a cursor/watermark-tracked table (like <code>orders</code>), it's invisible — no newer <code>updated_at</code> row appears to signal it. The place to check is wherever CDF is enabled downstream (Bronze → Silver): CDF would catch a delete that happens <i>inside</i> Delta, but it can't see a delete that already vanished before it ever reached a CDF-enabled table.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Why might GlobalMart choose the cursor/watermark strategy for orders from Postgres, rather than enabling something CDF-like inside Postgres itself?</summary>
+      <div class="qa-answer">CDF is a Delta Lake feature — it only exists once data is already inside a Delta table. Postgres doesn't have it. The realistic alternative inside Postgres would be logical replication / CDC infrastructure, which is heavier to set up and operate than a single trigger (<code>trg_orders_updated_at</code>) plus a cursor column. The watermark approach is the lightest option that still works reliably against a plain queryable source.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>If payment_methods (currently Autoloader/file-checkpoint) started receiving in-place row edits instead of new files, what would break, and which strategy would fix it?</summary>
+      <div class="qa-answer">Autoloader's file checkpoint would silently miss every in-place edit — it only reacts to new filenames, and an edited file re-uploaded under the same name is invisible to it (exactly the gap Bysani Karthik caught above). Either a cursor/watermark column (if <code>payment_methods</code> had a trustworthy "last updated" timestamp) or enabling CDF once the table is in Delta would fix it — CDF is the more complete fix since it also catches deletes, which a watermark column still couldn't.</div>
+    </details>
   </div>
+</section>
 
-  <!-- SLIDE 14: BRIDGE / CLOSING -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
-    <div class="section-tag">What's Next</div>
-    <h2>You're Ready for ILT 2</h2>
-    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
-      Next up: the cursor/watermark mechanism in detail, traced live through GlobalMart's real <code>orders_data_ingestion_cdc</code> pipeline configuration.
-    </p>
-    <div class="three-col" style="margin-top:32px; max-width:820px;">
-      <div class="card">
-        <h4>✅ Recap</h4>
-        <p>3 strategies: file checkpoint, cursor/watermark, Delta CDF — each catches different changes, each misses different changes</p>
-      </div>
-      <div class="card">
-        <h4>➡️ Up Next</h4>
-        <p>ILT 2: Watermark-Based Incremental Loading</p>
-      </div>
-      <div class="card">
-        <h4>🎤 Closing Check</h4>
-        <p>Name the one thing cursor/watermark loading can never see happen upstream.</p>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /deck -->
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 9 · ILT 1 — Need for Incremental Loading: Strategies and Trade-offs
+</footer>
 
 <script>
-  let current = 0;
-  const slides = document.querySelectorAll('.slide');
-  const counter = document.getElementById('counter');
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
 
-  function showSlide(n) {
-    slides[current].classList.remove('active');
-    current = (n + slides.length) % slides.length;
-    slides[current].classList.add('active');
-    counter.textContent = (current + 1) + ' / ' + slides.length;
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
   }
-
-  function changeSlide(dir) { showSlide(current + dir); }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
-  });
+  window.addEventListener('scroll', onScroll);
+  onScroll();
 </script>
+
 </body>
 </html>

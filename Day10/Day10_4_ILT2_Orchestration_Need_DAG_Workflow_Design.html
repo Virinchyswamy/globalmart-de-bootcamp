@@ -148,7 +148,7 @@
       <div class="card">
         <h4>The Problem</h4>
         <ul>
-          <li>12 real hands-on notebooks, already behind you</li>
+          <li>A stack of real hands-on notebooks, already behind you</li>
           <li>Strict ordering rules, currently held in your head</li>
         </ul>
       </div>
@@ -193,13 +193,16 @@
     <table class="sql-table">
       <tr><th>Layer</th><th>Real Notebooks You've Already Run</th><th>Lands In</th></tr>
       <tr><td>Ingestion — Postgres CDC</td><td><code>Day2_3_HOL1_Lakeflow_Connect_Storage_Credentials</code>, <code>Day2_4_HOL2_CDC_PostgreSQL_WAL</code></td><td><code>gbmart.bronze.orders</code>, <code>order_items</code></td></tr>
-      <tr><td>Ingestion — ADLS Autoloader</td><td><code>Day3_5_HOL2_ADLS_AutoLoader_Bronze_Customers_Payments</code>, <code>Day4_3_HOL1_Build_Bronze_Layer_All_Sources</code></td><td><code>customers</code>, <code>products</code>, <code>addresses</code>, <code>payments</code>, <code>payment_methods</code></td></tr>
-      <tr><td>Silver</td><td><code>Day5_3_HOL1_Transformations_DQ_Quarantine</code>, <code>Day5_4_HOL2_Build_Silver_Layer_All_Sources</code></td><td>All 7 <code>gbmart.silver.*</code> tables</td></tr>
-      <tr><td>Gold</td><td><code>Day7_1_HOL1_Build_Dimensions_Bridge_Table</code>, <code>Day7_3_HOL2_Build_Gold_Layer_Fact_Sales</code></td><td>6 dimensions + <code>fact_sales</code></td></tr>
+      <tr><td>Ingestion — ADLS Autoloader</td><td><code>Day4_3_HOL1_Build_Bronze_Layer_Mounting</code>, <code>Day4_3_HOL1_Build_Bronze_Addresses</code>, <code>Day4_3_HOL1_Build_Bronze_Layer_Remaining_Sources</code></td><td><code>customers</code>, <code>addresses</code>, <code>products</code>, <code>payment_methods</code>, <code>returns</code>, <code>payments</code></td></tr>
+      <tr><td>Silver</td><td><code>Day5_3_HOL1_Silver_01_Customers_DQ</code> &rarr; <code>Day5_4_HOL2_Silver_08_Returns_DQ</code> (8 notebooks)</td><td>All <code>gbmart.silver.*</code> tables</td></tr>
+      <tr><td>Gold</td><td><code>Day6_4_HOL1_Star_Schema_Design</code>, <code>Day7_1_HOL1_Build_Dimensions_Bridge_Table</code>, <code>Day7_3_HOL2_Build_Gold_Layer_Fact_Sales</code></td><td>6 dimensions + <code>fact_sales</code></td></tr>
       <tr><td>Incremental / SCD</td><td><code>Day9_3_HOL1</code>, <code>Day9_5_HOL2</code>, <code>Day10_2_HOL1</code>, <code>Day10_3_HOL2</code></td><td>Keeps Silver/Gold current without full reprocessing</td></tr>
     </table>
     <div class="highlight-box">
-      <p><strong style="color:#38bdf8;">That's 12 real hands-on notebooks</strong> that build or refresh a real <code>gbmart</code> table — before counting a single ILT demo, and all of it already behind you by this point on Day 10.</p>
+      <p><strong style="color:#38bdf8;">That's a lot of real hands-on notebooks</strong> that build or refresh a real <code>gbmart</code> table — before counting a single ILT demo, and all of it already behind you by this point on Day 10.</p>
+    </div>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p><strong>Note:</strong> the notebook names above were realigned after Day 2–7 were rebuilt around the real, executed GlobalMart pipeline (Bronze/Silver/Gold). Section 4's actual task graph (task_keys and counts) has not yet been re-audited against this — in particular it's missing a <code>returns</code> node, a real 8th table the rebuilt pipeline now includes.</p>
     </div>
   </div>
 

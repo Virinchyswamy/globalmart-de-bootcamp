@@ -226,7 +226,7 @@
         </div>
         <div class="card" style="margin-top:14px;">
           <h4>GlobalMart examples</h4>
-          <p><code>bronze/orders/</code> — raw CDC events<br><code>bronze/customers/</code> — raw file-drop rows<br><code>bronze/order_items/</code> — line items</p>
+          <p><code>&lt;your-catalog&gt;.bronze.orders</code> — raw CDC-upserted rows<br><code>&lt;your-catalog&gt;.bronze.customers</code> — raw file-drop rows<br><code>&lt;your-catalog&gt;.bronze.order_items</code> — line items</p>
         </div>
       </div>
     </div>
@@ -252,7 +252,7 @@
         </div>
         <div class="card" style="margin-top:14px;">
           <h4>GlobalMart examples</h4>
-          <p><code>silver/dim_customer/</code><br><code>silver/dim_product/</code><br><code>silver/stg_orders/</code></p>
+          <p><code>&lt;your-catalog&gt;.silver.customers</code><br><code>&lt;your-catalog&gt;.silver.products</code><br><code>&lt;your-catalog&gt;.silver.orders</code></p>
         </div>
       </div>
     </div>
@@ -278,7 +278,7 @@
         </div>
         <div class="card" style="margin-top:14px;">
           <h4>GlobalMart output</h4>
-          <p><code>gold/fact_sales/</code> — the whole point<br>plus <code>dim_date</code>, <code>dim_address</code>, and 4 more dimensions</p>
+          <p><code>&lt;your-catalog&gt;.gold.fact_sales</code> — the whole point<br>plus <code>dim_date</code>, <code>dim_address</code>, and 4 more dimensions</p>
         </div>
       </div>
     </div>
@@ -293,7 +293,7 @@
       <tr><td>Transformations</td><td>None</td><td>Clean, validate</td><td>Aggregate, join</td></tr>
       <tr><td>Data quality</td><td>Raw — may have errors</td><td>High</td><td>Highest</td></tr>
       <tr><td>Who uses it</td><td>Data Engineers only</td><td>Engineers + Analysts</td><td>Business + Genie</td></tr>
-      <tr><td>Typical path</td><td><code>raw/customers.csv</code></td><td><code>silver/dim_customer/</code></td><td><code>gold/fact_sales/</code></td></tr>
+      <tr><td>Where it lives</td><td><code>&lt;your-catalog&gt;.bronze.customers</code></td><td><code>&lt;your-catalog&gt;.silver.customers</code></td><td><code>&lt;your-catalog&gt;.gold.fact_sales</code></td></tr>
     </table>
   </div>
 
@@ -336,7 +336,7 @@
     <h3>The Secret Ingredient: <code>_delta_log</code></h3>
     <div class="two-col">
       <div>
-<pre>silver/customers/                     ← Delta table path in ADLS
+<pre>customers/                            ← a Delta table's storage location
     _delta_log/                       ← Delta's brain
         00000000000000000000.json     (version 0 — initial write: 6,666 rows)
         00000000000000000001.json     (version 1 — append: 200 new rows)

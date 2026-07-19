@@ -5,145 +5,191 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 6 | ILT 3 — Fact Tables Deep Dive</title>
 <style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
 
-  /* --- NAV --- */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: #1e293b; border-bottom: 1px solid #334155;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 24px;
+  /* PROGRESS + NAV */
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
   }
-  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
-  nav .controls { display: flex; gap: 10px; align-items: center; }
-  nav button {
-    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
-    border-radius: 6px; cursor: pointer; font-size: 13px;
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
   }
-  nav button:hover { background: #38bdf8; color: #0f172a; }
-  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
 
-  /* --- SLIDES --- */
-  .deck { padding-top: 60px; }
-  .slide {
-    display: none; min-height: 100vh; padding: 48px 60px;
-    animation: fadeIn 0.3s ease;
-  }
-  .slide.active { display: flex; flex-direction: column; justify-content: center; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  /* HERO */
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 40px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 700px; margin: 0 auto 26px; }
+  .hero .cta { display: inline-block; background: var(--accent); color: #0f172a; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+  .hero .cta:hover { background: #5fd0ff; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
 
-  /* --- SLIDE TYPES --- */
-  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
-  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
-  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
-  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  /* SECTIONS */
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 780px; margin-bottom: 30px; }
 
-  .slide-section { background: #1e293b; }
-  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
-  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+  /* CARDS */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 800px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+  .card.small { padding: 14px 16px; }
 
-  .slide-content { background: #0f172a; }
-  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
-
-  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
-  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
-  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
-
-  /* --- COMPONENTS --- */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
-  .card {
-    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
-    padding: 20px 24px;
-  }
-  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
-  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
-  .card ul, .card ol { padding-left: 16px; }
-
-  .highlight-box {
-    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
-    padding: 16px 20px; margin-top: 16px;
-  }
-  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
-  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
   .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
 
+  /* STEP LIST */
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* TABLE */
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  /* DETAILS / HINTS (used for asides, nudges, extra context) */
+  details.hint { background: #14243d; border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; padding: 4px 0; }
+  details.hint summary { cursor: pointer; padding: 12px 18px; font-size: 13.5px; font-weight: 700; color: var(--accent2); list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.hint summary::-webkit-details-marker { display: none; }
+  details.hint summary::before { content: '💡'; }
+  details.hint[open] summary { border-bottom: 1px solid var(--border); }
+  details.hint .hint-body { padding: 14px 18px 16px; font-size: 14px; color: #cbd5e1; line-height: 1.7; }
+  details.hint .hint-body p + p { margin-top: 10px; }
+
+  /* Q&A / QUICK-FIRE ACCORDION (for the quiz sections) */
+  details.qa-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; padding: 4px 0; }
+  details.qa-card summary { cursor: pointer; padding: 14px 18px; font-size: 14px; font-weight: 600; color: var(--text); list-style: none; }
+  details.qa-card summary::-webkit-details-marker { display: none; }
+  details.qa-card summary::before { content: "Q — "; color: var(--accent); font-weight: 700; }
+  details.qa-card[open] summary { color: #7dd3fc; border-bottom: 1px solid var(--border); }
+  details.qa-card .qa-answer { padding: 14px 18px 16px; color: #cbd5e1; font-size: 13.5px; line-height: 1.7; }
+  details.qa-card .qa-answer::before { content: "A — "; color: var(--good); font-weight: 700; }
+
+  /* CODE BLOCKS (for HOL1's real PySpark) */
   pre {
     background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
     padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
-    font-size: 13px; line-height: 1.7; color: #e6edf3;
+    font-size: 13px; line-height: 1.7; color: #e6edf3; margin-top: 14px;
   }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
   .kw { color: #ff7b72; font-weight: bold; }
   .fn { color: #d2a8ff; }
   .str { color: #a5d6ff; }
   .cm { color: #6e7681; font-style: italic; }
   .col { color: #79c0ff; }
   .tbl { color: #ffa657; }
+  .demo-label { color: #78716c; font-size: 13px; margin-bottom: 4px; }
 
-  .pill {
-    display: inline-block; padding: 3px 12px; border-radius: 20px;
-    font-size: 12px; font-weight: 600; margin: 2px;
-  }
+  /* CHECKPOINT (verification / recap callouts) */
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  /* NUMBERED PHASE HEADER */
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 15px; margin-right: 10px; }
+
+  /* PILLS */
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
   .pill-blue { background: #1d4ed8; color: #bfdbfe; }
   .pill-green { background: #15803d; color: #bbf7d0; }
   .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
+  .pill-purple { background: #6d28d9; color: #ddd6fe; }
 
-  .order-list { counter-reset: steps; list-style: none; padding: 0; }
-  .order-list li {
-    counter-increment: steps; display: flex; align-items: flex-start;
-    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
-    font-size: 14px; color: #cbd5e1; line-height: 1.6;
-  }
-  .order-list li::before {
-    content: counter(steps);
-    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; flex-shrink: 0;
-  }
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
 
-  table.sql-table {
-    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  @media (max-width: 640px) {
+    nav.topnav .links { display: none; }
+    .hero h1 { font-size: 30px; }
   }
-  table.sql-table th {
-    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
-  }
-  table.sql-table td {
-    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
-    background: #111827;
-  }
-  table.sql-table tr:nth-child(even) td { background: #0f172a; }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">DAY 6 · ILT 3 — Fact Tables Deep Dive</div>
-  <div class="controls">
-    <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 24</span>
-    <button onclick="changeSlide(1)">Next &#8594;</button>
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 6 · ILT 3 — FACT TABLES DEEP DIVE</div>
+    <div class="links">
+      <a href="#overview" class="navlink">Overview</a>
+      <a href="#fact-types" class="navlink">Fact Types</a>
+      <a href="#additivity" class="navlink">Additivity</a>
+      <a href="#degenerate-dims" class="navlink">Degenerate Dims</a>
+      <a href="#natural-keys" class="navlink">Natural Keys</a>
+      <a href="#column-shape" class="navlink">Column Shape</a>
+      <a href="#summary" class="navlink">Summary</a>
+      <a href="#qa-measures" class="navlink">Q&amp;A: Measures</a>
+      <a href="#qa-keys" class="navlink">Q&amp;A: Keys</a>
+      <a href="#closing" class="navlink">Recap</a>
+    </div>
   </div>
 </nav>
 
-<div class="deck">
-
-  <!-- SLIDE 1: COVER -->
-  <div class="slide slide-cover active">
-    <h1>Fact Tables Deep Dive</h1>
-    <p class="subtitle">What TYPE of fact table fact_sales is, what KIND of measures it holds, and how it references its 6 dimensions</p>
-    <div class="badge">Day 6 &nbsp;·&nbsp; ILT 3 &nbsp;·&nbsp; Trainer-Led Session</div>
-    <div style="margin-top:36px; color:#475569; font-size:13px;">
-      What we'll cover today → Fact Table Types · Additivity · Degenerate Dimensions · Natural Keys · Column Shape
-    </div>
+<header class="hero">
+  <div class="eyebrow">Day 6 &nbsp;·&nbsp; ILT 3 &nbsp;·&nbsp; Trainer-Led Session</div>
+  <h1>Fact Tables Deep Dive</h1>
+  <p class="lead">What TYPE of fact table fact_sales is, what KIND of measures it holds, and how it references its 6 dimensions</p>
+  <div class="meta-row">
+    <span class="meta-pill">Fact Table Types</span>
+    <span class="meta-pill">Additivity</span>
+    <span class="meta-pill">Degenerate Dimensions</span>
+    <span class="meta-pill">Natural Keys</span>
+    <span class="meta-pill">Column Shape</span>
   </div>
+  <div style="margin-top:22px;"><a href="#overview" class="cta">Start Learning ↓</a></div>
+</header>
 
-  <!-- SLIDE 2: AGENDA -->
-  <div class="slide slide-section">
+<!-- ============================================================ -->
+<!-- SECTION: OVERVIEW -->
+<!-- ============================================================ -->
+<section class="content" id="overview">
+  <div class="wrap">
     <div class="section-tag">Overview</div>
-    <h2>What We're Covering Today</h2>
-    <div class="three-col" style="margin-top:24px;">
+    <h2 class="section-title">What We're Covering Today</h2>
+
+    <div class="grid-3">
       <div class="card">
         <h4>Fact Table Types</h4>
         <ul>
@@ -166,67 +212,67 @@
         </ul>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 3: WHERE WE ARE -->
-  <div class="slide slide-content">
-    <h3>Where We Are</h3>
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Where We Are</h3>
     <div class="card" style="max-width:820px;">
-      <p><strong style="color:#38bdf8;">ILT 1</strong> settled the business process ("a sale") and the star schema shape. <strong style="color:#38bdf8;">ILT 2</strong> settled the grain — one row per order line item — and designed all 6 dimensions: <code>dim_customer</code>, <code>dim_product</code>, <code>dim_date</code>, <code>dim_address</code>, <code>dim_payment_method</code>, <code>dim_orders</code>.</p>
-      <p style="margin-top:10px;">Two questions remain, and both are about the fact table itself: what <em>type</em> of fact table is <code>fact_sales</code>, and what <em>kind</em> of measures does it hold? That's this session.</p>
+      <p><strong style="color:#38bdf8;">ILT 1</strong> settled what "a sale" means for GlobalMart and picked the star schema shape. <strong style="color:#38bdf8;">ILT 2</strong> locked the grain — one row per order line item — and designed all 6 dimensions: <code>dim_customer</code>, <code>dim_product</code>, <code>dim_date</code>, <code>dim_address</code>, <code>dim_payment_method</code>, <code>dim_orders</code>.</p>
+      <p style="margin-top:10px;">Two questions are still open, and both live inside the fact table itself: what <em>type</em> of fact table is <code>fact_sales</code>, and what <em>kind</em> of measures does it hold? That's today.</p>
     </div>
-  </div>
 
-  <!-- SLIDE 4: CORRECTION NOTICE -->
-  <div class="slide slide-content">
-    <h3>Correction Notice</h3>
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">fact_sales's 4 Real Measures</h3>
     <div class="highlight-box warn" style="max-width:820px;">
-      <p>An earlier draft of this course's spec said "quantity, unit_price, and line_total are all additive" — that draft also predates <code>fact_sales</code>'s real 4-measure shape.</p>
-      <p style="margin-top:10px;"><strong style="color:#f59e0b;">Neither is right.</strong> Only 2 of the real 4 measures (<code>Quantity_purchased</code>, <code>Sales_amount</code>) are additive; <code>Actual_price</code> and <code>Discounted_price</code> are not.</p>
+      <p>Every number column in <code>fact_sales</code> is tempting to just <code>SUM()</code> when you want a total. But summing the wrong column silently produces a number that <em>looks</em> correct and isn't — nobody gets an error, they just get a wrong dashboard. So before we touch any of them, we need to know which ones are actually safe to add up.</p>
+      <p style="margin-top:10px;"><code>fact_sales</code> has exactly 4 measures. Only 2 of them are safe to <code>SUM()</code>.</p>
+      <p style="margin-top:10px;"><strong style="color:#22c55e;">Safe to sum (additive):</strong> <code>Quantity_purchased</code>, <code>Sales_amount</code>.<br><strong style="color:#f59e0b;">Not safe to sum (non-additive):</strong> <code>Actual_price</code>, <code>Discounted_price</code>.</p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 5: SECTION - THREE TYPES -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
+<!-- ============================================================ -->
+<!-- SECTION: FACT TABLE TYPES -->
+<!-- ============================================================ -->
+<section class="content" id="fact-types">
+  <div class="wrap">
     <div class="section-tag">Fact Table Types</div>
-    <h2>Three Types of Fact Tables</h2>
-    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      The difference is about <strong style="color:#38bdf8;">when a row is written</strong> and whether it ever changes afterward.
-    </p>
-  </div>
+    <h2 class="section-title">Three Types of Fact Tables</h2>
+    <p class="section-intro">The difference is about <strong style="color:#38bdf8;">when a row is written</strong> and whether it ever changes afterward.</p>
 
-  <!-- SLIDE 6: THREE TYPES GRID -->
-  <div class="slide slide-content">
-    <h3>The Three Types</h3>
-    <div class="three-col">
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Why Bother Classifying a Fact Table At All?</h3>
+    <div class="card" style="max-width:860px;">
+      <p>Before you write a single line of pipeline code for a fact table, you have to answer a very practical question: once a row lands in this table, will it ever need to change later — or is it done the moment it's written?</p>
+      <p style="margin-top:10px;">Get that wrong and you build the wrong pipeline. Assume a row never changes when it actually does, and your table quietly goes stale — nobody edits it, so it stops matching reality. Assume a row might change when it actually never does, and you've built expensive update logic (checking "did this row change?" on every run) for a table that was always going to be insert-only.</p>
+    </div>
+    <div class="highlight-box" style="margin-top:16px; max-width:860px;">
+      <p>That one question — <strong style="color:#38bdf8;">"does a row get written once and left alone, or does it get revisited and updated?"</strong> — is exactly what sorts every fact table into one of three buckets. The formal names for those buckets are <strong>transactional</strong>, <strong>periodic snapshot</strong>, and <strong>accumulating snapshot</strong>.</p>
+    </div>
+
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">The Three Types</h3>
+    <div class="grid-3">
       <div class="card">
         <h4>Transactional Fact — <span style="color:#22c55e;">fact_sales is this type</span></h4>
-        <p>One row per business event, captured the moment it happens. Grain = the event. Inserted once, essentially never updated.</p>
+        <p>Something happens at one exact moment — a purchase, a withdrawal — and you write one row to record it. That row is the permanent record of that single event; there's nothing left to "update" once it's written, because the event itself is already over.</p>
         <div class="highlight-box" style="margin-top:10px;">
-          <p>GlobalMart: one row per order line item, inserted when placed. Append-only — same discipline as Bronze/Silver.</p>
+          <p>GlobalMart: one row per order line item, inserted the moment it's placed. Append-only — same discipline you already know from Bronze/Silver.</p>
         </div>
       </div>
       <div class="card">
         <h4>Periodic Snapshot Fact — <span style="color:#94a3b8;">not used today</span></h4>
-        <p>One row per entity per fixed time period — daily, weekly, monthly — whether or not anything happened.</p>
+        <p>Some things don't have a single "it happened" moment — they're a state that exists continuously (like how much stock is sitting in a warehouse). To track that, you take a measurement on a fixed schedule — every day, every week — and write a row each time, whether or not anything actually changed.</p>
         <div class="highlight-box" style="margin-top:10px;">
-          <p>Hypothetical GlobalMart example (not built): <code>fact_inventory_daily</code> — one row per product per day.</p>
+          <p>A hypothetical GlobalMart example (not built here): <code>fact_inventory_daily</code> — one row per product per day.</p>
         </div>
       </div>
       <div class="card">
         <h4>Accumulating Snapshot Fact — <span style="color:#94a3b8;">not used today</span></h4>
-        <p>One row per process instance, <strong>updated in place</strong> as it moves through milestones. The one type that breaks append-only.</p>
+        <p>Some events aren't instant — they're a process with stages spread over time (placed, then shipped, then delivered, days apart). Instead of writing a new row at every stage, you write ONE row for the whole process and keep updating it as each stage happens. This is the one type that is not append-only.</p>
         <div class="highlight-box" style="margin-top:10px;">
-          <p>Hypothetical: order lifecycle fact — <code>order_placed_date &rarr; shipped_date &rarr; actual_delivery_date</code>, same row, updated repeatedly.</p>
+          <p>Hypothetical: an order-lifecycle fact — <code>order_placed_date &rarr; shipped_date &rarr; actual_delivery_date</code>, same row, updated again and again as the order moves.</p>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 7: TYPES TABLE -->
-  <div class="slide slide-content">
-    <h3>Fact Table Types — Side by Side</h3>
-    <table class="sql-table">
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Fact Table Types — Side by Side</h3>
+    <table class="spec">
       <tr><th></th><th>Transactional</th><th>Periodic Snapshot</th><th>Accumulating Snapshot</th></tr>
       <tr><td><strong>Grain</strong></td><td>One row per event</td><td>One row per entity per period</td><td>One row per process instance</td></tr>
       <tr><td><strong>Row written</strong></td><td>Once, at event time</td><td>Repeatedly, every period</td><td>Once, then updated repeatedly</td></tr>
@@ -235,51 +281,47 @@
       <tr><td><strong>Real-world example</strong></td><td>Retail POS transactions, ATM withdrawals</td><td>Daily account balance, monthly inventory count</td><td>Loan application &rarr; approval &rarr; funding</td></tr>
     </table>
     <div class="highlight-box success" style="margin-top:16px;">
-      <p><strong style="color:#22c55e;">Why fact_sales is transactional:</strong> its grain (one order line item) is an event grain, not a time-period or process-instance grain. Inserted once when Bronze/Silver capture the line; Gold never edits <code>Quantity_purchased</code> or <code>Discounted_price</code> afterward.</p>
+      <p>Apply the test from the previous slide to <code>fact_sales</code>: does a row ever get revisited and updated after it's written, or is it done the moment it lands? A row in <code>fact_sales</code> represents one order line item being purchased — a single moment, not a recurring measurement and not a multi-stage process. So it's written once, when Bronze/Silver capture that line item, and Gold never comes back to edit <code>Quantity_purchased</code> or <code>Discounted_price</code> afterward. <strong style="color:#22c55e;">That makes fact_sales a transactional fact table.</strong></p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 8: SECTION - ADDITIVITY -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
+<!-- ============================================================ -->
+<!-- SECTION: ADDITIVITY -->
+<!-- ============================================================ -->
+<section class="content" id="additivity">
+  <div class="wrap">
     <div class="section-tag">Measures</div>
-    <h2>Additive, Semi-Additive, Non-Additive</h2>
-    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
-      <code>fact_sales</code> carries exactly 4 measures. Rule of thumb: before writing <code>SUM()</code> on any of them, ask — does adding these two numbers together produce something a business person would recognize as meaningful?
-    </p>
-  </div>
+    <h2 class="section-title">Additive, Semi-Additive, Non-Additive</h2>
+    <p class="section-intro"><code>fact_sales</code> carries exactly 4 measures. S R Sneha's rule of thumb, before she ever types <code>SUM()</code>: if I add these two numbers together, would a business person actually recognize the result as meaningful? That one question sorts every measure into one of three buckets.</p>
 
-  <!-- SLIDE 9: MEASURES GRID -->
-  <div class="slide slide-content">
-    <h3>fact_sales's 4 Measures</h3>
-    <div class="three-col">
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">fact_sales's 4 Measures</h3>
+    <div class="grid-3">
       <div class="card">
         <h4>Additive — <span style="color:#22c55e;">Quantity_purchased · Sales_amount</span></h4>
-        <p>Safe to SUM across <strong>any</strong> dimension — product, customer, date, category, region, any combination.</p>
+        <p>These two answer "how much in total?" — and a total is exactly what adding numbers together is for. Add up <code>Sales_amount</code> from a thousand different line items, across any mix of products, customers, or dates, and the result is still a real number a business person recognizes: total revenue. That's what makes something safe to <code>SUM()</code> — the sum itself still means something.</p>
         <div class="highlight-box" style="margin-top:10px;">
-          <p><code>SUM(Sales_amount)</code> by category this month, by customer this year — always correct. This is "revenue."</p>
+          <p>Sneha needs this month's revenue by category for a stakeholder deck. She just runs <code>SUM(Sales_amount)</code> — by category, by customer, by year, it's correct every time. This is "revenue."</p>
         </div>
       </div>
       <div class="card">
         <h4>Non-Additive — <span style="color:#f59e0b;">Actual_price · Discounted_price</span></h4>
-        <p>Never SUM either. Summing a rate/price across different line items produces a meaningless number.</p>
+        <p>Say one line item sold for &#8377;500 and another, totally different product, sold for &#8377;1,500. Add those two prices together and you get &#8377;2,000 — but &#8377;2,000 of <em>what</em>? It isn't total revenue (revenue also depends on how many units of each were bought — that's what <code>Sales_amount</code> is for). It isn't an average price either (a plain sum isn't divided by anything). It's just two unrelated per-unit prices stuck together, and it doesn't answer any real business question. That's why <code>Actual_price</code> and <code>Discounted_price</code> are never safe to <code>SUM()</code>.</p>
         <div class="highlight-box warn" style="margin-top:10px;">
-          <p>Wrong: <code>AVG(Discounted_price)</code> across many products. Right: avg. selling price = <code>SUM(Sales_amount)/SUM(Quantity_purchased)</code>.</p>
+          <p>Wrong: <code>AVG(Discounted_price)</code> across many products — same problem, just divided. Right: average selling price = <code>SUM(Sales_amount)/SUM(Quantity_purchased)</code>, because that actually weights the average by how many units sold at each price.</p>
         </div>
       </div>
       <div class="card">
         <h4>Semi-Additive — <span style="color:#94a3b8;">not in fact_sales</span></h4>
-        <p>Summable across most dimensions, but <strong>not across time</strong>. Classic example: inventory on-hand, account balance.</p>
+        <p>Some measures are safe to add across most things, but break specifically when you add across <strong>time</strong> — because they're a snapshot of a level, not a count of something that happened. Add today's stock across 3 warehouses (100 + 100 + 100 = 300 units) and that's real — 300 units exist right now. But add one warehouse's 100 units across 7 different days (100 &times; 7 = 700) and that number is meaningless — it's the <em>same</em> 100 units, sitting there, counted seven separate times. Nothing actually adds up to 700. That's what "semi-additive" means: sum across space, never across time.</p>
         <div class="highlight-box" style="margin-top:10px;">
-          <p>3 warehouses &times; 100 units today = 300, valid. One warehouse's 100 units summed over 7 idle days = 700, meaningless (same stock counted 7&times;).</p>
+          <p>Sneha keeps expecting <code>fact_sales</code> to hand her a semi-additive measure to be careful with. It never does — this bucket exists so she recognizes one the day she meets it elsewhere, like inventory-on-hand or an account balance.</p>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 10: ADDITIVITY TABLE -->
-  <div class="slide slide-content">
-    <h3>Additivity — Full Picture</h3>
-    <table class="sql-table">
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Additivity — Full Picture</h3>
+    <table class="spec">
       <tr><th>fact_sales Measure</th><th>Additivity</th><th>Safe aggregation</th></tr>
       <tr><td><code>Quantity_purchased</code></td><td>Additive</td><td><code>SUM(Quantity_purchased)</code> across any dimension</td></tr>
       <tr><td><code>Sales_amount</code></td><td>Additive</td><td><code>SUM(Sales_amount)</code> across any dimension — the revenue number</td></tr>
@@ -288,124 +330,129 @@
       <tr><td><em>inventory on-hand (not in fact_sales)</em></td><td>Semi-additive</td><td>SUM across product/warehouse OK; SUM across time is wrong — average or use period-end value</td></tr>
     </table>
     <div class="highlight-box" style="margin-top:16px;">
-      <p><strong style="color:#38bdf8;">The one legitimate exception:</strong> Day 7 HOL 2's real <code>vw_monthly_category_sales</code> view runs <code>ROUND(AVG(Actual_price - Discounted_price), 2) AS avg_discount_given</code> — that's averaging the <em>difference</em> of two rates (itself a rate), not averaging a raw price across unrelated products. Discount-gap analysis is meaningful; averaging raw prices across different products still isn't.</p>
+      <p><strong style="color:#38bdf8;">So is AVG() ever allowed on these two columns? Once, and it's a special case.</strong> Day 7 HOL 2's real <code>vw_monthly_category_sales</code> view runs <code>ROUND(AVG(Actual_price - Discounted_price), 2) AS avg_discount_given</code>. Notice what's actually being averaged: not the raw price of a product, but the <em>gap</em> between two prices — how big a discount was given. That gap is a rate, not a raw price, and averaging a rate across many line items to see "how big a discount do we typically give" is a meaningful business question. Averaging raw prices across unrelated products still isn't — the rule doesn't change, this just isn't that case.</p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 11: SECTION - DEGENERATE DIMENSIONS -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
+<!-- ============================================================ -->
+<!-- SECTION: DEGENERATE DIMENSIONS -->
+<!-- ============================================================ -->
+<section class="content" id="degenerate-dims">
+  <div class="wrap">
     <div class="section-tag">GlobalMart's Twist on the Textbook Case</div>
-    <h2>Degenerate Dimensions</h2>
-    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
-      By the textbook definition: an identifier stored in the fact table with no corresponding dimension table of its own — usually because it has no descriptive attributes beyond the ID itself.
-    </p>
-  </div>
+    <h2 class="section-title">Degenerate Dimensions</h2>
+    <p class="section-intro">Sometimes an ID sits inside a fact table with nothing else describing it — no separate table needed, because there's genuinely nothing more to say about it than the ID itself. That kind of ID has a name: a <strong style="color:#38bdf8;">degenerate dimension</strong>. Sneha is about to run into a GlobalMart case that bends this definition in a way worth slowing down for.</p>
 
-  <!-- SLIDE 12: ORDER_ID CANDIDATE + TWIST -->
-  <div class="slide slide-content">
-    <h3>Order_ID Looks Like a Classic Candidate</h3>
-    <div class="two-col">
-      <div>
-        <div class="card">
-          <h4>By that definition...</h4>
-          <p><code>Order_ID</code> looks like a classic degenerate-dimension candidate — just an ID, sitting in the fact table.</p>
-        </div>
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Order_ID Looks Like a Classic Candidate</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h4>By that definition...</h4>
+        <p>Sneha looks at <code>Order_ID</code> sitting inside <code>fact_sales</code>. It's just an ID column — no channel, no shipping tier, nothing else describing it sits next to it in the fact table. That matches the definition exactly, so she calls it correctly: "classic degenerate-dimension candidate — just an ID, nothing more." Textbook-perfect instinct.</p>
       </div>
-      <div>
-        <div class="highlight-box warn">
-          <p><strong style="color:#f59e0b;">But GlobalMart built <code>dim_orders</code> anyway</strong> — this afternoon's Hands-On constructs it from <code>gbmart.silver.orders</code>, complete with its own surrogate key (<code>order_sk</code>) and <code>order_channel</code>/<code>shipping_tier_id</code>/<code>supplier_id</code>/<code>order_date</code>.</p>
-          <p style="margin-top:10px;">So which is it — degenerate, or a real dimension? <strong>Both, depending which table you're looking from.</strong></p>
-        </div>
+      <div class="highlight-box warn">
+        <p><strong style="color:#f59e0b;">Then she notices something that seems to contradict her own call:</strong> GlobalMart built <code>dim_orders</code> anyway — this afternoon's Hands-On constructs it from <code>&lt;your-catalog&gt;.silver.orders</code>, complete with its own surrogate key (<code>order_sk</code>) and real describing columns: <code>order_channel</code>, <code>shipping_tier_id</code>, <code>supplier_id</code>, <code>order_date</code>. If <code>Order_ID</code> truly had "nothing more to say about it," why would a whole dimension table exist for it?</p>
+        <p style="margin-top:10px;">So which is it — degenerate, or a real dimension? <strong>Both.</strong> Sneha didn't get it wrong, and <code>dim_orders</code> doesn't prove her wrong either — the next slide walks through exactly why both are true at once.</p>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 13: LOOKING FROM WHICH TABLE -->
-  <div class="slide slide-content">
-    <h3>Looking From Which Table?</h3>
-    <table class="sql-table">
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Why Both Can Be True</h3>
+    <div class="card" style="max-width:900px;">
+      <p>This isn't a contradiction — it's two different tables asking two different questions of the same ID, and getting two different honest answers.</p>
+      <p style="margin-top:10px;"><strong style="color:#38bdf8;">Question 1 — what does dim_orders need Order_ID for?</strong> Its whole job is to describe an order: what channel it came through, what shipping tier, which supplier. Those are real, useful things to know about an order <em>on their own</em> — a business user can ask "how many orders came through the app channel this month?" without ever touching <code>fact_sales</code>. That's a real, standalone dimension, full stop.</p>
+      <p style="margin-top:10px;"><strong style="color:#38bdf8;">Question 2 — what does fact_sales need Order_ID for?</strong> Nothing that detailed. At the line-item level, <code>fact_sales</code> never needs to know the channel or the shipping tier — it just needs a way to group line items back into the order they belong to, and to count "how many separate orders" versus "how many line items." That's it. And doing exactly that — sitting in the fact table as a plain ID, with no join needed to do its job — is precisely what a degenerate dimension is for.</p>
+    </div>
+    <div class="highlight-box success" style="margin-top:16px; max-width:900px;">
+      <p><strong style="color:#22c55e;">The resolution:</strong> "is Order_ID degenerate?" was never a property of the ID by itself — it's a property of what a particular table needs from it. <code>dim_orders</code> needs description, so from its own point of view it's a real dimension. <code>fact_sales</code> only needs grouping and counting, so from its point of view <code>Order_ID</code> still behaves exactly like a degenerate dimension. Same column, two tables, two honest answers — at the same time.</p>
+    </div>
+
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Looking From Which Table?</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:6px;">Laid out side by side — same column, two honest answers depending which table is asking:</p>
+    <table class="spec">
       <tr><th>Looking from...</th><th>What Order_ID is</th></tr>
       <tr><td><code>dim_orders</code> itself</td><td>A real, standalone Gold dimension — one row per order, its own surrogate key, independently queryable ("orders by channel") without ever touching <code>fact_sales</code></td></tr>
       <tr><td><code>fact_sales</code></td><td><code>Order_ID</code> sits as a plain <strong>natural-key column</strong> — <code>fact_sales</code> does <strong>not</strong> join through <code>dim_orders.order_sk</code> at all</td></tr>
     </table>
-  </div>
 
-  <!-- SLIDE 14: ORDER_ID THREE JOBS -->
-  <div class="slide slide-content">
-    <h3>From fact_sales's Point of View, Order_ID Still Does the Degenerate-Dimension Job</h3>
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">From fact_sales's Point of View, Order_ID Still Does the Degenerate-Dimension Job</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:10px;">Even without ever joining <code>order_sk</code>, <code>Order_ID</code> still earns its keep inside <code>fact_sales</code> — it does three real jobs:</p>
     <ol class="order-list">
       <li><code>COUNT(DISTINCT Order_ID)</code> answers "how many orders?" — different from "how many line items?" (Day 7 HOL 2's real <code>vw_regional_sales</code> view uses exactly this)</li>
       <li>It groups line items back into their parent order</li>
       <li>It supports drill-through back to the source order record</li>
     </ol>
-  </div>
 
-  <!-- SLIDE 15: THE ACTUAL LESSON -->
-  <div class="slide slide-content">
-    <h3>The Actual Lesson</h3>
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">The Actual Lesson</h3>
     <div class="highlight-box" style="max-width:880px;">
-      <p>Having a real dimension table for something doesn't force every fact table to join to it by surrogate key. GlobalMart's <code>fact_sales</code> treats <code>Order_ID</code> as if it were degenerate — it still joins <code>dim_orders</code> fine on the natural key, it just never goes through <code>order_sk</code>, purely because the natural-key simplification (next section) applies uniformly to <em>all six</em> dimensions. <code>dim_orders</code> isn't wasted — it just serves order-level analysis on its own, not through the fact table.</p>
-      <p style="margin-top:10px;"><strong style="color:#38bdf8;">Payment_ID is a stricter case, not "the same story":</strong> it doesn't merely skip a surrogate key, it doesn't resolve to <code>dim_payment_method</code> through any column at all — the two aren't even in the same ID space.</p>
+      <p>The takeaway to carry forward: building a real, standalone dimension table doesn't force every fact table that touches it to join through its surrogate key. <code>fact_sales</code> still connects to <code>dim_orders</code> using <code>Order_ID</code> as a natural key — it just never goes through <code>order_sk</code> to get there.</p>
+      <p style="margin-top:8px; color:#94a3b8;">And this isn't special treatment just for orders — the exact same natural-key simplification applies to all six of <code>fact_sales</code>'s dimensions, which is the next section.</p>
+      <p style="margin-top:10px;"><strong style="color:#38bdf8;">One heads-up before we get there:</strong> <code>Payment_ID</code> is not just "the Order_ID story, repeated." It's a stricter case — full explanation, with a concrete example, coming up shortly.</p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 16: SECTION - NATURAL KEYS -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
+<!-- ============================================================ -->
+<!-- SECTION: NATURAL KEYS -->
+<!-- ============================================================ -->
+<section class="content" id="natural-keys">
+  <div class="wrap">
     <div class="section-tag">Key Design</div>
-    <h2>Why fact_sales Uses Natural Keys</h2>
-    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
-      Not the surrogate keys its dimensions already have.
-    </p>
-  </div>
+    <h2 class="section-title">Why fact_sales Uses Natural Keys</h2>
+    <p class="section-intro">Every one of <code>fact_sales</code>'s 6 dimensions already has a perfectly good surrogate key sitting there, ready to join on. <code>fact_sales</code> uses almost none of them. This section is about why — and what it costs.</p>
 
-  <!-- SLIDE 17: EVERY DIM HAS A SURROGATE KEY -->
-  <div class="slide slide-content">
-    <h3>Every Dimension Already Has a Proper Surrogate Key</h3>
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Every Dimension Already Has a Proper Surrogate Key</h3>
     <div class="card" style="max-width:860px;">
-      <p><code>customer_sk</code>/<code>product_sk</code> (reused from Silver's SCD2 build), <code>address_sk</code>/<code>payment_method_sk</code>/<code>order_sk</code> (generated fresh in Gold), and <code>dim_date.date_key</code> (the <code>YYYYMMDD</code> exception).</p>
+      <p><code>customer_sk</code> / <code>product_sk</code> (carried over from Silver's SCD2 build), <code>address_sk</code> / <code>payment_method_sk</code> / <code>order_sk</code> (generated fresh in Gold), and <code>dim_date.date_key</code> (the one exception, shaped as <code>YYYYMMDD</code>).</p>
     </div>
     <div class="highlight-box" style="margin-top:16px; max-width:860px;">
-      <p><strong style="color:#38bdf8;">The Kimball-standard rule — and cert material</strong> — says a fact table should join to its dimensions on exactly those surrogate keys, never the natural key.</p>
+      <p>Why does the standard rule insist on joining through the surrogate key instead of the plain business ID? Because for any dimension that keeps history — like <code>dim_customer</code>, which never overwrites an old row when something changes — the same natural ID can end up pointing at more than one row over time. The surrogate key is what pins a fact row down to exactly <strong>one specific version</strong> of that dimension row: the version that was true at the moment the sale happened. Join on the bare natural ID instead, and there's no way to say which version you meant.</p>
+      <p style="margin-top:10px;"><strong style="color:#38bdf8;">That reasoning is exactly what the Kimball-standard rule — and cert material — is built on:</strong> a fact table should join to its dimensions on the surrogate key, and never the natural key.</p>
     </div>
-  </div>
 
-  <!-- SLIDE 18: FACT_SALES BREAKS THE RULE (CRITICAL) -->
-  <div class="slide slide-content">
-    <h3>fact_sales Does Not Follow That Rule</h3>
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">fact_sales Does Not Follow That Rule</h3>
     <div class="highlight-box warn" style="max-width:920px;">
-      <p>It carries <code>Customer_ID</code>, <code>Product_ID</code>, <code>Order_ID</code>, <code>Address_ID</code>, <code>Payment_ID</code>, and <code>Time_ID</code> — six natural/business keys.</p>
-      <p style="margin-top:10px;"><strong>Five</strong> join their dimension directly: <code>Customer_ID</code>&rarr;<code>dim_customer</code>, <code>Product_ID</code>&rarr;<code>dim_product</code>, <code>Order_ID</code>&rarr;<code>dim_orders</code>, <code>Address_ID</code>&rarr;<code>dim_address</code>, <code>Time_ID</code>&rarr;<code>dim_date</code> (<code>Time_ID</code> <em>is</em> literally <code>dim_date.date_key</code>).</p>
-      <p style="margin-top:10px;"><strong style="color:#f59e0b;">Payment_ID is the odd one out</strong> — it doesn't resolve to <code>dim_payment_method</code> at all, since the two live in different ID spaces.</p>
-      <p style="margin-top:10px;">The only surrogate key <code>fact_sales</code> actually generates is its own row identity: <code>fact_sales_sk = sha2(order_item_id, 256)</code> — a key for the fact row itself, not a foreign key to anything.</p>
+      <p>Given everything on the last slide, you'd expect <code>fact_sales</code> to join in using <code>customer_sk</code>, <code>product_sk</code>, <code>order_sk</code>, <code>address_sk</code>, and <code>dim_date.date_key</code>. It doesn't. Instead, it carries the plain business IDs themselves — <code>Customer_ID</code>, <code>Product_ID</code>, <code>Order_ID</code>, <code>Address_ID</code>, <code>Payment_ID</code>, and <code>Time_ID</code> — six natural keys, not six surrogate keys.</p>
+      <p style="margin-top:10px;"><strong>Five</strong> of them still join their dimension directly, just on the natural key instead of the surrogate one: <code>Customer_ID</code>&rarr;<code>dim_customer</code>, <code>Product_ID</code>&rarr;<code>dim_product</code>, <code>Order_ID</code>&rarr;<code>dim_orders</code>, <code>Address_ID</code>&rarr;<code>dim_address</code>, <code>Time_ID</code>&rarr;<code>dim_date</code> (<code>Time_ID</code> <em>is</em>, literally, <code>dim_date.date_key</code>).</p>
     </div>
-  </div>
 
-  <!-- SLIDE 19: REAL COST -->
-  <div class="slide slide-content">
-    <h3>Why This Is a Real Cost</h3>
-    <table class="sql-table">
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">The One Real Exception, and the One Real Key</h3>
+    <div class="highlight-box warn" style="max-width:900px;">
+      <p><strong style="color:#f59e0b;">Payment_ID is the odd one out — and seeing the actual values makes it obvious why.</strong> A <code>Payment_ID</code> value looks like <code>PAY-001</code> — it identifies one specific payment event, this one exact transaction where this one order got paid for. <code>dim_payment_method</code>'s ID looks like <code>PM-002</code> — it identifies a payment <em>method</em>, a category like "Credit Card" or "UPI," and there are only about 5 of those in the entire business.</p>
+      <p style="margin-top:10px;">Thousands of different <code>Payment_ID</code>s can all share the same method category. Trying to match <code>PAY-001</code> against <code>PM-002</code> isn't a missing join waiting to be added — it's comparing two different kinds of thing that were never built to line up: one ID counts individual transactions, the other counts categories. That's why <code>Payment_ID</code> doesn't resolve to <code>dim_payment_method</code> through any column at all — not even the natural key.</p>
+    </div>
+    <div class="highlight-box" style="margin-top:16px; max-width:900px;">
+      <p style="color:#94a3b8;">The only surrogate key <code>fact_sales</code> actually generates is its own row identity: <code>fact_sales_sk = sha2(order_item_id, 256)</code> — a key that identifies the fact row itself, not a foreign key pointing anywhere.</p>
+    </div>
+
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Why This Is a Real Cost — Losing Point-in-Time Accuracy</h3>
+    <div class="card" style="max-width:900px;">
+      <p>Picture a GlobalMart customer whose email address changes on March 15th. Because <code>dim_customer</code> tracks history (SCD Type 2, already live since Day 5), the OLD row isn't overwritten — it stays on file, closed out with an end date. A brand NEW row is added with the new email, and its own new <code>customer_sk</code>. So now there are two rows for the same <code>Customer_ID</code>: one that was true before March 15th, one that's true after.</p>
+      <p style="margin-top:10px;"><code>fact_sales</code> joins to <code>dim_customer</code> using the bare <code>Customer_ID</code> — not <code>customer_sk</code>. But <code>Customer_ID</code> is identical on both of those rows; it can't tell you which version you meant. So when a query joins on it, there's no way to pick "the version that was true back when this particular sale happened" — the join just resolves to whichever row currently holds that ID, which is always the newest one.</p>
+      <p style="margin-top:10px;">Concretely: query a sale from January, and the join will show you March's email attached to it, not January's — the email that was actually true on the day of that sale is gone from the picture. That's what "losing point-in-time accuracy" means: a natural-key join always shows the customer as they are <strong>now</strong>, never as they were <strong>at the moment of the sale</strong>.</p>
+    </div>
+
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Why GlobalMart Accepts That Cost Anyway</h3>
+    <table class="spec">
       <tr><th>Reason</th><th>Explanation</th></tr>
-      <tr><td><strong>Point-in-time accuracy, lost</strong></td><td>If a customer's email changes, <code>dim_customer</code> (Type 2) keeps both rows with different <code>customer_sk</code> values. Joining on the bare <code>Customer_ID</code> instead means every join — including against last year's sales — resolves to whichever row currently has that ID, not the version true at sale time.</td></tr>
-      <tr><td><strong>Uniformity</strong> (why GlobalMart accepts the cost)</td><td>All 6 dimensions get identical natural-key treatment — no special-case join logic to remember per dimension, even for <code>dim_orders</code>, the newest and most obviously dimension-shaped table.</td></tr>
+      <tr><td><strong>Uniformity</strong></td><td>All 6 dimensions get the exact same natural-key treatment — no special-case join logic to remember dimension by dimension, not even for <code>dim_orders</code>, the newest and most obviously "real dimension" table. One rule to remember, applied everywhere, beats six different rules that are each individually "more correct."</td></tr>
       <tr><td><strong>Documented, not hidden</strong></td><td>Day 7 HOL 2's own Key Takeaways state it directly: "Natural-key joins were a deliberate choice, not a shortcut — you now know exactly what it costs and why it was still the right call for this program."</td></tr>
     </table>
     <div class="highlight-box success" style="margin-top:16px;">
       <p><strong style="color:#22c55e;">Rule to internalize regardless:</strong> the Kimball-standard, cert-tested default is still <em>join facts to dimensions on the surrogate key</em>. GlobalMart's <code>fact_sales</code> is the documented exception you now understand the cost of — not the pattern to reach for by default in your own designs.</p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 20: SECTION - COLUMN SHAPE -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
+<!-- ============================================================ -->
+<!-- SECTION: COLUMN SHAPE -->
+<!-- ============================================================ -->
+<section class="content" id="column-shape">
+  <div class="wrap">
     <div class="section-tag">Putting It Together</div>
-    <h2>fact_sales's Column Shape</h2>
-    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      A sketch, not a build — no code runs today. This is what every row looks like once Day 7 builds it.
-    </p>
-  </div>
+    <h2 class="section-title">fact_sales's Column Shape</h2>
+    <p class="section-intro">A sketch, not a build — no code runs today. This is what every row looks like once Day 7 builds it.</p>
 
-  <!-- SLIDE 21: COLUMN SKETCH -->
-  <div class="slide slide-content">
-    <h3>The Column Sketch</h3>
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">The Column Sketch</h3>
     <pre>fact_sales
   ├── <span class="col">fact_sales_sk</span>        <span class="cm">surrogate PK — the ONLY generated key — sha2(order_item_id, 256)</span>
   ├── <span class="tbl">Payment_ID</span>           <span class="cm">natural key, silver.payments — degenerate-style, not dim_payment_method's ID space</span>
@@ -418,12 +465,9 @@
   ├── Actual_price         <span class="cm">measure — non-additive, never SUM</span>
   ├── Discounted_price     <span class="cm">measure — non-additive, never SUM</span>
   └── Sales_amount         <span class="cm">measure — additive — Quantity_purchased &times; Discounted_price</span></pre>
-  </div>
 
-  <!-- SLIDE 22: COLUMN TABLE -->
-  <div class="slide slide-content">
-    <h3>Column Shape — Full Detail</h3>
-    <table class="sql-table">
+    <h3 style="font-size:20px; color:#f8fafc; margin:30px 0 14px;">Column Shape — Full Detail</h3>
+    <table class="spec">
       <tr><th>Column</th><th>Role</th><th>Type</th><th>Notes</th></tr>
       <tr><td><code>fact_sales_sk</code></td><td>Surrogate PK</td><td>hash/string</td><td>The only generated key in this table</td></tr>
       <tr><td><code>Payment_ID</code></td><td>Natural key, from <code>silver.payments</code></td><td>string</td><td>Degenerate-style — not the same ID as <code>dim_payment_method.payment_method_id</code></td></tr>
@@ -438,11 +482,17 @@
       <tr><td><code>Sales_amount</code></td><td>Measure</td><td>decimal</td><td>Additive — the revenue number</td></tr>
     </table>
   </div>
+</section>
 
-  <!-- SLIDE 23: SESSION SUMMARY -->
-  <div class="slide slide-content">
-    <h3>Session Summary — fact_sales, Fully Specified</h3>
-    <div class="three-col">
+<!-- ============================================================ -->
+<!-- SECTION: SESSION SUMMARY -->
+<!-- ============================================================ -->
+<section class="content" id="summary">
+  <div class="wrap">
+    <div class="section-tag">Wrap-Up</div>
+    <h2 class="section-title">Session Summary — fact_sales, Fully Specified</h2>
+
+    <div class="grid-3">
       <div class="card">
         <h4>Type &amp; Measures</h4>
         <p><strong>Type:</strong> Transactional fact<br><strong>Grain:</strong> one row per order line item</p>
@@ -474,15 +524,80 @@
       </div>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 24: CLOSING -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
+<!-- ============================================================ -->
+<!-- SECTION: QUICK-FIRE Q&A 1 -->
+<!-- ============================================================ -->
+<section class="content" id="qa-measures">
+  <div class="wrap">
+    <div class="section-tag">Quick-Fire Q&amp;A</div>
+    <h2 class="section-title">Measures &amp; Additivity</h2>
+    <p class="section-intro">Click a question to reveal the answer</p>
+
+    <details class="qa-card">
+      <summary>Kimball describes three fact table grain types — transaction, periodic snapshot, accumulating snapshot. Which is fact_sales?</summary>
+      <div class="qa-answer">Transaction fact table — one row per discrete event (an order line item being purchased), inserted once and mostly never revisited. Periodic snapshot would be "inventory level every night"; accumulating snapshot would be "one row per order, updated as it moves ship&rarr;deliver&rarr;return." <code>fact_sales</code> is neither of those.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>The trap question, tied to the whiteboard sketch: my whiteboard labeled fact_sales's measures "semi-additive" — is that right?</summary>
+      <div class="qa-answer">Not for the measures this course actually builds. <code>Sales_amount</code> and <code>Quantity_purchased</code> are additive — safely <code>SUM</code>-able across every dimension, including time. Semi-additive means summable across most dimensions but <em>not</em> across time — the classic example is an account balance or inventory-on-hand snapshot, where adding today's balance to yesterday's produces a meaningless number. <code>fact_sales</code> is a transaction-grain table, not a snapshot table, so it has no semi-additive measure — additive and non-additive cover all 4 of its real measures.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Actual_price and Discounted_price are non-additive. What's the right way to compute an average selling price across many order lines, if you can't just AVG() them?</summary>
+      <div class="qa-answer"><code>SUM(Sales_amount) / SUM(Quantity_purchased)</code>. Averaging a per-unit price directly across products of wildly different prices produces a number no business person would recognize; deriving it from the two additive measures gives the real weighted average.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Is AVG() ever legitimately safe on a non-additive measure?</summary>
+      <div class="qa-answer">One documented case: Day 7 HOL 2's real <code>vw_monthly_category_sales</code> view runs <code>AVG(Actual_price - Discounted_price)</code> — that's averaging the <em>difference</em> of two rates (itself a rate, the discount gap), not averaging a raw price across unrelated products. Discount-gap analysis is meaningful; averaging raw prices across different products still isn't.</div>
+    </details>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION: QUICK-FIRE Q&A 2 -->
+<!-- ============================================================ -->
+<section class="content" id="qa-keys">
+  <div class="wrap">
+    <div class="section-tag">Quick-Fire Q&amp;A</div>
+    <h2 class="section-title">Degenerate Dimensions &amp; Natural Keys</h2>
+    <p class="section-intro">Click a question to reveal the answer</p>
+
+    <details class="qa-card">
+      <summary>Sneha says Order_ID is a degenerate dimension. Aman Thapliyal says no, GlobalMart built a full dim_orders with its own surrogate key, so it's a real dimension. Who's right?</summary>
+      <div class="qa-answer">Both of them. It depends which table you're standing at. From <code>dim_orders</code>'s own point of view — Aman's angle — it's a genuine standalone dimension, independently queryable ("orders by channel") without ever touching <code>fact_sales</code>. From <code>fact_sales</code>'s point of view — Sneha's angle — <code>Order_ID</code> still does the degenerate-dimension job: grouping line items back to their parent order, supporting drill-through, answering <code>COUNT(DISTINCT Order_ID)</code>. <code>fact_sales</code> just never joins through <code>order_sk</code> to get there.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>If dim_orders has a perfectly good surrogate key, why doesn't fact_sales join to it that way?</summary>
+      <div class="qa-answer">Because GlobalMart's natural-key simplification applies uniformly to <em>all six</em> dimensions, not selectively — <code>Customer_ID</code>, <code>Product_ID</code>, <code>Order_ID</code>, <code>Address_ID</code>, and <code>Time_ID</code> all skip their surrogate key the same way. It's a documented, deliberate trade-off (point-in-time accuracy lost, in exchange for uniform join logic across every dimension) — not something specific to orders.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Payment_ID also sits in fact_sales as an ID. Is it the same story as Order_ID — skipping a surrogate key but still resolving to its dimension?</summary>
+      <div class="qa-answer">No — a stricter case. <code>Order_ID</code> still resolves to <code>dim_orders</code> on the natural key; it just skips the surrogate key. <code>Payment_ID</code> doesn't resolve to <code>dim_payment_method</code> through any column at all — the two live in entirely different ID spaces (<code>payments</code> vs. <code>payment_methods</code>).</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Why do measures need to be numeric and additive-by-default — why not just store a descriptive value like "high/medium/low" as a measure?</summary>
+      <div class="qa-answer">Because the entire value of a fact table is fast aggregation — <code>SUM</code>/<code>AVG</code>/<code>COUNT</code> across millions of rows — and that only works on numbers. Descriptive categories belong on a dimension (or as an attribute), precisely so they can be used to <code>GROUP BY</code>/filter a measure instead of being summed themselves, which would be meaningless.</div>
+    </details>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION: CLOSING -->
+<!-- ============================================================ -->
+<section class="content" id="closing">
+  <div class="wrap">
     <div class="section-tag">Session Recap</div>
-    <h2>You're Ready for This Afternoon's Hands-On</h2>
-    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
-      Next up: Star Schema Design — build all 6 dimension tables for real. <code>fact_sales</code> itself is Day 7.
-    </p>
-    <div class="three-col" style="margin-top:32px; max-width:820px;">
+    <h2 class="section-title">You're Ready for This Afternoon's Hands-On</h2>
+    <p class="section-intro">Next up: Star Schema Design — build all 6 dimension tables for real. <code>fact_sales</code> itself is Day 7.</p>
+
+    <div class="grid-3">
       <div class="card">
         <h4>Recap</h4>
         <p><code>fact_sales</code> is transactional. 2 of 4 measures are additive. All 6 dimensions join by natural key — Payment_ID doesn't resolve at all.</p>
@@ -497,27 +612,32 @@
       </div>
     </div>
   </div>
+</section>
 
-</div><!-- /deck -->
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 6 · ILT 3 · Fact Tables Deep Dive
+</footer>
 
 <script>
-  let current = 0;
-  const slides = document.querySelectorAll('.slide');
-  const counter = document.getElementById('counter');
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
 
-  function showSlide(n) {
-    slides[current].classList.remove('active');
-    current = (n + slides.length) % slides.length;
-    slides[current].classList.add('active');
-    counter.textContent = (current + 1) + ' / ' + slides.length;
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
   }
-
-  function changeSlide(dir) { showSlide(current + dir); }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
-  });
+  window.addEventListener('scroll', onScroll);
+  onScroll();
 </script>
+
 </body>
 </html>

@@ -292,9 +292,9 @@ Parse JSON → save to a landing table</pre>
     <div class="two-col">
       <div>
 <pre><span class="cm"># Same external location the real pipeline uses (set up Day 2),</span>
-<span class="cm"># but we write under sandbox/ — deliberately NOT raw-data/ or gbmart.bronze.*</span>
+<span class="cm"># but we write under sandbox/ — deliberately NOT raw-data/ or &lt;your-catalog&gt;.bronze.*</span>
 
-<span class="tbl">EXTERNAL_LOCATION</span> = <span class="str">"abfss://ecom-gbmart-data@ecomadlsdata.dfs.core.windows.net"</span>
+<span class="tbl">EXTERNAL_LOCATION</span> = <span class="str">"abfss://&lt;your-container&gt;@&lt;your-storage-account&gt;.dfs.core.windows.net"</span>
 <span class="tbl">sandbox_path</span> = <span class="fn">f</span><span class="str">"{EXTERNAL_LOCATION}/sandbox/api_graphdb"</span>
 <span class="fn">print</span>(<span class="fn">f</span><span class="str">"Sandbox path: {sandbox_path}"</span>)</pre>
       </div>

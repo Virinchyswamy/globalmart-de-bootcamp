@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 6 — End-of-Day Capstone: Design a New Star Schema</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+
+  nav {
+    position: sticky; top: 0; z-index: 100; background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 28px; flex-wrap: wrap; gap: 8px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 0.5px; }
+  nav .links { display: flex; gap: 4px; flex-wrap: wrap; }
+  nav .links a {
+    color: #94a3b8; text-decoration: none; font-size: 12.5px; padding: 6px 10px;
+    border-radius: 6px; transition: background 0.15s, color 0.15s;
+  }
+  nav .links a:hover { background: #334155; color: #e2e8f0; }
+
+  .progress-bar { position: sticky; top: 45px; z-index: 99; height: 3px; background: #1e293b; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #22c55e); width: 0%; transition: width 0.1s; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 40px 24px 100px; }
+  section { padding: 36px 0; border-bottom: 1px solid #1e293b; }
+  section:last-child { border-bottom: none; }
+
+  h1 { font-size: 32px; color: #38bdf8; font-weight: 800; margin-bottom: 10px; }
+  h2 { font-size: 24px; color: #f8fafc; font-weight: 700; margin-bottom: 14px; }
+  h3 { font-size: 18px; color: #f59e0b; font-weight: 700; margin: 18px 0 10px; }
+  p { color: #cbd5e1; font-size: 15px; margin-bottom: 12px; }
+  strong { color: #e2e8f0; }
+  code { background: #1e293b; padding: 1px 6px; border-radius: 4px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 13.5px; color: #7dd3fc; }
+
+  .hero { text-align: center; padding: 30px 0 10px; }
+  .hero .badge { display: inline-block; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; margin-top: 14px; }
+  .hero p.lede { color: #94a3b8; max-width: 640px; margin: 16px auto 0; font-size: 16px; }
+
+  .rules-card {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 12px; padding: 20px 24px; margin: 20px 0;
+  }
+  .rules-card ul { padding-left: 20px; }
+  .rules-card li { color: #cbd5e1; font-size: 14.5px; margin-bottom: 8px; }
+
+  .scenario-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 26px 28px; margin: 16px 0;
+  }
+  .scenario-card .tag { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+  .task-card {
+    background: #111827; border: 1px solid #334155; border-left: 4px solid #38bdf8; border-radius: 10px;
+    padding: 20px 24px; margin: 18px 0;
+  }
+  .task-card .task-num {
+    display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+    background: #1d4ed8; color: #fff; border-radius: 50%; font-size: 13px; font-weight: 700; margin-right: 10px;
+  }
+  .task-card textarea {
+    width: 100%; background: #0d1117; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0;
+    padding: 12px 14px; font-family: inherit; font-size: 14px; margin-top: 10px; resize: vertical; min-height: 60px;
+  }
+  .task-card textarea:focus { outline: none; border-color: #38bdf8; }
+
+  details.answer-reveal {
+    background: #0d2d1a; border: 1px solid #22c55e; border-radius: 10px; padding: 4px 20px; margin-top: 14px;
+  }
+  details.answer-reveal summary {
+    cursor: pointer; color: #4ade80; font-weight: 700; font-size: 14px; padding: 12px 0; list-style: none;
+  }
+  details.answer-reveal summary::-webkit-details-marker { display: none; }
+  details.answer-reveal summary::before { content: "▸ "; }
+  details.answer-reveal[open] summary::before { content: "▾ "; }
+  details.answer-reveal .answer-body { padding-bottom: 16px; border-top: 1px dashed #166534; padding-top: 14px; }
+  details.answer-reveal .answer-body p, details.answer-reveal .answer-body li { color: #d1fae5; }
+  details.answer-reveal .answer-body code { background: #0a1f12; color: #86efac; }
+
+  table.design-table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 10px 0; }
+  table.design-table th { background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left; }
+  table.design-table td { border: 1px solid #1e293b; padding: 8px 12px; color: #cbd5e1; background: #111827; }
+  table.design-table tr:nth-child(even) td { background: #0f172a; }
+
+  pre.star-sketch {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 20px;
+    overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 13px; color: #e6edf3;
+  }
+
+  .pill { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin: 2px 4px 2px 0; }
+  .pill-additive { background: #15803d; color: #bbf7d0; }
+  .pill-semi { background: #92400e; color: #fde68a; }
+  .pill-non { background: #7f1d1d; color: #fecaca; }
+  .pill-scd1 { background: #1d4ed8; color: #bfdbfe; }
+  .pill-scd2 { background: #6d28d9; color: #ddd6fe; }
+
+  .checklist-box {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 22px 26px; margin-top: 14px;
+  }
+  .checklist-box label { display: flex; align-items: flex-start; gap: 10px; color: #cbd5e1; font-size: 14.5px; padding: 6px 0; cursor: pointer; }
+  .checklist-box input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: #22c55e; flex-shrink: 0; }
+
+  .footer-note { text-align: center; color: #64748b; font-size: 13px; padding: 30px 0 0; }
+
+  @media (max-width: 640px) {
+    nav .links { display: none; }
+    h1 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 6 · END-OF-DAY CAPSTONE</div>
+  <div class="links">
+    <a href="#scenario">Scenario</a>
+    <a href="#task1">Grain</a>
+    <a href="#task2">Dimensions</a>
+    <a href="#task3">Measures</a>
+    <a href="#task4">Degenerate?</a>
+    <a href="#task5">Star Sketch</a>
+    <a href="#checklist">Self-Check</a>
+  </div>
+</nav>
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<main>
+
+  <section class="hero">
+    <h1>Design a New Star Schema, On Your Own</h1>
+    <p class="lede">Everything you need is already in your head from today: grain, dimension design, natural vs. surrogate keys, SCD Type 1 vs. Type 2, and additive / semi-additive / non-additive measures. No new material, no Databricks, no code — just you, a blank textarea, and your own reasoning.</p>
+    <div class="badge">Day 6 &nbsp;·&nbsp; Capstone Activity &nbsp;·&nbsp; 30–40 minutes</div>
+  </section>
+
+  <div class="rules-card">
+    <h3 style="margin-top:0; color:#93c5fd;">How this works</h3>
+    <ul>
+      <li>Read the scenario once, start to finish, before writing a single word. P V Ganadeep never touches a dimension before the grain is nailed down — borrow that discipline for the next 30 minutes.</li>
+      <li>Work through Tasks 1–5 in order — each one leans on the one before it. Don't jump ahead to the star sketch before the grain is settled.</li>
+      <li>Write your own answer first. <strong>Only then</strong> click "Reveal model answer" to compare. No peeking.</li>
+      <li>A model answer that doesn't match yours isn't automatically wrong. If your reasoning is consistent and grain-driven, defend it — that's the actual skill being tested today, not memorization.</li>
+      <li>This scenario is deliberately <em>not</em> a sales transaction — its grain has a different shape than <code>fact_sales</code>. Spot that early and you're already halfway there.</li>
+    </ul>
+  </div>
+
+  <section id="scenario">
+    <h2>The Scenario</h2>
+    <div class="scenario-card">
+      <div class="tag">Business Process</div>
+      <p><strong>GlobalMart's warehouse operations team wants a Gold-layer star schema for inventory levels.</strong> Every night at midnight, an automated job counts how many units of every product currently sit in every warehouse, then writes one snapshot to Silver. GlobalMart runs 4 warehouses — Mumbai, Delhi, Bengaluru, Hyderabad. Each nightly count carries a <code>count_batch_id</code>: an identifier for that night's count run, generated by the warehouse system, with no other attributes attached to it anywhere. Products are the same <code>&lt;your-catalog&gt;.silver.products</code> SCD2 table you already know from this morning. Warehouses have their own attributes (name, city, capacity_units), and — unlike products — GlobalMart has decided <strong>not</strong> to track warehouse history. If a warehouse's capacity changes, the old value is simply overwritten, no questions asked. The business question that started all of this, first raised by warehouse ops lead P V Ganadeep in a stand-up nobody wanted to be awake for: <strong>"How many units of Product X do we have on hand, across all warehouses, right now — and how has that changed over the last quarter?"</strong></p>
+    </div>
+  </section>
+
+  <section id="task1">
+    <h2><span style="color:#38bdf8;">Task 1</span> — Declare the Grain</h2>
+    <div class="task-card">
+      <p><span class="task-num">1</span><strong>In one sentence: what's the grain of this new fact table (we'll call it <code>fact_inventory_snapshot</code>)? This one sentence decides everything downstream, so take your time.</strong></p>
+      <textarea placeholder="Your grain sentence here..."></textarea>
+      <details class="answer-reveal">
+        <summary>Reveal model answer</summary>
+        <div class="answer-body">
+          <p><strong>One row per product, per warehouse, per nightly count.</strong></p>
+          <p>Notice what this rules out. "One row per warehouse" or "one row per product" alone would each throw away real information — you'd lose either the per-product breakdown or the per-warehouse breakdown. "One row per count" is just as broken: it would collapse every product and warehouse into a single number per night, which can't answer "how many units of Product X," the actual business question.</p>
+          <p>Just as important: this is a fundamentally <strong>different grain type</strong> than <code>fact_sales</code>. <code>fact_sales</code> is a <em>transaction</em> fact table — a row exists because something happened (a purchase). <code>fact_inventory_snapshot</code> is a <strong>periodic snapshot</strong> fact table — a row exists on a schedule (every midnight), whether or not anything happened, because the business needs to know the state of the world at that moment, not just the events that changed it.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="task2">
+    <h2><span style="color:#38bdf8;">Task 2</span> — Design the Dimensions</h2>
+    <div class="task-card">
+      <p><span class="task-num">2</span><strong>Fill in the table: source, natural key, and whether the surrogate key is reused/generated fresh — and whether each dimension is SCD Type 1 or Type 2.</strong></p>
+      <table class="design-table">
+        <tr><th>Dimension</th><th>Source</th><th>Natural key</th><th>Surrogate key</th><th>SCD type</th></tr>
+        <tr><td><code>dim_product</code></td><td>_______________</td><td>_______________</td><td>_______________</td><td>_______________</td></tr>
+        <tr><td><code>dim_warehouse</code></td><td>_______________</td><td>_______________</td><td>_______________</td><td>_______________</td></tr>
+        <tr><td><code>dim_date</code></td><td>_______________</td><td>_______________</td><td>_______________</td><td>_______________</td></tr>
+      </table>
+      <details class="answer-reveal">
+        <summary>Reveal model answer</summary>
+        <div class="answer-body">
+          <table class="design-table">
+            <tr><th>Dimension</th><th>Source</th><th>Natural key</th><th>Surrogate key</th><th>SCD type</th></tr>
+            <tr><td><code>dim_product</code></td><td><code>&lt;your-catalog&gt;.silver.products</code></td><td><code>product_id</code></td><td>Reused — <code>product_sk</code>, same table Day 6 already built</td><td><span class="pill pill-scd2">Type 2</span></td></tr>
+            <tr><td><code>dim_warehouse</code></td><td>Warehouse master data (new table)</td><td><code>warehouse_id</code></td><td>Fresh — <code>sha2(warehouse_id, 256)</code></td><td><span class="pill pill-scd1">Type 1</span></td></tr>
+            <tr><td><code>dim_date</code></td><td>Generated date spine</td><td>calendar date</td><td><code>date_key</code> — plain <code>YYYYMMDD</code> int, same exception as always</td><td>n/a — dates don't version</td></tr>
+          </table>
+          <p style="margin-top:14px;"><strong>Why <code>dim_product</code> is reused, not regenerated:</strong> same reasoning as this morning's <code>dim_customer</code>/<code>dim_product</code> — Silver already built it as a proper SCD2 table with its own <code>product_sk</code>. Re-hashing it here would just be redundant work, and it would risk drifting out of sync with the conformed <code>product_sk</code> values every other fact table (including <code>fact_sales</code>) already relies on.</p>
+          <p><strong>Why <code>dim_warehouse</code> is Type 1, not Type 2 like <code>dim_customer</code>/<code>dim_product</code>:</strong> the scenario says so directly — "GlobalMart has decided not to track warehouse history." <code>dim_customer</code>/<code>dim_product</code> are Type 2 because the business wants history preserved — a customer's changed email or a product's changed price shouldn't silently rewrite what a past order shows. <code>dim_warehouse</code> stays Type 1 because the business explicitly does <em>not</em> want that for warehouse capacity — old values are simply overwritten. Same as <code>dim_address</code> from this morning's <code>fact_sales</code> build: a fresh key generated in Gold, and no history-tracking columns — the plain, simple pattern, not the exception. If you answered Type 2 out of habit because <em>some</em> dimension in this course is Type 2, that's the exact trap this task was built to catch — <strong>reuse-vs-generate and Type-1-vs-Type-2 are independent decisions</strong>, made per dimension based on whether the business actually needs history, never by pattern-matching to a different dimension.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="task3">
+    <h2><span style="color:#38bdf8;">Task 3</span> — Classify the Measures</h2>
+    <div class="task-card">
+      <p><span class="task-num">3</span><strong><code>fact_inventory_snapshot</code> has one measure: <code>units_on_hand</code>. Classify it — additive, semi-additive, or non-additive — and explain what you can and can't safely <code>SUM()</code>.</strong></p>
+      <textarea placeholder="Your classification and reasoning here..."></textarea>
+      <details class="answer-reveal">
+        <summary>Reveal model answer</summary>
+        <div class="answer-body">
+          <p><span class="pill pill-semi">Semi-additive</span></p>
+          <p><strong>Safe:</strong> <code>SUM(units_on_hand)</code> across <code>product</code> or across <code>warehouse</code> — "total units of Product X across all 4 warehouses tonight" and "total units of everything in the Mumbai warehouse tonight" are both meaningful, correct numbers.</p>
+          <p><strong>Unsafe:</strong> <code>SUM(units_on_hand)</code> across <code>date</code>. Ask Bysani Karthik, who runs the nightly count job — adding "500 units on hand on Monday" to "480 units on hand on Tuesday" does not produce a meaningful "980." It's largely the same physical stock being counted twice. The correct way to answer "how has stock changed over the quarter" is to look at the <em>period-end value</em> or an <em>average</em> across dates, never a running sum.</p>
+          <p>This is exactly the semi-additive case this morning's ILT 3 said <code>fact_sales</code> does <em>not</em> have — inventory-on-hand was the textbook example used there, and this capstone is where you actually build the fact table it describes. The tell is always the same: <strong>if the fact table's grain includes a snapshot-in-time dimension (like a nightly count), any "current state" measure — a balance, a level, a count-on-hand — is semi-additive with respect to that time dimension.</strong></p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="task4">
+    <h2><span style="color:#38bdf8;">Task 4</span> — Spot the Degenerate Dimension</h2>
+    <div class="task-card">
+      <p><span class="task-num">4</span><strong>Is there a degenerate dimension candidate in this scenario? If so, what is it, and why does it qualify?</strong></p>
+      <textarea placeholder="Your answer here..."></textarea>
+      <details class="answer-reveal">
+        <summary>Reveal model answer</summary>
+        <div class="answer-body">
+          <p><strong><code>count_batch_id</code>.</strong> It sits directly on <code>fact_inventory_snapshot</code> as a plain column, with no dimension table built for it at all — matching the textbook definition exactly: an identifier stored on the fact table with no descriptive attributes beyond the ID itself, straight from ILT 3's opening definition.</p>
+          <p>Notice this is actually a <em>cleaner</em> case than <code>Order_ID</code> was in this morning's ILT 3. GlobalMart built a real <code>dim_orders</code> table anyway, which is what made <code>Order_ID</code> "degenerate from one point of view, a real dimension from another." <code>count_batch_id</code> has no such twist — nobody builds a <code>dim_count_batch</code> table, because there's genuinely nothing to describe about a count batch beyond its own ID. It exists purely so someone like Saket Ranjan, digging into why last night's Hyderabad numbers look off, can group or filter "everything counted in last night's run" and drill straight to the source count job — the same job <code>Order_ID</code> does for <code>fact_sales</code>, just without a second table competing for the label.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="task5">
+    <h2><span style="color:#38bdf8;">Task 5</span> — Sketch the Star</h2>
+    <div class="task-card">
+      <p><span class="task-num">5</span><strong>Sketch it — boxes and lines in plain text are fine, no artistic talent required.</strong></p>
+      <textarea placeholder="Sketch it here, e.g. using dashes/arrows..." style="min-height:120px;"></textarea>
+      <details class="answer-reveal">
+        <summary>Reveal model answer</summary>
+        <div class="answer-body">
+<pre class="star-sketch">                     dim_product
+                          |
+    dim_warehouse ── fact_inventory_snapshot ── dim_date
+                          |
+                   count_batch_id
+              (degenerate — no box, lives on the fact row)</pre>
+          <p style="margin-top:14px;">Three real dimension boxes — smaller than <code>fact_sales</code>'s six, and that's fine. A star's size follows the business process, not a target dimension count. <code>count_batch_id</code> deliberately gets no box of its own: drawing one would misrepresent it as a real dimension, which the Task 4 analysis already ruled out.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="checklist">
+    <h2>Self-Check</h2>
+    <div class="checklist-box">
+      <label><input type="checkbox"> My grain sentence names all three grain components (product, warehouse, per-count) — not just one or two.</label>
+      <label><input type="checkbox"> I can explain why this is a periodic snapshot fact table, not a transaction fact table like <code>fact_sales</code>.</label>
+      <label><input type="checkbox"> I correctly reused <code>product_sk</code> instead of re-hashing <code>product_id</code>.</label>
+      <label><input type="checkbox"> I did NOT assume <code>dim_warehouse</code> must be SCD2 just because <code>dim_customer</code>/<code>dim_product</code> are.</label>
+      <label><input type="checkbox"> I classified <code>units_on_hand</code> as semi-additive, and can name one safe SUM and one unsafe SUM for it.</label>
+      <label><input type="checkbox"> I identified <code>count_batch_id</code> as degenerate and can say why it gets no dimension table.</label>
+      <label><input type="checkbox"> My star sketch has exactly 3 dimension boxes, with the degenerate ID shown as a fact-table attribute, not a fourth box.</label>
+    </div>
+    <p class="footer-note">That's every major Day 6 concept — grain, dimension design (reuse vs. generate, SCD 1 vs. 2), additive/semi-additive/non-additive measures, and degenerate dimensions — applied to a scenario you hadn't seen before today's hands-on. Somewhere, P V Ganadeep is nodding along at this exact checklist. If every box above is checked honestly, you're ready for Day 7 too.</p>
+  </section>
+
+</main>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = scrollable > 0 ? (window.scrollY / scrollable) * 100 : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+  });
+</script>
+
+</body>
+</html>

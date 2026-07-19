@@ -1,0 +1,514 @@
+<title>Day 6 Capstone — Facilitator Answer Key</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-alt: #111827;
+    --border: #334155;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #f87171;
+    --code-bg: #0b1220;
+    --code-text: #7dd3fc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 0 80px 0;
+  }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  header.page-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 36px 24px 28px 24px;
+    margin-bottom: 8px;
+  }
+  header.page-header .wrap { max-width: 1100px; }
+  h1 {
+    color: #fff;
+    font-size: 1.9em;
+    margin: 0 0 8px 0;
+  }
+  .facilitator-flag {
+    display: inline-block;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    font-weight: 600;
+    font-size: 0.95em;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 1.05em;
+    margin-top: 6px;
+  }
+  h2 {
+    color: var(--accent);
+    font-size: 1.5em;
+    margin-top: 56px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+  }
+  h2 .section-num {
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-right: 10px;
+  }
+  h3 {
+    color: #f1f5f9;
+    font-size: 1.15em;
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+  p { color: var(--text); }
+  .lede {
+    color: var(--text-dim);
+    font-size: 1.02em;
+  }
+  code, .code-inline {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.92em;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 14px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.9em;
+    border: 1px solid var(--border);
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin: 16px 0;
+  }
+  .card.decision {
+    border-left: 4px solid var(--accent);
+  }
+  .card.warning {
+    border-left: 4px solid var(--amber);
+    background: rgba(245, 158, 11, 0.06);
+  }
+  .card.trap {
+    border-left: 4px solid var(--red);
+    background: rgba(248, 113, 113, 0.06);
+  }
+  .card.good {
+    border-left: 4px solid var(--green);
+    background: rgba(34, 197, 94, 0.06);
+  }
+  .card h3 { margin-top: 0; }
+  .grain-box {
+    background: var(--card-alt);
+    border: 2px solid var(--green);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+  .grain-box .label {
+    color: var(--green);
+    font-weight: 700;
+    font-size: 0.85em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .grain-box .sentence {
+    font-size: 1.15em;
+    color: #fff;
+    font-style: italic;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 22px 0;
+    background: var(--card-alt);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.94em;
+  }
+  th {
+    background: #1e293b;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 0.03em;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(56, 189, 248, 0.04); }
+  .table-scroll { overflow-x: auto; }
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .pill.type1 { background: rgba(56, 189, 248, 0.15); color: var(--accent); border: 1px solid var(--accent); }
+  .pill.snapshot { background: rgba(34, 197, 94, 0.15); color: var(--green); border: 1px solid var(--green); }
+  .pill.semi { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid var(--amber); }
+  .pill.degen { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid var(--red); }
+  .math-check {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    background: var(--code-bg);
+    color: #fff;
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 1.05em;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .math-check .result {
+    color: var(--green);
+    font-weight: 700;
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 8px; }
+  .mistake-item {
+    background: var(--card-alt);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--red);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+  }
+  .mistake-item .symptom {
+    color: var(--red);
+    font-weight: 700;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+  }
+  .mistake-item.trap-flag {
+    border-left: 4px solid var(--amber);
+  }
+  .mistake-item.trap-flag .symptom { color: var(--amber); }
+  .rubric-total {
+    text-align: right;
+    font-weight: 700;
+    color: var(--green);
+    font-size: 1.1em;
+    padding: 10px 14px;
+  }
+  .debrief-list li {
+    background: var(--card-alt);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    list-style: none;
+    border-left: 3px solid var(--accent);
+  }
+  .debrief-list { padding-left: 0; }
+  .debrief-list .q { color: var(--accent); font-weight: 600; }
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.85em;
+    text-align: center;
+  }
+  strong { color: #fff; }
+  .dim-label {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    margin-bottom: -6px;
+  }
+</style>
+
+<header class="page-header">
+  <div class="wrap">
+    <h1>Day 6 Capstone — Warehouse Inventory Star Schema (Excel)</h1>
+    <div class="facilitator-flag">FACILITATOR-ONLY — do not share with learners until after submission</div>
+    <div class="subtitle">Full worked solution, design rationale, data-quality reasoning, common mistakes, grading rubric, and debrief talking points for grading and leading discussion on the end-of-day capstone.</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<h2><span class="section-num">1</span>The Correct Solution, In Full</h2>
+<p class="lede">This is the gold-standard answer, matching exactly what is built out in <code>Answer_Key_Star_Schema.xlsx</code> (see its <code>DQ_Summary</code> sheet and each dimension/fact sheet in this same folder). Reasonable variation in a learner's exact wording of the grain sentence is fine — grade on the presence of all three grain components, not phrasing.</p>
+
+<div class="grain-box">
+  <div class="label">Grain of fact_inventory_snapshot</div>
+  <div class="sentence">One row per product, per warehouse, per nightly count.</div>
+</div>
+<p>This is a <strong>periodic snapshot fact table</strong> — a row exists on a schedule (every midnight, for every product/warehouse combination) whether or not anything happened. This is fundamentally different from <code>fact_sales</code>'s transaction grain, where a row exists only because an event (an order line) occurred. A submission that says "one row per count" or "per warehouse count event" without naming both <em>product</em> and <em>warehouse</em> is missing a grain component and should not receive full credit on this line.</p>
+
+<h3>dim_warehouse (5 rows)</h3>
+<div class="table-scroll">
+<table>
+  <tr><th>warehouse_sk</th><th>warehouse_id</th><th>warehouse_name</th><th>city</th><th>region</th><th>capacity_units</th></tr>
+  <tr><td>1</td><td>WH01</td><td>—</td><td>—</td><td>—</td><td>50000</td></tr>
+  <tr><td>2</td><td>WH02</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td>3</td><td>WH03</td><td>—</td><td>Bengaluru (PROPER-cased)</td><td>—</td><td>—</td></tr>
+  <tr><td>4</td><td>WH04</td><td>—</td><td>Hyderabad (PROPER-cased)</td><td>—</td><td>—</td></tr>
+  <tr><td>5</td><td>WH05</td><td>—</td><td>—</td><td>West (recovered)</td><td>—</td></tr>
+</table>
+</div>
+<p><span class="pill type1">SCD Type 1</span> — GlobalMart explicitly does not want warehouse history tracked in this scenario; capacity/region changes simply overwrite in place. Surrogate key freshly generated (sequential 1–5), assigned <em>after</em> cleaning.</p>
+<p style="margin-top:8px; font-size:13.5px; color:#94a3b8;"><strong>Note on the 50000 value above:</strong> this is what <code>Answer_Key_Star_Schema.xlsx</code> happens to contain, not a claim that it's the only acceptable answer. The instructions correctly tell learners there's no way to determine which of 47000/50000 is correct from the data alone — grade per Section 3's rule (either value, with documented reasoning, earns full credit).</p>
+
+<h3>dim_product (34 rows)</h3>
+<div class="table-scroll">
+<table>
+  <tr><th>product_sk</th><th>product_id</th><th>product_name</th><th>category</th><th>sub_category</th><th>unit_cost</th></tr>
+  <tr><td>1–34</td><td>from Products_Raw, deduplicated</td><td>—</td><td>one of 5 categories</td><td>—</td><td>—</td></tr>
+</table>
+</div>
+<p>Starts as 39 raw rows → 3 exact duplicates removed → 2 near-duplicate rows (same <code>Product_ID</code>, inconsistent <code>Category</code> casing) collapsed to the properly-cased version → <strong>34 real unique products</strong> across 5 categories: Electronics, Furniture, Sports, Home, Beauty. <span class="pill type1">SCD Type 1</span> in this exercise (no history-tracking requirement stated) and freshly generated surrogate key — deliberately different treatment from this morning's Type 2, Silver-inherited <code>dim_product</code>. Same dimension name, different scenario, different business requirement, different correct answer.</p>
+
+<h3>dim_date (10 rows)</h3>
+<div class="table-scroll">
+<table>
+  <tr><th>date_key</th><th>date</th><th>day_of_week</th><th>month</th><th>quarter</th><th>year</th></tr>
+  <tr><td>20260601</td><td>2026-06-01</td><td>Monday</td><td>June</td><td>Q2</td><td>2026</td></tr>
+  <tr><td>20260602</td><td>2026-06-02</td><td>Tuesday</td><td>June</td><td>Q2</td><td>2026</td></tr>
+  <tr><td>…</td><td>…</td><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+  <tr><td>20260610</td><td>2026-06-10</td><td>Wednesday</td><td>June</td><td>Q2</td><td>2026</td></tr>
+</table>
+</div>
+<p>10 rows, June 1–10 2026. <code>date_key</code> is the same non-hash, non-sequential surrogate key exception taught this morning (<code>YYYYMMDD</code> integer) — human-readable and correctly sortable, so there's no reason to obscure it behind an arbitrary sequence.</p>
+
+<h3>fact_inventory_snapshot (1,700 rows)</h3>
+<div class="table-scroll">
+<table>
+  <tr><th>warehouse_sk</th><th>product_sk</th><th>date_key</th><th>count_batch_id</th><th>units_on_hand</th></tr>
+  <tr><td>FK → dim_warehouse</td><td>FK → dim_product</td><td>FK → dim_date</td><td><span class="pill degen">degenerate dimension</span></td><td><span class="pill semi">semi-additive measure</span></td></tr>
+</table>
+</div>
+<p>5 warehouses × 34 products × 10 nights = <strong>1,700 rows</strong>, exactly matching the true clean grain. <code>count_batch_id</code> (e.g. <code>BATCH-20260601</code>) carries straight through from the raw data with no surrogate-key lookup — it has no dimension table of its own. <code>units_on_hand</code> is the fact table's one measure and is semi-additive: safe to <code>SUM()</code> across product or warehouse, meaningless to <code>SUM()</code> across date for a fixed product/warehouse.</p>
+
+<div class="math-check">
+  Raw NightlyCounts rows: 1742 − 20 (exact dupes) − 12 (blank Warehouse_Code) − 10 (negative Units_On_Hand) = <span class="result">1700</span><br>
+  <span style="color:#94a3b8; font-size:0.85em;">This equals 5 warehouses × 34 products × 10 nights exactly. This is the single most important verification number in the whole activity — if a learner's final row count isn't 1700, something upstream was mishandled.</span>
+</div>
+
+<h2><span class="section-num">2</span>Why Each Design Decision Was Made</h2>
+
+<div class="card decision">
+  <h3>Why periodic snapshot, not transaction grain</h3>
+  <p>The business process is "every night at midnight, count every product in every warehouse." A row is produced on a fixed schedule regardless of whether anything sold, moved, or changed — that is the defining signature of a periodic snapshot fact table. A transaction fact table (like this morning's <code>fact_sales</code>) only produces a row when a discrete business event occurs. There is no "event" here to key off of; there is a recurring measurement. Learners should be able to state this distinction, not just recite the grain.</p>
+</div>
+
+<div class="card decision">
+  <h3>Why dim_warehouse AND dim_product are both Type 1 here</h3>
+  <p>This morning's <code>dim_customer</code> and <code>dim_product</code> were Type 2 because that scenario's stated business requirement was to preserve history (e.g., track a customer's changed email/phone over time, or a product's price change over time). <strong>This capstone's stated requirement is the opposite: GlobalMart does not want warehouse history tracked</strong>, and no history requirement is stated for products in this scenario either. (Worth noting: this afternoon's own <code>dim_address</code>, in the real <code>fact_sales</code> build, is Type 1 too — the same "fresh key, no history" pattern as <code>dim_warehouse</code> here, because GlobalMart never stated a need to preserve address version history either.) SCD type is never inherited from a dimension's name or from what a different table did earlier the same day — it is decided fresh, per scenario, from the business requirement in front of you. Treat "Type 2 because dim_product was Type 2 this morning" as a red flag, not a correct answer arrived at by luck.</p>
+</div>
+
+<div class="card decision">
+  <h3>Why every surrogate key here is freshly generated</h3>
+  <p>This morning's Databricks work inherited natural keys from an upstream Silver layer and could choose to reuse or regenerate a surrogate key against that lineage. This capstone has no upstream system at all — it starts directly from raw, messy source files. There is nothing to inherit from, so the "reuse vs. generate" decision that required real thought this morning is not a decision here at all: every surrogate key (warehouse_sk, product_sk, date_key) must be freshly assigned, and it must be assigned <em>after</em> full deduplication and cleaning, never before (assigning keys before cleaning would burn a surrogate key on a row that gets discarded, or worse, produce two different keys for what is really the same warehouse).</p>
+</div>
+
+<div class="card decision">
+  <h3>Why count_batch_id is a degenerate dimension</h3>
+  <p><code>count_batch_id</code> (format <code>BATCH-20260601</code>, one per warehouse/product/night) is an identifier that lives on the fact row but has no attributes of its own worth modeling — there is no <code>dim_batch</code> table, and there shouldn't be one. It is carried through as-is, with no surrogate-key lookup. This is a cleaner example than this morning's <code>Order_ID</code> case, because there is no competing table anyone might mistakenly try to build a lookup against — the "is this a degenerate dimension?" test here is unambiguous: no dimension table exists, full stop.</p>
+</div>
+
+<div class="card decision">
+  <h3>Why units_on_hand is semi-additive, with a concrete failure example</h3>
+  <p><code>units_on_hand</code> can be safely summed across <em>product</em> (total stock of all products in a warehouse on a given night) or across <em>warehouse</em> (total stock of a product across all warehouses on a given night). It cannot be meaningfully summed across <em>date</em>. For example: take product P and warehouse W, and suppose the nightly counts across June 1–10 are roughly 500 units each night (stock barely moves). Summing units_on_hand for that single product/warehouse across all 10 nights produces ~5,000 — a number that does not represent 5,000 physical units anywhere; it represents the same ~500 physical units counted ten times. The correct aggregation across date is <code>MAX()</code> or the count from the most recent date, never <code>SUM()</code>. ILT3 taught semi-additivity theoretically using inventory-on-hand as the textbook example of a measure <code>fact_sales</code> does not have — this capstone is where learners build the fact table that actually has one, and prove the failure mode themselves in a PivotTable.</p>
+</div>
+
+<h2><span class="section-num">3</span>Data Quality Decisions — Full Rationale</h2>
+<p class="lede">Grade the reasoning, not just the final action. A learner can arrive at the right row count by luck or by copying a classmate's approach without understanding why an action was correct. Listen for the reasoning below in the debrief and in any written justification the submission includes.</p>
+
+<div class="card">
+  <h3>Warehouses_Raw: WH01 duplicate (47000 vs 50000 capacity)</h3>
+  <p><strong>Correct action:</strong> there is genuinely no way to know which value is correct from the data alone — no timestamp, no second source. The instructions tell learners this explicitly and ask them to make a judgment call and document it, not to find "the" answer. <strong>Accept either 47000 or 50000</strong> as full credit, as long as exactly one row survives and the learner's note names which value they kept and why (e.g. "kept the higher value, assuming the lower one was a stale figure from before an expansion" is a fine, defensible guess — so is the reverse). <strong>What to listen for:</strong> did the learner articulate a reason at all, rather than silently deleting one row with no explanation? <strong>Not acceptable at any credit level:</strong> averaging or splitting the difference (e.g. 48500) — that invents a number that was never true at any point in time, which is a different and worse failure than picking either real observed value.</p>
+</div>
+
+<div class="card">
+  <h3>Warehouses_Raw: City casing ("bengaluru", "HYDERABAD")</h3>
+  <p><strong>Correct action:</strong> normalize with <code>PROPER()</code>. <strong>What to listen for:</strong> this is a low-stakes mechanical fix, but check the learner didn't simply retype the values by hand (which doesn't scale and won't survive a data refresh) versus using a formula-driven fix.</p>
+</div>
+
+<div class="card">
+  <h3>Warehouses_Raw: WH05 blank Region</h3>
+  <p><strong>Correct action:</strong> recover "West" from context (the answer key confirms this is a recoverable blank, not an unresolvable one — the value is knowable, just missing in this row). <strong>What to listen for:</strong> did the learner treat this differently from the blank Warehouse_Code case in the fact data below? A blank in a 5-row dimension table with an obviously-recoverable, single correct value is not the same category of problem as a blank foreign key in a 1742-row fact table pointing at 5 possible warehouses with no way to determine which one.</p>
+</div>
+
+<div class="card">
+  <h3>Products_Raw: 3 exact duplicate rows</h3>
+  <p><strong>Correct action:</strong> Remove Duplicates. <strong>What to listen for:</strong> nothing subtle here — this should be clean and mechanical. If a learner's dim_product ends up with more than 34 rows, this step or the next one was skipped or done incorrectly.</p>
+</div>
+
+<div class="card">
+  <h3>Products_Raw: 2 near-duplicate rows (inconsistent Category casing per Product_ID)</h3>
+  <p><strong>Correct action:</strong> keep the properly-cased version, treating both rows as describing the same product. <strong>What to listen for:</strong> did the learner notice these were not caught by Remove Duplicates (because the rows aren't byte-for-byte identical) and specifically hunt for near-duplicates keyed on <code>Product_ID</code>? A learner who ends up with 35 or 36 rows in dim_product almost always missed this category-casing issue rather than the exact-duplicate issue.</p>
+</div>
+
+<div class="card warning">
+  <h3>NightlyCounts_Raw: 12 rows with blank Warehouse_Code</h3>
+  <p><strong>Correct action:</strong> exclude/quarantine these rows entirely. <strong>The key insight to check for:</strong> did the learner recognize this as <strong>unresolvable</strong> — there is no way to determine, from the data available, which of the 5 warehouses a blank-code count belongs to — and therefore exclude it? This is the same referential-integrity discipline taught in the real Silver-layer pipeline this course is grounded in: rows that cannot be matched to a valid dimension key do not get force-fit into the fact table.</p>
+  <p><strong>Grade this as a three-way distinction, not pass/fail:</strong></p>
+  <ul>
+    <li><strong>Full credit:</strong> excluded the rows AND can explain why (unresolvable foreign key, not just "it looked messy").</li>
+    <li><strong>Partial credit:</strong> excluded the rows but couldn't articulate why beyond "there was a blank."</li>
+    <li><strong>No credit / flag for debrief:</strong> attempted to guess or impute a warehouse code (e.g., filled it with the most common warehouse, or WH01 by default). This is the wrong instinct: silently fabricating which warehouse a count belongs to corrupts inventory totals for whichever warehouse gets guessed, and there is no way to detect the error later — the row will look completely legitimate downstream. This is worse than doing nothing.</li>
+  </ul>
+</div>
+
+<div class="card warning">
+  <h3>NightlyCounts_Raw: 10 rows with negative Units_On_Hand</h3>
+  <p><strong>Correct action:</strong> exclude. <strong>What to listen for:</strong> did the learner identify this as physically impossible (you cannot have negative physical inventory — this is a data-entry error, e.g. a sign flip or a miskeyed adjustment) rather than a legitimate value that should be zeroed out or made positive? Flipping the sign to make a negative count positive is not a valid fix — there's no basis for assuming the magnitude is even correct, only that the record is corrupted.</p>
+</div>
+
+<div class="card warning">
+  <h3>NightlyCounts_Raw: 20 exact duplicate rows</h3>
+  <p><strong>Correct action:</strong> Remove Duplicates. <strong>What to listen for:</strong> straightforward, but confirm the learner ran this <em>before</em> assigning surrogate keys and building the fact table, not after — running it after can still produce the right final count by coincidence but reflects a workflow that would break on a different dataset.</p>
+</div>
+
+<div class="card warning">
+  <h3>NightlyCounts_Raw: Count_Date mixed across 3 formats</h3>
+  <p>Real Excel date serials, US-slash text (<code>MM/DD/YYYY</code>), and long text (<code>"Month D, YYYY"</code>) are all present in the same column. <strong>Correct action:</strong> normalize every value to a real date before deriving <code>date_key</code>, using logic equivalent to:</p>
+  <pre>=IF(ISNUMBER(x), x, DATEVALUE(x))</pre>
+  <p><strong>What to listen for:</strong> did the learner normalize <em>before</em> building the <code>date_key</code> lookup against <code>dim_date</code>? A learner who tries to derive <code>date_key</code> straight from the raw mixed-format column will get <code>VLOOKUP</code>/<code>XLOOKUP</code> misses on whichever rows weren't real Excel date serials, producing blanks or <code>#N/A</code> in the final fact table — this is the most common silent failure in this exercise because the row count can still look plausible while a subset of dates is simply wrong or missing.</p>
+</div>
+
+<h2><span class="section-num">4</span>Common Mistakes to Watch For</h2>
+<p class="lede">Numeric symptoms are the fastest way to diagnose what went wrong in a submission without re-deriving the whole workbook.</p>
+
+<div class="mistake-item">
+  <div class="symptom">fact_inventory_snapshot has 1720 rows</div>
+  <div>Kept the 20 exact-duplicate rows — Remove Duplicates was skipped or applied to the wrong sheet/range.</div>
+</div>
+
+<div class="mistake-item">
+  <div class="symptom">fact_inventory_snapshot has 1712 rows</div>
+  <div>Kept the 12 blank-Warehouse_Code rows instead of excluding them (1742 − 20 − 10 = 1712). Check whether these rows were guessed/imputed rather than dropped — see the Section 4 warning above.</div>
+</div>
+
+<div class="mistake-item">
+  <div class="symptom">fact_inventory_snapshot has 1710 rows</div>
+  <div>Kept the 10 negative-Units_On_Hand rows (1742 − 20 − 12 = 1710).</div>
+</div>
+
+<div class="mistake-item">
+  <div class="symptom">fact_inventory_snapshot has some other odd row count, or blank/#N/A values in warehouse_sk, product_sk, or date_key columns</div>
+  <div>Almost always a <code>Count_Date</code> normalization failure — the three mixed date formats weren't fully converted before the <code>date_key</code> lookup against <code>dim_date</code> ran, so some rows failed to match and produced errors instead of being cleanly included or excluded.</div>
+</div>
+
+<div class="mistake-item trap-flag">
+  <div class="symptom">A large, systematic block of #N/A on date_key — roughly a quarter of the fact table, not a handful of stray rows</div>
+  <div><strong>This is a locale bug, not a lookup bug — verified empirically: it affects ~23% of rows (391 of 1700) if it triggers.</strong> The <code>Count_Date</code> slash-format rows were generated as US-style <code>MM/DD/YYYY</code> text (e.g. <code>"06/10/2026"</code> = June 10). <code>DATEVALUE()</code>'s parsing of that string depends on the learner's own Excel regional date setting, not the string's intended format. On a day-first locale (<code>DD/MM/YYYY</code> — common on Excel installs configured for India, i.e. plausible for a meaningful fraction of this cohort), <code>DATEVALUE("06/10/2026")</code> silently returns 6 October instead of June 10 — no error thrown, just a date that then can't find a match in the 10-row <code>dim_date</code> spine (all June 1–10). The learner-facing instructions doc includes an explicit locale spot-check and a locale-proof fallback formula (<code>=DATE(VALUE(RIGHT(Count_Date,4)), VALUE(LEFT(Count_Date,2)), VALUE(MID(Count_Date,4,2)))</code>) for exactly this reason — if a learner hits this and didn't use the fallback, that's a real, non-obvious Excel gotcha, not a conceptual gap in their star-schema design. Don't dock design-understanding points for it; just point them at the fallback formula.</div>
+</div>
+
+<div class="mistake-item">
+  <div class="symptom">dim_warehouse has 6 rows instead of 5</div>
+  <div>Didn't catch the WH01 duplicate (47000/50000 capacity) — both rows were kept as if they were two different warehouses.</div>
+</div>
+
+<div class="mistake-item">
+  <div class="symptom">dim_product has more than 34 rows (35, 36, or higher)</div>
+  <div>Missed the Category-casing near-duplicates on top of the exact duplicates — Remove Duplicates alone doesn't catch these because the rows aren't byte-identical.</div>
+</div>
+
+<div class="mistake-item trap-flag">
+  <div class="symptom">Learner declares SCD Type 2 for dim_warehouse or dim_product "because that's what we did this morning"</div>
+  <div><strong>This is the #1 conceptual trap this capstone is designed to catch.</strong> It reveals pattern-matching against this morning's dimension names instead of reasoning from this scenario's actual stated business requirement (no history tracking wanted). Flag this explicitly in feedback — the mechanical Excel work (extra effective-date/current-flag columns) is usually done competently by learners who make this mistake, which makes it easy to miss if you're only checking column structure and not the underlying justification.</div>
+</div>
+
+<div class="mistake-item">
+  <div class="symptom">Learner SUMs units_on_hand across all 10 dates in the PivotTable exercise and reports it as "current stock"</div>
+  <div>This is the direct, hands-on proof-of-concept failure the semi-additive exercise is built to surface. The resulting number (e.g., ~10x a single night's real count) should have been an obvious red flag to the learner if they sanity-checked it against a single night's value — a written explanation that doesn't catch this should not receive credit on the semi-additive line of the rubric even if the PivotTable itself is mechanically built correctly.</div>
+</div>
+
+<h2><span class="section-num">5</span>Grading Rubric</h2>
+<div class="table-scroll">
+<table>
+  <tr><th>Criterion</th><th>Points</th><th>Full credit</th><th>Partial credit</th></tr>
+  <tr>
+    <td>Grain sentence for fact_inventory_snapshot</td>
+    <td>15</td>
+    <td>States all three grain components: product, warehouse, per-nightly-count (or clearly equivalent wording). Correctly identifies it as a periodic snapshot, not a transaction fact.</td>
+    <td>States 2 of 3 grain components, or gets the grain right but mislabels the fact table type.</td>
+  </tr>
+  <tr>
+    <td>dim_warehouse correctness</td>
+    <td>15</td>
+    <td>Exactly 5 rows; WH01 duplicate resolved to a single documented value (either 47000 or 50000 is acceptable — see Section 3); city casing normalized; WH05 region recovered as "West"; correctly identified/implemented as Type 1 with stated rationale.</td>
+    <td>5 rows and clean data but no explicit Type 1 rationale, or 1–2 unresolved DQ issues with otherwise correct structure.</td>
+  </tr>
+  <tr>
+    <td>dim_product correctness</td>
+    <td>15</td>
+    <td>Exactly 34 rows; both exact and casing-near-duplicates resolved; correctly identified/implemented as Type 1 with stated rationale.</td>
+    <td>34 rows achieved but rationale for Type 1 missing or copied from morning session without independent justification.</td>
+  </tr>
+  <tr>
+    <td>dim_date correctness</td>
+    <td>10</td>
+    <td>10 rows, June 1–10 2026, correct YYYYMMDD integer date_key, correct derived attributes (day_of_week, month, quarter, year).</td>
+    <td>Correct rows/dates but date_key format wrong (e.g., text instead of int, or non-sortable format) or a derived attribute error.</td>
+  </tr>
+  <tr>
+    <td>Fact table row count + correctness</td>
+    <td>25</td>
+    <td>Exactly 1700 rows; all three exclusion categories (duplicates, blank warehouse, negative units) correctly excluded with stated rationale; all foreign keys resolve cleanly with no blanks/errors.</td>
+    <td>Row count off by one exclusion category's worth (1710/1712/1720) — award partial proportional to which categories were handled correctly; deduct further if blanks/#N/A appear from date normalization issues.</td>
+  </tr>
+  <tr>
+    <td>Semi-additive PivotTable exercise + written explanation</td>
+    <td>10</td>
+    <td>Builds a PivotTable showing the SUM-across-date failure for a specific product/warehouse, explicitly identifies the resulting number as meaningless, and correctly states that SUM is valid across product/warehouse but not across date.</td>
+    <td>PivotTable built correctly but written explanation is vague or doesn't identify the concrete failure; or explanation is correct but no concrete example was constructed.</td>
+  </tr>
+  <tr>
+    <td>Degenerate dimension identification</td>
+    <td>10</td>
+    <td>Correctly identifies count_batch_id as a degenerate dimension, explains that it carries through with no surrogate-key lookup because no dim_batch table exists.</td>
+    <td>Correctly leaves count_batch_id un-looked-up in the fact table but can't articulate the "degenerate dimension" concept by name or reasoning.</td>
+  </tr>
+  <tr>
+    <td class="rubric-total" colspan="1">Total</td>
+    <td class="rubric-total">100</td>
+    <td colspan="2"></td>
+  </tr>
+</table>
+</div>
+
+<h2><span class="section-num">6</span>Suggested Debrief Talking Points</h2>
+<ul class="debrief-list">
+  <li><span class="q">Ask the room:</span> who defaulted to SCD Type 2 for a dimension out of habit rather than checking the business requirement stated in this scenario? What does that tell you about the difference between memorizing a pattern and applying a principle?</li>
+  <li><span class="q">Compare grains directly:</span> put fact_sales's grain (transaction: one row per order line) next to fact_inventory_snapshot's grain (periodic snapshot: one row per product/warehouse/night) on the board. What's the practical tell that distinguishes the two before you've written a single formula — does a row exist because something happened, or because a clock ticked?</li>
+  <li><span class="q">No upstream Silver layer this time:</span> this exercise had no pre-built system with an existing surrogate key to reuse — every key was generated fresh. Why did that make dim_warehouse/dim_product's reuse-vs-generate decision trivial here, when it required real thought this morning working from Silver-layer data?</li>
+  <li><span class="q">Same tool, different mechanism, same concept:</span> this morning used <code>sha2(natural_key, 256)</code> in Databricks; this afternoon used a plain sequential integer in Excel. Ask learners to state, in their own words, what stayed constant across both (an ID the table owns, meaningless outside it, a stable join target) versus what changed (the hashing mechanism) — and why the tool changing didn't change the underlying idea.</li>
+  <li><span class="q">The math-check number:</span> 1742 − 20 − 12 − 10 = 1700, and 1700 = 5 × 34 × 10 exactly. Ask who checked their final row count against this multiplication independently, versus who just trusted whatever number Excel produced. What's the value of having an independent way to verify a row count instead of only trusting the pipeline that produced it?</li>
+  <li><span class="q">The blank-Warehouse_Code decision:</span> ask who was tempted to guess a warehouse for those 12 rows rather than exclude them, and why that instinct is dangerous specifically in an inventory context — a wrongly-imputed warehouse silently corrupts that warehouse's stock totals with no downstream signal that anything is wrong. Contrast with a context where a wrong guess might be more visibly self-correcting.</li>
+</ul>
+
+<footer>
+  Day 6 Capstone Facilitator Answer Key — GlobalMart Databricks Bootcamp, Chennai 2026 cohort. Internal use only.
+</footer>
+
+</div>

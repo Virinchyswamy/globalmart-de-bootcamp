@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intro to Databricks for Data Engineers</title>
+
+<!-- Tailwind CSS (CDN, Play build) — utility classes for layout/typography/spacing -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+
+<!-- Base Coat UI (CDN) — component classes: .card / .badge / .alert / .table -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.1/dist/basecoat.cdn.min.css">
+<script src="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.1/dist/js/all.min.js" defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+  code, pre, .font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
+</style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
+
+<div class="mx-auto max-w-6xl px-5 py-10 sm:px-8 lg:px-10">
+
+  <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+  <header class="border-b border-slate-200 pb-8">
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <span class="badge">ILT 4</span>
+      <span class="badge" data-variant="outline">Day 1</span>
+      <span class="badge" data-variant="outline">60 min ILT + 60 min Hands‑on</span>
+      <span class="badge" data-variant="outline">Beginner</span>
+    </div>
+    <h1 class="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl">
+      Intro to Databricks for Data Engineers <span class="text-indigo-600">+</span> PySpark &amp; Spark SQL
+    </h1>
+    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-500">
+      How Apache Spark, the Databricks platform, cluster architecture, PySpark, and Spark SQL fit together —
+      grounded in the GlobalMart Bronze → Silver → Gold pipeline.
+    </p>
+    <div class="mt-4 flex flex-wrap gap-1.5">
+      <span class="badge" data-variant="secondary">databricks</span>
+      <span class="badge" data-variant="secondary">apache-spark</span>
+      <span class="badge" data-variant="secondary">pyspark</span>
+      <span class="badge" data-variant="secondary">spark-sql</span>
+      <span class="badge" data-variant="secondary">dataframe</span>
+      <span class="badge" data-variant="secondary">lazy-evaluation</span>
+      <span class="badge" data-variant="secondary">ADLS</span>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════ ON THIS PAGE ═══════════════════════ -->
+  <nav class="sticky top-0 z-10 -mx-5 mb-2 border-b border-slate-200 bg-slate-50/90 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10">
+    <div class="flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500">
+      <a href="#spark" class="hover:text-indigo-600">1. Spark</a>
+      <a href="#databricks" class="hover:text-indigo-600">2. Databricks</a>
+      <a href="#cluster" class="hover:text-indigo-600">3. Clusters</a>
+      <a href="#dag" class="hover:text-indigo-600">4. Execution (DAG)</a>
+      <a href="#notebooks" class="hover:text-indigo-600">5. Notebooks</a>
+      <a href="#pandas" class="hover:text-indigo-600">6. Pandas vs PySpark</a>
+      <a href="#operations" class="hover:text-indigo-600">7. PySpark Ops</a>
+      <a href="#writing" class="hover:text-indigo-600">8. Writing Delta</a>
+      <a href="#sparksql" class="hover:text-indigo-600">9. Spark SQL</a>
+      <a href="#adls" class="hover:text-indigo-600">10. ADLS</a>
+      <a href="#practices" class="hover:text-indigo-600">11. Best Practices</a>
+      <a href="#schedule" class="hover:text-indigo-600">12. Schedule</a>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════ 1. APACHE SPARK ═══════════════════════ -->
+  <section id="spark" class="mt-12 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">1</span>
+      <h2 class="text-lg font-bold text-slate-900">Apache Spark — The Engine Under the Hood</h2>
+    </div>
+    <p class="text-[13.5px] leading-relaxed text-slate-600">
+      Before Databricks, there was <b class="text-slate-800">Apache Spark</b> — an open-source distributed computing
+      engine created at UC Berkeley in 2009. It solves one problem: processing massive datasets (terabytes to
+      petabytes) faster than a single computer can.
+    </p>
+
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="card" style="border-top:4px solid #94a3b8">
+        <header><h3 class="text-sm font-semibold text-slate-600">DIY Apache Spark (raw)</h3></header>
+        <section>
+          <ul class="list-disc space-y-1.5 pl-4 text-[12.5px] leading-relaxed text-slate-600">
+            <li>Download and install Spark yourself</li>
+            <li>Manage your own cluster (YARN, Kubernetes)</li>
+            <li>Configure Hadoop dependencies manually</li>
+            <li>Set up notebooks (Jupyter) yourself</li>
+            <li>Write your own scheduling (Airflow)</li>
+            <li>Manage your own library versions</li>
+            <li>No built-in governance or access control</li>
+          </ul>
+        </section>
+      </div>
+      <div class="card" style="border-top:4px solid #4f46e5">
+        <header><h3 class="text-sm font-semibold text-indigo-700">Databricks (managed Spark)</h3></header>
+        <section>
+          <ul class="list-disc space-y-1.5 pl-4 text-[12.5px] leading-relaxed text-slate-600">
+            <li>Spark pre-installed, pre-optimised, always up to date</li>
+            <li>Clusters with one click — auto-scale, auto-terminate</li>
+            <li>No config files — works out of the box</li>
+            <li>Built-in notebooks, collaboration, version control</li>
+            <li>Workflows for scheduling (no Airflow needed)</li>
+            <li>Managed library installation per cluster</li>
+            <li>Unity Catalog for governance built in</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+
+    <div class="alert mt-4">
+      <h2>Key insight</h2>
+      <section>
+        Spark is the engine. Databricks is the platform that wraps Spark so you can use it without a DevOps team.
+        All the PySpark code you write runs on Apache Spark under the hood.
+      </section>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 2. WHAT IS DATABRICKS ═══════════════════════ -->
+  <section id="databricks" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">2</span>
+      <h2 class="text-lg font-bold text-slate-900">What is Databricks?</h2>
+    </div>
+    <p class="text-[13.5px] leading-relaxed text-slate-600">
+      Databricks is a cloud platform built on top of Apache Spark. It gives Data Engineers a fully managed
+      environment for large-scale data processing — with notebooks, clusters, Delta Lake, scheduling, and governance
+      all in one place. GlobalMart uses it to build and run the full Bronze → Silver → Gold pipeline.
+    </p>
+
+    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="text-xl">📓</span>
+          <h3 class="text-sm font-semibold text-slate-800">Notebooks</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">Interactive cells mixing Python, SQL, Scala, and Markdown. Write and test pipeline logic, share with your team, run cells one at a time or all at once.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="text-xl">⚡</span>
+          <h3 class="text-sm font-semibold text-slate-800">Clusters</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">A group of VMs running Apache Spark. You create one, attach it to your notebook, and Spark distributes your job automatically. Auto-terminates when idle to save cost.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="text-xl">🏔️</span>
+          <h3 class="text-sm font-semibold text-slate-800">Delta Lake</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">The storage format for every table in the pipeline. Parquet files + a transaction log = ACID, time travel, streaming + batch. All Bronze/Silver/Gold tables are Delta.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="text-xl">📁</span>
+          <h3 class="text-sm font-semibold text-slate-800">Unity Catalog</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">Central metadata store. Controls who can access which table, column, or row. Tracks lineage from ADLS raw file to Gold table. Works across all Databricks workspaces.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="text-xl">⚙️</span>
+          <h3 class="text-sm font-semibold text-slate-800">Workflows</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">Scheduled multi-task pipelines (DAGs). Replaces Airflow for simple orchestration. Runs your ingestion → Silver → Gold chain on a timer with retry logic and alerting.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="text-xl">💬</span>
+          <h3 class="text-sm font-semibold text-slate-800">Genie</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">Natural-language Q&amp;A on top of Gold Delta tables. Business users ask questions in plain English — no SQL required. Powered by AI with your data model as context.</p>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 3. CLUSTER ARCHITECTURE ═══════════════════════ -->
+  <section id="cluster" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">3</span>
+      <h2 class="text-lg font-bold text-slate-900">Cluster Architecture — Driver + Workers</h2>
+    </div>
+    <p class="text-[13.5px] leading-relaxed text-slate-600">
+      Every Spark job runs on a cluster. The <b class="text-slate-800">driver</b> is the brain (builds the execution
+      plan, coordinates workers). The <b class="text-slate-800">workers</b> are the hands (each processes a partition
+      of data in parallel). ADLS is the shared storage — data never fully moves into memory.
+    </p>
+
+    <div class="mt-4 rounded-xl bg-slate-900 p-5 font-mono text-[12.5px] text-slate-200 sm:p-6">
+      <div class="text-center text-slate-300">Your Notebook Code <span class="text-slate-500">(Python / SQL)</span></div>
+      <div class="py-1 text-center text-slate-600">↓</div>
+
+      <div class="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-center">
+        <span class="font-bold text-sky-300">Driver Node</span>
+        <span class="block text-[11.5px] italic text-slate-500 sm:inline sm:text-[12.5px]"> (plans the job, builds DAG, tracks task completion, collects results)</span>
+      </div>
+      <div class="py-1 text-center text-[11.5px] italic text-slate-500">↓ splits data into partitions → distributes tasks</div>
+
+      <div class="grid gap-2 sm:grid-cols-3">
+        <div class="rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-[12px]">
+          <div class="font-bold text-emerald-300">Worker Node 1</div>
+          <div class="italic text-slate-500">(processes rows 1 – 1M)</div>
+          <div class="mt-1">reads/writes ↔ <span class="font-bold text-amber-300">ADLS</span></div>
+        </div>
+        <div class="rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-[12px]">
+          <div class="font-bold text-emerald-300">Worker Node 2</div>
+          <div class="italic text-slate-500">(processes rows 1M – 2M)</div>
+          <div class="mt-1">reads/writes ↔ <span class="font-bold text-amber-300">ADLS</span></div>
+        </div>
+        <div class="rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-[12px]">
+          <div class="font-bold text-emerald-300">Worker Node 3</div>
+          <div class="italic text-slate-500">(processes rows 2M – 3M)</div>
+          <div class="mt-1">reads/writes ↔ <span class="font-bold text-amber-300">ADLS</span></div>
+        </div>
+      </div>
+      <div class="pt-2 text-center text-[11.5px] italic text-slate-500">(more workers can be added → linear speed improvement)</div>
+      <div class="py-1 text-center text-[11.5px] italic text-slate-500">↓ partial results back to driver → final result assembled</div>
+
+      <div class="text-center text-slate-300">Output <span class="text-slate-500">(shown in notebook display() / written to Delta table)</span></div>
+    </div>
+
+    <div class="table-container mt-4">
+      <table class="table">
+        <thead>
+          <tr><th>Cluster Type</th><th>Best For</th><th>Auto‑terminate?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="font-medium">All‑Purpose Cluster</td>
+            <td>Interactive notebook development — attach multiple notebooks, keep it running while you work</td>
+            <td>Configurable (set 30–60 min)</td>
+          </tr>
+          <tr>
+            <td class="font-medium">Job Cluster</td>
+            <td>Production Workflows — spins up for one job, terminates immediately after. Cheaper.</td>
+            <td>Always (on job completion)</td>
+          </tr>
+          <tr>
+            <td class="font-medium">Single‑Node Cluster</td>
+            <td>Small datasets / development — driver only, no workers. Free tier compatible.</td>
+            <td>Configurable</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mt-3 text-[13px] leading-relaxed text-slate-600">
+      Adding more workers = faster on large datasets. 100 GB on 2 workers: ~10 min. Same data on 6 workers: ~3 min.
+      Spark handles the distribution automatically.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 4. EXECUTION MODEL / DAG ═══════════════════════ -->
+  <section id="dag" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">4</span>
+      <h2 class="text-lg font-bold text-slate-900">How Spark Actually Executes Code — DAG, Stages, Tasks</h2>
+    </div>
+    <p class="text-[13.5px] leading-relaxed text-slate-600">
+      Spark does not execute code line by line. Instead it builds an execution plan (a
+      <b class="text-slate-800">Directed Acyclic Graph — DAG</b>) and only runs it when you call an Action. This is
+      called <b class="text-slate-800">lazy evaluation</b>.
+    </p>
+
+    <div class="mt-4 rounded-xl bg-slate-900 p-5 font-mono text-[12.5px] leading-relaxed text-slate-200 sm:p-6">
+      <div class="italic text-slate-500">You write (transformations — nothing runs yet):</div>
+      <div class="mt-2 space-y-1.5">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+          <code>df = spark.read.csv(raw_path)</code>
+          <span class="text-[11px] italic text-slate-500">← Transformation (read plan)</span>
+        </div>
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+          <code>df2 = df.filter(df.status == "active")</code>
+          <span class="text-[11px] italic text-slate-500">← Transformation (filter added to plan)</span>
+        </div>
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+          <code>df3 = df2.groupBy("city").count()</code>
+          <span class="text-[11px] italic text-slate-500">← Transformation (groupBy added)</span>
+        </div>
+      </div>
+
+      <div class="my-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 font-bold text-red-400">
+        df3.show() <span class="ml-2 text-[11px] font-semibold">← ACTION — Spark builds + runs the DAG NOW</span>
+      </div>
+
+      <div class="italic text-slate-500">Spark splits into stages (separated by shuffles):</div>
+
+      <div class="mt-2 rounded-lg border border-slate-700 bg-slate-800/60 p-3">
+        <div><span class="font-bold text-indigo-300">Stage 1</span><span class="text-slate-300">: read CSV → filter rows</span></div>
+        <div class="mt-1.5 flex flex-wrap gap-1.5 text-[11px]">
+          <span class="rounded bg-sky-900/60 px-2 py-0.5 text-sky-300">Task 1 · partition 1</span>
+          <span class="rounded bg-sky-900/60 px-2 py-0.5 text-sky-300">Task 2 · partition 2</span>
+          <span class="rounded bg-sky-900/60 px-2 py-0.5 text-sky-300">Task 3 · partition 3</span>
+        </div>
+      </div>
+      <div class="py-1.5 text-center text-[11.5px] italic text-violet-300">↓ shuffle (regroup by city key — network transfer)</div>
+      <div class="rounded-lg border border-slate-700 bg-slate-800/60 p-3">
+        <div><span class="font-bold text-indigo-300">Stage 2</span><span class="text-slate-300">: aggregate count</span></div>
+        <div class="mt-1.5 flex flex-wrap gap-1.5 text-[11px]">
+          <span class="rounded bg-sky-900/60 px-2 py-0.5 text-sky-300">Task 1 · cities A–M</span>
+          <span class="rounded bg-sky-900/60 px-2 py-0.5 text-sky-300">Task 2 · cities N–Z</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="mt-3 text-[13px] leading-relaxed text-slate-600">
+      <b class="text-slate-800">Shuffles</b> are expensive — they move data across the network between worker nodes.
+      Minimize them by filtering before groupBy and using broadcast joins for small tables.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 5. NOTEBOOKS ═══════════════════════ -->
+  <section id="notebooks" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">5</span>
+      <h2 class="text-lg font-bold text-slate-900">Databricks Notebooks — Cell Types &amp; Magic Commands</h2>
+    </div>
+
+    <div class="space-y-2.5">
+      <div class="rounded-lg border border-slate-200 bg-white p-3.5">
+        <span class="mb-1.5 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">%md</span>
+        <div class="font-mono text-[12px] text-amber-700">## Section heading — plain markdown, renders as formatted text</div>
+      </div>
+
+      <div class="rounded-lg border border-slate-200 bg-white p-3.5">
+        <span class="mb-1.5 inline-block rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">Python</span>
+        <div class="font-mono text-[12px] text-slate-700">df = spark.read.format("csv").option("header", "true").load(raw_path)</div>
+        <div class="mt-1 font-mono text-[11.5px] text-slate-400">↳ DataFrame [order_id, customer_id, status, …] ← result shown below cell</div>
+      </div>
+
+      <div class="rounded-lg border border-slate-200 bg-white p-3.5">
+        <span class="mb-1.5 inline-block rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-800">%sql</span>
+        <div class="font-mono text-[12px] text-sky-700">SELECT status, COUNT(*) FROM bronze.orders GROUP BY status</div>
+        <div class="mt-1 font-mono text-[11.5px] text-slate-400">↳ Table output rendered as an interactive grid</div>
+      </div>
+
+      <div class="rounded-lg border border-slate-200 bg-white p-3.5">
+        <span class="mb-1.5 inline-block rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">Python</span>
+        <div class="font-mono text-[12px] text-slate-700">result = spark.sql("SELECT COUNT(*) FROM bronze.customers")</div>
+        <div class="mt-1 font-mono text-[11.5px] text-slate-400">↳ mix SQL inside Python — result is a DataFrame you can chain more transforms on</div>
+      </div>
+
+      <div class="rounded-lg border border-slate-200 bg-white p-3.5">
+        <span class="mb-1.5 inline-block rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">Python</span>
+        <div class="font-mono text-[12px] text-slate-700">display(df) <span class="text-slate-400">← Databricks-only: interactive table with charts, filters, download</span></div>
+      </div>
+    </div>
+
+    <h3 class="mb-2 mt-6 text-sm font-semibold text-slate-800">Databricks Utilities (dbutils)</h3>
+    <pre class="overflow-x-auto rounded-lg bg-slate-900 p-4 font-mono text-[12px] leading-relaxed text-slate-200"><code><span class="italic text-slate-500"># List files in ADLS path</span>
+<span class="text-amber-300">dbutils</span>.<span class="text-amber-300">fs</span>.<span class="text-amber-300">ls</span>(<span class="text-emerald-400">"abfss://amazon-data@amazonprojectadls.dfs.core.windows.net/raw/"</span>)
+
+<span class="italic text-slate-500"># Read a secret from Azure Key Vault (production pattern)</span>
+<span class="text-slate-100">storage_key</span> = <span class="text-amber-300">dbutils</span>.<span class="text-amber-300">secrets</span>.<span class="text-amber-300">get</span>(scope=<span class="text-emerald-400">"globalmart-kv"</span>, key=<span class="text-emerald-400">"adls-key"</span>)
+
+<span class="italic text-slate-500"># Run another notebook and pass parameters</span>
+<span class="text-amber-300">dbutils</span>.<span class="text-amber-300">notebook</span>.<span class="text-amber-300">run</span>(<span class="text-emerald-400">"/Shared/bronze_customers"</span>, timeout_seconds=<span class="text-pink-400">600</span>, arguments={<span class="text-emerald-400">"date"</span>: <span class="text-emerald-400">"2026-07-07"</span>})
+
+<span class="italic text-slate-500"># Create a notebook widget (interactive parameter)</span>
+<span class="text-amber-300">dbutils</span>.<span class="text-amber-300">widgets</span>.<span class="text-amber-300">text</span>(<span class="text-emerald-400">"run_date"</span>, <span class="text-emerald-400">"2026-07-07"</span>, <span class="text-emerald-400">"Run Date"</span>)
+<span class="text-slate-100">run_date</span> = <span class="text-amber-300">dbutils</span>.<span class="text-amber-300">widgets</span>.<span class="text-amber-300">get</span>(<span class="text-emerald-400">"run_date"</span>)</code></pre>
+  </section>
+
+  <!-- ═══════════════════════ 6. PYSPARK VS PANDAS ═══════════════════════ -->
+  <section id="pandas" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">6</span>
+      <h2 class="text-lg font-bold text-slate-900">PySpark vs Pandas — Key Differences</h2>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="card" style="border-top:4px solid #94a3b8">
+        <header><h3 class="text-sm font-semibold text-slate-600">pandas</h3></header>
+        <section>
+          <ul class="list-disc space-y-1.5 pl-4 text-[12.5px] leading-relaxed text-slate-600">
+            <li>Runs on a <b>single machine</b> — one CPU</li>
+            <li>Data must fit in RAM (16 GB limit → crash on 20 GB)</li>
+            <li>Good for datasets under ~1 GB</li>
+            <li>Eager evaluation — every line runs immediately</li>
+            <li>No cluster, no distributed processing</li>
+            <li>Operations are usually fast for small data</li>
+            <li>Cannot read from ADLS natively</li>
+          </ul>
+        </section>
+      </div>
+      <div class="card" style="border-top:4px solid #4f46e5">
+        <header><h3 class="text-sm font-semibold text-indigo-700">PySpark (Spark DataFrame)</h3></header>
+        <section>
+          <ul class="list-disc space-y-1.5 pl-4 text-[12.5px] leading-relaxed text-slate-600">
+            <li>Runs across a <b>cluster</b> — many CPUs, many machines</li>
+            <li>Data lives in ADLS, not in RAM — handles TB‑scale</li>
+            <li>Built for datasets 1 GB → 1 TB+</li>
+            <li><b>Lazy evaluation</b> — builds a plan, executes only on Action</li>
+            <li>Auto-distributes work across all worker nodes</li>
+            <li>Similar API to pandas — <code class="rounded bg-slate-100 px-1 py-0.5 text-[11.5px]">.select()</code>, <code class="rounded bg-slate-100 px-1 py-0.5 text-[11.5px]">.filter()</code>, <code class="rounded bg-slate-100 px-1 py-0.5 text-[11.5px]">.groupBy()</code></li>
+            <li>Native ADLS support via <code class="rounded bg-slate-100 px-1 py-0.5 text-[11.5px]">abfss://</code></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 7. ESSENTIAL PYSPARK OPERATIONS ═══════════════════════ -->
+  <section id="operations" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">7</span>
+      <h2 class="text-lg font-bold text-slate-900">Essential PySpark Operations</h2>
+    </div>
+
+    <h3 class="mb-2 text-sm font-semibold text-slate-800">Reading Data</h3>
+    <pre class="overflow-x-auto rounded-lg bg-slate-900 p-4 font-mono text-[12px] leading-relaxed text-slate-200"><code><span class="italic text-slate-500"># Read CSV from ADLS</span>
+<span class="text-slate-100">df</span> = (
+    spark.<span class="text-amber-300">read</span>
+        .<span class="text-amber-300">option</span>(<span class="text-emerald-400">"header"</span>, <span class="text-emerald-400">"true"</span>)
+        .<span class="text-amber-300">option</span>(<span class="text-emerald-400">"inferSchema"</span>, <span class="text-emerald-400">"true"</span>)
+        .<span class="text-amber-300">csv</span>(<span class="text-slate-100">raw_path</span> + <span class="text-emerald-400">"/customers_010626.csv"</span>)
+)
+
+<span class="italic text-slate-500"># Read a Delta table from path</span>
+<span class="text-slate-100">df</span> = spark.<span class="text-amber-300">read</span>.<span class="text-amber-300">format</span>(<span class="text-emerald-400">"delta"</span>).<span class="text-amber-300">load</span>(<span class="text-slate-100">bronze_path</span>)
+
+<span class="italic text-slate-500"># Read a Delta table by catalog name (Unity Catalog)</span>
+<span class="text-slate-100">df</span> = spark.<span class="text-amber-300">read</span>.<span class="text-amber-300">table</span>(<span class="text-emerald-400">"globalmart.bronze.customers"</span>)</code></pre>
+
+    <h3 class="mb-2 mt-6 text-sm font-semibold text-slate-800">Transformations — Build the Plan (no data moves yet)</h3>
+    <div class="table-container">
+      <table class="table">
+        <thead><tr><th>Operation</th><th>Code</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td class="font-medium">select</td><td><code>df.select("order_id", "status")</code></td><td>Keep only these columns</td></tr>
+          <tr><td class="font-medium">filter / where</td><td><code>df.filter(df.status == "pending")</code></td><td>Keep rows matching condition</td></tr>
+          <tr><td class="font-medium">withColumn</td><td><code>df.withColumn("year", year("order_date"))</code></td><td>Add or overwrite a column</td></tr>
+          <tr><td class="font-medium">drop</td><td><code>df.drop("internal_flag")</code></td><td>Remove a column</td></tr>
+          <tr><td class="font-medium">groupBy + agg</td><td><code>df.groupBy("city").agg(count("*"), avg("amount"))</code></td><td>Aggregate rows by group</td></tr>
+          <tr><td class="font-medium">join</td><td><code>df.join(dim_customer, "customer_id", "left")</code></td><td>Join two DataFrames</td></tr>
+          <tr><td class="font-medium">distinct</td><td><code>df.select("customer_id").distinct()</code></td><td>Remove duplicate rows</td></tr>
+          <tr><td class="font-medium">orderBy / sort</td><td><code>df.orderBy("order_date", ascending=False)</code></td><td>Sort rows</td></tr>
+          <tr><td class="font-medium">dropna</td><td><code>df.dropna(subset=["customer_id"])</code></td><td>Remove rows with nulls in given columns</td></tr>
+          <tr><td class="font-medium">fillna</td><td><code>df.fillna({"status": "unknown", "amount": 0})</code></td><td>Replace nulls with a default value</td></tr>
+          <tr><td class="font-medium">when / otherwise</td><td><code>df.withColumn("tier", when(col("spend") &gt; 1000, "Gold").otherwise("Silver"))</code></td><td>Conditional column values (like SQL CASE WHEN)</td></tr>
+          <tr><td class="font-medium">trim</td><td><code>df.withColumn("name", trim(col("name")))</code></td><td>Remove leading/trailing spaces from string</td></tr>
+          <tr><td class="font-medium">cast</td><td><code>df.withColumn("amount", col("amount").cast("double"))</code></td><td>Change data type of a column</td></tr>
+          <tr><td class="font-medium">rename</td><td><code>df.withColumnRenamed("old_name", "new_name")</code></td><td>Rename a single column</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="mb-2 mt-6 text-sm font-semibold text-slate-800">Common Functions Import</h3>
+    <pre class="overflow-x-auto rounded-lg bg-slate-900 p-4 font-mono text-[12px] leading-relaxed text-slate-200"><code><span class="text-sky-400">from</span> pyspark.sql.functions <span class="text-sky-400">import</span> (
+    <span class="text-amber-300">col</span>, <span class="text-amber-300">lit</span>, <span class="text-amber-300">when</span>, <span class="text-amber-300">coalesce</span>,          <span class="italic text-slate-500"># column references, conditions</span>
+    <span class="text-amber-300">trim</span>, <span class="text-amber-300">lower</span>, <span class="text-amber-300">upper</span>, <span class="text-amber-300">length</span>, <span class="text-amber-300">concat</span>,     <span class="italic text-slate-500"># string functions</span>
+    <span class="text-amber-300">year</span>, <span class="text-amber-300">month</span>, <span class="text-amber-300">dayofmonth</span>, <span class="text-amber-300">datediff</span>, <span class="text-amber-300">current_date</span>,  <span class="italic text-slate-500"># date functions</span>
+    <span class="text-amber-300">floor</span>, <span class="text-amber-300">round</span>, <span class="text-amber-300">abs</span>,                     <span class="italic text-slate-500"># math functions</span>
+    <span class="text-amber-300">count</span>, <span class="text-amber-300">sum</span>, <span class="text-amber-300">avg</span>, <span class="text-amber-300">min</span>, <span class="text-amber-300">max</span>,             <span class="italic text-slate-500"># aggregation functions</span>
+    <span class="text-amber-300">row_number</span>, <span class="text-amber-300">rank</span>, <span class="text-amber-300">dense_rank</span>,         <span class="italic text-slate-500"># window functions</span>
+    <span class="text-amber-300">explode</span>, <span class="text-amber-300">array</span>, <span class="text-amber-300">struct</span>,             <span class="italic text-slate-500"># complex type functions</span>
+)</code></pre>
+
+    <h3 class="mb-2 mt-6 text-sm font-semibold text-slate-800">Actions — Trigger Execution</h3>
+    <pre class="overflow-x-auto rounded-lg bg-slate-900 p-4 font-mono text-[12px] leading-relaxed text-slate-200"><code><span class="text-slate-100">df</span>.<span class="text-amber-300">show</span>(<span class="text-pink-400">5</span>)                 <span class="italic text-slate-500"># print first 5 rows (truncates long values)</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">show</span>(<span class="text-pink-400">5</span>, truncate=<span class="text-pink-400">False</span>)  <span class="italic text-slate-500"># show full values without truncating</span>
+<span class="text-amber-300">display</span>(<span class="text-slate-100">df</span>)             <span class="italic text-slate-500"># Databricks interactive output with charts</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">count</span>()               <span class="italic text-slate-500"># total row count — triggers full scan</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">printSchema</span>()          <span class="italic text-slate-500"># column names and data types</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">describe</span>().<span class="text-amber-300">show</span>()      <span class="italic text-slate-500"># min/max/mean/stddev/count for numeric columns</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">first</span>()               <span class="italic text-slate-500"># return first Row object (not a DataFrame)</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">toPandas</span>()            <span class="italic text-slate-500"># convert to pandas (only for small DataFrames!)</span></code></pre>
+  </section>
+
+  <!-- ═══════════════════════ 8. WRITING DATA ═══════════════════════ -->
+  <section id="writing" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">8</span>
+      <h2 class="text-lg font-bold text-slate-900">Writing to Delta (Bronze / Silver / Gold)</h2>
+    </div>
+    <pre class="overflow-x-auto rounded-lg bg-slate-900 p-4 font-mono text-[12px] leading-relaxed text-slate-200"><code><span class="italic text-slate-500"># Full refresh — overwrite everything at this path</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">write</span>.<span class="text-amber-300">format</span>(<span class="text-emerald-400">"delta"</span>).<span class="text-amber-300">mode</span>(<span class="text-emerald-400">"overwrite"</span>).<span class="text-amber-300">save</span>(<span class="text-slate-100">bronze_path</span>)
+
+<span class="italic text-slate-500"># Incremental — append new rows without deleting existing</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">write</span>.<span class="text-amber-300">format</span>(<span class="text-emerald-400">"delta"</span>).<span class="text-amber-300">mode</span>(<span class="text-emerald-400">"append"</span>).<span class="text-amber-300">save</span>(<span class="text-slate-100">bronze_path</span>)
+
+<span class="italic text-slate-500"># Register in Unity Catalog (recommended for production)</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">write</span>.<span class="text-amber-300">format</span>(<span class="text-emerald-400">"delta"</span>).<span class="text-amber-300">mode</span>(<span class="text-emerald-400">"overwrite"</span>).<span class="text-amber-300">saveAsTable</span>(<span class="text-emerald-400">"globalmart.bronze.customers"</span>)
+
+<span class="italic text-slate-500"># Add new columns without breaking readers (schema evolution)</span>
+<span class="text-slate-100">df</span>.<span class="text-amber-300">write</span>.<span class="text-amber-300">format</span>(<span class="text-emerald-400">"delta"</span>).<span class="text-amber-300">mode</span>(<span class="text-emerald-400">"append"</span>).<span class="text-amber-300">option</span>(<span class="text-emerald-400">"mergeSchema"</span>, <span class="text-emerald-400">"true"</span>).<span class="text-amber-300">save</span>(<span class="text-slate-100">bronze_path</span>)</code></pre>
+  </section>
+
+  <!-- ═══════════════════════ 9. SPARK SQL ═══════════════════════ -->
+  <section id="sparksql" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">9</span>
+      <h2 class="text-lg font-bold text-slate-900">Spark SQL — SQL on Delta Tables</h2>
+    </div>
+    <p class="text-[13.5px] leading-relaxed text-slate-600">
+      Two ways to run SQL in Databricks: a <code class="rounded bg-slate-100 px-1 py-0.5 text-[12px]">%sql</code> cell
+      (pure SQL output) or <code class="rounded bg-slate-100 px-1 py-0.5 text-[12px]">spark.sql("...")</code> inside
+      Python (returns a DataFrame you can chain more operations on).
+    </p>
+
+    <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-900 p-4 font-mono text-[12px] leading-relaxed text-slate-200"><code><span class="italic text-slate-500">-- In a %sql cell: standard SQL on Delta tables</span>
+<span class="text-sky-400">SELECT</span> status, <span class="text-amber-300">COUNT</span>(*) <span class="text-sky-400">AS</span> order_count
+<span class="text-sky-400">FROM</span> bronze.orders
+<span class="text-sky-400">GROUP BY</span> status
+<span class="text-sky-400">ORDER BY</span> order_count <span class="text-sky-400">DESC</span>;
+
+<span class="italic text-slate-500">-- Register a DataFrame as a temp view for SQL access</span>
+<span class="text-slate-100">customers_df</span>.<span class="text-amber-300">createOrReplaceTempView</span>(<span class="text-emerald-400">"customers"</span>)
+<span class="text-sky-400">SELECT</span> <span class="text-amber-300">YEAR</span>(RegistrationDate) <span class="text-sky-400">AS</span> yr, <span class="text-amber-300">COUNT</span>(*) <span class="text-sky-400">AS</span> cnt <span class="text-sky-400">FROM</span> customers <span class="text-sky-400">GROUP BY</span> yr
+
+<span class="italic text-slate-500">-- Use spark.sql() inside Python to get back a DataFrame</span>
+<span class="text-slate-100">result_df</span> = spark.<span class="text-amber-300">sql</span>(<span class="text-emerald-400">"SELECT city, COUNT(*) AS cnt FROM customers GROUP BY city ORDER BY cnt DESC"</span>)
+<span class="text-slate-100">result_df</span>.<span class="text-amber-300">show</span>(<span class="text-pink-400">10</span>)
+
+<span class="italic text-slate-500">-- Time travel query</span>
+<span class="text-sky-400">SELECT</span> * <span class="text-sky-400">FROM</span> bronze.orders <span class="text-sky-400">VERSION AS OF</span> <span class="text-pink-400">1</span>;
+
+<span class="italic text-slate-500">-- See version history</span>
+DESCRIBE HISTORY bronze.orders;</code></pre>
+
+    <h3 class="mb-2 mt-6 text-sm font-semibold text-slate-800">Useful Spark SQL Functions</h3>
+    <div class="table-container">
+      <table class="table">
+        <thead><tr><th>Function</th><th>Example</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td><code>YEAR()</code></td><td><code>YEAR(RegistrationDate)</code></td><td>Integer year: 2024</td></tr>
+          <tr><td><code>MONTH()</code></td><td><code>MONTH(order_date)</code></td><td>Integer month: 7</td></tr>
+          <tr><td><code>DATEDIFF()</code></td><td><code>DATEDIFF(current_date(), DateOfBirth)</code></td><td>Number of days between two dates</td></tr>
+          <tr><td><code>TRIM()</code></td><td><code>TRIM(FirstName)</code></td><td>Removes leading/trailing spaces</td></tr>
+          <tr><td><code>UPPER() / LOWER()</code></td><td><code>UPPER(city)</code></td><td>Changes string case</td></tr>
+          <tr><td><code>COALESCE()</code></td><td><code>COALESCE(email, "unknown")</code></td><td>Returns first non-null value</td></tr>
+          <tr><td><code>CASE WHEN</code></td><td><code>CASE WHEN spend &gt; 1000 THEN 'Gold' ELSE 'Silver' END</code></td><td>Conditional value</td></tr>
+          <tr><td><code>COUNT(DISTINCT)</code></td><td><code>COUNT(DISTINCT customer_id)</code></td><td>Count unique values</td></tr>
+          <tr><td><code>BETWEEN</code></td><td><code>DateOfBirth BETWEEN '1990-01-01' AND '1999-12-31'</code></td><td>Range filter (inclusive)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 10. CONNECT TO ADLS ═══════════════════════ -->
+  <section id="adls" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">10</span>
+      <h2 class="text-lg font-bold text-slate-900">Connecting to ADLS from Databricks</h2>
+    </div>
+
+    <div class="card">
+      <header>
+        <h3 class="text-sm font-semibold text-slate-800">GlobalMart storage account</h3>
+        <p class="flex flex-wrap gap-2 text-[12.5px] text-slate-500">
+          <code class="rounded bg-slate-100 px-1.5 py-0.5">amazonprojectadls</code>
+          <span>·</span>
+          Container: <code class="rounded bg-slate-100 px-1.5 py-0.5">amazon-data</code>
+        </p>
+      </header>
+      <section class="space-y-3 text-[12.5px] leading-relaxed text-slate-600">
+        <div>
+          <p class="mb-1 font-semibold text-slate-800">Step 1 — Set the storage key in Spark config (once per session):</p>
+          <code class="block overflow-x-auto rounded bg-slate-100 px-3 py-2 font-mono text-[12px]">spark.conf.set("fs.azure.account.key.amazonprojectadls.dfs.core.windows.net", storage_key)</code>
+        </div>
+        <div>
+          <p class="mb-1 font-semibold text-slate-800">Step 2 — Build the base path:</p>
+          <code class="block overflow-x-auto rounded bg-slate-100 px-3 py-2 font-mono text-[12px]">base_path = "abfss://amazon-data@amazonprojectadls.dfs.core.windows.net"</code>
+        </div>
+        <div>
+          <p class="mb-1 font-semibold text-slate-800">Step 3 — Read / write using sub-paths:</p>
+          <div class="space-y-1">
+            <code class="block overflow-x-auto rounded bg-slate-100 px-3 py-2 font-mono text-[12px]">raw_path    = base_path + "/raw"</code>
+            <code class="block overflow-x-auto rounded bg-slate-100 px-3 py-2 font-mono text-[12px]">bronze_path = base_path + "/bronze"</code>
+            <code class="block overflow-x-auto rounded bg-slate-100 px-3 py-2 font-mono text-[12px]">df = spark.read.option("header","true").csv(raw_path + "/customers_010626.csv")</code>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 11. BEST PRACTICES ═══════════════════════ -->
+  <section id="practices" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">11</span>
+      <h2 class="text-lg font-bold text-slate-900">PySpark Best Practices</h2>
+    </div>
+
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="badge" data-variant="destructive">Avoid</span>
+          <h3 class="text-sm font-semibold text-slate-800">df.collect()</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">Pulls ALL rows into the driver's RAM. On a 10 GB table → out-of-memory crash. Use <code class="rounded bg-slate-100 px-1 py-0.5">show()</code> or <code class="rounded bg-slate-100 px-1 py-0.5">display()</code> instead.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="badge" data-variant="outline">Do</span>
+          <h3 class="text-sm font-semibold text-slate-800">Filter early</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">Apply <code class="rounded bg-slate-100 px-1 py-0.5">.filter()</code> as early as possible in your chain. This reduces the data that flows through all later operations.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="badge" data-variant="outline">Do</span>
+          <h3 class="text-sm font-semibold text-slate-800">Select only needed columns</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">Use <code class="rounded bg-slate-100 px-1 py-0.5">.select("col1", "col2")</code> instead of keeping all 30 columns through the whole pipeline. Reduces shuffle cost significantly.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="badge" data-variant="destructive">Avoid</span>
+          <h3 class="text-sm font-semibold text-slate-800">count() before every action</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500"><code class="rounded bg-slate-100 px-1 py-0.5">df.count()</code> triggers a full scan. Avoid calling it multiple times on the same DataFrame — cache the count or avoid it until needed.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="badge" data-variant="outline">Do</span>
+          <h3 class="text-sm font-semibold text-slate-800">Broadcast small tables</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">When joining a large table with a small reference table (e.g. payment_methods with 4 rows), use <code class="rounded bg-slate-100 px-1 py-0.5">broadcast(dim)</code> to avoid a shuffle join.</p>
+        </section>
+      </div>
+      <div class="card">
+        <section class="space-y-1.5">
+          <span class="badge" data-variant="destructive">Avoid</span>
+          <h3 class="text-sm font-semibold text-slate-800">Hardcoding secrets</h3>
+          <p class="text-[12px] leading-relaxed text-slate-500">Never put storage keys or passwords directly in notebook code. Use <code class="rounded bg-slate-100 px-1 py-0.5">dbutils.secrets.get()</code> in production, or at minimum environment variables.</p>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 12. DAY SCHEDULE ═══════════════════════ -->
+  <section id="schedule" class="mt-14 scroll-mt-20">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">12</span>
+      <h2 class="text-lg font-bold text-slate-900">Day 1 Schedule — Where You Are Now</h2>
+    </div>
+
+    <div class="table-container">
+      <table class="table">
+        <thead><tr><th>Time</th><th>Session</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td>9:00–10:30</td><td>GlobalMart Problem Statement &amp; Architecture</td><td>ILT 1</td></tr>
+          <tr><td>10:30–12:00</td><td>Azure Cloud, ADLS Gen2 &amp; Lakehouse vs Warehouse vs Hybrid</td><td>ILT 2</td></tr>
+          <tr><td>12:00–13:00</td><td>Medallion Architecture &amp; Delta Lake Fundamentals</td><td>ILT 3</td></tr>
+          <tr><td>13:00–14:00</td><td>Lunch</td><td>—</td></tr>
+          <tr style="background-color:#fef3c7">
+            <td class="font-semibold">14:00–15:00</td>
+            <td class="font-semibold">Intro to Databricks + PySpark &amp; Spark SQL ← YOU ARE HERE</td>
+            <td class="font-semibold">ILT 4</td>
+          </tr>
+          <tr><td>15:00–16:00</td><td>Hands-on: Data wrangling with PySpark &amp; Spark SQL + Work with ADLS</td><td>HOL</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="mb-2 mt-6 text-sm font-semibold text-slate-800">Hands-on (3:00 PM): What You Will Do</h3>
+    <p class="mb-2 text-[13px] text-slate-600">Using the GlobalMart customer dataset already uploaded to ADLS:</p>
+    <ol class="list-decimal space-y-2 pl-5 text-[13px] leading-relaxed text-slate-600">
+      <li>Create your own Azure Storage Account (ADLS Gen2) and upload <code class="rounded bg-slate-100 px-1 py-0.5">customers_010626.csv</code></li>
+      <li>Connect Databricks to your ADLS using the storage account key</li>
+      <li>Read <code class="rounded bg-slate-100 px-1 py-0.5">customers_010626.csv</code> into a PySpark DataFrame — explore schema, count, show</li>
+      <li>Run 3 Spark SQL queries: payment method counts, registrations per year, 1990s customers</li>
+      <li>Apply PySpark transformations: filter 2020+ registrations, add age column, add LoyaltyTier with <code class="rounded bg-slate-100 px-1 py-0.5">when/otherwise</code></li>
+      <li>Fix data quality: trim trailing spaces from <code class="rounded bg-slate-100 px-1 py-0.5">FirstName</code> and <code class="rounded bg-slate-100 px-1 py-0.5">Email</code></li>
+      <li>Write the cleaned DataFrame as a Delta table to <code class="rounded bg-slate-100 px-1 py-0.5">bronze/customers/</code> and verify row count</li>
+    </ol>
+  </section>
+
+  <!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+  <footer class="mt-14 border-t border-slate-200 pt-5 text-[11.5px] leading-relaxed text-slate-400">
+    Day 1 ILT 4 — Pairs with <b class="text-slate-500">Day1_ILT4_Intro_Databricks_PySpark_SparkSQL.ipynb</b> and the
+    hands-on <b class="text-slate-500">Day1_HOL_PySpark_SparkSQL_ADLS.ipynb</b>. Ingestion tools (Lakeflow Connect and
+    Autoloader) are covered in depth on Days 2 and 3.
+  </footer>
+
+</div>
+</body>
+</html>

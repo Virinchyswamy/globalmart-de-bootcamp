@@ -273,7 +273,7 @@ A logical replication slot is a bookmark in the WAL.
     <h3>Setup — JDBC Connection to Your Own Supabase Project</h3>
     <div class="demo-label">Unity Catalog external location handles ADLS auth — no storage key needed</div>
 <pre><span class="cm"># poc_orders is YOUR OWN scratch/practice table — it lands in your</span>
-<span class="cm"># personal Day-1 storage account, not the shared gbmart catalog.</span>
+<span class="cm"># personal Day-1 storage account, not your catalog's shared real pipeline.</span>
 <span class="col">storage_account</span>   = <span class="str">"YOUR_STORAGE_ACCOUNT_NAME"</span>
 <span class="col">base_path</span>        = <span class="fn">f</span><span class="str">"abfss://{container}@{storage_account}.dfs.core.windows.net"</span>
 <span class="col">bronze_poc_orders</span> = <span class="fn">f</span><span class="str">"{base_path}/bronze/supabase/poc_orders"</span>

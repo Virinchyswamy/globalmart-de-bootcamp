@@ -8,7 +8,9 @@
       "Read(//c/Yvirinchy/Chennai_batch/day 8/Flexible Filtering and Analysis of Sales with Functions/**)",
       "Read(//c/Yvirinchy/Chennai_batch/day 8/Vendor Performance Analysis and Ranking Framework/**)",
       "Bash(ls \"c:/Yvirinchy/Chennai_batch/day 7/\")",
-      "Read(//c/Yvirinchy/Chennai_batch/day 7/**)"
+      "Read(//c/Yvirinchy/Chennai_batch/day 7/**)",
+      "Bash(python *)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

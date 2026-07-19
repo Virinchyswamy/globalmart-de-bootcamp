@@ -5,145 +5,184 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 6 | ILT 1 — Business Process Mapping &amp; Star Schema (Kimball)</title>
 <style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
 
-  /* --- NAV --- */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: #1e293b; border-bottom: 1px solid #334155;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 24px;
+  /* PROGRESS + NAV */
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
   }
-  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
-  nav .controls { display: flex; gap: 10px; align-items: center; }
-  nav button {
-    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
-    border-radius: 6px; cursor: pointer; font-size: 13px;
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
   }
-  nav button:hover { background: #38bdf8; color: #0f172a; }
-  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
 
-  /* --- SLIDES --- */
-  .deck { padding-top: 60px; }
-  .slide {
-    display: none; min-height: 100vh; padding: 48px 60px;
-    animation: fadeIn 0.3s ease;
-  }
-  .slide.active { display: flex; flex-direction: column; justify-content: center; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  /* HERO */
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 40px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 700px; margin: 0 auto 26px; }
+  .hero .cta { display: inline-block; background: var(--accent); color: #0f172a; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+  .hero .cta:hover { background: #5fd0ff; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
 
-  /* --- SLIDE TYPES --- */
-  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
-  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
-  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
-  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  /* SECTIONS */
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 780px; margin-bottom: 30px; }
 
-  .slide-section { background: #1e293b; }
-  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
-  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+  /* CARDS */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 800px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+  .card.small { padding: 14px 16px; }
 
-  .slide-content { background: #0f172a; }
-  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
-
-  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
-  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
-  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
-
-  /* --- COMPONENTS --- */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
-  .card {
-    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
-    padding: 20px 24px;
-  }
-  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
-  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
-  .card ul, .card ol { padding-left: 16px; }
-
-  .highlight-box {
-    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
-    padding: 16px 20px; margin-top: 16px;
-  }
-  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
-  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
   .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
 
+  /* STEP LIST */
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* TABLE */
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  /* DETAILS / HINTS (used for asides, nudges, extra context) */
+  details.hint { background: #14243d; border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; padding: 4px 0; }
+  details.hint summary { cursor: pointer; padding: 12px 18px; font-size: 13.5px; font-weight: 700; color: var(--accent2); list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.hint summary::-webkit-details-marker { display: none; }
+  details.hint summary::before { content: '💡'; }
+  details.hint[open] summary { border-bottom: 1px solid var(--border); }
+  details.hint .hint-body { padding: 14px 18px 16px; font-size: 14px; color: #cbd5e1; line-height: 1.7; }
+  details.hint .hint-body p + p { margin-top: 10px; }
+
+  /* Q&A / QUICK-FIRE ACCORDION (for the quiz sections) */
+  details.qa-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; padding: 4px 0; }
+  details.qa-card summary { cursor: pointer; padding: 14px 18px; font-size: 14px; font-weight: 600; color: var(--text); list-style: none; }
+  details.qa-card summary::-webkit-details-marker { display: none; }
+  details.qa-card summary::before { content: "Q — "; color: var(--accent); font-weight: 700; }
+  details.qa-card[open] summary { color: #7dd3fc; border-bottom: 1px solid var(--border); }
+  details.qa-card .qa-answer { padding: 14px 18px 16px; color: #cbd5e1; font-size: 13.5px; line-height: 1.7; }
+  details.qa-card .qa-answer::before { content: "A — "; color: var(--good); font-weight: 700; }
+
+  /* CODE BLOCKS (for HOL1's real PySpark) */
   pre {
     background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
     padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
-    font-size: 13px; line-height: 1.7; color: #e6edf3;
+    font-size: 13px; line-height: 1.7; color: #e6edf3; margin-top: 14px;
   }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
   .kw { color: #ff7b72; font-weight: bold; }
   .fn { color: #d2a8ff; }
   .str { color: #a5d6ff; }
   .cm { color: #6e7681; font-style: italic; }
   .col { color: #79c0ff; }
   .tbl { color: #ffa657; }
+  .demo-label { color: #78716c; font-size: 13px; margin-bottom: 4px; }
 
-  .pill {
-    display: inline-block; padding: 3px 12px; border-radius: 20px;
-    font-size: 12px; font-weight: 600; margin: 2px;
-  }
+  /* CHECKPOINT (verification / recap callouts) */
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  /* NUMBERED PHASE HEADER */
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 15px; margin-right: 10px; }
+
+  /* PILLS */
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
   .pill-blue { background: #1d4ed8; color: #bfdbfe; }
   .pill-green { background: #15803d; color: #bbf7d0; }
   .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
+  .pill-purple { background: #6d28d9; color: #ddd6fe; }
 
-  .order-list { counter-reset: steps; list-style: none; padding: 0; }
-  .order-list li {
-    counter-increment: steps; display: flex; align-items: flex-start;
-    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
-    font-size: 14px; color: #cbd5e1; line-height: 1.6;
-  }
-  .order-list li::before {
-    content: counter(steps);
-    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; flex-shrink: 0;
-  }
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
 
-  table.sql-table {
-    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  @media (max-width: 640px) {
+    nav.topnav .links { display: none; }
+    .hero h1 { font-size: 30px; }
   }
-  table.sql-table th {
-    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
-  }
-  table.sql-table td {
-    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
-    background: #111827;
-  }
-  table.sql-table tr:nth-child(even) td { background: #0f172a; }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">DAY 6 · ILT 1 — Business Process Mapping &amp; Star Schema (Kimball)</div>
-  <div class="controls">
-    <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 16</span>
-    <button onclick="changeSlide(1)">Next &#8594;</button>
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 6 · ILT 1 — Business Process Mapping &amp; Star Schema (Kimball)</div>
+    <div class="links">
+      <a href="#overview" class="navlink">Overview</a>
+      <a href="#globalmart-process" class="navlink">GlobalMart's Process</a>
+      <a href="#star-shape" class="navlink">Star Shape</a>
+      <a href="#whats-next" class="navlink">What's Next</a>
+      <a href="#qa1" class="navlink">Q&amp;A: Processes</a>
+      <a href="#qa2" class="navlink">Q&amp;A: Sketch</a>
+      <a href="#recap" class="navlink">Recap</a>
+    </div>
   </div>
 </nav>
 
-<div class="deck">
-
-  <!-- SLIDE 1: COVER -->
-  <div class="slide slide-cover active">
-    <h1>Business Process Mapping &amp; Star Schema</h1>
-    <p class="subtitle">Why a warehouse is modeled around business processes — and the star schema shape GlobalMart's sales data will take</p>
-    <div class="badge">Day 6 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; Trainer-Led Session</div>
-    <div style="margin-top:36px; color:#475569; font-size:13px;">
-      What we'll cover today → Business Processes · Facts vs Dimensions · GlobalMart's Star · What's Next
-    </div>
+<header class="hero">
+  <div class="eyebrow">Day 6 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; Trainer-Led Session</div>
+  <h1>Business Process Mapping &amp; Star Schema</h1>
+  <p class="lead">Why a warehouse is modeled around business processes — and the star schema shape GlobalMart's sales data will take</p>
+  <div class="meta-row">
+    <span class="meta-pill">Day 6</span>
+    <span class="meta-pill">ILT 1</span>
+    <span class="meta-pill">Trainer-Led Session</span>
+    <span class="meta-pill">What we'll cover → Business Processes · Facts vs Dimensions · GlobalMart's Star · What's Next</span>
   </div>
+</header>
 
-  <!-- SLIDE 2: AGENDA / OBJECTIVES -->
-  <div class="slide slide-section">
+<!-- SECTION 1: Overview (covers old slides 2-8) -->
+<section class="content" id="overview">
+  <div class="wrap">
     <div class="section-tag">Overview</div>
-    <h2>What We're Covering Today</h2>
-    <div class="three-col" style="margin-top:24px;">
+    <h2 class="section-title">What We're Covering Today</h2>
+
+    <div class="grid-3">
       <div class="card">
         <h4>Business Processes</h4>
         <ul>
@@ -166,19 +205,16 @@
         </ul>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 3: WHERE WE LEFT OFF -->
-  <div class="slide slide-content">
-    <h3>Where We Left Off</h3>
-    <div class="two-col">
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">Where We Left Off</h3>
+    <div class="grid-2">
       <div>
         <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
-          You just finished building the <strong style="color:#e2e8f0;">Silver layer</strong> (Day 5). Silver is clean, row-level data — but it's still shaped like the source systems, not like something a business user could query.
+          You just finished building the <strong style="color:#e2e8f0;">Silver layer</strong> (Day 5). Silver is clean, row-level data — but it's still shaped like the source systems, not like something a business user could actually query.
         </p>
         <div class="card">
-          <h4>Today we introduce the shape it needs to become</h4>
-          <p>A <strong>star schema</strong> — one fact table surrounded by the dimensions that give it meaning.</p>
+          <h4>Today We Learn the Shape It Needs to Become</h4>
+          <p>That shape has a name: a <strong>star schema</strong>. Picture one central table holding every sale that happened, surrounded by smaller tables that answer <em>who, what, when, where</em> about each sale. Over the next few slides we'll build up to exactly why this shape works.</p>
         </div>
       </div>
       <div>
@@ -187,88 +223,88 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 4: WHAT IS A BUSINESS PROCESS -->
-  <div class="slide slide-content">
-    <h3>What Is a Business Process?</h3>
-    <div class="two-col">
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">What Is a Business Process?</h3>
+    <div class="grid-2">
       <div>
         <div class="card">
           <h4>A repeatable, measurable activity</h4>
-          <p>A <strong>business process</strong> is a repeatable, measurable activity that happens in the business — something that generates events you can count, sum, or track over time.</p>
-          <p style="margin-top:10px;">"Sales performance" is <em>not</em> a business process — too vague. <strong style="color:#e2e8f0;">A sale happening</strong> — a customer buying N units of a product, at a price, on a date — is.</p>
+          <p>Picture Sushant Kumar's manager stopping by his desk: "Can you build me something for sales performance?" Sushant doesn't touch a keyboard yet — <em>"sales performance"</em> is too vague to build anything from. There's no single event hiding inside that phrase. So he asks a follow-up: what exact event do you want counted, every time it happens? The real answer: <strong style="color:#e2e8f0;">a sale happening</strong> — a customer buying N units of a product, at a price, on a date. That's something you can point at, count, and track over time, forever.</p>
+          <p style="margin-top:10px;">That's the whole idea behind the term <strong>business process</strong>: something that happens in the business over and over, in a way you can count, sum, or track over time. "A sale happening" is a business process. "Sales performance" is not. That's what gets modeled.</p>
         </div>
       </div>
       <div>
         <div class="highlight-box">
-          <p><strong style="color:#38bdf8;">Kimball's core rule:</strong> build the warehouse one business process at a time, not one report at a time.</p>
-          <p style="margin-top:8px;">Model the report every team asks for as a fresh table, and you get GlobalMart's original Data Silos and Unclear Origin problems all over again. Model the <strong>sale</strong> process once, correctly, as <code>fact_sales</code> — every report becomes a different <code>GROUP BY</code> on the same trusted table.</p>
+          <p>Imagine building a brand-new table every time someone asks for a report — sales by region, sales by month, sales by rep. You'd end up with the same numbers copied into a dozen different tables, and no way to know which copy is right when two of them disagree. That's exactly the mess a warehouse exists to prevent.</p>
+          <p style="margin-top:8px;">So instead, build the underlying business process once — the sale itself — as one trustworthy table: <code>fact_sales</code>. Every report after that is just a different <code>GROUP BY</code> on that same table, not a new copy of the data. This is <strong style="color:#38bdf8;">Kimball's core rule:</strong> model the warehouse around business processes, not around report requests.</p>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- SLIDE 5: PROCESS OR NOT -->
-  <div class="slide slide-content">
-    <h3>Business Process — or Not?</h3>
-    <table class="sql-table">
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">Business Process — or Not?</h3>
+    <table class="spec">
       <tr><th>Not a business process</th><th>A business process</th></tr>
       <tr><td>"Sales performance" — vague, no clear event</td><td><strong>A sale happening</strong> — customer buys product(s), in an order, on a date</td></tr>
       <tr><td>"Customer satisfaction" — an opinion</td><td><strong>A return being filed</strong> — a measurable event with date, product, reason</td></tr>
       <tr><td>"Marketing effectiveness" — a judgment</td><td><strong>A campaign being sent and opened</strong> — a measurable event</td></tr>
     </table>
-  </div>
 
-  <!-- SLIDE 6: FACTS VS DIMENSIONS -->
-  <div class="slide slide-content">
-    <h3>Facts vs. Dimensions</h3>
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">Facts vs. Dimensions</h3>
     <div class="card" style="max-width:760px;">
-      <h4>Kimball's one-liner</h4>
-      <p style="font-size:16px; line-height:1.8;"><strong style="color:#f8fafc;">Facts are verbs, dimensions are nouns.</strong></p>
-      <p style="margin-top:10px;">A sale <em>happens</em> (verb, fact) <em>to</em> a customer, <em>of</em> a product, <em>on</em> a date, <em>shipped to</em> an address, <em>paid by</em> a method, <em>as part of</em> an order (all nouns, dimensions).</p>
+      <h4>One Sentence, Two Kinds of Words</h4>
+      <p>Say Sushant Kumar <em>buys</em> a keyboard, today. Split that sentence into two kinds of pieces:</p>
+      <ul style="margin-top:8px;">
+        <li>The action — <strong>"buys."</strong> This is the thing that actually happened, the event you'd want to count or track. In a warehouse, this piece lives in what's called a <strong>fact table</strong>.</li>
+        <li>Everything else — <strong>"Sushant," "keyboard," "today."</strong> These don't describe an event on their own; they describe the <em>who</em>, <em>what</em>, and <em>when</em> around it. In a warehouse, these pieces live in what are called <strong>dimension tables</strong>.</li>
+      </ul>
+      <p style="margin-top:10px; font-size:16px;">Kimball has a one-liner for this split: <strong style="color:#f8fafc;">facts are verbs, dimensions are nouns.</strong></p>
     </div>
-  </div>
 
-  <!-- SLIDE 7: FACT VS DIMENSION TABLE -->
-  <div class="slide slide-content">
-    <h3>Fact vs. Dimension — Side by Side</h3>
-    <table class="sql-table">
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">Same Pattern, a Real Sale</h3>
+    <div class="card" style="max-width:760px;">
+      <p>A sale <em>happens</em>. That's the fact.</p>
+      <ul style="margin-top:10px;">
+        <li>to a <strong style="color:#f8fafc;">customer</strong></li>
+        <li>of a <strong style="color:#f8fafc;">product</strong></li>
+        <li>on a <strong style="color:#f8fafc;">date</strong></li>
+        <li>shipped to an <strong style="color:#f8fafc;">address</strong></li>
+        <li>paid by a <strong style="color:#f8fafc;">method</strong></li>
+        <li>as part of an <strong style="color:#f8fafc;">order</strong></li>
+      </ul>
+      <p style="margin-top:12px; color:#38bdf8;"><strong>Six nouns. Six dimensions.</strong></p>
+    </div>
+
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">Fact vs. Dimension — Side by Side</h3>
+    <table class="spec">
       <tr><th></th><th>Fact</th><th>Dimension</th></tr>
       <tr><td><strong>What it represents</strong></td><td>A measurable business event</td><td>Context describing that event</td></tr>
       <tr><td><strong>Contains</strong></td><td>Numbers to SUM/AVG/COUNT + foreign keys</td><td>Descriptive attributes to filter/group by</td></tr>
       <tr><td><strong>Grows</strong></td><td>Fast — one row per event</td><td>Slowly — a customer doesn't change daily</td></tr>
       <tr><td><strong>GlobalMart example</strong></td><td><code>fact_sales</code> — one row per order line item</td><td><code>dim_customer</code>, <code>dim_product</code>, <code>dim_date</code>, <code>dim_address</code>, <code>dim_payment_method</code>, <code>dim_orders</code></td></tr>
     </table>
-  </div>
 
-  <!-- SLIDE 8: NEITHER USEFUL ALONE -->
-  <div class="slide slide-content">
-    <h3>Neither Is Useful Alone</h3>
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">Neither Is Useful Alone</h3>
     <div class="highlight-box" style="max-width:780px;">
       <p><code>fact_sales</code> with no dimensions is a pile of numbers — "&#8377;14,392,000 in <code>Sales_amount</code>" means nothing without knowing whose sales, which products, when.</p>
       <p style="margin-top:10px;"><code>dim_customer</code> with no fact table is just a phone book.</p>
       <p style="margin-top:10px;"><strong style="color:#38bdf8;">The value is in the join.</strong></p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 9: SECTION - GLOBALMART'S PROCESS -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
+<!-- SECTION 2: GlobalMart's Business Process (old slides 9-10) -->
+<section class="content" id="globalmart-process">
+  <div class="wrap">
     <div class="section-tag">Applying It</div>
-    <h2>GlobalMart's Business Process</h2>
-    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      Every ingestion pipeline, every Bronze/Silver table, every CDC and Autoloader job built so far exists to make one process measurable correctly.
-    </p>
-  </div>
+    <h2 class="section-title">GlobalMart's Business Process</h2>
+    <p class="section-intro">Every ingestion pipeline, every Bronze/Silver table, every CDC and Autoloader job built so far exists to make one process measurable correctly.</p>
 
-  <!-- SLIDE 10: A CUSTOMER BUYS PRODUCT(S) -->
-  <div class="slide slide-content">
-    <h3>A Customer Buys Product(s) In an Order</h3>
-    <div class="two-col">
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">A Customer Buys Product(s) In an Order</h3>
+    <div class="grid-2">
       <div>
         <div class="card">
           <h4>GlobalMart's core business process</h4>
-          <p>That data is clean in Silver today, but scattered across <strong>7 tables</strong> shaped like the source systems:</p>
+          <p>That data is clean in Silver today — ask Sushant Kumar, he's queried every one of these tables by now. But it's still split across <strong>7 tables</strong>, each shaped the way the source system happened to store it. Ask a simple question like "how much did we sell yesterday?" and you'd have to manually join all 7 together, by hand, every single time, just to get one number:</p>
           <ul style="margin-top:8px;">
             <li><code>orders</code></li>
             <li><code>order_items</code></li>
@@ -282,38 +318,33 @@
       </div>
       <div>
         <div class="highlight-box">
-          <p>The star schema's job: collapse those 7 tables into <strong style="color:#38bdf8;">one fact table</strong> surrounded by the dimensions that give it meaning.</p>
+          <p>The star schema fixes exactly that problem. It collapses those 7 tables into <strong style="color:#38bdf8;">one fact table</strong> (the sales events) surrounded by the dimensions that describe them — so a question that used to take 7 joins now takes 1.</p>
         </div>
         <div class="highlight-box" style="margin-top:14px;">
-          <p><code>fact_sales</code>'s grain, measures (<code>Quantity_purchased</code>, <code>Actual_price</code>, <code>Discounted_price</code>, <code>Sales_amount</code>), and 6 dimensions were already named back on Day 1 as this course's central deliverable. Today's job is to understand <em>why</em> that shape is the right one — grain and dimension design get their full rigorous treatment in ILT 2, right after this session.</p>
+          <p>The exact shape of <code>fact_sales</code> — and the 6 tables around it — was already sketched back on Day 1. Today's job is just to understand <em>why</em> that shape makes sense.</p>
+          <p style="margin-top:8px; color:#94a3b8;">The next session (ILT 2) gets precise about exactly what one row of <code>fact_sales</code> means.</p>
         </div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 11: SECTION - STAR SCHEMA SHAPE -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
+<!-- SECTION 3: The Star Schema Shape (old slides 11-13b) -->
+<section class="content" id="star-shape">
+  <div class="wrap">
     <div class="section-tag">The Shape</div>
-    <h2>The Star Schema Shape</h2>
-    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      One fact table in the middle. Six dimensions around it, each answering a different question about the sale.
-    </p>
-  </div>
+    <h2 class="section-title">The Star Schema Shape</h2>
+    <p class="section-intro">One fact table in the middle. Six dimensions around it, each answering a different question about the sale.</p>
 
-  <!-- SLIDE 12: STAR DIAGRAM -->
-  <div class="slide slide-content">
-    <h3>fact_sales at the Center</h3>
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">fact_sales at the Center</h3>
     <pre>              dim_date              dim_orders
                     \                    /
    dim_customer ---- fact_sales ---- dim_product
                     /                    \
              dim_address    dim_payment_method</pre>
-  </div>
 
-  <!-- SLIDE 13: TABLE ROLES -->
-  <div class="slide slide-content">
-    <h3>What Each Table Does</h3>
-    <table class="sql-table">
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">What Each Table Does</h3>
+    <table class="spec">
       <tr><th>Table</th><th>Role</th><th>Grain / Contents</th></tr>
       <tr><td><strong>fact_sales</strong></td><td>Center of the star</td><td>One row per order line item</td></tr>
       <tr><td><code>dim_customer</code></td><td>Who bought it</td><td>One row per customer version (SCD2)</td></tr>
@@ -324,36 +355,105 @@
       <tr><td><code>dim_orders</code></td><td>Order header context</td><td>One row per order (channel, shipping tier, supplier)</td></tr>
     </table>
     <div class="highlight-box warn" style="margin-top:16px;">
-      <p><strong style="color:#f59e0b;">Six dimensions</strong> — matching the Day 1 spec's spirit, with one addition: <code>dim_orders</code> for order-header attributes. ILT 2 (next) designs each one in depth. Two of them — <code>dim_customer</code> and <code>dim_product</code> — already carry SCD2 history by the time you get to them, because Silver (Day 5) built it in; today's hands-on republishes it in Gold, it doesn't build it from scratch.</p>
+      <p>Notice this list has <strong style="color:#f59e0b;">six</strong> tables, not five — the original Day 1 sketch only had five dimensions. Why the extra one? Some details, like which channel the order came through, the shipping tier, or which supplier fulfilled it, describe the order as a whole — not the customer, not the product, not the date. They don't fit cleanly into any of the other five nouns, so they get their own table: <code>dim_orders</code>. That's the Day 1 spec's five, plus this one addition. ILT 2 (next) designs each of these six in depth.</p>
+    </div>
+
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">Two of These Six Are Special</h3>
+    <div class="card" style="max-width:780px;">
+      <p>People and products change. A customer updates their phone number. A product's price goes up next month.</p>
+      <p style="margin-top:10px;">Picture what would happen if we just overwrote the old phone number with the new one: every past order that customer ever placed would now show today's phone number attached to it — even though that number didn't exist yet when the order actually happened. That's wrong. And once overwritten, the old number is gone for good; there's no way to get it back.</p>
+      <p style="margin-top:10px;">So instead of overwriting, <code>dim_customer</code> and <code>dim_product</code> keep the OLD row exactly as it was, and add a brand NEW row with the new information. Both stay on file: what was true before, and what's true now.</p>
+      <p style="margin-top:10px; color:#94a3b8;">This pattern — keep old rows, add new ones instead of overwriting — has a name you'll hear a lot starting in ILT 2: <strong style="color:#e2e8f0;">SCD Type 2 (SCD2)</strong>.</p>
+    </div>
+    <div class="highlight-box success" style="max-width:780px;">
+      <p><strong style="color:#22c55e;">What this means for your hands-on:</strong> Silver already built this history on Day 5, before today. This hands-on doesn't rebuild it from scratch — it just carries that history forward into Gold.</p>
     </div>
   </div>
+</section>
 
-  <!-- SLIDE 14: SECTION - WHAT'S NEXT -->
-  <div class="slide slide-section">
+<!-- SECTION 4: What's Next (old slides 14-15) -->
+<section class="content" id="whats-next">
+  <div class="wrap">
     <div class="section-tag">What's Next</div>
-    <h2>The Rest of Day 6 (and Day 7)</h2>
-  </div>
+    <h2 class="section-title">The Rest of Day 6 (and Day 7)</h2>
 
-  <!-- SLIDE 15: WHAT'S NEXT TABLE -->
-  <div class="slide slide-content">
-    <h3>Where Each Idea Gets Finished</h3>
-    <table class="sql-table">
+    <h3 style="font-size:22px; font-weight:700; color:#f8fafc; margin:40px 0 18px;">Where Each Idea Gets Finished</h3>
+    <table class="spec">
       <tr><th>Session</th><th>What Happens</th></tr>
       <tr><td><strong>Day 6 ILT 2 (next)</strong></td><td>Grain definition, then a deep dive into designing each of the 6 dimensions</td></tr>
       <tr><td><strong>Day 6 ILT 3</strong></td><td>Fact table types, additive vs. non-additive measures, degenerate dimensions, and why <code>fact_sales</code> references dimensions by natural key instead of surrogate key</td></tr>
-      <tr><td><strong>Day 6 HOL 1</strong></td><td>Design the schema on paper, then build all 6 dimension tables for real in <code>gbmart.gold</code></td></tr>
+      <tr><td><strong>Day 6 HOL 1</strong></td><td>Design the schema on paper, then build all 6 dimension tables for real in <code>&lt;your-catalog&gt;.gold</code></td></tr>
       <tr><td><strong>Day 7</strong></td><td>Build <code>fact_sales</code> itself, joining the grain against every dimension built today</td></tr>
     </table>
   </div>
+</section>
 
-  <!-- SLIDE 16: CLOSING -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
+<!-- SECTION 5: Quick-Fire Q&A 1 (old slide 15b) -->
+<section class="content" id="qa1">
+  <div class="wrap">
+    <div class="section-tag">Quick-Fire Q&amp;A</div>
+    <h2 class="section-title">Business Processes &amp; the Star Shape</h2>
+    <p class="section-intro">Click a question to reveal the answer</p>
+
+    <details class="qa-card">
+      <summary>We modeled around "business processes" instead of departments. What's the actual reason?</summary>
+      <div class="qa-answer">Business processes (place an order, ship an order, process a return) stay stable and are shared across departments. Org charts and report requests do not — they change constantly. Modeling around the process means the same fact table serves Sales, Finance, and Ops without a redesign every time someone in one department wants a new report.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>In one sentence — what's the difference between a fact and a dimension?</summary>
+      <div class="qa-answer">A fact is a measured event — something that happened, with numbers attached. A dimension is the context around that event — who, what, when, where. <code>fact_sales</code> = "an order line item happened"; <code>dim_customer</code>/<code>dim_product</code>/<code>dim_date</code> = who bought it, what it was, when.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Is a star schema the same thing as a normalized (3NF) database design?</summary>
+      <div class="qa-answer">No — the opposite, on purpose. A normalized (3NF) design splits data into many small tables to avoid repeating anything — great for a system taking fast, one-row-at-a-time writes. A star schema does the reverse: it keeps each dimension as one flat table, even if that repeats some data, because that's what makes reading and reporting fast — one join per dimension, no chains of joins.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Why "star" and not "snowflake" in this course?</summary>
+      <div class="qa-answer">Snowflake normalizes dimensions further (e.g. splitting <code>dim_product</code> into product + category + subcategory tables) to save storage. Star keeps each dimension flat in one table. Storage is cheap; joins are the cost that matters for a BI/Genie query — so this course keeps every dimension flat, one join away.</div>
+    </details>
+  </div>
+</section>
+
+<!-- SECTION 6: Quick-Fire Q&A 2 (old slide 15c) -->
+<section class="content" id="qa2">
+  <div class="wrap">
+    <div class="section-tag">Quick-Fire Q&amp;A</div>
+    <h2 class="section-title">Reading the Whiteboard Sketch</h2>
+    <p class="section-intro">Click a question to reveal the answer</p>
+
+    <details class="qa-card">
+      <summary>The whiteboard sketch has 8 boxes around fact_sales, but this course only builds 6 dimensions. What happened to Order_items_Dimension and Returns_Dimension?</summary>
+      <div class="qa-answer">Good eye — Sushant Kumar and Aman Thapliyal counted the same 8 boxes on the whiteboard and stopped mid-sketch to double-check. They're reference-only in this design — not foreign keys on <code>fact_sales</code>. Order items <em>are</em> <code>fact_sales</code> itself (that's the grain); returns will get its own <code>fact_returns</code> table on a later day, built against the very same <code>dim_customer</code>/<code>dim_product</code> tables rather than its own copies — that reuse is what's meant by "conformed": both fact tables agree on who the customers and products are, so a return and the sale it's tied to always line up. They're related concepts on the sketch, not additional joins to build today.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>Does every business process at GlobalMart need its own fact table?</summary>
+      <div class="qa-answer">Only the ones worth measuring on their own grain. "Place an order" and "process a return" are separate processes with separate grains — that's two fact tables. A process like "update a customer's phone number" isn't measured at all; it's just a dimension attribute change, no fact table needed.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>What comes first when designing a star schema — picking the dimensions or declaring the grain?</summary>
+      <div class="qa-answer">Grain, always — Kimball's four-step method is business process → grain → dimensions → facts, in that order. Think of it like Sushant Kumar organizing lunch for the cohort: nobody picks a restaurant until the group agrees on "lunch, today, for six people." Skip that step and the whole plan falls apart. Same with a star schema — pick dimensions before grain, and you end up with the wrong grain by accident.</div>
+    </details>
+
+    <details class="qa-card">
+      <summary>If fact_sales is the "star," what's the actual shape that name refers to?</summary>
+      <div class="qa-answer">Literally star-shaped when diagrammed — one central fact table with dimension tables radiating outward as single points, each one join away. No dimension joins another dimension directly; that's what keeps the shape a star instead of a chain or snowflake.</div>
+    </details>
+  </div>
+</section>
+
+<!-- SECTION 7: Recap (old slide 16) -->
+<section class="content" id="recap">
+  <div class="wrap">
     <div class="section-tag">Session Recap</div>
-    <h2>You're Ready for ILT 2</h2>
-    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
-      Next up: Grain Definition &amp; Dimension Design — declaring the grain, then designing each of GlobalMart's 6 dimensions in depth.
-    </p>
-    <div class="three-col" style="margin-top:32px; max-width:820px;">
+    <h2 class="section-title">You're Ready for ILT 2</h2>
+    <p class="section-intro">Next up: Grain Definition &amp; Dimension Design — declaring the grain, then designing each of GlobalMart's 6 dimensions in depth.</p>
+
+    <div class="grid-3">
       <div class="card">
         <h4>Recap</h4>
         <p>Facts are verbs, dimensions are nouns. <code>fact_sales</code> = the sale business process, surrounded by 6 dimensions.</p>
@@ -368,27 +468,32 @@
       </div>
     </div>
   </div>
+</section>
 
-</div><!-- /deck -->
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 6 · ILT 1 — Business Process Mapping &amp; Star Schema (Kimball)
+</footer>
 
 <script>
-  let current = 0;
-  const slides = document.querySelectorAll('.slide');
-  const counter = document.getElementById('counter');
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
 
-  function showSlide(n) {
-    slides[current].classList.remove('active');
-    current = (n + slides.length) % slides.length;
-    slides[current].classList.add('active');
-    counter.textContent = (current + 1) + ' / ' + slides.length;
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
   }
-
-  function changeSlide(dir) { showSlide(current + dir); }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
-  });
+  window.addEventListener('scroll', onScroll);
+  onScroll();
 </script>
+
 </body>
 </html>

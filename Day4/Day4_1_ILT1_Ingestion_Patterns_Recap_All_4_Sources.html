@@ -199,8 +199,8 @@
         <h4>Pathway 1 — Postgres (Supabase) via Lakeflow Connect</h4>
         <ul>
           <li>Tables: <code>orders</code>, <code>order_items</code></li>
-          <li>Mechanism: WAL / logical replication slot (CDC)</li>
-          <li>Captures deletes: Yes</li>
+          <li>Mechanism: query/cursor-based capture (cursor: <code>updated_at</code>)</li>
+          <li>Captures deletes: <strong>No</strong> — the one gap of this mode</li>
           <li>Built: Day 2 HOL 1</li>
         </ul>
       </div>
@@ -226,7 +226,7 @@
 orders, order_items                 products, customers,
      │                               addresses, payments
      │ Lakeflow Connect                    │ Auto Loader
-     │ (CDC, WAL-based)                    │ (cloudFiles)
+     │ (query/cursor-based)                │ (cloudFiles)
      ▼                                     ▼
 ┌─────────────────────────────────────────────────────┐
 │              BRONZE LAYER (Delta Lake)               │
@@ -239,7 +239,7 @@ orders, order_items                 products, customers,
                         ▼
              SILVER → GOLD → fact_sales → Genie</pre>
     <div class="highlight-box" style="margin-top:14px;">
-      <p>You met both mechanisms already: <strong style="color:#38bdf8;">Day 2</strong> walked the Postgres WAL/CDC mechanics by hand, and <strong style="color:#38bdf8;">Day 3</strong> built Auto Loader Bronze tables for <code>customers</code> and <code>payments</code>. Today adds the remaining entities and ties it into one picture.</p>
+      <p>You met both mechanisms already: <strong style="color:#38bdf8;">Day 2</strong> walked the general WAL/CDC mental model by hand, then GlobalMart's real query/cursor-based Lakeflow Connect pipeline, and <strong style="color:#38bdf8;">Day 3</strong> covered Auto Loader and schema evolution concepts with a live demo — on disposable sandbox data, not GlobalMart's real Bronze tables. Today's Bronze HOL, right after this session, is where <code>customers</code>, <code>payments</code>, <code>products</code>, and <code>addresses</code> actually get built as real Bronze tables for the first time.</p>
     </div>
   </div>
 
@@ -266,42 +266,39 @@ orders, order_items                 products, customers,
             <li>Postgres is OLTP — optimised for fast writes, not bulk reads</li>
             <li>Querying millions of rows every hour kills performance</li>
             <li>We need changes only — not the whole table, every time</li>
-            <li><code>WHERE updated_at &gt; last_run</code> still misses deletes entirely</li>
+            <li><code>WHERE updated_at &gt; last_run</code> also misses deletes entirely</li>
           </ul>
         </div>
       </div>
       <div>
         <div class="highlight-box success">
-          <p><strong style="color:#22c55e;">The fix:</strong> read the diary's <em>margin notes</em> instead — a running log of every edit as it happens. That log is the <strong>Write-Ahead Log (WAL)</strong>, and Lakeflow Connect reads it continuously.</p>
+          <p><strong style="color:#22c55e;">The fix:</strong> a managed pipeline that re-queries just the cursor column on a schedule instead of you hand-rolling the watermark script. That's what Lakeflow Connect automates for GlobalMart's real <code>orders</code>/<code>order_items</code> pipeline — still cursor-based under the hood, just managed for you (Lakeflow Connect can also read the WAL directly in a different mode — Day 2 HOL 2 teaches that mode by hand — but it's not what GlobalMart's real pipeline runs).</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 8: WAL MECHANISM -->
+  <!-- SLIDE 8: MECHANISM -->
   <div class="slide slide-content">
-    <h3>The Mechanism — WAL-Based CDC</h3>
+    <h3>The Mechanism — Query/Cursor-Based Capture</h3>
     <div class="two-col">
       <div>
-<pre>Postgres WAL (Write-Ahead Log)
+<pre>Supabase PostgreSQL
       │
-      ▼  logical replication slot (a bookmark)
-Lakeflow Connect (managed, production)
+      ▼  Lakeflow Connect queries WHERE updated_at > last_seen_value
+Lakeflow Connect (managed, production) — orders_data_ingestion_cdc
       │
-      ▼  INSERT / UPDATE / DELETE, exactly once
-bronze.orders , bronze.order_items
-      │
-      ▼  MERGE (upsert) in Silver
-silver.orders_clean</pre>
+      ▼  INSERT / UPDATE upserted (history tracking: Off / SCD1)
+&lt;your-catalog&gt;.bronze.orders , &lt;your-catalog&gt;.bronze.order_items</pre>
       </div>
       <div>
         <div class="card">
           <h4>Key Concepts (Recap from Day 2)</h4>
           <ul>
-            <li><strong>WAL</strong> — append-only log of every DB change, written before the table itself changes</li>
-            <li><strong>Replication slot</strong> — a bookmark in the WAL so a reader never misses or duplicates events</li>
-            <li><strong>Lakeflow Connect</strong> reads the slot and lands events straight into Bronze Delta tables</li>
-            <li>Each row lands with <code>_cdc_op</code> — never resolved to "current state" in Bronze; that's Silver's job</li>
+            <li><strong>Cursor column</strong> — the column re-queried each run to find what changed; GlobalMart's real pipeline uses <code>updated_at</code></li>
+            <li><strong>Lakeflow Connect</strong> re-queries the source table and lands upserted rows straight into Bronze — no manual scheduling</li>
+            <li>Lakeflow Connect <em>can</em> also run log-based (reads the WAL directly, does catch deletes) — but GlobalMart's real pipeline is cursor-based, so it <strong>cannot detect hard deletes</strong></li>
+            <li>Each row lands upserted (SCD1, latest state) — no discrete change-event log, unlike log-based CDC</li>
           </ul>
         </div>
       </div>
@@ -312,14 +309,14 @@ silver.orders_clean</pre>
   <div class="slide slide-content">
     <h3>Why Not Just a Nightly JDBC Pull?</h3>
     <table class="sql-table">
-      <tr><th></th><th>CDC (WAL / Lakeflow Connect)</th><th>Plain JDBC + Watermark</th></tr>
-      <tr><td>Captures deletes?</td><td>Yes</td><td>No — a deleted row leaves no trace</td></tr>
-      <tr><td>Source load</td><td>Low (reads WAL, not the table)</td><td>Medium (queries the live table)</td></tr>
-      <tr><td>Latency</td><td>Near real-time</td><td>Depends on schedule</td></tr>
-      <tr><td>GlobalMart uses in production</td><td>Preferred</td><td>Fallback only — no <code>updated_at</code> to watermark on</td></tr>
+      <tr><th></th><th>Lakeflow Connect (query/cursor)</th><th>Plain JDBC + Watermark</th></tr>
+      <tr><td>Captures deletes?</td><td>No — same blind spot as any cursor-based approach</td><td>No — a deleted row leaves no trace</td></tr>
+      <tr><td>Source load</td><td>Low (managed, scheduled queries)</td><td>Medium (hand-rolled script)</td></tr>
+      <tr><td>Latency</td><td>Depends on run trigger</td><td>Depends on schedule</td></tr>
+      <tr><td>GlobalMart uses in production</td><td>Preferred (managed)</td><td>Fallback only — what this is automating away</td></tr>
     </table>
     <div class="highlight-box" style="margin-top:16px;">
-      <p><strong style="color:#38bdf8;">Note:</strong> today's Bronze-build HOL uses a JDBC + watermark script to <em>simulate</em> the CDC pathway in a notebook — production uses Lakeflow Connect, the same mental model you built by hand in Day 2 HOL 2.</p>
+      <p><strong style="color:#38bdf8;">Note:</strong> Day 2 walked both the general WAL/CDC mental model (log-based, by hand via JDBC) and GlobalMart's actual query/cursor-based Lakeflow Connect pipeline in detail — today's recap assumes that context.</p>
     </div>
   </div>
 
@@ -394,10 +391,10 @@ silver.orders_clean</pre>
     <table class="sql-table">
       <tr><th>Pattern</th><th>What You Learned</th><th>Why Not in This Pipeline</th></tr>
       <tr><td>REST API ingestion</td><td>Pagination, rate limiting, scheduled pulls</td><td>No enrichment API in scope for <code>fact_sales</code> — but a real pattern for other projects</td></tr>
-      <tr><td>Neo4j / Cypher</td><td>Nodes, edges, graph traversal</td><td>Supplier/product relationships live in flat reference tables, not a graph DB</td></tr>
+      <tr><td>Neo4j / Cypher</td><td>Nodes, edges, graph traversal</td><td>Product/customer relationships live in flat reference tables, not a graph DB</td></tr>
     </table>
     <div class="highlight-box success" style="margin-top:16px;">
-      <p><strong style="color:#22c55e;">The takeaway:</strong> knowing more patterns than your current project needs is normal and valuable. For GlobalMart, only CDC + Autoloader touch Bronze.</p>
+      <p><strong style="color:#22c55e;">The takeaway:</strong> knowing more patterns than your current project needs is normal and valuable. For GlobalMart, only Lakeflow Connect + Autoloader touch Bronze.</p>
     </div>
   </div>
 
@@ -405,13 +402,15 @@ silver.orders_clean</pre>
   <div class="slide slide-content">
     <h3>Cross-Pathway Comparison</h3>
     <table class="sql-table">
-      <tr><th>Dimension</th><th>Postgres CDC</th><th>ADLS Autoloader</th></tr>
+      <tr><th>Dimension</th><th>Postgres — Lakeflow Connect</th><th>ADLS Autoloader</th></tr>
       <tr><td>Tables</td><td>orders, order_items</td><td>products, customers, addresses, payments</td></tr>
-      <tr><td>Data shape</td><td>Transactional event rows</td><td>Periodic reference-data file drops</td></tr>
-      <tr><td>Exactly-once via</td><td>Replication slot offset</td><td>Checkpoint</td></tr>
-      <tr><td>Captures deletes?</td><td>Yes — first-class event</td><td>N/A — full snapshots</td></tr>
+      <tr><td>Data shape</td><td>Transactional rows, queried on a cursor</td><td>Periodic reference-data file drops</td></tr>
+      <tr><td>Mechanism</td><td>Query/cursor-based (cursor: <code>updated_at</code>)</td><td><code>cloudFiles</code> streaming source</td></tr>
+      <tr><td>Exactly-once via</td><td>Cursor's last-seen value</td><td>Checkpoint</td></tr>
+      <tr><td>Captures deletes?</td><td><strong>No</strong> — deleted row just stops matching the query</td><td>N/A — full snapshots</td></tr>
       <tr><td>Schema evolution</td><td>Postgres DDL + Lakeflow</td><td><code>addNewColumns</code></td></tr>
-      <tr><td>Audit columns</td><td><code>_cdc_op</code>, <code>_ingested_at</code></td><td><code>_source_file</code>, <code>_ingested_at</code></td></tr>
+      <tr><td>Bronze write mode</td><td>Upsert — latest row per key only</td><td>Append — every new file's rows are new</td></tr>
+      <tr><td>Audit columns</td><td>Managed by Lakeflow Connect</td><td><code>_source_file</code>, <code>_ingested_at</code></td></tr>
     </table>
   </div>
 
@@ -420,19 +419,19 @@ silver.orders_clean</pre>
     <h3>Bronze Landing Map — All 6 Tables</h3>
     <div class="two-col">
       <div>
-<pre>gbmart.bronze.orders        ← CDC
-gbmart.bronze.order_items   ← CDC
-gbmart.bronze.products      ← Auto Loader
-gbmart.bronze.customers     ← Auto Loader
-gbmart.bronze.addresses     ← Auto Loader
-gbmart.bronze.payments      ← Auto Loader</pre>
+<pre>&lt;your-catalog&gt;.bronze.orders        ← Upserted — Lakeflow Connect
+&lt;your-catalog&gt;.bronze.order_items   ← Upserted — Lakeflow Connect
+&lt;your-catalog&gt;.bronze.products      ← Auto Loader (append)
+&lt;your-catalog&gt;.bronze.customers     ← Auto Loader (append)
+&lt;your-catalog&gt;.bronze.addresses     ← Auto Loader (append)
+&lt;your-catalog&gt;.bronze.payments      ← Auto Loader (append)</pre>
       </div>
       <div class="card">
-        <h4>Bronze Rules — Same for Both Pathways</h4>
+        <h4>Bronze Rules</h4>
         <ol class="order-list">
           <li>Never transform — land raw data as close to source shape as possible</li>
-          <li>Always add audit columns</li>
-          <li>Never delete — Bronze is append-only</li>
+          <li>Autoloader tables always add audit columns: <code>_ingested_at</code>, <code>_source_file</code></li>
+          <li>Autoloader Bronze is append-only; Lakeflow Connect Bronze is the exception — it's upserted, and can't see a source DELETE</li>
           <li>All 6 tables are Delta format, regardless of pathway</li>
         </ol>
       </div>
@@ -442,9 +441,9 @@ gbmart.bronze.payments      ← Auto Loader</pre>
   <!-- SLIDE 16: WHAT COMES NEXT -->
   <div class="slide slide-content">
     <h3>What Comes Next</h3>
-<pre>Bronze (raw, 6 tables)         Silver (clean)          Gold (business-ready)
-gbmart.bronze.orders      →   silver.orders       →    fact_sales
-gbmart.bronze.products    →   silver.products          dim_customer, dim_product...</pre>
+<pre>Bronze (raw, 6 tables)              Silver (clean)          Gold (business-ready)
+&lt;your-catalog&gt;.bronze.orders    →  silver.orders       →    fact_sales
+&lt;your-catalog&gt;.bronze.products  →  silver.products          dim_customer, dim_product...</pre>
     <div class="highlight-box" style="margin-top:14px;">
       <p>This session's job was to make the <em>shape</em> of Bronze crystal clear before we formalize its design rules in <strong style="color:#38bdf8;">ILT 2</strong> and build it hands-on right after in <strong style="color:#38bdf8;">HOL 1</strong>.</p>
     </div>
@@ -457,15 +456,15 @@ gbmart.bronze.products    →   silver.products          dim_customer, dim_produ
     <div class="three-col" style="margin-top:20px;">
       <div class="card">
         <h4>Two Pathways</h4>
-        <p>Postgres CDC + ADLS Autoloader — not four. CDC beats watermark JDBC; Auto Loader beats a plain read loop.</p>
+        <p>Postgres Lakeflow Connect + ADLS Autoloader — not four. Lakeflow Connect beats hand-rolled watermark JDBC on cost/complexity, but doesn't catch hard deletes; Auto Loader beats a plain read loop.</p>
       </div>
       <div class="card">
-        <h4>Same Contract</h4>
-        <p>Both land in Bronze as Delta, append-only, with audit columns — same guarantees regardless of source.</p>
+        <h4>Different Write Patterns</h4>
+        <p>Autoloader Bronze is append-only with audit columns. Lakeflow Connect Bronze is upserted — latest state only, no delete capture.</p>
       </div>
       <div class="card">
         <h4>Six Tables</h4>
-        <p><code>orders</code>, <code>order_items</code> (CDC) + <code>products</code>, <code>customers</code>, <code>addresses</code>, <code>payments</code> (Autoloader) — all feeding <code>fact_sales</code>.</p>
+        <p><code>orders</code>, <code>order_items</code> (Lakeflow Connect) + <code>products</code>, <code>customers</code>, <code>addresses</code>, <code>payments</code> (Autoloader) — all feeding <code>fact_sales</code>.</p>
       </div>
     </div>
   </div>
@@ -488,7 +487,7 @@ gbmart.bronze.products    →   silver.products          dim_customer, dim_produ
       </div>
       <div class="card">
         <h4>🎤 Closing Check</h4>
-        <p>Name the 2 real pathways. Name the 6 tables. Why doesn't Bronze use MERGE?</p>
+        <p>Name the 2 real pathways. Name the 6 tables. Why can't GlobalMart's real Lakeflow Connect pipeline detect a hard DELETE?</p>
       </div>
     </div>
   </div>

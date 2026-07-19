@@ -1,0 +1,4 @@
+payment_id,order_id,amount,payment_method
+PAY-001,ORD-001,1299.00,UPI
+PAY-002,ORD-002,4599.00,Credit Card
+PAY-003,ORD-003,899.00,Debit Card
