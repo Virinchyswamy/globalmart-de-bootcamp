@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Host – Window Functions</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#f59e0b;--a2:#fbbf24;--text:#e6edf3;--muted:#8b949e;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a78bfa}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* TOP BAR */
+.topbar{height:50px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;gap:10px}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-badge{font-size:10px;font-weight:900;letter-spacing:2px;color:var(--a);text-transform:uppercase}
+.tb-title{font-size:12px;color:var(--muted)}
+.tb-state{font-size:11px;font-weight:700;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:var(--a2);padding:3px 10px;border-radius:100px}
+.tb-right{display:flex;gap:8px;align-items:center}
+.hbtn{padding:7px 18px;border-radius:9px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s}
+.hbtn:hover:not(:disabled){background:var(--a);color:#0d1117;border-color:var(--a)}
+.hbtn:disabled{opacity:.35;cursor:not-allowed}
+.hbtn.green{background:var(--green);color:#0d1117;border-color:var(--green)}
+.hbtn.green:hover{opacity:.9}
+.hbtn.red-outline{border-color:rgba(239,68,68,.4);color:var(--red)}
+.hbtn.red-outline:hover{background:rgba(239,68,68,.15);color:var(--red);border-color:var(--red)}
+
+/* MAIN LAYOUT: 3 columns */
+.main{display:grid;grid-template-columns:220px 1fr 280px;gap:0;flex:1;overflow:hidden}
+
+/* LEFT — players */
+.left{border-right:1px solid var(--border);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.panel-title{font-size:.7rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.plist{display:flex;flex-direction:column;gap:5px}
+.prow{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:.8rem}
+.prow .pname{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .pscore{font-weight:800;color:var(--a);font-family:'JetBrains Mono',monospace;font-size:.78rem;flex-shrink:0}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.ptotal{font-size:.76rem;color:var(--muted);text-align:center;margin-top:6px}
+
+/* CENTER — question + controls */
+.center{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+
+/* Lobby center */
+.lobby-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
+.lobby-center h2{font-size:1.6rem;font-weight:900;color:var(--a)}
+.lobby-center p{color:var(--muted);font-size:.9rem}
+.join-code{font-size:3rem;font-weight:900;color:var(--green);font-family:'JetBrains Mono',monospace;margin:8px 0}
+.url-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#7dd3fc;word-break:break-all}
+
+/* Question display */
+.q-header-host{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.q-badge-host{font-size:.72rem;font-weight:800;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.timer-host{font-size:2rem;font-weight:900;color:var(--a);font-family:'JetBrains Mono',monospace;min-width:60px;text-align:right}
+.timer-host.urgent{color:var(--red)}
+.timer-bar-host{width:100%;height:6px;background:var(--border);border-radius:3px;margin-bottom:16px;overflow:hidden}
+.timer-fill-host{height:100%;background:var(--a);border-radius:3px;transition:width 1s linear}
+.timer-fill-host.urgent{background:var(--red)}
+.q-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.q-text-host{font-size:1.1rem;font-weight:700;line-height:1.5;color:var(--text);margin-bottom:16px}
+.opts-host{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt-host{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:.82rem;font-weight:600;color:#c9d1d9;text-align:left;line-height:1.4}
+.opt-host.correct-opt{border-color:var(--green);background:rgba(34,197,94,.1);color:var(--green)}
+
+/* Answer distribution */
+.dist-title{font-size:.7rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.dist-bars{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.dist-row{display:flex;align-items:center;gap:8px}
+.dist-label{font-size:.78rem;font-weight:700;color:var(--muted);width:14px;flex-shrink:0}
+.dist-bar-wrap{flex:1;height:24px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.dist-bar-fill{height:100%;border-radius:6px;transition:width .4s ease;display:flex;align-items:center;padding-left:8px}
+.dist-bar-fill span{font-size:.72rem;font-weight:800;color:#0d1117;opacity:0}
+.dist-bar-fill.has-val span{opacity:1}
+.dist-count{font-size:.78rem;font-weight:700;width:28px;text-align:right;flex-shrink:0}
+.dist-colors{--c0:#3b82f6;--c1:#a78bfa;--c2:#22c55e;--c3:#f59e0b}
+.db-0 .dist-bar-fill{background:var(--c0)}
+.db-1 .dist-bar-fill{background:var(--c1)}
+.db-2 .dist-bar-fill{background:var(--c2)}
+.db-3 .dist-bar-fill{background:var(--c3)}
+
+/* Answer stats */
+.ans-stats{display:flex;gap:8px;margin-bottom:14px}
+.stat-pill{flex:1;text-align:center;padding:8px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:10px}
+.stat-pill .sv{font-size:1.3rem;font-weight:900;color:var(--green)}
+.stat-pill .sl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.stat-pill.al{border-color:rgba(239,68,68,.25)}
+.stat-pill.al .sv{color:var(--red)}
+
+/* Reveal answer display */
+.reveal-ans-host{padding:12px 14px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:10px;color:var(--green);font-weight:700;font-size:.9rem;margin-bottom:10px}
+.expl-host{font-size:.82rem;color:#c9d1d9;line-height:1.65;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+
+/* RIGHT — leaderboard */
+.right{border-left:1px solid var(--border);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:0}
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:5px;transition:background .2s}
+.lb-row:hover{background:var(--bg2)}
+.lb-rank{font-size:1rem;min-width:26px;font-weight:900;text-align:center}
+.lb-name{flex:1;font-size:.84rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-score{font-size:.88rem;font-weight:900;font-family:'JetBrains Mono',monospace;color:var(--a);flex-shrink:0}
+.lb-streak{font-size:.72rem;color:var(--a2);margin-left:4px;flex-shrink:0}
+.lb-row.gold .lb-name{color:var(--a2)}
+.lb-row.silver .lb-name{color:#94a3b8}
+.lb-row.bronze .lb-name{color:#a16207}
+.lb-empty{color:var(--muted);font-size:.82rem;text-align:center;padding:24px 0}
+
+/* Final screen */
+.final-panel{grid-column:1/-1;padding:24px;overflow-y:auto}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:20px;margin-bottom:30px;padding:0 20px}
+.pod{display:flex;flex-direction:column;align-items:center;gap:8px}
+.pod .trophy{font-size:2.5rem}
+.pod .pod-name{font-size:.88rem;font-weight:800;text-align:center;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .pod-score{font-size:.78rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.pod .pod-bar{width:100px;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:900;color:#0d1117;min-height:40px}
+.pod.p1 .pod-bar{background:var(--a2);height:110px}
+.pod.p2 .pod-bar{background:#94a3b8;height:80px}
+.pod.p3 .pod-bar{background:#a16207;height:60px}
+.final-list{max-width:600px;margin:0 auto}
+.final-row{display:flex;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:.85rem}
+.final-row .fr-rank{min-width:28px;font-weight:900;color:var(--muted)}
+.final-row .fr-name{flex:1;font-weight:600}
+.final-row .fr-score{font-weight:900;color:var(--a);font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tb-left">
+    <span class="tb-badge">Host Panel</span>
+    <span class="tb-title">Window Functions Quiz · Day 2</span>
+    <span class="tb-state" id="state-badge">Lobby</span>
+  </div>
+  <div class="tb-right">
+    <button class="hbtn green" id="btn-start" onclick="startQuiz()">▶ Start Quiz</button>
+    <button class="hbtn" id="btn-reveal" onclick="revealAnswer()" disabled>Reveal Answer</button>
+    <button class="hbtn" id="btn-next" onclick="nextStep()" disabled>Next Question →</button>
+    <button class="hbtn red-outline" onclick="resetAll()">↺ Reset</button>
+  </div>
+</div>
+
+<!-- MAIN AREA -->
+<div class="main" id="main-area">
+
+  <!-- LEFT: Players -->
+  <div class="left">
+    <div>
+      <p class="panel-title">Players Joined</p>
+      <div class="plist" id="player-list">
+        <p style="font-size:.78rem;color:var(--muted)">Waiting for players...</p>
+      </div>
+      <p class="ptotal" id="p-total"></p>
+    </div>
+  </div>
+
+  <!-- CENTER: Lobby / Question -->
+  <div class="center" id="center-area">
+    <div class="lobby-center" id="lobby-view">
+      <h2>🪟 Window Functions Quiz</h2>
+      <p>Share this link with students:</p>
+      <div class="url-box" id="url-display">Loading URL...</div>
+      <p style="font-size:.82rem;color:var(--muted);margin-top:8px">Students open the link → enter name → wait here</p>
+    </div>
+    <div id="question-view" style="display:none">
+      <div class="q-header-host">
+        <span class="q-badge-host" id="qbadge">Q1 of 15</span>
+        <span class="timer-host" id="timer-num">—</span>
+      </div>
+      <div class="timer-bar-host"><div class="timer-fill-host" id="timer-fill-host"></div></div>
+      <div class="q-card">
+        <div class="q-text-host" id="q-text-host"></div>
+        <div class="opts-host" id="opts-host"></div>
+      </div>
+      <div class="ans-stats">
+        <div class="stat-pill"><div class="sv" id="stat-ans">0</div><div class="sl">Answered</div></div>
+        <div class="stat-pill"><div class="sv" id="stat-left">25</div><div class="sl">Waiting</div></div>
+        <div class="stat-pill al"><div class="sv" id="stat-pct">0%</div><div class="sl">% Done</div></div>
+      </div>
+      <p class="dist-title">Answer Distribution</p>
+      <div class="dist-bars dist-colors" id="dist-bars">
+        <div class="dist-row db-0"><span class="dist-label">A</span><div class="dist-bar-wrap"><div class="dist-bar-fill" id="db0" style="width:0%"><span>0</span></div></div><span class="dist-count" id="dc0">0</span></div>
+        <div class="dist-row db-1"><span class="dist-label">B</span><div class="dist-bar-wrap"><div class="dist-bar-fill" id="db1" style="width:0%"><span>0</span></div></div><span class="dist-count" id="dc1">0</span></div>
+        <div class="dist-row db-2"><span class="dist-label">C</span><div class="dist-bar-wrap"><div class="dist-bar-fill" id="db2" style="width:0%"><span>0</span></div></div><span class="dist-count" id="dc2">0</span></div>
+        <div class="dist-row db-3"><span class="dist-label">D</span><div class="dist-bar-wrap"><div class="dist-bar-fill" id="db3" style="width:0%"><span>0</span></div></div><span class="dist-count" id="dc3">0</span></div>
+      </div>
+      <div id="reveal-section" style="display:none">
+        <p class="dist-title" style="margin-bottom:8px">✅ Correct Answer</p>
+        <div class="reveal-ans-host" id="reveal-ans-host"></div>
+        <p class="dist-title" style="margin-bottom:6px;margin-top:10px">💡 Explanation</p>
+        <div class="expl-host" id="expl-host"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Leaderboard -->
+  <div class="right">
+    <p class="panel-title" style="margin-bottom:10px">🏆 Live Leaderboard</p>
+    <div id="leaderboard"><p class="lb-empty">No scores yet</p></div>
+  </div>
+</div>
+
+<!-- FINAL VIEW (replaces everything) -->
+<div id="final-view" style="display:none;flex:1;overflow-y:auto;padding:24px">
+  <h2 style="text-align:center;color:var(--a);font-size:1.8rem;margin-bottom:24px">🏆 Final Results</h2>
+  <div class="podium" id="podium"></div>
+  <div class="final-list" id="final-list"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  🔧 STEP 1 — Same config as quiz-play.html
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const firebaseConfig = {
+  apiKey: "AIzaSyCNQwzMaSMpuNg99R9VjddpuOmpjmLsBVs",
+  authDomain: "tredence-quiz.firebaseapp.com",
+  databaseURL: "https://tredence-quiz-default-rtdb.firebaseio.com",
+  projectId: "tredence-quiz",
+  storageBucket: "tredence-quiz.firebasestorage.app",
+  messagingSenderId: "873297317646",
+  appId: "1:873297317646:web:b24df713c7644ce80d915f",
+  measurementId: "G-TTTDQ9D0TQ"
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  📚 QUESTIONS (same array as quiz-play.html)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const Q = [
+  {q:"What does a window function do that GROUP BY cannot?",opts:["Filters rows before aggregation","Adds a calculated column without collapsing rows","Creates a new table in the database","Replaces the WHERE clause"],ans:1,time:20,expl:"GROUP BY collapses multiple rows into one. A window function keeps all rows and adds a new column beside them. Your row count never changes."},
+  {q:"Which clause in a window function defines the groups it calculates within?",opts:["ORDER BY","GROUP BY","PARTITION BY","HAVING"],ans:2,time:20,expl:"PARTITION BY splits rows into windows. The function resets inside each partition — like GROUP BY but without collapsing rows."},
+  {q:"SELECT * FROM life WHERE happy = 1 — what does this return?",opts:["Your dream job","Work-life balance","0 rows","Syntax error"],ans:2,time:15,expl:"😂 Classic developer reality check. Always 0 rows in production. No exceptions."},
+  {q:"What does SELECT 57 / 250 return in SQL Server?",opts:["0.228","22.8","0","Error — cannot divide integers"],ans:2,time:20,expl:"Both are integers — SQL Server drops the decimal silently. Returns 0. Always write 57 * 1.0 / 250 to force decimal division."},
+  {q:"Rajiv writes: WHERE RANK() OVER(PARTITION BY region ORDER BY sales DESC) <= 3. What happens?",opts:["Returns top 3 per region","Returns all rows","Throws an error — window functions cannot appear in WHERE","Works only if PARTITION BY is removed"],ans:2,time:30,expl:"WHERE runs before SELECT in SQL's execution order. The rank column doesn't exist yet when WHERE tries to filter it."},
+  {q:"How many developers does it take to change a light bulb?",opts:["One","Depends on the sprint","It's in the backlog","None — that's a hardware problem"],ans:3,time:15,expl:"😂 Always someone else's problem. Not in scope for this team."},
+  {q:"Scores: A=100, B=90, C=90, D=80. Using RANK() — what rank does D get?",opts:["3","4","2","3.5"],ans:1,time:25,expl:"B and C tie at rank 2. RANK() skips rank 3 (gap) — D gets rank 4. Sequence: 1, 2, 2, 4."},
+  {q:"Same scores as above. Now using DENSE_RANK() — what rank does D get?",opts:["4","2","3","1"],ans:2,time:25,expl:"DENSE_RANK() never skips ranks. B and C both get 2, D gets 3. No gap. Sequence: 1, 2, 2, 3."},
+  {q:"How do you correctly filter rows where a window function result is <= 3?",opts:["Add HAVING rank <= 3","Compute rank inside a CTE, then use WHERE on the outer query","Use a nested WHERE inside the window function","Move the window function to ORDER BY"],ans:1,time:30,expl:"Once rank is inside a CTE, it's a plain integer column. The outer WHERE can filter plain integers normally."},
+  {q:"Your SQL query works perfectly on the first try. You:",opts:["Submit it confidently","Feel proud and move on","Show the team","Stare at it suspiciously for 10 minutes because something MUST be wrong"],ans:3,time:15,expl:"😂 Every developer knows this feeling. If it works first try, something is wrong somewhere. Always."},
+  {q:"LAG(order_count) OVER(PARTITION BY year ORDER BY month_seq) — what does January return?",opts:["0","The same month's value","NULL","A runtime error"],ans:2,time:20,expl:"No previous row exists before January in that year's window. LAG() returns NULL. This is correct and expected — January has no prior month."},
+  {q:"Best SQL JOIN type for an Indian wedding?",opts:["INNER JOIN — only mutual connections","LEFT JOIN — one side always dominates","FULL OUTER JOIN — everyone gets food","CROSS JOIN — every relative of every relative of every relative"],ans:3,time:15,expl:"😂 CROSS JOIN. Nobody knows who invited whom but every single combination shows up. Standard Indian wedding algorithm."},
+  {q:"In MoM analysis, you omit PARTITION BY order_year in LAG(). What goes wrong for January 2018?",opts:["Nothing — correctly returns NULL","January 2018 pulls December 2017 as its previous month","The query throws a runtime error","January 2018 automatically gets rank 1"],ans:1,time:30,expl:"Without PARTITION BY year, the window spans all years. Jan 2018 sees Dec 2017 as 'previous month'. Always partition by year for monthly comparisons."},
+  {q:"Why write NULLIF(prev_month, 0) in a Month-on-Month % formula?",opts:["To convert NULL to 0","To prevent divide-by-zero crashing the query","To round the result to 2 decimal places","To filter out months with no orders"],ans:1,time:20,expl:"If prev_month = 0, dividing causes a runtime crash. NULLIF(prev_month, 0) converts 0 to NULL — any number ÷ NULL = NULL (no crash)."},
+  {q:"ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW — for March, the frame includes:",opts:["Only March","February and March","January, February and March","All 12 months of the year"],ans:2,time:30,expl:"UNBOUNDED PRECEDING = first row of the partition (January). CURRENT ROW = March. Frame = Jan + Feb + Mar. That's your YTD running total."}
+];
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  🎮 HOST LOGIC
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+firebase.initializeApp(firebaseConfig);
+const db   = firebase.database();
+const ROOM = 'wf2026';
+
+let currentQ = -1;
+let timerIv   = null;
+let totalPlayers = 0;
+let ansListener  = null;
+
+// Show student URL
+document.getElementById('url-display').textContent =
+  window.location.href.replace('quiz-host.html','quiz-play.html');
+
+// ── Player list (live) ──
+db.ref(`${ROOM}/players`).on('value', snap => {
+  totalPlayers = snap.numChildren();
+  document.getElementById('p-total').textContent = `${totalPlayers} player${totalPlayers!==1?'s':''} joined`;
+  const list = document.getElementById('player-list');
+  list.innerHTML = '';
+  const rows = [];
+  snap.forEach(c => rows.push({id:c.key,...c.val()}));
+  rows.sort((a,b)=>(b.score||0)-(a.score||0));
+  if (!rows.length) { list.innerHTML='<p style="font-size:.78rem;color:var(--muted)">Waiting for players...</p>'; return; }
+  rows.forEach(p => {
+    const d = document.createElement('div'); d.className='prow';
+    d.innerHTML=`<div class="pdot"></div><span class="pname">${esc(p.name)}</span><span class="pscore">${p.score||0}</span>`;
+    list.appendChild(d);
+  });
+  updateLeaderboard(rows);
+});
+
+function updateLeaderboard(rows) {
+  const lb = document.getElementById('leaderboard');
+  if (!rows || !rows.length) { lb.innerHTML='<p class="lb-empty">No scores yet</p>'; return; }
+  const sorted = [...rows].sort((a,b)=>(b.score||0)-(a.score||0));
+  const medals = ['🥇','🥈','🥉'];
+  const classes = ['gold','silver','bronze'];
+  lb.innerHTML = sorted.map((p,i)=>`
+    <div class="lb-row ${classes[i]||''}">
+      <span class="lb-rank">${medals[i]||('#'+(i+1))}</span>
+      <span class="lb-name">${esc(p.name)}</span>
+      <span class="lb-score">${p.score||0}</span>
+      ${(p.streak||0)>=3?`<span class="lb-streak">🔥${p.streak}</span>`:''}
+    </div>`).join('');
+}
+
+// ── Game state listener (for self-sync) ──
+db.ref(`${ROOM}/state`).on('value', snap => {
+  const st = snap.val()||'lobby';
+  updateStateBadge(st);
+  const [mode, idx] = st.split('_');
+  if (mode==='q') { const n=parseInt(idx); if(n!==currentQ){currentQ=n;renderQuestion(n,false);} }
+  if (mode==='r') { const n=parseInt(idx); renderReveal(n); }
+  if (st==='done') renderFinal();
+});
+
+// ── Controls ──
+function startQuiz() {
+  db.ref(`${ROOM}/state`).set('q_0');
+  setBtn(false,true,false);
+}
+
+function revealAnswer() {
+  if (ansListener) { db.ref(`${ROOM}/ans/${currentQ}`).off('value',ansListener); ansListener=null; }
+  db.ref(`${ROOM}/state`).set(`r_${currentQ}`);
+  setBtn(false,false,true);
+}
+
+function nextStep() {
+  if (currentQ >= Q.length-1) {
+    db.ref(`${ROOM}/state`).set('done');
+    setBtn(false,false,false);
+  } else {
+    db.ref(`${ROOM}/state`).set(`q_${currentQ+1}`);
+    setBtn(false,true,false);
+  }
+}
+
+function resetAll() {
+  if (!confirm('Reset the quiz? This clears all player data and scores.')) return;
+  if (timerIv) clearInterval(timerIv);
+  db.ref(ROOM).remove();
+  db.ref(`${ROOM}/state`).set('lobby');
+  currentQ=-1;
+  document.getElementById('lobby-view').style.display='';
+  document.getElementById('question-view').style.display='none';
+  document.getElementById('final-view').style.display='none';
+  document.getElementById('main-area').style.display='';
+  setBtn(true,false,false);
+  updateStateBadge('lobby');
+}
+
+function setBtn(start,reveal,next) {
+  document.getElementById('btn-start').disabled  = !start;
+  document.getElementById('btn-reveal').disabled = !reveal;
+  document.getElementById('btn-next').disabled   = !next;
+}
+
+// ── Render question ──
+function renderQuestion(n, fromListener) {
+  if (timerIv) clearInterval(timerIv);
+  const q = Q[n];
+  document.getElementById('lobby-view').style.display='none';
+  document.getElementById('question-view').style.display='';
+  document.getElementById('reveal-section').style.display='none';
+  document.getElementById('qbadge').textContent=`Q${n+1} of ${Q.length}`;
+  document.getElementById('q-text-host').textContent=q.q;
+
+  const labels=['A','B','C','D'];
+  const colors=['#3b82f6','#a78bfa','#22c55e','#f59e0b'];
+  document.getElementById('opts-host').innerHTML = q.opts.map((o,i)=>
+    `<div class="opt-host" id="oh-${i}" style="border-left:3px solid ${colors[i]}">${labels[i]}. ${esc(o)}</div>`
+  ).join('');
+
+  // reset dist bars
+  for(let i=0;i<4;i++){
+    document.getElementById(`db${i}`).style.width='0%';
+    document.getElementById(`dc${i}`).textContent='0';
+    document.getElementById(`db${i}`).classList.remove('has-val');
+  }
+  document.getElementById('stat-ans').textContent='0';
+  document.getElementById('stat-left').textContent=totalPlayers;
+  document.getElementById('stat-pct').textContent='0%';
+
+  // timer
+  let rem = q.time;
+  const fill = document.getElementById('timer-fill-host');
+  const num  = document.getElementById('timer-num');
+  fill.style.width='100%'; fill.className='timer-fill-host';
+  num.className='timer-host'; num.textContent=rem+'s';
+  timerIv = setInterval(()=>{
+    rem--; fill.style.width=(rem/q.time*100)+'%'; num.textContent=rem+'s';
+    if(rem<=5){fill.classList.add('urgent');num.classList.add('urgent');}
+    if(rem<=0) clearInterval(timerIv);
+  },1000);
+
+  // listen to answers for this question
+  if(ansListener){db.ref(`${ROOM}/ans/${n-1}`).off('value',ansListener);ansListener=null;}
+  ansListener = db.ref(`${ROOM}/ans/${n}`).on('value', snap=>{
+    const counts=[0,0,0,0]; let total=0;
+    snap.forEach(c=>{const a=c.val();if(a.c>=0&&a.c<=3){counts[a.c]++;total++;}});
+    const max=Math.max(...counts,1);
+    for(let i=0;i<4;i++){
+      const pct=Math.round(counts[i]/max*100);
+      document.getElementById(`db${i}`).style.width=pct+'%';
+      document.getElementById(`db${i}`).querySelector('span').textContent=counts[i];
+      document.getElementById(`db${i}`).classList.toggle('has-val',counts[i]>0);
+      document.getElementById(`dc${i}`).textContent=counts[i];
+    }
+    const waiting=Math.max(0,totalPlayers-total);
+    document.getElementById('stat-ans').textContent=total;
+    document.getElementById('stat-left').textContent=waiting;
+    document.getElementById('stat-pct').textContent=totalPlayers?Math.round(total/totalPlayers*100)+'%':'0%';
+  });
+}
+
+// ── Render reveal ──
+function renderReveal(n) {
+  if(timerIv) clearInterval(timerIv);
+  const q=Q[n];
+  const labels=['A','B','C','D'];
+  // highlight correct option
+  for(let i=0;i<4;i++){
+    const el=document.getElementById(`oh-${i}`);
+    if(el&&i===q.ans) el.classList.add('correct-opt');
+  }
+  document.getElementById('reveal-ans-host').textContent=`${labels[q.ans]}. ${q.opts[q.ans]}`;
+  document.getElementById('expl-host').textContent=q.expl;
+  document.getElementById('reveal-section').style.display='';
+  document.getElementById('timer-num').textContent='—';
+  document.getElementById('timer-fill-host').style.width='0%';
+}
+
+// ── Final ──
+function renderFinal() {
+  if(timerIv) clearInterval(timerIv);
+  document.getElementById('main-area').style.display='none';
+  const fv=document.getElementById('final-view'); fv.style.display='block';
+  db.ref(`${ROOM}/players`).orderByChild('score').once('value', snap=>{
+    const rows=[];
+    snap.forEach(c=>rows.unshift({...c.val(),id:c.key}));
+    rows.sort((a,b)=>(b.score||0)-(a.score||0));
+    const medals=['🥇','🥈','🥉'];
+    const podColors=['p1','p2','p3'];
+    // Podium (top 3)
+    const top3=rows.slice(0,3);
+    const podOrder=[1,0,2]; // 2nd, 1st, 3rd
+    document.getElementById('podium').innerHTML=podOrder.filter(i=>top3[i]).map(i=>`
+      <div class="pod ${podColors[i]}">
+        <div class="trophy">${medals[i]}</div>
+        <div class="pod-name">${esc(top3[i].name)}</div>
+        <div class="pod-score">${top3[i].score||0} pts</div>
+        <div class="pod-bar">${i+1}</div>
+      </div>`).join('');
+    // Full list
+    document.getElementById('final-list').innerHTML=rows.map((p,i)=>`
+      <div class="final-row">
+        <span class="fr-rank">${medals[i]||('#'+(i+1))}</span>
+        <span class="fr-name">${esc(p.name)}</span>
+        <span class="fr-score">${p.score||0} pts</span>
+      </div>`).join('');
+  });
+}
+
+function updateStateBadge(st) {
+  const el=document.getElementById('state-badge');
+  if(st==='lobby') el.textContent='Lobby';
+  else if(st==='done') el.textContent='Finished';
+  else if(st.startsWith('q_')) el.textContent=`Question ${parseInt(st.split('_')[1])+1}`;
+  else if(st.startsWith('r_')) el.textContent=`Reveal ${parseInt(st.split('_')[1])+1}`;
+}
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>

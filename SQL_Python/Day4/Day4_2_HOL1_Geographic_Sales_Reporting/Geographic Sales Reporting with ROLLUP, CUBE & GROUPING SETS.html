@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 14 – Geographic Sales Reporting with ROLLUP, CUBE &amp; GROUPING SETS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; height: 100vh; overflow: hidden; }
+  .deck { width: 100%; height: 100vh; position: relative; }
+  .slide { display: none; position: absolute; inset: 0; padding: 40px 56px; flex-direction: column; justify-content: flex-start; gap: 14px; }
+  .slide.active { display: flex; }
+
+  h1 { font-size: 1.95rem; color: #f59e0b; line-height: 1.2; }
+  h2 { font-size: 1.45rem; color: #f59e0b; margin-bottom: 5px; }
+  h3 { font-size: 1rem; color: #c9d1d9; margin-bottom: 4px; }
+  p, li { font-size: 0.95rem; color: #c9d1d9; line-height: 1.6; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 5px; }
+
+  .subtitle { font-size: 1rem; color: #8b949e; margin-top: 6px; }
+  .module-badge { font-size: 0.82rem; color: #8b949e; margin-bottom: 6px; }
+
+  pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 18px; font-family: 'Cascadia Code','Consolas',monospace; font-size: 0.86rem; line-height: 1.7; overflow-x: auto; white-space: pre; }
+  .kw  { color: #ff7b72; font-weight: bold; }
+  .fn  { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm  { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; }
+  .card h3 { color: #f59e0b; margin-bottom: 8px; }
+
+  .hl  { background: #f59e0b10; border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 10px 14px; }
+  .hl2 { background: #38bdf810; border-left: 3px solid #38bdf8; border-radius: 0 6px 6px 0; padding: 10px 14px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+  th { background: #161b22; color: #f59e0b; padding: 7px 10px; text-align: left; border-bottom: 2px solid #30363d; }
+  td { padding: 7px 10px; border-bottom: 1px solid #21262d; color: #c9d1d9; }
+  tr:hover td { background: #161b2240; }
+
+  .quiz-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 13px 16px; }
+  .quiz-box p { font-weight: 600; color: #e6edf3; font-size: 0.95rem; }
+  .quiz-answer { display: none; margin-top: 9px; padding: 10px 13px; background: #0a2218; border-left: 3px solid #22c55e; border-radius: 0 6px 6px 0; }
+  .quiz-answer p { color: #86efac; font-weight: 400; font-size: 0.9rem; }
+  .reveal-btn { margin-top: 8px; background: #f59e0b15; color: #f59e0b; border: 1px solid #f59e0b40; border-radius: 6px; padding: 5px 13px; cursor: pointer; font-size: 0.82rem; }
+  .reveal-btn:hover { background: #f59e0b25; }
+
+  .phase-badge { display: inline-block; background: #f59e0b; color: #0d1117; border-radius: 4px; padding: 1px 8px; font-size: 0.78rem; font-weight: bold; margin-right: 6px; }
+  .null-val { color: #f59e0b; font-style: italic; }
+
+  .nav { position: fixed; bottom: 22px; right: 30px; display: flex; gap: 8px; align-items: center; }
+  .nav button { background: #161b22; border: 1px solid #30363d; color: #e6edf3; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
+  .nav button:hover { background: #21262d; }
+  .counter { font-size: 0.82rem; color: #8b949e; min-width: 48px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <div class="module-badge">Day 4 · Module 14</div>
+    <h1>Geographic Sales Reporting<br>with ROLLUP, CUBE &amp; GROUPING SETS</h1>
+    <p class="subtitle">GlobalMart expansion strategy — hierarchical geographic analysis</p>
+  </div>
+  <div class="two-col" style="margin-top:4px;">
+    <div class="card">
+      <h3>Business Context</h3>
+      <p>GlobalMart leadership is planning their <strong>annual expansion strategy</strong>. They need comprehensive sales reports across regions, states, and cities to identify where to invest in new fulfillment centers and marketing campaigns.</p>
+      <p style="margin-top:8px;"><strong>Your role:</strong> Data Analyst intern on the Sales Analytics team.</p>
+    </div>
+    <div class="card">
+      <h3>Three Tasks</h3>
+      <ul>
+        <li><strong style="color:#f59e0b;">Task 1:</strong> Hierarchical report — VP of Sales needs region → state → city drill-down using <strong>ROLLUP</strong></li>
+        <li><strong style="color:#f59e0b;">Task 2:</strong> All-dimension report — Chief Strategy Officer wants every geographic combination using <strong>CUBE</strong></li>
+        <li><strong style="color:#f59e0b;">Task 3:</strong> Custom report — Finance team wants exactly 4 specific grouping levels using <strong>GROUPING SETS</strong></li>
+      </ul>
+    </div>
+  </div>
+  <div class="hl" style="margin-top:4px;">
+    <p><strong style="color:#f59e0b;">Tables used:</strong> <code class="tbl">ex_transactions</code> → <code class="tbl">ex_orders</code> → <code class="tbl">ex_customers</code> → <code class="tbl">ex_locations</code> &nbsp;|&nbsp; Filter: <code>order_status = 'delivered'</code></p>
+  </div>
+</div>
+
+<!-- SLIDE 2: DATABASE SETUP -->
+<div class="slide">
+  <h2>Database Setup: The 4-Table Join</h2>
+  <p style="margin-bottom:10px;">All three tasks need geographic data. Build the foundation join first:</p>
+  <pre><span class="cm">-- Phase 1: Verify the 4-table join</span>
+<span class="kw">SELECT</span>
+    <span class="col">l</span>.<span class="col">region</span>,
+    <span class="col">l</span>.<span class="col">state</span>,
+    <span class="col">l</span>.<span class="col">city</span>,
+    <span class="col">t</span>.<span class="col">sales_amount</span>
+<span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="col">t</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="col">o</span>     <span class="kw">ON</span> <span class="col">t</span>.<span class="col">order_id</span>   = <span class="col">o</span>.<span class="col">order_id</span>   <span class="cm">-- transactions → orders</span>
+                       <span class="kw">AND</span> <span class="col">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>  <span class="cm">-- filter early in JOIN</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="col">c</span> <span class="kw">ON</span> <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span> <span class="cm">-- orders → customers</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_locations</span> <span class="col">l</span> <span class="kw">ON</span> <span class="col">c</span>.<span class="col">postal_code</span> = <span class="col">l</span>.<span class="col">postal_code</span> <span class="cm">-- customers → locations (has city)</span>
+<span class="kw">ORDER BY</span> <span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>, <span class="col">l</span>.<span class="col">city</span>;</pre>
+  <div class="two-col" style="margin-top:4px;">
+    <table>
+      <tr><th>Table</th><th>Key Column(s)</th><th>Purpose</th></tr>
+      <tr><td><code class="tbl">ex_transactions</code></td><td>order_id, sales_amount</td><td>Revenue source</td></tr>
+      <tr><td><code class="tbl">ex_orders</code></td><td>order_id, customer_id, order_status</td><td>Link + filter delivered</td></tr>
+      <tr><td><code class="tbl">ex_customers</code></td><td>customer_id, postal_code</td><td>Bridge to location</td></tr>
+      <tr><td><code class="tbl">ex_locations</code></td><td>postal_code, region, state, city</td><td>Geographic hierarchy</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- SLIDE 3: TASK 1 - ROLLUP PROBLEM -->
+<div class="slide">
+  <h2>Task 1: Hierarchical Sales Report with ROLLUP</h2>
+  <div class="hl" style="margin-bottom:12px;">
+    <p><strong style="color:#f59e0b;">Business ask:</strong> The VP of Sales needs a report that rolls up from city level → state level → region level → grand total. Delivered orders only.</p>
+  </div>
+  <div class="two-col">
+    <div>
+      <p style="margin-bottom:8px;font-weight:600;">Expected output format:</p>
+      <table>
+        <tr><th>region</th><th>state</th><th>city</th><th>total_sales</th></tr>
+        <tr><td>Central</td><td>Illinois</td><td>Chicago</td><td>125,000</td></tr>
+        <tr><td>Central</td><td>Illinois</td><td class="null-val">NULL</td><td>250,000 ← state total</td></tr>
+        <tr><td>Central</td><td class="null-val">NULL</td><td class="null-val">NULL</td><td>500,000 ← region total</td></tr>
+        <tr><td class="null-val">NULL</td><td class="null-val">NULL</td><td class="null-val">NULL</td><td>2,500,000 ← grand total</td></tr>
+      </table>
+      <p style="font-size:0.82rem;color:#8b949e;margin-top:6px;">NULL = rolled up / "all values in this column"</p>
+    </div>
+    <div>
+      <p style="margin-bottom:8px;font-weight:600;">Build approach (4 phases):</p>
+      <ul style="font-size:0.92rem;">
+        <li><span class="phase-badge">1</span> Join all 4 tables, verify data</li>
+        <li><span class="phase-badge">2</span> Add filter + select needed columns</li>
+        <li><span class="phase-badge">3</span> Apply ROLLUP and SUM aggregation</li>
+        <li><span class="phase-badge">4</span> Add ROUND() and ORDER BY</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: TASK 1 - ROLLUP SOLUTION -->
+<div class="slide">
+  <h2>Task 1 Solution — ROLLUP</h2>
+  <pre><span class="cm">-- Task 1: Hierarchical sales report — city → state → region → grand total</span>
+<span class="kw">SELECT</span>
+    <span class="col">l</span>.<span class="col">region</span>,
+    <span class="col">l</span>.<span class="col">state</span>,
+    <span class="col">l</span>.<span class="col">city</span>,
+    <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="col">t</span>.<span class="col">sales_amount</span>), 2) <span class="kw">AS</span> <span class="col">total_sales</span>
+<span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="col">t</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="col">o</span>     <span class="kw">ON</span> <span class="col">t</span>.<span class="col">order_id</span>   = <span class="col">o</span>.<span class="col">order_id</span>   <span class="kw">AND</span> <span class="col">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="col">c</span> <span class="kw">ON</span> <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_locations</span> <span class="col">l</span> <span class="kw">ON</span> <span class="col">c</span>.<span class="col">postal_code</span> = <span class="col">l</span>.<span class="col">postal_code</span>
+<span class="kw">GROUP BY ROLLUP</span>(<span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>, <span class="col">l</span>.<span class="col">city</span>)  <span class="cm">-- 4 levels: detail → state → region → grand</span>
+<span class="kw">ORDER BY</span> <span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>, <span class="col">l</span>.<span class="col">city</span>;</pre>
+  <div class="two-col" style="margin-top:4px;">
+    <div class="hl">
+      <strong style="color:#f59e0b;">Common mistakes:</strong>
+      <ul style="margin-top:6px;font-size:0.9rem;">
+        <li>Forgetting <code>order_status = 'delivered'</code> → includes cancelled orders</li>
+        <li>Wrong column order in ROLLUP → wrong hierarchy</li>
+        <li>Missing ROUND() → too many decimal places</li>
+        <li>Using <code>locations_01</code> instead of <code>ex_locations</code> → no city column</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: TASK 2 - CUBE PROBLEM -->
+<div class="slide">
+  <h2>Task 2: Comprehensive Analysis with CUBE</h2>
+  <div class="hl" style="margin-bottom:12px;">
+    <p><strong style="color:#f59e0b;">Business ask:</strong> The Chief Strategy Officer wants to explore ALL possible combinations — not just the hierarchy. They want sales by city across all regions, by state across all regions, etc. (exploratory analysis).</p>
+  </div>
+  <div class="two-col">
+    <div>
+      <p style="margin-bottom:8px;font-weight:600;">What CUBE adds over ROLLUP:</p>
+      <p>For 3 columns (region, state, city): CUBE produces <strong>2³ = 8 groupings</strong></p>
+      <table style="margin-top:8px;">
+        <tr><th>Grouping</th><th>In ROLLUP?</th><th>In CUBE?</th></tr>
+        <tr><td>(region, state, city)</td><td style="color:#22c55e;">✓</td><td style="color:#22c55e;">✓</td></tr>
+        <tr><td>(region, state)</td><td style="color:#22c55e;">✓</td><td style="color:#22c55e;">✓</td></tr>
+        <tr><td>(region)</td><td style="color:#22c55e;">✓</td><td style="color:#22c55e;">✓</td></tr>
+        <tr><td>()</td><td style="color:#22c55e;">✓</td><td style="color:#22c55e;">✓</td></tr>
+        <tr><td>(region, city)</td><td style="color:#f87171;">✗</td><td style="color:#22c55e;">✓</td></tr>
+        <tr><td>(state, city)</td><td style="color:#f87171;">✗</td><td style="color:#22c55e;">✓</td></tr>
+        <tr><td>(state)</td><td style="color:#f87171;">✗</td><td style="color:#22c55e;">✓</td></tr>
+        <tr><td>(city)</td><td style="color:#f87171;">✗</td><td style="color:#22c55e;">✓</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="hl2" style="margin-bottom:10px;">
+        <strong style="color:#38bdf8;">When does (state) without (region) matter?</strong>
+        <p style="margin-top:6px;font-size:0.9rem;">Question: "How much does Illinois sell nationally, across ALL regions?" — This is the (state) grouping with region=NULL. ROLLUP can't answer this. CUBE can.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: TASK 2 - CUBE SOLUTION -->
+<div class="slide">
+  <h2>Task 2 Solution — CUBE</h2>
+  <pre><span class="cm">-- Task 2: All possible geographic combinations — 2³ = 8 groupings</span>
+<span class="kw">SELECT</span>
+    <span class="col">l</span>.<span class="col">region</span>,
+    <span class="col">l</span>.<span class="col">state</span>,
+    <span class="col">l</span>.<span class="col">city</span>,
+    <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="col">t</span>.<span class="col">sales_amount</span>), 2) <span class="kw">AS</span> <span class="col">total_sales</span>
+<span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="col">t</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="col">o</span>     <span class="kw">ON</span> <span class="col">t</span>.<span class="col">order_id</span>   = <span class="col">o</span>.<span class="col">order_id</span>   <span class="kw">AND</span> <span class="col">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="col">c</span> <span class="kw">ON</span> <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_locations</span> <span class="col">l</span> <span class="kw">ON</span> <span class="col">c</span>.<span class="col">postal_code</span> = <span class="col">l</span>.<span class="col">postal_code</span>
+<span class="kw">GROUP BY CUBE</span>(<span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>, <span class="col">l</span>.<span class="col">city</span>)    <span class="cm">-- 8 groupings: every subset</span>
+<span class="kw">ORDER BY</span> <span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>, <span class="col">l</span>.<span class="col">city</span>;</pre>
+  <div class="two-col" style="margin-top:4px;">
+    <div class="hl">
+      <strong style="color:#f59e0b;">ROLLUP vs CUBE output comparison:</strong>
+      <ul style="margin-top:6px;font-size:0.9rem;">
+        <li>ROLLUP: rows where region set, state is NULL, city is NULL (region totals only)</li>
+        <li>CUBE: also rows where region=NULL, state set (state national totals)</li>
+        <li>CUBE: also rows where region=NULL, city set (city national totals)</li>
+        <li>CUBE: also rows where region set, state=NULL, city set (unusual combos)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: TASK 3 - GROUPING SETS PROBLEM -->
+<div class="slide">
+  <h2>Task 3: Custom Report with GROUPING SETS</h2>
+  <div class="hl" style="margin-bottom:12px;">
+    <p><strong style="color:#f59e0b;">Business ask:</strong> Finance team has a specific requirement for their budget allocation model. They need <strong>exactly 4 grouping levels</strong> — no more, no less. ROLLUP gives 4 but in fixed hierarchy. GROUPING SETS gives control.</p>
+  </div>
+  <div class="two-col">
+    <div>
+      <p style="margin-bottom:8px;font-weight:600;">Finance team requires exactly these 4 groupings:</p>
+      <table>
+        <tr><th>#</th><th>Grouping</th><th>Purpose</th></tr>
+        <tr><td>1</td><td>(region, state, city)</td><td>City-level sales detail</td></tr>
+        <tr><td>2</td><td>(region, state)</td><td>State subtotals within region</td></tr>
+        <tr><td>3</td><td>(region)</td><td>Region subtotals</td></tr>
+        <tr><td>4</td><td>()</td><td>Grand total</td></tr>
+      </table>
+      <div class="hl2" style="margin-top:10px;">
+        <p style="font-size:0.9rem;"><strong style="color:#38bdf8;">Wait — isn't this just ROLLUP?</strong> Yes! For <em>this specific</em> case. But GROUPING SETS lets Finance exclude any level or add non-hierarchical ones without rewriting the entire query structure.</p>
+      </div>
+    </div>
+    <div>
+      <p style="margin-bottom:8px;font-weight:600;">GROUPING SETS syntax pattern:</p>
+      <pre><span class="kw">GROUP BY GROUPING SETS</span> (
+    (<span class="col">region</span>, <span class="col">state</span>, <span class="col">city</span>),  <span class="cm">-- grouping 1</span>
+    (<span class="col">region</span>, <span class="col">state</span>),         <span class="cm">-- grouping 2</span>
+    (<span class="col">region</span>),                <span class="cm">-- grouping 3</span>
+    ()                        <span class="cm">-- grouping 4: grand total</span>
+)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: TASK 3 - GROUPING SETS SOLUTION -->
+<div class="slide">
+  <h2>Task 3 Solution — GROUPING SETS</h2>
+  <pre><span class="cm">-- Task 3: Finance team's exact 4-level custom report</span>
+<span class="kw">SELECT</span>
+    <span class="col">l</span>.<span class="col">region</span>,
+    <span class="col">l</span>.<span class="col">state</span>,
+    <span class="col">l</span>.<span class="col">city</span>,
+    <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="col">t</span>.<span class="col">sales_amount</span>), 2) <span class="kw">AS</span> <span class="col">total_sales</span>
+<span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="col">t</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="col">o</span>     <span class="kw">ON</span> <span class="col">t</span>.<span class="col">order_id</span>   = <span class="col">o</span>.<span class="col">order_id</span>   <span class="kw">AND</span> <span class="col">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="col">c</span> <span class="kw">ON</span> <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_locations</span> <span class="col">l</span> <span class="kw">ON</span> <span class="col">c</span>.<span class="col">postal_code</span> = <span class="col">l</span>.<span class="col">postal_code</span>
+<span class="kw">GROUP BY GROUPING SETS</span> (
+    (<span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>, <span class="col">l</span>.<span class="col">city</span>),  <span class="cm">-- city detail</span>
+    (<span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>),           <span class="cm">-- state subtotal within region</span>
+    (<span class="col">l</span>.<span class="col">region</span>),                     <span class="cm">-- region subtotal</span>
+    ()                               <span class="cm">-- grand total</span>
+)
+<span class="kw">ORDER BY</span> <span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>, <span class="col">l</span>.<span class="col">city</span>;</pre>
+  <div class="two-col" style="margin-top:4px;">
+    <div class="hl">
+      <strong style="color:#f59e0b;">Common mistakes:</strong>
+      <ul style="margin-top:6px;font-size:0.9rem;">
+        <li>Missing <code>()</code> → no grand total row</li>
+        <li>Wrong parentheses nesting → syntax error</li>
+        <li>Adding extra groupings the Finance team didn't ask for</li>
+        <li>Forgetting commas between grouping sets</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: COMPARISON + QUIZ -->
+<div class="slide">
+  <h2>Summary: When to Use Which Operator</h2>
+  <table style="margin-bottom:14px;">
+    <tr><th>Feature</th><th>Task 1 (ROLLUP)</th><th>Task 2 (CUBE)</th><th>Task 3 (GROUPING SETS)</th></tr>
+    <tr><td>Groupings produced</td><td>n+1 = 4 (for 3 cols)</td><td>2³ = 8 (for 3 cols)</td><td>Exactly 4 (as specified)</td></tr>
+    <tr><td>Key syntax</td><td>ROLLUP(a, b, c)</td><td>CUBE(a, b, c)</td><td>GROUPING SETS ((a,b,c),(a,b),(a),())</td></tr>
+    <tr><td>Use case</td><td>Hierarchical reports</td><td>Exploratory analysis</td><td>Custom fixed requirements</td></tr>
+    <tr><td>Performance</td><td>Moderate</td><td>Most expensive</td><td>Most efficient</td></tr>
+    <tr><td>All combos?</td><td>No — hierarchy only</td><td>Yes</td><td>No — only what you define</td></tr>
+  </table>
+  <div class="quiz-box">
+    <p>The CFO asks: "Show me total sales for (region, state) combinations and (state) alone in one query — but NOT by city or a grand total." Which operator do you use?</p>
+    <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none';">Reveal Answer</button>
+    <div class="quiz-answer">
+      <p><strong>GROUPING SETS</strong> — because you need a non-hierarchical, custom combination. ROLLUP won't produce (state) without (region). CUBE produces too many combos including ones they don't want.<br><br>
+      <code>GROUP BY GROUPING SETS ((l.region, l.state), (l.state))</code></p>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .deck -->
+<div class="nav">
+  <button onclick="changeSlide(-1)">&#8592;</button>
+  <span class="counter" id="counter">1 / 9</span>
+  <button onclick="changeSlide(1)">&#8594;</button>
+</div>
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  function changeSlide(dir) {
+    slides[current].classList.remove('active');
+    current = (current + dir + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

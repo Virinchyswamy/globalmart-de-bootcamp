@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 7 – Unlocking Seasonal Trends with Timestamps</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;--orange:#fb923c}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
+.nav-title{font-size:12px;color:var(--muted);font-weight:500}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nav-btn:hover{background:var(--a);color:#fff;border-color:var(--a)}
+.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
+.deck{padding-top:52px;height:100vh}
+.slide{display:none;height:calc(100vh - 52px);padding:26px 50px;flex-direction:column;justify-content:flex-start;gap:12px;overflow:hidden;animation:fadein .25s ease}
+.slide.active{display:flex}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:2rem;font-weight:900;color:var(--a);line-height:1.1}
+h2{font-size:1.45rem;font-weight:800;color:var(--a);line-height:1.2}
+h3{font-size:.93rem;font-weight:700;color:var(--a2);margin-bottom:5px}
+p,li{font-size:.86rem;color:#c9d1d9;line-height:1.7}
+ul{padding-left:18px}li{margin-bottom:4px}
+.sub{font-size:.86rem;color:var(--muted);margin-top:4px}
+.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 15px}
+.hl{background:rgba(59,130,246,.06);border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:9px 13px}
+.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
+.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
+.hl.yl{background:rgba(245,158,11,.06);border-color:var(--yellow)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'JetBrains Mono',monospace;font-size:.77rem;line-height:1.82;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.79rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
+.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.nm{color:#ffa657}.var{color:#79c0ff}
+table{width:100%;border-collapse:collapse;font-size:.81rem}
+th{background:rgba(59,130,246,.12);color:var(--a2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;letter-spacing:.5px}
+td{padding:6px 10px;border-bottom:1px solid var(--border);color:#c9d1d9}
+tr:hover td{background:rgba(255,255,255,.02)}
+.ok{color:var(--green);font-weight:600}
+.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:11px 15px}
+.quiz p{font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:9px}
+.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:5px 15px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.77rem;font-weight:700}
+.ans{display:none;margin-top:9px;padding:9px 12px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.82rem;color:#c9d1d9;line-height:1.7}
+.ans code{font-size:.76rem}
+.badge-row{display:flex;gap:7px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:3px 11px;font-size:.74rem;font-weight:600;color:var(--muted)}
+.season-chip{border-radius:8px;padding:2px 9px;font-size:.76rem;font-weight:700;display:inline-block}
+.spring{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--green)}
+.summer{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--yellow)}
+.autumn{background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.3);color:var(--orange)}
+.winter{background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3);color:var(--a2)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <span class="nav-badge">Day 7 · Module 3</span>
+    <span class="nav-title">Unlocking Seasonal Trends with Timestamps</span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" onclick="go(-1)">← Prev</button>
+    <span class="nav-counter" id="ctr">1 / 9</span>
+    <button class="nav-btn" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE + OVERVIEW -->
+<div class="slide active">
+  <div>
+    <div class="tag">Day 7 · Module 3 · Timestamps + Pivot + Seasonal Analysis</div>
+    <h1>Unlocking Seasonal Trends<br>with Timestamps</h1>
+    <p class="sub">Use the .dt accessor to extract date components, map to seasons, pivot/unpivot for analysis, and rank within groups</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>🎯 The Goal</h3>
+      <p>GlobalMart wants to understand <strong>revenue by product category across seasons</strong> — which category dominates in Summer? Which season is best for Technology sales?</p>
+      <p style="margin-top:8px">The pipeline:</p>
+      <ol style="padding-left:18px;margin-top:6px">
+        <li>Join orders → transactions → products</li>
+        <li>Extract month + season from order date</li>
+        <li>Compute monthly revenue per category</li>
+        <li>Pivot (long → wide) for cross-category view</li>
+        <li>Melt (wide → long) for ranking and sorting</li>
+        <li>Rank categories within each season</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>📦 Datasets</h3>
+      <table>
+        <tr><th>Table</th><th>Key columns</th></tr>
+        <tr><td style="font-size:.78rem">orders</td><td style="font-size:.78rem">order_id, order_purchase_date</td></tr>
+        <tr><td style="font-size:.78rem">transactions</td><td style="font-size:.78rem">Order_ID, Product_ID, Sales_Amount</td></tr>
+        <tr><td style="font-size:.78rem">products</td><td style="font-size:.78rem">product_id, category</td></tr>
+      </table>
+      <div class="badge-row" style="margin-top:8px">
+        <div class="badge">.dt accessor</div>
+        <div class="badge">season_map dict</div>
+        <div class="badge">pivot_table</div>
+        <div class="badge">melt</div>
+        <div class="badge">groupby rank</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: SQL MENTAL MODEL (NEW) -->
+<div class="slide">
+  <h2>SQL Mental Model — Visualise the Pipeline Before Writing Python</h2>
+  <p class="sub" style="margin-bottom:10px">Every Python step in this module has a direct SQL equivalent. Understand the SQL first — Python is just a different syntax for the same idea.</p>
+  <div class="two">
+    <pre style="font-size:.72rem;line-height:1.78"><span class="cm">-- Step 1: JOIN the three tables</span>
+<span class="kw">SELECT</span> o.order_id, o.order_purchase_date,
+       t.Sales_Amount, p.category
+<span class="kw">FROM</span>   orders o
+<span class="kw">LEFT JOIN</span> transactions t <span class="kw">ON</span> o.order_id = t.Order_ID
+<span class="kw">LEFT JOIN</span> products     p <span class="kw">ON</span> t.Product_ID = p.product_id;
+
+<span class="cm">-- Step 2: Extract month number + assign season</span>
+<span class="kw">SELECT</span> *,
+  <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> order_purchase_date) <span class="kw">AS</span> month_num,
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> order_purchase_date) <span class="kw">IN</span> (<span class="nm">12</span>,<span class="nm">1</span>,<span class="nm">2</span>)
+         <span class="kw">THEN</span> <span class="st">'Winter'</span>
+    <span class="kw">WHEN</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> order_purchase_date) <span class="kw">IN</span> (<span class="nm">3</span>,<span class="nm">4</span>,<span class="nm">5</span>)
+         <span class="kw">THEN</span> <span class="st">'Spring'</span>
+    <span class="kw">WHEN</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> order_purchase_date) <span class="kw">IN</span> (<span class="nm">6</span>,<span class="nm">7</span>,<span class="nm">8</span>)
+         <span class="kw">THEN</span> <span class="st">'Summer'</span>
+    <span class="kw">ELSE</span> <span class="st">'Autumn'</span>
+  <span class="kw">END</span> <span class="kw">AS</span> season
+<span class="kw">FROM</span> joined;
+
+<span class="cm">-- Step 3: Aggregate monthly revenue</span>
+<span class="kw">SELECT</span> month_num, season, category,
+       <span class="fn">SUM</span>(Sales_Amount) <span class="kw">AS</span> revenue
+<span class="kw">FROM</span>   enriched
+<span class="kw">GROUP BY</span> month_num, season, category;</pre>
+    <pre style="font-size:.72rem;line-height:1.78"><span class="cm">-- Step 4: Pivot — SQL needs CASE per category (verbose!)</span>
+<span class="kw">SELECT</span> month_num, season,
+  <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> category=<span class="st">'Furniture'</span>
+       <span class="kw">THEN</span> revenue <span class="kw">ELSE</span> <span class="nm">0</span> <span class="kw">END</span>) <span class="kw">AS</span> Furniture,
+  <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> category=<span class="st">'Technology'</span>
+       <span class="kw">THEN</span> revenue <span class="kw">ELSE</span> <span class="nm">0</span> <span class="kw">END</span>) <span class="kw">AS</span> Technology,
+  <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> category=<span class="st">'Office Supplies'</span>
+       <span class="kw">THEN</span> revenue <span class="kw">ELSE</span> <span class="nm">0</span> <span class="kw">END</span>) <span class="kw">AS</span> OfficeSupplies
+<span class="kw">FROM</span> monthly <span class="kw">GROUP BY</span> month_num, season;
+<span class="cm">-- Python: pivot_table(columns='category') — one line!</span>
+
+<span class="cm">-- Step 5: Melt = SQL UNION ALL (very verbose!)</span>
+<span class="kw">SELECT</span> month_num, season, <span class="st">'Furniture'</span> <span class="kw">AS</span> category,
+       Furniture <span class="kw">AS</span> revenue <span class="kw">FROM</span> wide
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> month_num, season, <span class="st">'Technology'</span>, Technology <span class="kw">FROM</span> wide
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> month_num, season, <span class="st">'Office Supplies'</span>, OfficeSupplies <span class="kw">FROM</span> wide;
+<span class="cm">-- Python: .melt() does this in one line!</span>
+
+<span class="cm">-- Step 6: Rank within season</span>
+<span class="kw">SELECT</span> season, category,
+       <span class="fn">SUM</span>(revenue) <span class="kw">AS</span> seasonal_revenue,
+       <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (
+         <span class="kw">PARTITION BY</span> season
+         <span class="kw">ORDER BY</span> <span class="fn">SUM</span>(revenue) <span class="kw">DESC</span>
+       ) <span class="kw">AS</span> category_rank
+<span class="kw">FROM</span> melted <span class="kw">GROUP BY</span> season, category;
+<span class="cm">-- Python: groupby('season').rank(method='dense', ascending=False)</span></pre>
+  </div>
+</div>
+
+<!-- SLIDE 3: LOAD + JOIN CHAIN -->
+<div class="slide">
+  <h2>Step 1 — Load Data and Join the Three Tables</h2>
+  <p class="sub" style="margin-bottom:10px">Parse the date column at load time using <code>parse_dates</code>, then chain the three tables: orders → transactions → products.</p>
+  <div class="two">
+    <pre><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
+
+<span class="cm"># parse_dates converts the column to datetime at load time</span>
+<span class="var">orders</span> = pd.<span class="fn">read_csv</span>(
+    <span class="st">"exorders.csv"</span>,
+    parse_dates=[<span class="st">"order_purchase_date"</span>]
+)
+<span class="var">transactions</span> = pd.<span class="fn">read_csv</span>(<span class="st">"extransactions.csv"</span>)
+<span class="var">products</span>     = pd.<span class="fn">read_csv</span>(<span class="st">"exproducts.csv"</span>)
+
+<span class="cm"># ─── Join chain ──────────────────────────────────────────
+# NOTE: column names are case-sensitive across tables
+# orders.order_id ≠ transactions.Order_ID — use left_on/right_on</span>
+
+<span class="var">orders_txn</span> = <span class="var">orders</span>.<span class="fn">merge</span>(
+    <span class="var">transactions</span>,
+    <span class="var">left_on</span>=<span class="st">'order_id'</span>, <span class="var">right_on</span>=<span class="st">'Order_ID'</span>,
+    <span class="var">how</span>=<span class="st">'left'</span>
+)
+
+<span class="var">df</span> = <span class="var">orders_txn</span>.<span class="fn">merge</span>(
+    <span class="var">products</span>,
+    <span class="var">left_on</span>=<span class="st">'Product_ID'</span>, <span class="var">right_on</span>=<span class="st">'product_id'</span>,
+    <span class="var">how</span>=<span class="st">'left'</span>
+)
+<span class="cm"># df now has: order_id, order_purchase_date (datetime),
+#             Sales_Amount, category</span></pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="hl yl">
+        <h3 style="color:var(--yellow);font-size:.84rem;margin-bottom:6px">parse_dates at load time — why?</h3>
+        <p style="font-size:.83rem">Without <code>parse_dates</code>, the date column loads as plain strings — the <code>.dt</code> accessor won't work. Passing <code>parse_dates=["col_name"]</code> tells pandas to automatically parse that column as datetime during the read — saving a separate conversion step.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Join logic diagram</h3>
+        <pre style="font-size:.75rem;background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2)">orders.order_id
+    ↕ (left_on / right_on — case differs)
+transactions.Order_ID ←→ .Product_ID
+                              ↕
+                    products.product_id → .category</pre>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how do you JOIN these 3 tables when column names differ in case?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL:</span><br>
+          <code>SELECT * FROM orders o<br>
+          LEFT JOIN transactions t ON o.order_id = t.Order_ID<br>
+          LEFT JOIN products p ON t.Product_ID = p.product_id;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python:</span> When column names differ in casing, use <code>left_on='order_id', right_on='Order_ID'</code> — same concept as SQL's <code>ON o.order_id = t.Order_ID</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: .dt ACCESSOR + SEASON MAP -->
+<div class="slide">
+  <h2>Step 2 — Extract Date Parts and Map to Seasons</h2>
+  <p class="sub" style="margin-bottom:10px">The <code>.dt</code> accessor gives access to date components from a datetime column. A dictionary maps month numbers to season names.</p>
+  <div class="two">
+    <pre><span class="cm"># .dt accessor — extract date components</span>
+<span class="var">df</span>[<span class="st">"month_num"</span>]  = <span class="var">df</span>[<span class="st">"order_purchase_date"</span>].<span class="fn">dt</span>.month
+<span class="cm"># → integers 1–12  (January=1, December=12)</span>
+
+<span class="var">df</span>[<span class="st">"month_name"</span>] = <span class="var">df</span>[<span class="st">"order_purchase_date"</span>].<span class="fn">dt</span>.<span class="fn">month_name</span>()
+<span class="cm"># → "January", "February", ..., "December"
+# Note: month is a property, month_name() is a method with ()</span>
+
+<span class="cm"># Season mapping dictionary</span>
+<span class="var">season_map</span> = {
+    <span class="nm">12</span>: <span class="st">"Winter"</span>,  <span class="nm">1</span>: <span class="st">"Winter"</span>,  <span class="nm">2</span>: <span class="st">"Winter"</span>,
+     <span class="nm">3</span>: <span class="st">"Spring"</span>,  <span class="nm">4</span>: <span class="st">"Spring"</span>,  <span class="nm">5</span>: <span class="st">"Spring"</span>,
+     <span class="nm">6</span>: <span class="st">"Summer"</span>,  <span class="nm">7</span>: <span class="st">"Summer"</span>,  <span class="nm">8</span>: <span class="st">"Summer"</span>,
+     <span class="nm">9</span>: <span class="st">"Autumn"</span>, <span class="nm">10</span>: <span class="st">"Autumn"</span>, <span class="nm">11</span>: <span class="st">"Autumn"</span>
+}
+
+<span class="cm"># .map() applies the dictionary lookup to each value</span>
+<span class="var">df</span>[<span class="st">"season"</span>] = <span class="var">df</span>[<span class="st">"month_num"</span>].<span class="fn">map</span>(<span class="var">season_map</span>)
+
+<span class="cm"># order_purchase_date | month_num | month_name | season
+# 2018-03-15          | 3         | March      | Spring
+# 2017-07-20          | 7         | July       | Summer
+# 2017-12-01          | 12        | December   | Winter</span></pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">.dt accessor — key properties and methods</h3>
+        <table>
+          <tr><th>Expression</th><th>Returns</th><th>Example</th></tr>
+          <tr><td><code>.dt.month</code></td><td style="font-size:.78rem">int 1–12</td><td style="font-size:.78rem" class="ok">7</td></tr>
+          <tr><td><code>.dt.month_name()</code></td><td style="font-size:.78rem">full month name</td><td style="font-size:.78rem" class="ok">July</td></tr>
+          <tr><td><code>.dt.year</code></td><td style="font-size:.78rem">4-digit year</td><td style="font-size:.78rem" class="ok">2018</td></tr>
+          <tr><td><code>.dt.day</code></td><td style="font-size:.78rem">day of month</td><td style="font-size:.78rem" class="ok">20</td></tr>
+          <tr><td><code>.dt.dayofweek</code></td><td style="font-size:.78rem">0=Mon … 6=Sun</td><td style="font-size:.78rem" class="ok">5 (Saturday)</td></tr>
+          <tr><td><code>.dt.quarter</code></td><td style="font-size:.78rem">1–4</td><td style="font-size:.78rem" class="ok">3 (Q3)</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Season calendar</h3>
+        <table>
+          <tr><th>Season</th><th>Months</th></tr>
+          <tr><td><span class="season-chip spring">Spring</span></td><td style="font-size:.78rem">March, April, May (3, 4, 5)</td></tr>
+          <tr><td><span class="season-chip summer">Summer</span></td><td style="font-size:.78rem">June, July, August (6, 7, 8)</td></tr>
+          <tr><td><span class="season-chip autumn">Autumn</span></td><td style="font-size:.78rem">Sept, Oct, Nov (9, 10, 11)</td></tr>
+          <tr><td><span class="season-chip winter">Winter</span></td><td style="font-size:.78rem">Dec, Jan, Feb (12, 1, 2)</td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you extract the month number and assign a season?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL:</span><br>
+          <code>SELECT EXTRACT(MONTH FROM order_purchase_date) AS month_num,<br>
+          &nbsp; CASE WHEN month_num IN (12,1,2) THEN 'Winter'<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN month_num IN (3,4,5) THEN 'Spring'<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN month_num IN (6,7,8) THEN 'Summer'<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE 'Autumn' END AS season FROM df;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python:</span> <code>.dt.month</code> = <code>EXTRACT(MONTH)</code>; dict + <code>.map()</code> = the <code>CASE WHEN IN (...)</code> block — but written once, applied to every row.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: AGGREGATE MONTHLY REVENUE -->
+<div class="slide">
+  <h2>Step 3 — Aggregate Monthly Revenue by Category</h2>
+  <p class="sub" style="margin-bottom:10px">Group by month and category to get total revenue. This is the source data for our pivot table.</p>
+  <div class="two">
+    <pre><span class="cm"># Group by month dimensions + category
+# Sum the revenue (Sales_Amount) for each combination
+# Note: column is 'Sales_Amount' (capital S and A) in the data</span>
+<span class="var">base</span> = (
+    <span class="var">df</span>
+    .<span class="fn">groupby</span>(
+        [<span class="st">'month_num'</span>, <span class="st">'month_name'</span>, <span class="st">'season'</span>, <span class="st">'category'</span>],
+        as_index=<span class="kw">False</span>
+    )
+    .<span class="fn">agg</span>(<span class="var">revenue</span>=(<span class="st">'Sales_Amount'</span>, <span class="st">'sum'</span>))
+    .<span class="fn">sort_values</span>(<span class="st">'month_num'</span>)
+    .<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>)
+)
+
+<span class="fn">print</span>(<span class="var">base</span>.<span class="fn">head</span>(<span class="nm">12</span>).<span class="fn">to_string</span>(<span class="var">index</span>=<span class="kw">False</span>))
+<span class="cm"># month_num month_name season        category     revenue
+#         1    January Winter       Furniture  62695.5571
+#         1    January Winter Office Supplies  58986.6470
+#         1    January Winter      Technology  53778.6280
+#         2   February Winter       Furniture  58640.1918
+# ...
+# This is LONG format — one row per (month, category) combo
+# 12 months × 3 categories = 36 rows total</span></pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Why include month_num, month_name, and season all in groupby?</h3>
+        <ul>
+          <li><code>month_num</code> — needed for sorting (numeric order)</li>
+          <li><code>month_name</code> — needed for display in the output</li>
+          <li><code>season</code> — needed for seasonal grouping and ranking</li>
+          <li>Since each row has one unique month, grouping by all three together doesn't change the result — it just preserves all three columns</li>
+        </ul>
+      </div>
+      <div class="hl">
+        <h3 style="font-size:.84rem;margin-bottom:6px">Long format vs Wide format</h3>
+        <p style="font-size:.83rem"><strong>Long format</strong> (current): one row per month-category combination. Good for groupby and ranking.</p>
+        <p style="font-size:.83rem;margin-top:6px"><strong>Wide format</strong> (after pivot): one row per month, columns = categories. Good for side-by-side comparison.</p>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you aggregate monthly revenue per category?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL:</span><br>
+          <code>SELECT month_num, month_name, season, category,<br>
+          &nbsp; SUM(Sales_Amount) AS revenue<br>
+          FROM enriched<br>
+          GROUP BY month_num, month_name, season, category<br>
+          ORDER BY month_num;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python:</span><br>
+          <code>df.groupby([...]).agg(revenue=('Sales_Amount','sum'))</code><br>
+          Named aggregation syntax: <code>(col_name, agg_func)</code> — same as <code>SUM(col) AS name</code> in SQL.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: PIVOT TABLE -->
+<div class="slide">
+  <h2>Step 4 — Pivot: Long → Wide Format</h2>
+  <p class="sub" style="margin-bottom:10px"><code>pivot_table()</code> reshapes from one-row-per-category to one-row-per-month with categories as columns — ideal for cross-category comparison.</p>
+  <div class="two">
+    <pre><span class="cm"># pivot_table: rotate the 'category' values into column headers
+# index = what stays as rows
+# columns = which column's values become new column names
+# values = which column's values to fill the cells
+# aggfunc = 'sum' since we might have duplicate month-category rows
+# fill_value = 0 for month-category combos with no sales</span>
+
+<span class="var">pivot_df</span> = (
+    <span class="var">base</span>
+    .<span class="fn">pivot_table</span>(
+        <span class="var">index</span>      = [<span class="st">'month_num'</span>, <span class="st">'month_name'</span>, <span class="st">'season'</span>],
+        <span class="var">columns</span>    = <span class="st">'category'</span>,
+        <span class="var">values</span>     = <span class="st">'revenue'</span>,
+        <span class="var">aggfunc</span>    = <span class="st">'sum'</span>,
+        <span class="var">fill_value</span> = <span class="nm">0</span>
+    )
+    .<span class="fn">reset_index</span>()
+    .<span class="fn">sort_values</span>(<span class="st">'month_num'</span>)
+    .<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>)
+)
+
+<span class="cm"># Remove the "category" axis label from the column header row</span>
+<span class="var">pivot_df</span>.<span class="var">columns</span>.<span class="var">name</span> = <span class="kw">None</span>
+
+<span class="cm"># Result (wide format — 12 rows, one per month):
+# month_num | month_name | season | Furniture | Office Supplies | Technology
+# 1         | January    | Winter | 62695.56  | 58986.65        | 53778.63
+# 2         | February   | Winter | 58640.19  | 64841.39        | 73089.55</span></pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">pivot_table arguments — what each does</h3>
+        <table>
+          <tr><th>Argument</th><th>Role</th></tr>
+          <tr><td><code>index</code></td><td style="font-size:.78rem">Columns that stay as row identifiers</td></tr>
+          <tr><td><code>columns</code></td><td style="font-size:.78rem">Column whose values become new column names</td></tr>
+          <tr><td><code>values</code></td><td style="font-size:.78rem">Column whose values fill the cells</td></tr>
+          <tr><td><code>fill_value</code></td><td style="font-size:.78rem">Replaces NaN where no data exists</td></tr>
+        </table>
+      </div>
+      <div class="hl yl">
+        <h3 style="color:var(--yellow);font-size:.84rem;margin-bottom:5px">columns.name = None — why?</h3>
+        <p style="font-size:.82rem">After pivot_table, the columns axis has the name "category" (from the source column). Setting <code>pivot_df.columns.name = None</code> removes it for cleaner output — no extra header row.</p>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you pivot revenue into one column per category?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL (manual pivot — very verbose):</span><br>
+          <code>SELECT month_num, season,<br>
+          &nbsp; SUM(CASE WHEN category='Furniture' THEN revenue ELSE 0 END) AS Furniture,<br>
+          &nbsp; SUM(CASE WHEN category='Technology' THEN revenue ELSE 0 END) AS Technology<br>
+          FROM base GROUP BY month_num, season;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python (one line!):</span><br>
+          <code>base.pivot_table(index=[...], columns='category', values='revenue', aggfunc='sum', fill_value=0)</code><br>
+          Python doesn't need one CASE per category — it reads all unique values automatically.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: MELT + SEASONAL REVENUE -->
+<div class="slide">
+  <h2>Step 5 — Melt: Wide → Long + Seasonal Revenue</h2>
+  <p class="sub" style="margin-bottom:10px"><code>melt()</code> reverses the pivot — converts wide back to long for groupby and ranking. Then compute total seasonal revenue per category.</p>
+  <div class="two">
+    <pre><span class="cm"># Melt the pivot table back to long format
+# id_vars = columns that stay as row identifiers (don't melt)
+# var_name = new column name for the old column headers
+# value_name = new column name for the cell values</span>
+
+<span class="var">melted_df</span> = (
+    <span class="var">pivot_df</span>
+    .<span class="fn">melt</span>(
+        <span class="var">id_vars</span>    = [<span class="st">'month_num'</span>, <span class="st">'month_name'</span>, <span class="st">'season'</span>],
+        <span class="var">var_name</span>   = <span class="st">'category'</span>,
+        <span class="var">value_name</span> = <span class="st">'revenue'</span>
+    )
+    .<span class="fn">sort_values</span>([<span class="st">'month_num'</span>, <span class="st">'category'</span>])
+    .<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>)
+)
+
+<span class="cm"># month_num | month_name | season | category        | revenue
+# 1         | January    | Winter | Furniture        | 62695.56
+# 1         | January    | Winter | Office Supplies  | 58986.65
+# 1         | January    | Winter | Technology       | 53778.63
+# 2         | February   | Winter | Furniture        | 58640.19</span>
+
+<span class="cm"># Total revenue per season per category</span>
+<span class="var">seasonal</span> = (
+    <span class="var">melted_df</span>
+    .<span class="fn">groupby</span>([<span class="st">'season'</span>, <span class="st">'category'</span>], as_index=<span class="kw">False</span>)
+    .<span class="fn">agg</span>(<span class="var">seasonal_revenue</span>=(<span class="st">'revenue'</span>, <span class="st">'sum'</span>))
+)</pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">melt() arguments</h3>
+        <table>
+          <tr><th>Argument</th><th>Role</th></tr>
+          <tr><td><code>id_vars</code></td><td style="font-size:.78rem">Columns that stay as identifiers (not melted)</td></tr>
+          <tr><td><code>var_name</code></td><td style="font-size:.78rem">Name for the new column holding old column headers</td></tr>
+          <tr><td><code>value_name</code></td><td style="font-size:.78rem">Name for the new column holding the cell values</td></tr>
+        </table>
+      </div>
+      <div class="hl gr">
+        <h3 style="color:var(--green);font-size:.84rem;margin-bottom:5px">Pivot ↔ Melt — symmetric operations</h3>
+        <p style="font-size:.82rem"><strong>Pivot</strong>: many rows → fewer rows, more columns (wide)<br>
+        <strong>Melt</strong>: fewer rows → many rows, fewer columns (long)<br>
+        They are inverses. Long = better for groupby; wide = better for reading.</p>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you "un-pivot" the wide table back to long format?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL (verbose UNION ALL):</span><br>
+          <code>SELECT month_num, 'Furniture' AS category, Furniture AS revenue FROM wide<br>
+          UNION ALL<br>
+          SELECT month_num, 'Technology', Technology FROM wide<br>
+          UNION ALL<br>
+          SELECT month_num, 'Office Supplies', OfficeSupplies FROM wide;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python (one line!):</span><br>
+          <code>pivot_df.melt(id_vars=[...], var_name='category', value_name='revenue')</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: RANKING + CUSTOM SORT -->
+<div class="slide">
+  <h2>Step 6 — Rank Within Season + Custom Sort Order</h2>
+  <p class="sub" style="margin-bottom:10px">Use <code>groupby().rank()</code> to rank categories by revenue within each season. Then sort seasons in a custom order (not alphabetical).</p>
+  <div class="two">
+    <pre><span class="cm"># Rank each category by seasonal_revenue within each season
+# ascending=False → highest revenue gets rank 1
+# method='dense' → no gaps (like SQL DENSE_RANK)</span>
+
+<span class="var">seasonal</span>[<span class="st">'category_rank'</span>] = (
+    <span class="var">seasonal</span>
+    .<span class="fn">groupby</span>(<span class="st">'season'</span>)[<span class="st">'seasonal_revenue'</span>]
+    .<span class="fn">rank</span>(<span class="var">method</span>=<span class="st">'dense'</span>, <span class="var">ascending</span>=<span class="kw">False</span>)
+    .<span class="fn">astype</span>(<span class="nm">int</span>)
+)
+
+<span class="cm"># Custom season sort order (not alphabetical)</span>
+<span class="var">season_order</span> = {
+    <span class="st">"Spring"</span>: <span class="nm">1</span>, <span class="st">"Summer"</span>: <span class="nm">2</span>,
+    <span class="st">"Autumn"</span>: <span class="nm">3</span>, <span class="st">"Winter"</span>: <span class="nm">4</span>
+}
+<span class="var">seasonal</span>[<span class="st">'season_sort'</span>] = <span class="var">seasonal</span>[<span class="st">'season'</span>].<span class="fn">map</span>(<span class="var">season_order</span>)
+
+<span class="var">seasonal</span> = (
+    <span class="var">seasonal</span>
+    .<span class="fn">sort_values</span>([<span class="st">'season_sort'</span>, <span class="st">'category_rank'</span>])
+    .<span class="fn">drop</span>(<span class="var">columns</span>=[<span class="st">'season_sort'</span>])
+    .<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>)
+)
+<span class="cm"># season | category        | seasonal_revenue | category_rank
+# Spring | Technology       | 286617.08        | 1
+# Spring | Office Supplies  | 232440.98        | 2
+# Spring | Furniture        | 220116.80        | 3
+# Summer | Technology       | 229387.52        | 1</span></pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">rank() methods recap</h3>
+        <table>
+          <tr><th>method=</th><th>SQL equivalent</th><th>Gaps?</th></tr>
+          <tr><td><code>'min'</code></td><td style="font-size:.78rem">RANK()</td><td style="font-size:.78rem">Yes (ties cause gap)</td></tr>
+          <tr><td><code>'dense'</code></td><td style="font-size:.78rem">DENSE_RANK()</td><td style="font-size:.78rem">No gaps</td></tr>
+          <tr><td><code>'first'</code></td><td style="font-size:.78rem">ROW_NUMBER()</td><td style="font-size:.78rem">Unique per row</td></tr>
+        </table>
+      </div>
+      <div class="hl">
+        <h3 style="font-size:.84rem;margin-bottom:5px">Custom sort — the .map() trick</h3>
+        <p style="font-size:.82rem">Alphabetical: Autumn → Spring → Summer → Winter.<br>
+        We want: Spring → Summer → Autumn → Winter.<br>
+        Solution: map season names to sort numbers (1–4), sort by that column, then drop it.</p>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you rank categories within each season by revenue?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL (window function):</span><br>
+          <code>SELECT season, category, SUM(revenue) AS seasonal_revenue,<br>
+          &nbsp; DENSE_RANK() OVER (<br>
+          &nbsp;&nbsp;&nbsp; PARTITION BY season<br>
+          &nbsp;&nbsp;&nbsp; ORDER BY SUM(revenue) DESC<br>
+          &nbsp; ) AS category_rank<br>
+          FROM melted GROUP BY season, category;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python:</span> <code>groupby('season')['seasonal_revenue'].rank(method='dense', ascending=False)</code><br>
+          <code>PARTITION BY season</code> = <code>groupby('season')</code>; <code>DENSE_RANK()</code> = <code>method='dense'</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: FULL CODE + CHEAT SHEET -->
+<div class="slide">
+  <h2>Complete Solution + Concept Summary</h2>
+  <div class="two">
+    <pre style="font-size:.71rem;line-height:1.75"><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
+
+<span class="cm"># Load</span>
+<span class="var">orders</span>       = pd.<span class="fn">read_csv</span>(<span class="st">"exorders.csv"</span>, parse_dates=[<span class="st">"order_purchase_date"</span>])
+<span class="var">transactions</span> = pd.<span class="fn">read_csv</span>(<span class="st">"extransactions.csv"</span>)
+<span class="var">products</span>     = pd.<span class="fn">read_csv</span>(<span class="st">"exproducts.csv"</span>)
+
+<span class="cm"># Join (note: case-sensitive column names require left_on/right_on)</span>
+<span class="var">orders_txn</span> = <span class="var">orders</span>.<span class="fn">merge</span>(<span class="var">transactions</span>, <span class="var">left_on</span>=<span class="st">'order_id'</span>, <span class="var">right_on</span>=<span class="st">'Order_ID'</span>, <span class="var">how</span>=<span class="st">'left'</span>)
+<span class="var">df</span>         = <span class="var">orders_txn</span>.<span class="fn">merge</span>(<span class="var">products</span>, <span class="var">left_on</span>=<span class="st">'Product_ID'</span>, <span class="var">right_on</span>=<span class="st">'product_id'</span>, <span class="var">how</span>=<span class="st">'left'</span>)
+
+<span class="cm"># Date features</span>
+<span class="var">df</span>[<span class="st">"month_num"</span>]  = <span class="var">df</span>[<span class="st">"order_purchase_date"</span>].<span class="fn">dt</span>.month
+<span class="var">df</span>[<span class="st">"month_name"</span>] = <span class="var">df</span>[<span class="st">"order_purchase_date"</span>].<span class="fn">dt</span>.<span class="fn">month_name</span>()
+<span class="var">season_map</span> = {<span class="nm">12</span>:<span class="st">"Winter"</span>,<span class="nm">1</span>:<span class="st">"Winter"</span>,<span class="nm">2</span>:<span class="st">"Winter"</span>,<span class="nm">3</span>:<span class="st">"Spring"</span>,<span class="nm">4</span>:<span class="st">"Spring"</span>,<span class="nm">5</span>:<span class="st">"Spring"</span>,<span class="nm">6</span>:<span class="st">"Summer"</span>,<span class="nm">7</span>:<span class="st">"Summer"</span>,<span class="nm">8</span>:<span class="st">"Summer"</span>,<span class="nm">9</span>:<span class="st">"Autumn"</span>,<span class="nm">10</span>:<span class="st">"Autumn"</span>,<span class="nm">11</span>:<span class="st">"Autumn"</span>}
+<span class="var">df</span>[<span class="st">"season"</span>] = <span class="var">df</span>[<span class="st">"month_num"</span>].<span class="fn">map</span>(<span class="var">season_map</span>)
+
+<span class="cm"># Aggregate monthly (column is 'Sales_Amount' — capital S and A)</span>
+<span class="var">base</span> = (<span class="var">df</span>.<span class="fn">groupby</span>([<span class="st">'month_num'</span>,<span class="st">'month_name'</span>,<span class="st">'season'</span>,<span class="st">'category'</span>],as_index=<span class="kw">False</span>)
+            .<span class="fn">agg</span>(<span class="var">revenue</span>=(<span class="st">'Sales_Amount'</span>,<span class="st">'sum'</span>))
+            .<span class="fn">sort_values</span>(<span class="st">'month_num'</span>).<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>))
+
+<span class="cm"># Pivot: long → wide</span>
+<span class="var">pivot_df</span> = (<span class="var">base</span>.<span class="fn">pivot_table</span>(<span class="var">index</span>=[<span class="st">'month_num'</span>,<span class="st">'month_name'</span>,<span class="st">'season'</span>],<span class="var">columns</span>=<span class="st">'category'</span>,<span class="var">values</span>=<span class="st">'revenue'</span>,<span class="var">aggfunc</span>=<span class="st">'sum'</span>,<span class="var">fill_value</span>=<span class="nm">0</span>)
+              .<span class="fn">reset_index</span>().<span class="fn">sort_values</span>(<span class="st">'month_num'</span>).<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>))
+<span class="var">pivot_df</span>.<span class="var">columns</span>.<span class="var">name</span> = <span class="kw">None</span>
+
+<span class="cm"># Melt: wide → long</span>
+<span class="var">melted_df</span> = (<span class="var">pivot_df</span>.<span class="fn">melt</span>(<span class="var">id_vars</span>=[<span class="st">'month_num'</span>,<span class="st">'month_name'</span>,<span class="st">'season'</span>],<span class="var">var_name</span>=<span class="st">'category'</span>,<span class="var">value_name</span>=<span class="st">'revenue'</span>)
+               .<span class="fn">sort_values</span>([<span class="st">'month_num'</span>,<span class="st">'category'</span>]).<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>))
+
+<span class="cm"># Seasonal totals + rank</span>
+<span class="var">seasonal</span> = <span class="var">melted_df</span>.<span class="fn">groupby</span>([<span class="st">'season'</span>,<span class="st">'category'</span>],as_index=<span class="kw">False</span>).<span class="fn">agg</span>(<span class="var">seasonal_revenue</span>=(<span class="st">'revenue'</span>,<span class="st">'sum'</span>))
+<span class="var">seasonal</span>[<span class="st">'category_rank'</span>] = <span class="var">seasonal</span>.<span class="fn">groupby</span>(<span class="st">'season'</span>)[<span class="st">'seasonal_revenue'</span>].<span class="fn">rank</span>(<span class="var">method</span>=<span class="st">'dense'</span>,<span class="var">ascending</span>=<span class="kw">False</span>).<span class="fn">astype</span>(<span class="nm">int</span>)
+<span class="var">season_order</span> = {<span class="st">"Spring"</span>:<span class="nm">1</span>,<span class="st">"Summer"</span>:<span class="nm">2</span>,<span class="st">"Autumn"</span>:<span class="nm">3</span>,<span class="st">"Winter"</span>:<span class="nm">4</span>}
+<span class="var">seasonal</span>[<span class="st">'season_sort'</span>] = <span class="var">seasonal</span>[<span class="st">'season'</span>].<span class="fn">map</span>(<span class="var">season_order</span>)
+<span class="var">seasonal</span> = (<span class="var">seasonal</span>.<span class="fn">sort_values</span>([<span class="st">'season_sort'</span>,<span class="st">'category_rank'</span>]).<span class="fn">drop</span>(<span class="var">columns</span>=[<span class="st">'season_sort'</span>]).<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>))</pre>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Pipeline at a glance — SQL ↔ Python</h3>
+        <table>
+          <tr><th>Step</th><th>SQL</th><th>Python</th></tr>
+          <tr><td style="font-size:.73rem">Join 3 tables</td><td style="font-size:.73rem">LEFT JOIN ON</td><td style="font-size:.73rem"><code>.merge(left_on, right_on)</code></td></tr>
+          <tr><td style="font-size:.73rem">Extract month</td><td style="font-size:.73rem">EXTRACT(MONTH)</td><td style="font-size:.73rem"><code>.dt.month</code></td></tr>
+          <tr><td style="font-size:.73rem">Assign season</td><td style="font-size:.73rem">CASE WHEN IN</td><td style="font-size:.73rem">dict + <code>.map()</code></td></tr>
+          <tr><td style="font-size:.73rem">Aggregate</td><td style="font-size:.73rem">GROUP BY + SUM</td><td style="font-size:.73rem"><code>groupby().agg()</code></td></tr>
+          <tr><td style="font-size:.73rem">Pivot</td><td style="font-size:.73rem">CASE+SUM per column</td><td style="font-size:.73rem"><code>pivot_table()</code></td></tr>
+          <tr><td style="font-size:.73rem">Melt</td><td style="font-size:.73rem">UNION ALL per column</td><td style="font-size:.73rem"><code>.melt()</code></td></tr>
+          <tr><td style="font-size:.73rem">Rank</td><td style="font-size:.73rem">DENSE_RANK() OVER (PARTITION BY)</td><td style="font-size:.73rem"><code>groupby().rank()</code></td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>❓ What is the purpose of <code>columns.name = None</code> after pivot_table?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ After pivot_table, pandas names the columns axis "category" (from the <code>columns='category'</code> argument). This shows up as an extra header row in print output. Setting <code>.columns.name = None</code> removes that label for a cleaner display — it doesn't change the data, only the column index metadata.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+let cur=0;const slides=document.querySelectorAll('.slide');const total=slides.length;const ctr=document.getElementById('ctr');
+function show(n){slides[cur].classList.remove('active');cur=(n+total)%total;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+total;}
+function go(d){show(cur+d)}function rev(btn){btn.nextElementSibling.style.display='block';btn.style.display='none';}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+ctr.textContent='1 / '+total;
+</script>
+</body>
+</html>

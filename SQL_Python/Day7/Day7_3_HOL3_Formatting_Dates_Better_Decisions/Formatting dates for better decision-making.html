@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 7 – Formatting Dates for Better Decision-Making</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;--orange:#fb923c}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
+.nav-title{font-size:12px;color:var(--muted);font-weight:500}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nav-btn:hover{background:var(--a);color:#fff;border-color:var(--a)}
+.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
+.deck{padding-top:52px;height:100vh}
+.slide{display:none;height:calc(100vh - 52px);padding:26px 50px;flex-direction:column;justify-content:flex-start;gap:12px;overflow:hidden;animation:fadein .25s ease}
+.slide.active{display:flex}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:2rem;font-weight:900;color:var(--a);line-height:1.1}
+h2{font-size:1.45rem;font-weight:800;color:var(--a);line-height:1.2}
+h3{font-size:.93rem;font-weight:700;color:var(--a2);margin-bottom:5px}
+p,li{font-size:.86rem;color:#c9d1d9;line-height:1.7}
+ul{padding-left:18px}li{margin-bottom:4px}
+.sub{font-size:.86rem;color:var(--muted);margin-top:4px}
+.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 15px}
+.hl{background:rgba(59,130,246,.06);border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:9px 13px}
+.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
+.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
+.hl.yl{background:rgba(245,158,11,.06);border-color:var(--yellow)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'JetBrains Mono',monospace;font-size:.77rem;line-height:1.82;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.79rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
+.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.nm{color:#ffa657}.var{color:#79c0ff}
+table{width:100%;border-collapse:collapse;font-size:.81rem}
+th{background:rgba(59,130,246,.12);color:var(--a2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;letter-spacing:.5px}
+td{padding:6px 10px;border-bottom:1px solid var(--border);color:#c9d1d9}
+tr:hover td{background:rgba(255,255,255,.02)}
+.ok{color:var(--green);font-weight:600}
+.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:11px 15px}
+.quiz p{font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:9px}
+.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:5px 15px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.77rem;font-weight:700}
+.ans{display:none;margin-top:9px;padding:9px 12px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.82rem;color:#c9d1d9;line-height:1.7}
+.ans code{font-size:.76rem}
+.badge-row{display:flex;gap:7px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:3px 11px;font-size:.74rem;font-weight:600;color:var(--muted)}
+.arrow{color:var(--yellow);font-weight:800;font-size:1rem;padding:0 6px}
+.fmt-chip{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);color:var(--purple);border-radius:6px;padding:2px 8px;font-family:'JetBrains Mono',monospace;font-size:.77rem;font-weight:600}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <span class="nav-badge">Day 7 · Module 2</span>
+    <span class="nav-title">Formatting Dates for Better Decision-Making</span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" onclick="go(-1)">← Prev</button>
+    <span class="nav-counter" id="ctr">1 / 8</span>
+    <button class="nav-btn" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <div class="tag">Day 7 · Module 2 · Date & Time Parsing</div>
+    <h1>Formatting Dates for<br>Better Decision-Making</h1>
+    <p class="sub">Parse raw date strings and reformat them into human-readable labels for reports, dashboards, and analysis</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>🎯 The Problem</h3>
+      <p>Databases store dates in technical formats like <code>"2024-03-15 08:45:30.000000"</code> — hard to read in reports.</p>
+      <p style="margin-top:8px">We need to transform them into labels like:</p>
+      <ul style="margin-top:6px">
+        <li>"Friday, 15 March 2024" → purchase label</li>
+        <li>"08:45 AM" → time of day label</li>
+        <li>"Nov-2023" → monthly cohort</li>
+        <li>"01/03/2024" → campaign date range</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔑 Two Core Functions</h3>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-top:4px">
+        <div class="hl">
+          <p style="font-size:.84rem"><strong><code>strptime</code></strong> — String to Datetime</p>
+          <p style="font-size:.8rem;color:var(--muted);margin-top:3px">Parses a text string into a Python datetime object</p>
+          <p style="font-size:.78rem;margin-top:3px"><em>"2024-03-15"</em> → <em>datetime(2024, 3, 15)</em></p>
+        </div>
+        <div class="hl yl">
+          <p style="font-size:.84rem"><strong><code>strftime</code></strong> — Datetime to String</p>
+          <p style="font-size:.8rem;color:var(--muted);margin-top:3px">Formats a datetime object back to a text string</p>
+          <p style="font-size:.78rem;margin-top:3px"><em>datetime(2024, 3, 15)</em> → <em>"Friday, 15 March 2024"</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="badge-row">
+    <div class="badge">strptime</div>
+    <div class="badge">strftime</div>
+    <div class="badge">pd.to_datetime()</div>
+    <div class="badge">apply() + lambda</div>
+    <div class="badge">Helper returning pd.Series</div>
+  </div>
+</div>
+
+<!-- SLIDE 2: SQL MENTAL MODEL (NEW) -->
+<div class="slide">
+  <h2>SQL Mental Model — Visualise the Pipeline Before Writing Python</h2>
+  <p class="sub" style="margin-bottom:10px">Every Python date task in this module has a direct SQL equivalent. Understand the SQL first — Python is just a different syntax for the same idea.</p>
+  <div class="two">
+    <pre style="font-size:.72rem;line-height:1.78"><span class="cm">-- Task 1: Full date label (pandas: strptime + strftime)</span>
+<span class="kw">SELECT</span> order_id,
+  <span class="fn">TO_CHAR</span>(order_purchase_date,
+          <span class="st">'Day, DD Month YYYY'</span>) <span class="kw">AS</span> purchase_label
+<span class="kw">FROM</span> orders;
+<span class="cm">-- Python: datetime.strptime(val, "%Y-%m-%d %H:%M:%S.%f")
+--                  .strftime("%A, %d %B %Y")</span>
+
+<span class="cm">-- Task 2: Date + time label from ONE column</span>
+<span class="kw">SELECT</span>
+  <span class="fn">TO_CHAR</span>(order_purchase_date,
+          <span class="st">'Day, DD Month YYYY'</span>) <span class="kw">AS</span> purchase_label,
+  <span class="fn">TO_CHAR</span>(order_purchase_date,
+          <span class="st">'HH12:MI AM'</span>)         <span class="kw">AS</span> time_of_day_label
+<span class="kw">FROM</span> orders;
+<span class="cm">-- Python: helper returning pd.Series → two columns at once</span></pre>
+    <pre style="font-size:.72rem;line-height:1.78"><span class="cm">-- Task 3: Monthly cohort label (pandas: strftime "%b-%Y")</span>
+<span class="kw">SELECT</span> customer_id,
+  <span class="fn">TO_CHAR</span>(joining_date, <span class="st">'Mon-YYYY'</span>) <span class="kw">AS</span> joining_cohort
+<span class="kw">FROM</span> customers;
+<span class="cm">-- Python: datetime.strptime(val, "%Y-%m-%d").strftime("%b-%Y")</span>
+
+<span class="cm">-- Task 4: Campaign dates — same format, TWO columns</span>
+<span class="kw">SELECT</span> campaign_id,
+  <span class="fn">TO_CHAR</span>(start_date, <span class="st">'DD/MM/YYYY'</span>) <span class="kw">AS</span> start_label,
+  <span class="fn">TO_CHAR</span>(end_date,   <span class="st">'DD/MM/YYYY'</span>) <span class="kw">AS</span> end_label
+<span class="kw">FROM</span> campaigns;
+<span class="cm">-- Python: one reformat_date() helper, .apply() on both columns</span></pre>
+  </div>
+  <div class="hl" style="margin-top:6px">
+    <p style="font-size:.85rem">SQL's <code>TO_CHAR(date, 'fmt')</code> = Python's <code>datetime.strftime('fmt')</code> — same two-part idea: specify how to read the raw value, then how to write the output.</p>
+  </div>
+</div>
+
+<!-- SLIDE 3: FORMAT CODES -->
+<div class="slide">
+  <h2>Format Codes — The Building Blocks</h2>
+  <p class="sub" style="margin-bottom:10px">Format codes are special placeholders that tell Python which part of a date/time to extract or produce. You must know these to parse any date.</p>
+  <div class="two">
+    <div>
+      <table>
+        <tr><th>Code</th><th>Meaning</th><th>Example</th></tr>
+        <tr><td><span class="fmt-chip">%Y</span></td><td>4-digit year</td><td class="ok">2024</td></tr>
+        <tr><td><span class="fmt-chip">%m</span></td><td>Month as number (01–12)</td><td class="ok">03</td></tr>
+        <tr><td><span class="fmt-chip">%d</span></td><td>Day of month (01–31)</td><td class="ok">15</td></tr>
+        <tr><td><span class="fmt-chip">%H</span></td><td>Hour 24-hr (00–23)</td><td class="ok">08</td></tr>
+        <tr><td><span class="fmt-chip">%M</span></td><td>Minutes (00–59)</td><td class="ok">45</td></tr>
+        <tr><td><span class="fmt-chip">%S</span></td><td>Seconds (00–59)</td><td class="ok">30</td></tr>
+        <tr><td><span class="fmt-chip">%f</span></td><td>Microseconds (6 digits)</td><td class="ok">000000</td></tr>
+        <tr><td><span class="fmt-chip">%A</span></td><td>Full weekday name</td><td class="ok">Friday</td></tr>
+        <tr><td><span class="fmt-chip">%B</span></td><td>Full month name</td><td class="ok">March</td></tr>
+        <tr><td><span class="fmt-chip">%b</span></td><td>Abbreviated month</td><td class="ok">Mar</td></tr>
+        <tr><td><span class="fmt-chip">%I</span></td><td>Hour 12-hr (01–12)</td><td class="ok">08</td></tr>
+        <tr><td><span class="fmt-chip">%p</span></td><td>AM or PM</td><td class="ok">AM</td></tr>
+      </table>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Reading a raw timestamp</h3>
+        <pre style="font-size:.76rem">"2024-03-15 08:45:30.000000"
+  ↑   ↑  ↑  ↑  ↑  ↑  ↑
+  %Y  %m %d %H %M %S %f
+
+raw_fmt = "%Y-%m-%d %H:%M:%S.%f"</pre>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Producing a human label</h3>
+        <pre style="font-size:.76rem">"Friday, 15 March 2024"
+  ↑        ↑   ↑     ↑
+  %A      %d   %B    %Y
+
+output_fmt = "%A, %d %B %Y"</pre>
+      </div>
+      <div class="quiz">
+        <p>❓ What format string describes "Nov-2023"?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <code>"%b-%Y"</code> — <code>%b</code> = abbreviated month name (Nov), <code>-</code> = literal dash, <code>%Y</code> = 4-digit year (2023)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: strptime vs strftime -->
+<div class="slide">
+  <h2>strptime vs strftime — The Core Pattern</h2>
+  <p class="sub" style="margin-bottom:10px">Every date formatting task follows the same two-step pattern: parse the input string → format the output string.</p>
+  <div class="two">
+    <div>
+      <pre><span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="cm"># === strptime: string → datetime object ===</span>
+<span class="var">raw_string</span> = <span class="st">"2024-03-15 08:45:30.000000"</span>
+<span class="var">raw_fmt</span>    = <span class="st">"%Y-%m-%d %H:%M:%S.%f"</span>
+
+<span class="var">dt_obj</span> = datetime.<span class="fn">strptime</span>(<span class="var">raw_string</span>, <span class="var">raw_fmt</span>)
+<span class="cm"># → datetime(2024, 3, 15, 8, 45, 30)</span>
+
+<span class="cm"># === strftime: datetime object → formatted string ===</span>
+<span class="var">output_fmt</span> = <span class="st">"%A, %d %B %Y"</span>
+<span class="var">result</span>     = <span class="var">dt_obj</span>.<span class="fn">strftime</span>(<span class="var">output_fmt</span>)
+<span class="cm"># → "Friday, 15 March 2024"</span>
+
+<span class="cm"># ===== With pandas (for a whole column) =====</span>
+<span class="cm"># Step 1: parse the column</span>
+<span class="var">df</span>[<span class="st">'parsed'</span>] = pd.<span class="fn">to_datetime</span>(<span class="var">df</span>[<span class="st">'raw_date'</span>],
+                                 <span class="var">format</span>=<span class="var">raw_fmt</span>)
+
+<span class="cm"># Step 2: format using .dt.strftime or apply</span>
+<span class="var">df</span>[<span class="st">'label'</span>] = <span class="var">df</span>[<span class="st">'parsed'</span>].<span class="fn">dt</span>.<span class="fn">strftime</span>(<span class="var">output_fmt</span>)
+<span class="cm"># OR with apply():
+# df['label'] = df['raw_date'].apply(
+#     lambda x: datetime.strptime(x, raw_fmt).strftime(output_fmt)
+# )</span></pre>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="hl">
+        <h3 style="font-size:.84rem;margin-bottom:6px">The two-step flow</h3>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
+          <span class="badge" style="font-size:.76rem;border-color:var(--a)">Raw string<br>"2024-03-15"</span>
+          <span class="arrow">→</span>
+          <span style="font-size:.78rem;color:var(--yellow)">strptime<br>(parse)</span>
+          <span class="arrow">→</span>
+          <span class="badge" style="font-size:.76rem;border-color:var(--purple)">datetime<br>object</span>
+          <span class="arrow">→</span>
+          <span style="font-size:.78rem;color:var(--yellow)">strftime<br>(format)</span>
+          <span class="arrow">→</span>
+          <span class="badge" style="font-size:.76rem;border-color:var(--green)">Human label<br>"Friday, 15 March"</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">pandas vs Python datetime — when to use</h3>
+        <table>
+          <tr><th>Method</th><th>Best for</th></tr>
+          <tr><td style="font-size:.78rem"><code>pd.to_datetime() + .dt.strftime()</code></td><td style="font-size:.78rem">Whole DataFrame column — fast</td></tr>
+          <tr><td style="font-size:.78rem"><code>df.apply(lambda x: ...)</code></td><td style="font-size:.78rem">Complex logic per row</td></tr>
+          <tr><td style="font-size:.78rem"><code>datetime.strptime()</code></td><td style="font-size:.78rem">Single string, outside pandas</td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>❓ In <code>strptime(s, fmt)</code> — which argument is the string and which is the format?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ First arg = the raw string to parse. Second arg = the format string that describes the pattern of the raw string. Think: "parse string <em>s</em> according to pattern <em>fmt</em>."</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: TASK 1 — purchase_label -->
+<div class="slide">
+  <h2>Task 1 — Purchase Date Label</h2>
+  <p class="sub" style="margin-bottom:10px">Transform the raw order_purchase_date (with microseconds) into a readable weekday label. Dataset: <code>orders</code></p>
+  <div class="two">
+    <pre><span class="var">orders</span> = pd.<span class="fn">read_csv</span>(<span class="st">"exorders.csv"</span>)
+
+<span class="cm"># Raw format: "2018-05-11 20:07:00.000"
+# Output:     "Friday, 11 May 2018"</span>
+
+<span class="var">raw_fmt</span>    = <span class="st">"%Y-%m-%d %H:%M:%S.%f"</span>
+<span class="var">output_fmt</span> = <span class="st">"%A, %d %B %Y"</span>
+
+<span class="cm"># Parse the raw string → datetime, then format → label</span>
+<span class="var">orders</span>[<span class="st">'purchase_label'</span>] = (
+    <span class="var">orders</span>[<span class="st">'order_purchase_date'</span>]
+    .<span class="fn">apply</span>(<span class="kw">lambda</span> <span class="var">val</span>:
+        datetime.<span class="fn">strptime</span>(<span class="var">val</span>, <span class="var">raw_fmt</span>).<span class="fn">strftime</span>(<span class="var">output_fmt</span>)
+    )
+)
+
+<span class="cm"># Result:
+# order_purchase_date         | purchase_label
+# 2018-05-11 20:07:00.000     | Friday, 11 May 2018
+# 2018-01-30 10:21:00.000     | Tuesday, 30 January 2018
+# 2017-10-04 14:15:00.000     | Wednesday, 04 October 2017</span>
+
+<span class="var">result</span> = <span class="var">orders</span>[[<span class="st">'order_id'</span>,<span class="st">'order_purchase_date'</span>,<span class="st">'purchase_label'</span>]]
+<span class="fn">print</span>(<span class="var">result</span>.<span class="fn">head</span>())</pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Breaking down the format strings</h3>
+        <table>
+          <tr><th>Raw format</th><th>What it matches</th></tr>
+          <tr><td><code>%Y-%m-%d</code></td><td style="font-size:.78rem">2018-05-11 (year-month-day)</td></tr>
+          <tr><td><code>%H:%M:%S</code></td><td style="font-size:.78rem">20:07:00 (24-hr time)</td></tr>
+          <tr><td><code>.%f</code></td><td style="font-size:.78rem">.000 (microseconds)</td></tr>
+        </table>
+        <table style="margin-top:8px">
+          <tr><th>Output format</th><th>Produces</th></tr>
+          <tr><td><code>%A</code></td><td style="font-size:.78rem">Friday (full weekday)</td></tr>
+          <tr><td><code>%d %B %Y</code></td><td style="font-size:.78rem">11 May 2018</td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you produce "Friday, 11 May 2018" from a date column?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL (PostgreSQL):</span><br>
+          <code>SELECT order_id,<br>
+          &nbsp; TO_CHAR(order_purchase_date,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Day, DD Month YYYY') AS purchase_label<br>
+          FROM orders;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python equivalent:</span><br>
+          <code>datetime.strptime(val, "%Y-%m-%d %H:%M:%S.%f")<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.strftime("%A, %d %B %Y")</code><br>
+          Same two-format idea: read the raw pattern, write the display pattern.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: TASK 2 — time_label + helper returning pd.Series -->
+<div class="slide">
+  <h2>Task 2 — Time of Day Label (Helper Returning pd.Series)</h2>
+  <p class="sub" style="margin-bottom:10px">When one function needs to produce <strong>multiple new columns</strong> in one pass, make the helper return a <code>pd.Series</code>.</p>
+  <div class="two">
+    <pre><span class="cm"># Need TWO columns from one apply:
+#   purchase_label  → "Friday, 11 May 2018"
+#   time_of_day_label → "08:07 PM"</span>
+
+<span class="var">raw_fmt</span>        = <span class="st">"%Y-%m-%d %H:%M:%S.%f"</span>
+<span class="var">digest_fmt</span>     = <span class="st">"%A, %d %B %Y"</span>
+<span class="var">time_label_fmt</span> = <span class="st">"%I:%M %p"</span>   <span class="cm"># 12-hour with AM/PM</span>
+
+<span class="cm"># Helper: parse once, produce both labels</span>
+<span class="kw">def</span> <span class="fn">build_labels</span>(<span class="var">val</span>):
+    <span class="var">dt</span> = datetime.<span class="fn">strptime</span>(<span class="var">val</span>, <span class="var">raw_fmt</span>)
+    <span class="kw">return</span> pd.<span class="fn">Series</span>({
+        <span class="st">"purchase_label"</span>    : <span class="var">dt</span>.<span class="fn">strftime</span>(<span class="var">digest_fmt</span>),
+        <span class="st">"time_of_day_label"</span> : <span class="var">dt</span>.<span class="fn">strftime</span>(<span class="var">time_label_fmt</span>),
+    })
+
+<span class="cm"># apply() expands the pd.Series into two columns automatically</span>
+<span class="var">labels</span> = <span class="var">orders</span>[<span class="st">"order_purchase_date"</span>].<span class="fn">apply</span>(<span class="fn">build_labels</span>)
+<span class="var">result</span> = pd.<span class="fn">concat</span>([<span class="var">orders</span>[[<span class="st">"order_id"</span>,<span class="st">"order_purchase_date"</span>]],
+                     <span class="var">labels</span>], <span class="var">axis</span>=<span class="nm">1</span>)
+
+<span class="cm"># order_purchase_date           | purchase_label        | time_of_day_label
+# 2018-05-11 20:07:00.000        | Friday, 11 May 2018   | 08:07 PM</span></pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="hl yl">
+        <h3 style="color:var(--yellow);font-size:.84rem;margin-bottom:6px">Why return pd.Series?</h3>
+        <p style="font-size:.83rem">When <code>.apply()</code> sees that each call returns a <code>pd.Series</code>, pandas automatically expands the result into multiple columns. You get both columns in one pass — no need to call <code>.apply()</code> twice.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">%I vs %H — the 12/24-hour difference</h3>
+        <table>
+          <tr><th>Code</th><th>Range</th><th>Example</th></tr>
+          <tr><td><code>%H</code></td><td style="font-size:.78rem">00–23 (24-hour)</td><td style="font-size:.78rem">20 (for 8 PM)</td></tr>
+          <tr><td><code>%I</code></td><td style="font-size:.78rem">01–12 (12-hour)</td><td style="font-size:.78rem">08 (for 8 PM)</td></tr>
+          <tr><td><code>%p</code></td><td style="font-size:.78rem">AM/PM</td><td style="font-size:.78rem">PM</td></tr>
+        </table>
+        <p style="font-size:.79rem;color:var(--muted);margin-top:6px">Always pair <code>%I</code> with <code>%p</code> to get "08:07 PM" not "08:07"</p>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you produce both a date label AND a time label from one column?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL (PostgreSQL):</span><br>
+          <code>SELECT<br>
+          &nbsp; TO_CHAR(order_purchase_date, 'Day, DD Month YYYY') AS purchase_label,<br>
+          &nbsp; TO_CHAR(order_purchase_date, 'HH12:MI AM') AS time_of_day_label<br>
+          FROM orders;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python:</span> Return a <code>pd.Series</code> with both keys — pandas expands it into two columns in one <code>.apply()</code> pass.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: TASK 3 — joining_cohort -->
+<div class="slide">
+  <h2>Task 3 — Monthly Joining Cohort</h2>
+  <p class="sub" style="margin-bottom:10px">Reformat the joining date of customers into a monthly cohort label like "Nov-2023" for cohort analysis and retention tracking. Dataset: <code>customers</code></p>
+  <div class="two">
+    <pre><span class="var">customers</span> = pd.<span class="fn">read_csv</span>(<span class="st">"excustomers.csv"</span>)
+
+<span class="cm"># Raw format:  "2017-08-22"  (clean date — no time component)
+# Output:      "Aug-2017"   (%b-%Y)</span>
+
+<span class="var">raw_fmt</span>    = <span class="st">"%Y-%m-%d"</span>
+<span class="var">output_fmt</span> = <span class="st">"%b-%Y"</span>
+
+<span class="cm"># Parse and format in a single .apply() call</span>
+<span class="var">customers</span>[<span class="st">'joining_cohort'</span>] = (
+    <span class="var">customers</span>[<span class="st">'joining_date'</span>]
+    .<span class="fn">apply</span>(<span class="kw">lambda</span> <span class="var">val</span>:
+        datetime.<span class="fn">strptime</span>(<span class="var">val</span>, <span class="var">raw_fmt</span>).<span class="fn">strftime</span>(<span class="var">output_fmt</span>)
+    )
+)
+
+<span class="cm"># Result:
+# customer_id | joining_date | joining_cohort
+# AA-10375    | 2017-08-22   | Aug-2017
+# AA-10480    | 2017-02-15   | Feb-2017
+# AB-10060    | 2017-04-16   | Apr-2017</span>
+
+<span class="cm"># Follow-up: count customers per cohort</span>
+<span class="var">cohort_count</span> = (
+    <span class="var">customers</span>.<span class="fn">groupby</span>(<span class="st">'joining_cohort'</span>)
+    [<span class="st">'customer_id'</span>].<span class="fn">count</span>().<span class="fn">reset_index</span>(<span class="var">name</span>=<span class="st">'count'</span>)
+)</pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Format differences to watch</h3>
+        <table>
+          <tr><th>Input format</th><th>Example</th></tr>
+          <tr><td><code>"%Y-%m-%d"</code></td><td style="font-size:.78rem">2017-08-22 (clean date)</td></tr>
+          <tr><td><code>"%Y-%m-%d %H:%M:%S.%f"</code></td><td style="font-size:.78rem">2018-05-11 20:07:00.000 (with time)</td></tr>
+        </table>
+        <p style="font-size:.79rem;color:var(--muted);margin-top:6px">Always match the raw format exactly — if the data has microseconds but your format string doesn't include <code>%f</code>, it will throw a ValueError.</p>
+      </div>
+      <div class="hl gr">
+        <h3 style="color:var(--green);font-size:.84rem;margin-bottom:6px">Why cohort analysis?</h3>
+        <p style="font-size:.83rem">Monthly cohorts group customers by when they joined. This lets us track retention: "Of customers who joined in Aug-2017, how many are still buying today?" — a core e-commerce KPI.</p>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you produce "Aug-2017" from a date column?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL (PostgreSQL):</span><br>
+          <code>SELECT customer_id,<br>
+          &nbsp; TO_CHAR(joining_date, 'Mon-YYYY') AS joining_cohort<br>
+          FROM customers;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python:</span><br>
+          <code>datetime.strptime(val, "%Y-%m-%d").strftime("%b-%Y")</code><br>
+          <code>%b</code> (abbreviated month) = SQL's <code>'Mon'</code>; <code>%Y</code> = SQL's <code>'YYYY'</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: TASK 4 — campaign start/end labels -->
+<div class="slide">
+  <h2>Task 4 — Campaign Date Range Labels</h2>
+  <p class="sub" style="margin-bottom:10px">Reformat campaign start and end dates into <code>"dd/mm/yyyy"</code> format using a reusable helper function. Dataset: <code>campaigns</code></p>
+  <div class="two">
+    <pre><span class="var">campaigns</span> = pd.<span class="fn">read_csv</span>(<span class="st">"excampaigns.csv"</span>)
+
+<span class="cm"># start_date / end_date format: "2017-10-09"
+# Output: "09/10/2017" (dd/mm/yyyy)</span>
+
+<span class="var">raw_fmt</span>    = <span class="st">"%Y-%m-%d"</span>
+<span class="var">output_fmt</span> = <span class="st">"%d/%m/%Y"</span>
+
+<span class="cm"># Helper function — reusable for both start and end dates</span>
+<span class="kw">def</span> <span class="fn">reformat_date</span>(<span class="var">val</span>):
+    <span class="kw">return</span> datetime.<span class="fn">strptime</span>(<span class="var">val</span>, <span class="var">raw_fmt</span>).<span class="fn">strftime</span>(<span class="var">output_fmt</span>)
+
+<span class="cm"># Apply to both columns — same helper, two uses</span>
+<span class="var">campaigns</span>[<span class="st">'start_label'</span>] = <span class="var">campaigns</span>[<span class="st">'start_date'</span>].<span class="fn">apply</span>(<span class="fn">reformat_date</span>)
+<span class="var">campaigns</span>[<span class="st">'end_label'</span>]   = <span class="var">campaigns</span>[<span class="st">'end_date'</span>].<span class="fn">apply</span>(<span class="fn">reformat_date</span>)
+
+<span class="cm"># Result:
+# start_date  | end_date   | start_label | end_label
+# 2017-10-09  | 2018-06-09 | 09/10/2017  | 09/06/2018
+# 2017-12-12  | 2018-03-13 | 12/12/2017  | 13/03/2018</span>
+
+<span class="var">result</span> = <span class="var">campaigns</span>[[<span class="st">'campaign_id'</span>,<span class="st">'campaign_type'</span>,
+                       <span class="st">'start_date'</span>,<span class="st">'end_date'</span>,
+                       <span class="st">'start_label'</span>,<span class="st">'end_label'</span>]]</pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Helper vs lambda — when to use each</h3>
+        <table>
+          <tr><th></th><th>Helper function</th><th>Lambda</th></tr>
+          <tr><td style="font-size:.78rem">Reusability</td><td style="font-size:.78rem" class="ok">Yes — used twice here</td><td style="font-size:.78rem">No — one use only</td></tr>
+          <tr><td style="font-size:.78rem">Complexity</td><td style="font-size:.78rem">Multiple lines OK</td><td style="font-size:.78rem">Single expression only</td></tr>
+          <tr><td style="font-size:.78rem">Readability</td><td style="font-size:.78rem">Named → clear</td><td style="font-size:.78rem">Can get cluttered</td></tr>
+        </table>
+        <p style="font-size:.79rem;color:var(--muted);margin-top:6px">When the same transformation applies to multiple columns → use a named helper.</p>
+      </div>
+      <div class="hl yl">
+        <h3 style="color:var(--yellow);font-size:.84rem;margin-bottom:6px">%d/%m/%Y — be careful with order!</h3>
+        <p style="font-size:.83rem"><code>%d/%m/%Y</code> = day first, then month — DD/MM/YYYY (international format, not US MM/DD). "09/10/2017" = 9th October, not 10th September.</p>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you produce "09/10/2017" for both start and end dates in one query?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL (PostgreSQL):</span><br>
+          <code>SELECT campaign_id,<br>
+          &nbsp; TO_CHAR(start_date, 'DD/MM/YYYY') AS start_label,<br>
+          &nbsp; TO_CHAR(end_date,   'DD/MM/YYYY') AS end_label<br>
+          FROM campaigns;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python:</span> Define one <code>reformat_date()</code> helper and call <code>.apply(reformat_date)</code> on both columns — one helper, two uses, same as the single SQL expression applied to two columns.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: FULL CODE + CHEAT SHEET -->
+<div class="slide">
+  <h2>Complete Solution + Format Code Cheat Sheet</h2>
+  <div class="two">
+    <pre style="font-size:.72rem;line-height:1.78"><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="var">orders</span>    = pd.<span class="fn">read_csv</span>(<span class="st">"exorders.csv"</span>)
+<span class="var">customers</span> = pd.<span class="fn">read_csv</span>(<span class="st">"excustomers.csv"</span>)
+<span class="var">campaigns</span> = pd.<span class="fn">read_csv</span>(<span class="st">"excampaigns.csv"</span>)
+
+<span class="cm"># Task 1: purchase_label — "Friday, 11 May 2018"</span>
+<span class="var">raw_fmt</span>    = <span class="st">"%Y-%m-%d %H:%M:%S.%f"</span>
+<span class="var">output_fmt</span> = <span class="st">"%A, %d %B %Y"</span>
+<span class="var">orders</span>[<span class="st">'purchase_label'</span>] = (
+    <span class="var">orders</span>[<span class="st">'order_purchase_date'</span>]
+    .<span class="fn">apply</span>(<span class="kw">lambda</span> <span class="var">val</span>:
+        datetime.<span class="fn">strptime</span>(<span class="var">val</span>, <span class="var">raw_fmt</span>).<span class="fn">strftime</span>(<span class="var">output_fmt</span>))
+)
+
+<span class="cm"># Task 2: purchase_label + time_of_day_label in one helper</span>
+<span class="var">time_label_fmt</span> = <span class="st">"%I:%M %p"</span>
+
+<span class="kw">def</span> <span class="fn">build_labels</span>(<span class="var">val</span>):
+    <span class="var">dt</span> = datetime.<span class="fn">strptime</span>(<span class="var">val</span>, <span class="var">raw_fmt</span>)
+    <span class="kw">return</span> pd.<span class="fn">Series</span>({
+        <span class="st">"purchase_label"</span>    : <span class="var">dt</span>.<span class="fn">strftime</span>(<span class="var">output_fmt</span>),
+        <span class="st">"time_of_day_label"</span> : <span class="var">dt</span>.<span class="fn">strftime</span>(<span class="var">time_label_fmt</span>),
+    })
+
+<span class="var">labels</span> = <span class="var">orders</span>[<span class="st">"order_purchase_date"</span>].<span class="fn">apply</span>(<span class="fn">build_labels</span>)
+
+<span class="cm"># Task 3: joining_cohort — "Aug-2017"</span>
+<span class="var">raw_fmt</span>    = <span class="st">"%Y-%m-%d"</span>
+<span class="var">output_fmt</span> = <span class="st">"%b-%Y"</span>
+<span class="var">customers</span>[<span class="st">'joining_cohort'</span>] = (
+    <span class="var">customers</span>[<span class="st">'joining_date'</span>]
+    .<span class="fn">apply</span>(<span class="kw">lambda</span> <span class="var">val</span>:
+        datetime.<span class="fn">strptime</span>(<span class="var">val</span>, <span class="var">raw_fmt</span>).<span class="fn">strftime</span>(<span class="var">output_fmt</span>))
+)
+
+<span class="cm"># Task 4: start_label + end_label — "09/10/2017"</span>
+<span class="var">output_fmt</span> = <span class="st">"%d/%m/%Y"</span>
+<span class="kw">def</span> <span class="fn">reformat_date</span>(<span class="var">val</span>):
+    <span class="kw">return</span> datetime.<span class="fn">strptime</span>(<span class="var">val</span>, <span class="var">raw_fmt</span>).<span class="fn">strftime</span>(<span class="var">output_fmt</span>)
+
+<span class="var">campaigns</span>[<span class="st">'start_label'</span>] = <span class="var">campaigns</span>[<span class="st">'start_date'</span>].<span class="fn">apply</span>(<span class="fn">reformat_date</span>)
+<span class="var">campaigns</span>[<span class="st">'end_label'</span>]   = <span class="var">campaigns</span>[<span class="st">'end_date'</span>].<span class="fn">apply</span>(<span class="fn">reformat_date</span>)</pre>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">All 4 task outputs at a glance</h3>
+        <table>
+          <tr><th>Task</th><th>Output format</th><th>Example</th></tr>
+          <tr><td style="font-size:.76rem">1. Purchase label</td><td><code style="font-size:.72rem">%A, %d %B %Y</code></td><td style="font-size:.76rem" class="ok">Friday, 11 May 2018</td></tr>
+          <tr><td style="font-size:.76rem">2. Time label</td><td><code style="font-size:.72rem">%I:%M %p</code></td><td style="font-size:.76rem" class="ok">08:07 PM</td></tr>
+          <tr><td style="font-size:.76rem">3. Joining cohort</td><td><code style="font-size:.72rem">%b-%Y</code></td><td style="font-size:.76rem" class="ok">Aug-2017</td></tr>
+          <tr><td style="font-size:.76rem">4. Campaign dates</td><td><code style="font-size:.72rem">%d/%m/%Y</code></td><td style="font-size:.76rem" class="ok">09/10/2017</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">SQL ↔ Python quick reference</h3>
+        <table>
+          <tr><th>Task</th><th>SQL (<code>TO_CHAR</code>)</th><th>Python (<code>strftime</code>)</th></tr>
+          <tr><td style="font-size:.74rem">Full date label</td><td><code style="font-size:.70rem">'Day, DD Month YYYY'</code></td><td><code style="font-size:.70rem">"%A, %d %B %Y"</code></td></tr>
+          <tr><td style="font-size:.74rem">Time of day</td><td><code style="font-size:.70rem">'HH12:MI AM'</code></td><td><code style="font-size:.70rem">"%I:%M %p"</code></td></tr>
+          <tr><td style="font-size:.74rem">Monthly cohort</td><td><code style="font-size:.70rem">'Mon-YYYY'</code></td><td><code style="font-size:.70rem">"%b-%Y"</code></td></tr>
+          <tr><td style="font-size:.74rem">DD/MM/YYYY</td><td><code style="font-size:.70rem">'DD/MM/YYYY'</code></td><td><code style="font-size:.70rem">"%d/%m/%Y"</code></td></tr>
+          <tr><td style="font-size:.74rem">Two columns</td><td><code style="font-size:.70rem">two TO_CHAR() in one SELECT</code></td><td><code style="font-size:.70rem">one helper, .apply() twice</code></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+let cur=0;const slides=document.querySelectorAll('.slide');const total=slides.length;const ctr=document.getElementById('ctr');
+function show(n){slides[cur].classList.remove('active');cur=(n+total)%total;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+total;}
+function go(d){show(cur+d)}function rev(btn){btn.nextElementSibling.style.display='block';btn.style.display='none';}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+ctr.textContent='1 / '+total;
+</script>
+</body>
+</html>

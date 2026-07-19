@@ -1,0 +1,817 @@
+# Mastering Code Reusability using Functions
+## Content Type
+Masterclass
+
+## Overview
+GlobalMart, a leading company in the market, was having trouble with their sales data processing. Their current method was slow and inefficient because the same code was used repeatedly. This was making it hard to handle and analyze sales data quickly.
+
+To fix this problem, the data analyst team at GlobalMart suggested using functions. Functions are small, reusable pieces of code that can simplify tasks. By breaking their code into functions, they hoped to make their work faster, less repetitive, and easier to manage.
+
+## Learning Objectives
+- Undrestand the requirements of function
+- Understand and implement Python functions, including defining, calling, and using parameters
+- Utilize lambda functions
+- Difference between parameters and arguments
+
+## Prerequisites
+- Basic Python syntax and programming constructs.
+- Fundamentals of Data Wrangling using Python
+
+## Duration of Completion
+180 minutes
+
+## Level
+N A
+
+## Industries
+- e-commerce
+
+## Tags
+- approach (skill)
+- quality (skill)
+- data-wrangling (skill)
+- python (tool)
+
+## Scenarios
+### List Comprehension
+#### Overview
+List comprehensions in Python provide a concise way to create lists. They consist of an expression followed by a for clause and can include additional for or if clauses. List comprehensions are used to construct lists in a readable and efficient manner, often replacing the need for loops.
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- approach (skill)
+- quality (skill)
+- data-wrangling (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+**Mark:** Great work, team! Our progress has been impressive, and I'm pleased to hear that GlobalMart is happy with our efforts. As we continue, Jane will explain our next task.
+
+**Jane:** Thanks, Mark. Our next objective is to analyze customer data to find common names among those visiting the site.
+
+**Mark:** That sounds like a valuable task! By identifying and separating common names, we can tailor personalized marketing images for our customers.
+
+**Jane:** Exactly. This will help us in personalizing services and improving customer engagement based on their names.
+
+**Mark:** One specific request from GlobalMart is to determine how many customers have names that start with "Alan." 
+
+**Jane:** I’ve written some code to accomplish this. Here is that
+
+However, I’m wondering if there’s a more efficient way to solve this.
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+### List Comprehension
+
+**Mark:** Good question, Jane. Instead of using traditional `for` loop, we can use a list comprehension to achieve the same result.
+
+**Jane:** What is List Comprehension?
+
+**Mark:** List comprehension is an easy-to-read, compact, and elegant way of creating a list from any existing iterable object. Basically, it's a simpler way to create a new list from the values in a list you already have. Below is an example of that where we are creating a list based on loop.
+
+![List Comprehension in Python Explained for Beginners](https://www.freecodecamp.org/news/content/images/size/w2000/2021/07/list-comprehension-1.png)
+
+**Jane:** Let's solve our problem with the List Comprehension
+
+**Mark:** Ya, here's the solution to that, via list comprehension
+
+    # Unique customer names from the DataFrame
+    customer_name = data['customer_name']
+    
+    # List comprehension to fetch all names starting with 'Alan'
+    alan_fname = [name for name in customer_name if name.startswith("Alan")]
+    print('No. of customers whose name starts with Alan are: ', len(alan_fname))
+
+**Tags**
+
+
+##### Input 3
+**Type:** Choice
+
+**Question:** Load the customer data from the provided [GlobalMart](https://cdn.enqurious.com/others/9902e8b2-e990-43af-9bc2-a955d976ab2f_globalmart-data.xlsx) file. Retrieve the customer names and determine how many customers have a first name starting with "Alan" using list comprehension.
+
+**Options:** 
+- 6
+
+- 4
+
+- 3
+
+- 5
+
+**Correct Options:** 
+- 6
+
+**Tags**
+- approach / concept-clarity (skill)
+- approach / logic-building (skill)
+- data-wrangling / list-processing (skill)
+
+##### Input 4
+**Type:** Code
+
+**Question:** ### Scenario: Filtering and Transforming Globalmart Sales Data
+
+You have a list of dictionaries representing sales transactions, and you want to create a list of product names that have a sales amount greater than $500 and were sold in the "Electronics" category.
+
+<move it to Shuchi hands-on>
+
+**Language:** python
+
+**Snippet:** sales_data = [
+    {"product_name": "Laptop", "sales_amt": 1200, "category": "Electronics"},
+    {"product_name": "Smartphone", "sales_amt": 400, "category": "Electronics"},
+    {"product_name": "Desk Chair", "sales_amt": 150, "category": "Furniture"},
+    {"product_name": "Headphones", "sales_amt": 600, "category": "Electronics"},
+    {"product_name": "Office Desk", "sales_amt": 450, "category": "Furniture"}
+]
+
+# Filter and transform using list comprehension
+
+
+**Solution:** 
+**Solution:**
+
+```python
+sales_data = [
+    {"product_name": "Laptop", "sales_amt": 1200, "category": "Electronics"},
+    ...
+    ...
+]
+
+# Filter and transform using list comprehension
+high_value_electronics = [
+    sale["product_name"] 
+    for sale in sales_data 
+    if sale["sales_amt"] > 500 and 
+    sale["category"] == "Electronics"
+]
+
+print("High Value Electronics:", high_value_electronics)
+```
+
+### Explanation:
+- **Filtering Condition 1**: `sale["sales_amt"] > 500` ensures that only sales with amounts greater than $500 are considered.
+- **Filtering Condition 2**: `sale["category"] == "Electronics"` ensures that only products in the "Electronics" category are included.
+- **Transformation**: Extracts the `product_name` from each qualifying sale.
+
+This approach provides a concise and efficient way to filter and extract relevant information from the dataset.
+
+**Tags**
+- data-wrangling / list-processing (skill)
+- approach / concept-clarity (skill)
+- python (tool)
+
+###  Reusability of code
+#### Overview
+Understand the principles and practices that allow code to be reused across different parts of a project or in multiple projects, thereby improving efficiency, reducing redundancy, and enhancing maintainability.
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- approach (skill)
+- data-wrangling (skill)
+- quality (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+### **Introduction to Function**
+
+**Mark:** Hey, we successfully ingested and processed data using Python. However, the code is repetitive and difficult to maintain. We have hard-coded logic, which makes it inefficient **as shown below**. 
+
+![](https://cdn.enqurious.com/images/1ab52633-7302-4a8c-b7b8-240c28735326_image.webp)
+
+#### Problems with This Approach:
+
+1.  **Code Redundancy:** The logic for calculating the total cost and applying discounts is repeated multiple times.
+2.  **Maintenance Nightmare:** If you need to change the discount logic, you must update it in multiple places.
+3.  **Readability Issues:** The code becomes harder to read and understand as it grows
+
+**Jane:** What should we do now?
+
+**Mark:** Therefore, we need to use functions to make it more efficient. Functions can help us avoid repeating code and make it easier to manage.
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+### What are Functions?
+
+**Jane:** What are the functions?
+
+**Mark:**  Functions are like recipes. They take ingredients (inputs), follow steps (logic), and produce a dish (output). Without a recipe, cookies vary in shape and flavor; with the recipe, they're consistent.
+
+![](https://cdn.enqurious.com/images/ea9aca99-f871-416c-b15e-ebfff35d14ff_cookies_recipie_image.webp)
+
+Similarly, In programming, a function is like a recipe that takes inputs (arguments), performs a series of actions (instructions), and returns an output based on those inputs.
+
+**Jane:** Okay. Just like how we can reuse the same recipe to make different meals, functions allow us to reuse the same code in our program multiple times.
+
+**Mark:** Additionally, if any changes are required, we can simply modify the function's logic, and it will automatically be applied in all the places where the function is used. This enhances code reusability and maintainability. 
+
+**Jane:** What if we modify the above redundant logic by using the function?
+
+**Mark:** Here's an example of how our revised code would appear:
+
+![](https://cdn.enqurious.com/images/5c4bcc90-922a-455e-9394-a335e00d063b_image.webp)
+
+#### Benefits of This Approach:
+
+1.  **Reduced Redundancy:** The logic for adding items, calculating total cost, and applying discounts is encapsulated in functions, avoiding repetition.
+2.  **Ease of Maintenance:** If the discount logic changes, you only need to update the `apply_discount` function.
+3.  **Improved Readability:** The main code is now cleaner and more understandable, focusing on high-level tasks.
+
+**Jane:** Let's discuss how to define the functions and call them.
+
+**Tags**
+
+
+##### Input 3
+**Type:** Choice
+
+**Question:** What are the benefits of using functions in this scenario for calculating the total cost of customer orders? Select all that apply.
+
+**Options:** 
+- Functions allow code to be reused in multiple places without rewriting it.
+
+- Functions help in organizing code and making it more readable.
+
+- Functions increase the complexity of the code, making it harder to maintain.
+
+- Functions make the code redundant, which reduces the code efficiency
+
+**Correct Options:** 
+- Functions allow code to be reused in multiple places without rewriting it.
+
+- Functions help in organizing code and making it more readable.
+
+**Tags**
+- approach / concept-clarity (skill)
+- python (tool)
+
+##### Input 4
+**Type:** Text
+
+### Syntax of Function
+
+**Jane:** Mark, can you explain how to create our own functions?
+
+**Mark:** Sure, Jane! The syntax of a function in programming follows a specific structure.
+
+![](https://cdn.enqurious.com/images/8669c9c5-155a-4937-b292-4e94adc4a792_function_syntax.webp)
+
+Let me explain step by step:
+
+*   **Defining a Function**: We start by using the "def" keyword followed by the function name and parentheses. For example: `def add():`
+    
+*   **Parameters:** Inside the parentheses, we can include parameters that the function will accept. These parameters are like placeholders for the data we want to pass into the function. For example: `def greet(name):`
+    
+*   **Function Body:** After defining the function, we use a colon "**:**" to indicate the beginning of the function's body. The function body contains the set of instructions or operations that the function will perform. It is indented and must be properly aligned. For example:
+    
+
+    def add(x, y):
+        print(f'Arguments passed are {x} and {y}')
+        return a + b
+
+**Tags**
+
+
+##### Input 5
+**Type:** Text
+
+### Function Call
+
+**Jane:** How to execute the logic of the function?
+
+**Mark:** Good Question Jane. Here comes the **Function Call**. To execute the function and make it perform its tasks, we call the function by writing its name followed by arguments. `add()`. We can pass actual values (arguments) into the function call if it requires any
+
+Below we have given two parameters while defining the function i.e. **a** and **b**. Now while calling the function we will pass the actual values i.e `add(2, 4)`. Thus 2 and 4 are the arguments. This is the flow:
+
+1.  Once the function is called, control will shift to function.
+    
+2.  The logic of the function will be executed
+    
+3.  If a return statement is encountered, the function returns the specified value and the control shifts back to the place from where the function was called.
+    
+
+**Jane:** Is it necessary to include a return statement in every function?
+
+**Mark:** No Jane. It is not mandatory, it totally depends on the logic of the function. If the function needs to give a result back, we can use the "return" keyword followed by the value we want to return. If the function contains execution code, but won't return anything, in that case we won't use the return keyword. Ex:
+
+    def greet(name):
+        print("Hello, " + name)
+    
+    greet("Enqurious") # Hello, Enqurious
+
+The provided function is utilized to print the name, so there's no need for a return statement in this function, and thus, we haven't included one.
+
+**Tags**
+
+
+##### Input 6
+**Type:** Choice
+
+**Question:** You are developing a system that returns welcome emails to new users. Given the following function, do you think the definition of the function is correct?
+
+```python
+def welcome_message(first_name):
+        print("Welcome to our platform, " + first_name + "!")
+```
+
+**Options:** 
+- No
+
+- Yes
+
+**Correct Options:** 
+- No
+
+**Solution:** 
+The definition of the function is not correct for sending welcome emails, because the function only prints the message and does not return it. To send the message in an email, the function should return the welcome message string.
+
+```python
+def welcome_message(first_name):
+    return "Welcome to our platform, " + first_name + "!"
+
+```
+
+**Tags**
+
+
+##### Input 7
+**Type:** Code
+
+**Question:** You are working for an online retail company, and you have been tasked with creating a Python script to process customer orders. 
+
+Define a function that calculates the total cost of an order. The function should take two parameters: the unit price of the item and the quantity ordered.
+
+**Language:** python
+
+**Snippet:** # Create a function
+
+
+
+
+unit_price = 75
+qty_ordered = 2
+
+# call the function
+
+**Solution:** 
+```python
+def calculate_total_cost(unit_price, quantity):
+    return unit_price * quantity
+
+# Example unit price and quantity
+unit_price = 75
+quantity = 2
+
+# Calculate the total cost
+total_cost = calculate_total_cost(unit_price, quantity)
+
+print("Total Cost:", total_cost)
+```
+
+**Tags**
+- approach / logic-building (skill)
+
+##### Input 8
+**Type:** Text
+
+### Parameters and Arguments
+
+**Jane:** Mark, I'm a bit confused about arguments and parameters. Can you explain the difference between the two?
+
+**Mark:** Alright. When we define a function, we use parameters. Parameters are like variables that act as placeholders for the data that the function will work with. They are written inside the parentheses in the function's definition.
+
+    def add(a, b):
+
+In the given function a and b are the parameters, that are used to receive input values that we pass to the function when we call it.
+
+**Jane:** And what are arguments then?
+
+**Mark:** Arguments are the actual values that we provide when calling the function. These values are passed to the function and are assigned to the corresponding parameters. They represent the real data the function will operate on.
+
+    add(2, 4)
+
+When calling the function, we passed two arguments, namely 2 and 4. These arguments serve as the real values on which the function operates. Consequently, the expression a + b will return 6, where a = 2 and b = 4.
+
+**Tags**
+
+
+##### Input 9
+**Type:** Choice
+
+**Question:** Let's have a look at the given code:
+```python
+def greet(name):
+    return f"Welcome {name} to the Mastering Function reusability masterclass"
+
+welcome_name = "John"
+greet(welcome_name)
+```
+
+Is welcome_name a parameter or an argument in the greet function call?
+
+**Options:** 
+- Argument
+
+- Parameter
+
+**Correct Options:** 
+- Argument
+
+**Solution:** 
+1. **Argument**: In the context of functions, an argument refers to the value that is passed to a function when the function is called. It is used to provide input data or information to the function so that it can perform its operations. Functions can accept one or more arguments depending on their definition.
+2. **Parameters**: Parameters are the variables declared in the function's definition that represent the arguments expected by the function. When a function is defined, it can specify what type and number of parameters it expects to receive when called. These parameters act as placeholders for the actual values (arguments) that will be passed during the function call.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 10
+**Type:** Text
+
+### Types of Parameters
+
+**Mark:** Jane, let's discuss the different types of parameters that we can use in functions.
+
+**Jane:** Sounds interesting! What are the types of parameters?
+
+**Mark:** There are three main types: 
+
+*   **Positional parameters**: Positional parameters are the most common type. When we define a function, we specify parameters in a specific order. When we call the function, we pass arguments in the same order to match the parameters. The values are matched based on their positions.
+    
+    ![](https://cdn.enqurious.com/images/6745b645-18e7-495a-9361-3ce86e799de0_positional_parameter.webp)
+    
+    In this context, a and b are referred to as positional parameters. When we call the function with two arguments, the first argument value is assigned to the first parameter (a), and the second argument value is assigned to the second parameter (b).   
+     
+    
+*   **Keyword parameters**: With keyword parameters, we pass arguments to the function using the parameter names as keys. This way, the order of the arguments doesn't matter, and we can pass them in any order we like.
+    
+    ![](https://cdn.enqurious.com/images/1e30f33d-9584-486c-ad8e-0d8cdd21b750_keyword_arguments.webp)
+    
+    In this context, a and b are referred to as keyword parameters. Therefore the order doesn't matter, two ways of function calling are given, that is `**add(a=10, b=30)**` and `**add(a=30, b=10)**.`  
+     
+    
+*   **Default parameters**: The third type is default parameters. We assign default values to certain parameters when defining the function. If we call the function without providing an argument for those parameters, the default values are used.
+    
+    ![](https://cdn.enqurious.com/images/d135c2f5-416f-4ea8-a23f-ec9ae8e5d946_default_parameters.webp)
+    
+
+**Jane:** Oh, I see! So, if some parameters have default values, we can call the function without passing values for those parameters.
+
+**Mark:** Exactly! Default parameters provide **flexibility** and allow us to use the function with or without specific arguments.
+
+**Tags**
+
+
+##### Input 11
+**Type:** Choice
+
+**Question:** Go through the given question and select the appropriate option.
+
+**Options:** 
+- ```python
+def call_api(url):
+      request.get(url)
+```
+
+- None of the above
+
+- ```python
+def call_api(url = "https://www.api.com"):
+      request.get(url)
+```
+
+- ```python
+def call_api():
+      url = "https://www.api.com"
+      request.get(url)
+```
+
+**Correct Options:** 
+- ```python
+def call_api(url = "https://www.api.com"):
+      request.get(url)
+```
+
+**Solution:** 
+The correct option is **Option 3**:
+
+```python
+def call_api(url = "https://www.api.com"):
+     request.get(url)
+ ```
+
+According to the question, the API should handle the API call, whether the URL is passed or not. If we choose **Option 1**, where positional parameters are passed, it will return an error if the URL parameter is not provided. In **Option 2**, since there are no parameters, passing a parameter will lead to an error.
+
+Therefore, **Option 3** is the correct choice, where the URL is declared as a default parameter. This enables it to handle both situations: if a URL is passed, it will use that URL; otherwise, it will default to the predefined URL, ensuring seamless functionality in either case.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 12
+**Type:** Choice
+
+**Question:** Your team learned that functions have a lot of benefits, so let's select the advantages of using functions.
+
+**Options:** 
+- Decreases modularity
+
+- Reduced code complexity
+
+- Reusability
+
+- Increases runtime errors
+
+**Correct Options:** 
+- Reduced code complexity
+
+- Reusability
+
+**Solution:** 
+1. **Reusability**: Functions promote reusability, allowing the same set of code to be used multiple times in a program. By defining a function once, you can call it whenever needed, eliminating the need to rewrite the same logic, which saves time and effort.
+2. **Increases runtime errors**: Using functions can actually help decrease runtime errors. By dividing the code into smaller, manageable pieces, it becomes easier to identify and fix errors in specific functions. This improves the overall code quality and reduces the likelihood of runtime errors.
+3. **Reduced code complexity**: Functions help break down complex tasks into smaller, more manageable units. This simplifies the overall code structure, making it easier to understand and maintain. It also enhances code readability, leading to better collaboration among team members.
+4. **Decreases modularity**: It seems there might be a typo in this option. The correct advantage should be "Increased modularity." Functions enable you to organize code into modular components, where each function serves a specific purpose. Modular code is easier to update, test, and maintain, leading to more efficient development and maintenance processes.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 13
+**Type:** Text
+
+### Global vs Local Variable
+
+**Jane:** Hey, I am getting an error when I try to run the code.
+
+**Mark:** Oh, I see. Could you please share your code with me?
+
+**Jane:** Sure! Here's the code:
+
+    def get_data(url = "https://www.api.com"):
+        data = request.get(url)
+    
+    get_data()
+    print(data)
+
+**Mark:** Ah, I see the issue here. The problem is related to how you're trying to access the `data` variable. Let me explain.
+
+**Jane:** Yes, please. What’s wrong with my code?
+
+**Mark:** In your code, `data` is a **local variable** within the `get_data` function. This means it is only accessible inside that function. When you try to access `data` outside the function, it results in an error because `data` does not exist in that scope.
+
+**Jane:** So, how can I fix this?
+
+**Mark:** One approach is to return the `data` from the function and then print it outside the function. Here’s how you can modify your code:
+
+    def get_data(url="https://www.api.com"):
+        data = request.get(url)
+        return data
+    
+    data = get_data()  # Get the data from the function and store it in a global variable
+    print(data)  # Now you can print the data because it's available in this scope
+    
+
+In this revised code, `get_data` returns the `data`, which is then assigned to the global variable `data`, which is outside the function. This makes `data`, accessible in the global scope where you can print it.
+
+**Jane:** Thanks, Mark! This explanation helps a lot.
+
+**Tags**
+
+
+### Lambda Function
+#### Overview
+Lambda functions in Python, also known as anonymous functions, are small, one-line functions defined using the lambda keyword. Unlike regular functions defined using def, lambda functions are limited in functionality but are often used for simple operations that can be written in a single expression. They are commonly used in situations requiring a small function for a short period, such as within other functions or methods like map(), filter(), and sorted().
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- approach (skill)
+- quality (skill)
+- data-wrangling (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+### **Lambda Function**
+
+**Mark:** Hey Team! We have successfully created the function. Great job, everyone!
+
+**Jane:** I have a question about functions.
+
+**Mark:** Sure, Jane! Please go ahead and share your confusion.
+
+**Jane:** Is there a simpler way to define a function for short tasks? Let's say I need a function to add two numbers, and the regular function looks like this:
+
+    def add(a, b):
+        return a + b
+    
+
+It seems a bit excessive to define a named function for such a simple task. What if we need a function for a brief period and don't want to create a full function definition?
+
+**Mark:** Oh, I understand now. Lambda functions are perfect for cases where we need a small function that we'll use only once. They help us avoid extra function definitions cluttering our code. Lambda functions are also handy for inline functions, like when passing an argument to another function.
+
+**Mark:** Exactly! So let's convert your regular function to a lambda function.
+
+    add = lambda a, b: a + b
+
+**Jane**: But how do we call this function?
+
+**Mark**: Good question. To call this function, we use the variable where the lambda function is stored. For example:
+
+    result = add(5, 6) # 11
+
+Also, we can directly call the lambda function, without assigning it to a variable:
+
+    (lambda a, b: a + b)(5, 6) # 11
+
+**Jane**: Oh, I see. Lambda functions are more concise, and they can be written in a single line, saving time and space in our code.
+
+**Tags**
+
+
+##### Input 2
+**Type:** Choice
+
+**Question:** You have employed the lambda function and determined its advantages. What advantages do you think the lambda function has over the regular function?
+
+**Options:** 
+- Lambda functions are more versatile than regular functions, since they can be used with any data type.
+
+- Lambda functions can be defined inline, making them more concise and easier to read in some cases.
+
+- Lambda functions have less syntactic overhead compared to regular functions
+
+- Can handle more complex logic than regular functions.
+
+**Correct Options:** 
+- Lambda functions can be defined inline, making them more concise and easier to read in some cases.
+
+- Lambda functions have less syntactic overhead compared to regular functions
+
+**Solution:** 
+1. **Can handle more complex logic than regular functions**: This option is not accurate. Lambda functions are generally used for simpler and concise operations. Regular functions, defined using the def keyword, are better suited for handling more complex logic due to their ability to contain multiple statements, control flow structures (if-else, loops), and handle larger code blocks.
+2. <span style='color:green; font-weight: bold; text-decoration: underline'>Lambda functions can be defined inline, making them more concise and easier to read in some cases</span>: This is true. Lambda functions are often used when a small, single-expression function is needed. They can be defined inline within the code, reducing the need for creating named functions and improving code readability when the function logic is straightforward.
+3. **Lambda functions are more versatile than regular functions, since they can be used with any data type**: This option is not entirely accurate. Lambda functions are versatile, but their versatility is related to the simplicity of the operations they perform, not their ability to work with any data type. Lambda functions are limited to single expressions and are best suited for operations like mapping, filtering, and simple transformations. Regular functions can work with any data type and handle more complex operations.
+4. <span style='color:green; font-weight: bold; text-decoration: underline'>Lambda functions have less syntactic overhead compared to regular functions</span>: This is true. Lambda functions have a more concise syntax compared to regular functions. They don't require the `def` keyword, function name, and `return` statement. This reduced syntactic overhead makes lambda functions well-suited for quick and simple tasks.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 3
+**Type:** Choice
+
+**Question:** Which is the correct way to call the lambda function?
+
+**Options:** 
+- ```python
+lambda_fn = (a, b): a + b
+lambda_fn(2, 4)
+```
+
+- ```python
+(lambda a, b: a + b)(2, 4)
+```
+
+- ```python
+lambda a, b: a + b(2, 4)
+```
+
+- ```python
+lambda_fn = lambda a, b: a + b
+lambda_fn(2, 4)
+```
+
+**Correct Options:** 
+- ```python
+(lambda a, b: a + b)(2, 4)
+```
+
+- ```python
+lambda_fn = lambda a, b: a + b
+lambda_fn(2, 4)
+```
+
+**Solution:** 
+### Options 2 and 4 are correct.
+
+**Option 2**:
+
+We can directly call the function without assigning it to a variable. Here is an example of that:
+```python
+(lambda a, b: a + b)(2, 4)
+ ```
+
+Let's break it into steps:
+
+- ```(lambda a, b: a + b)``` defines an anonymous lambda function that takes two arguments a and b, and returns their sum ```(a + b)```.
+- ```(2, 4)``` represents a tuple containing two values: 2 and 4. These values will be used as the arguments for the lambda function.
+- The lambda function is immediately invoked with the arguments 2 and 4.
+- The lambda function adds the values of a (which is 2) and b (which is 4) together, resulting in 2 + 4, which equals 6.
+
+**Option 4**: The logic is the same as Option 2, but in this case, the lambda function is assigned to the variable and then called via that variable. 
+
+- Assigned to a variable:
+```python
+lambda_fn = (a, b): a + b
+ ```
+- Called the function:
+```python
+lambda_fn(2, 4)
+ ```
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 4
+**Type:** Code
+
+**Question:** ### Code Debugging
+
+You are working with GlobalMart's sales data and need to perform operations using lambda functions. There is a syntax error in the lambda function call that needs to be debugged
+
+**Language:** python
+
+**Snippet:** # GlobalMart Sales Data
+orders = [250, 450, 150, 500]
+
+# Apply a 10% discount on each order using lambda
+apply_discount = lambda x: x * 0.9
+discounted_orders = []
+
+for order in orders:
+    discounted_orders.append(lambda order: apply_discount(order))
+
+print("Discounted Orders:", discounted_orders)
+
+
+**Solution:** 
+**Incorrect code:**
+```python
+# GlobalMart Sales Data
+orders = [250, 450, 150, 500]
+
+# Apply a 10% discount on each order using lambda
+apply_discount = lambda x: x * 0.9
+discounted_orders = []
+
+for order in orders:
+    discounted_orders.append(lambda order: apply_discount(order))
+
+print("Discounted Orders:", discounted_orders)
+```
+
+In this code, you are appending a lambda function to the `discounted_orders` list. However, this lambda function takes an argument `order` but does not use it. It appends the lambda function into the list, thus it contains the list of lambda functions and not the discounted price.
+
+If you want to apply the discount directly to each order and store the discounted values, you should call `apply_discount(order)` directly within the loop, as follows:
+
+**Correct Code:**
+```python
+# GlobalMart Sales Data
+orders = [250, 450, 150, 500]
+
+# Apply a 10% discount on each order using lambda
+apply_discount = lambda x: x * 0.9
+discounted_orders = []
+
+for order in orders:
+    discounted_orders.append(apply_discount(order))
+
+print("Discounted Orders:", discounted_orders)
+```
+
+In this corrected version:
+- `apply_discount(order)` is called directly in the loop, which correctly applies the discount to each order.
+The results are appended to `discounted_orders`, giving you the list of discounted orders.
+
+**Tags**
+- approach / concept-clarity (skill)
+- python (tool)

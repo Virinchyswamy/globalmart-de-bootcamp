@@ -1,0 +1,932 @@
+# Understanding window functions in SQL
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to use SQL window functions to solve real-world analytical reporting challenges at GlobalMart, including contribution percentages, ranking within groups, top-N filtering, and month-on-month time-series comparisons.
+
+## Learning Objectives
+- Explain how window functions differ from GROUP BY and identify when each approach is appropriate
+- Apply SUM() OVER(PARTITION BY ...) to calculate group-wise contribution percentages without collapsing rows
+- Choose between ROW_NUMBER(), RANK(), and DENSE_RANK() based on how ties must be handled
+- Design multi-step CTE queries that calculate window function results and then filter them in an outer query
+- Implement LAG() and LEAD() to compare each row with the previous or next row in a time series
+- Identify and avoid common pitfalls including integer division, NULL from LAG(), and window functions used in WHERE
+
+## Prerequisites
+- Proficiency writing SQL SELECT queries with JOINs, WHERE filters, and GROUP BY
+- Experience using aggregate functions such as COUNT() and SUM()
+- Ability to structure multi-step queries using CTEs with the WITH clause
+
+## Duration of Completion
+90 minutes
+
+## Level
+Advanced
+
+## Industries
+- general
+
+## Tags
+- data-wrangling (skill)
+- approach (skill)
+- sql (tool)
+
+#### Overview
+In this scenario you will learn how to use SQL window functions to solve real-world analytical reporting challenges at GlobalMart, including contribution percentages, ranking within groups, top-N filtering, and month-on-month time-series comparisons.
+
+#### Level
+advanced
+
+#### Industries
+- general
+
+#### Tags
+- data-wrangling (skill)
+- approach (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## Rajiv's Reporting Challenge
+
+Rajiv is a data analyst at GlobalMart. He is confident with joins, group aggregations, and CTEs. This morning he received an email from Robert with three reporting requests that go beyond what `GROUP BY` alone can handle.
+
+>[!IMPORTANT]
+> All SQL code in this masterclass uses **SQL Server (T-SQL)** syntax. Functions such as `FORMAT()`, `DATENAME()`, `MONTH()`, and `YEAR()` are SQL Server-specific and may not work in PostgreSQL, MySQL, or SQLite. See the dialect comparison table in the final section.
+
+---
+
+### Robert's Email
+
+Hi Rajiv,
+
+We have a few reporting requirements that need to be completed urgently.
+
+**Report 1 — Category and sub-category product contribution**
+
+Report category-wise and sub-category-wise product count, along with each sub-category's percentage contribution to its category.
+
+![Report 1 expected output showing category, sub-category, product count, and contribution percentage](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/306a3198-4b89-4d42-8fe7-b7c51bf5404d_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+| Column | Meaning |
+|---|---|
+| Category | Product category from the `products` table |
+| Sub-Category | Sub-category from the `products` table |
+| #Products | Total products in that sub-category |
+| Contribution | Sub-category's percentage share within its category |
+
+Example: If category `A` has 250 products and sub-category `A1` has 57, then `A1` contributes `57 / 250 = 22.8%`.
+
+---
+
+**Report 2 — Vendor deliveries by region**
+
+Report vendor-wise delivery counts in each region, contribution percentage, and rank within the region.
+
+![Report 2 expected output showing region, vendor name, delivery count, contribution, and rank](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/6791cc92-1151-4668-b0ab-76de2cb23b67_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+| Column | Meaning |
+|---|---|
+| Region | Region from the `locations_01` table |
+| Vendor Name | Vendor delivering the product |
+| #Deliveries | Total completed deliveries by the vendor in that region |
+| Contribution | Vendor's share of deliveries within the region |
+| Rank | Vendor's rank within the region |
+
+---
+
+**Report 3 — Top 3 customers by order value in each region**
+
+Report only the top 3 customers by total order value in each region.
+
+![Report 3 expected output showing region, customer name, order value, contribution, and rank](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/4c275f09-8fa8-401c-a4be-3805d4c976f2_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+| Column | Meaning |
+|---|---|
+| Region | Customer's region |
+| Customer Name | Customer placing the order |
+| Orders Worth | Total order value placed by the customer |
+| Contribution | Customer's share of order value within the region |
+| Rank | Customer's rank within the region |
+
+>[!NOTE]
+> Access the database using the credentials provided below in your learning environment.
+
+- Server name : mentorskool.database.windows.net  
+ Username : mskllearnlogin  
+ Password : !@#sw2aq1  
+- The data dictionary and the ER-diagram is shown below:
+
+![Image-ER-diagram.png](https://cdn.enqurious.com/images/751b06c3-2660-442d-b3d8-5170bd949c92\_ER-diagram.webp)
+
+Looking forward to your magic :)
+Regards,
+Robert
+
+---
+
+### Why Rajiv Needs Window Functions
+
+Rajiv can already write base summaries with `GROUP BY` and CTEs. But the **Contribution** and **Rank** columns are new.
+
+> **Rajiv:** I can get category totals with `GROUP BY`, but that collapses everything into one row per group — sub-category rows disappear. These reports need the category total sitting beside each sub-category row, and then ranks on top of that.
+>
+> **Sharon:** That is exactly what window functions solve. They calculate across a group of rows without collapsing any of them. Once you understand `OVER(PARTITION BY ...)`, the rest follows naturally.
+
+---
+
+### Rajiv's Starting Point
+
+Rajiv writes the base queries first. These get him most of the way there.
+
+**Report 1 base query**
+
+```sql
+SELECT
+    category,
+    sub_category,
+    COUNT(*) AS product_count
+FROM products
+GROUP BY
+    category,
+    sub_category;
+```
+
+He has product count per sub-category. What he still needs: the category total in the same row to compute the percentage.
+
+**Report 2 base query**
+
+```sql
+WITH base_data AS (
+    SELECT
+        o.order_id,
+        v.vendor_name,
+        l.region
+    FROM orders o
+    JOIN vendors v
+        ON o.vendor_id = v.vendor_id
+    JOIN customers c
+        ON o.customer_id = c.customer_id
+    JOIN locations_01 l
+        ON c.postal_code = l.postal_code
+    WHERE o.order_delivered_customer_date IS NOT NULL
+),
+delivery_summary AS (
+    SELECT
+        region,
+        vendor_name,
+        COUNT(order_id) AS delivery_count
+    FROM base_data
+    GROUP BY region, vendor_name
+)
+SELECT * FROM delivery_summary;
+```
+
+He has delivery counts. What he still needs: contribution percentage and rank within each region.
+
+**Report 3 base query**
+
+```sql
+WITH base_data AS (
+    SELECT
+        l.region,
+        c.customer_name,
+        t.sales
+    FROM orders o
+    JOIN transactions t
+        ON o.order_id = t.order_id
+    JOIN customers c
+        ON o.customer_id = c.customer_id
+    JOIN locations_01 l
+        ON c.postal_code = l.postal_code
+    WHERE o.order_status NOT IN ('canceled', 'unavailable')
+),
+order_summary AS (
+    SELECT
+        region,
+        customer_name,
+        SUM(sales) AS order_amount
+    FROM base_data
+    GROUP BY region, customer_name
+)
+SELECT * FROM order_summary;
+```
+
+He has order amounts per customer per region. What he still needs: contribution, rank, and a way to keep only the top 3.
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Core Concept: What Is A Window Function?
+
+A window function performs a calculation across a set of related rows — called a **window** — without collapsing them into one row per group.
+
+| Requirement | `GROUP BY` | Window Function |
+|---|---|---|
+| Category total beside each sub-category row | One row per category — sub-category rows gone | Category total added beside every sub-category row |
+| Rank vendors within each region | Requires extra subquery steps | `RANK()` inside `OVER(PARTITION BY region ...)` |
+| Previous month's value beside the current month | Requires a self-join | `LAG()` |
+
+**General syntax:**
+
+```sql
+function_name(column_name) OVER (
+    PARTITION BY group_column
+    ORDER BY sort_column
+)
+```
+
+| Clause | Purpose |
+|---|---|
+| `PARTITION BY` | Divides rows into separate windows — like `GROUP BY` but non-collapsing |
+| `ORDER BY` | Defines row order within each window |
+
+Both clauses are optional. An empty `OVER()` treats the entire result set as one window.
+
+>[!TIP]
+> Think of a window function as placing a calculation column beside your existing rows, not replacing them. The row count in your result never changes.
+
+---
+
+### Ranking Functions Reference
+
+| Function | What It Does | Tie Behavior |
+|---|---|---|
+| `ROW_NUMBER()` | Unique sequential number per row | Tied rows still get different numbers |
+| `RANK()` | Same rank for tied rows | Skips the next rank (gap appears) |
+| `DENSE_RANK()` | Same rank for tied rows | Does not skip — no gaps |
+
+**Example with two players tied at score 90:**
+
+| Player | Score | `ROW_NUMBER()` | `RANK()` | `DENSE_RANK()` |
+|---|---:|---:|---:|---:|
+| A | 100 | 1 | 1 | 1 |
+| B | 90 | 2 | 2 | 2 |
+| C | 90 | 3 | 2 | 2 |
+| D | 80 | 4 | 4 | 3 |
+
+**When to use each:**
+
+- `ROW_NUMBER()` — when every row must have a unique number regardless of ties
+- `RANK()` — when tied rows should share a rank and gaps are acceptable
+- `DENSE_RANK()` — when tied rows should share a rank and no gaps should appear
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Choice
+
+**Question:** Which TWO of the following statements correctly describe the `DENSE_RANK()` function? (Select 2)
+
+**Options:** 
+- It assigns consecutive rank values with no gaps, even when ties occur
+
+- Tied rows receive the same rank value
+
+- It generates gaps in ranking values after tied rows, the same way `RANK()` does
+
+- The `PARTITION BY` clause is mandatory when using `DENSE_RANK()`
+
+**Correct Options:** 
+- It assigns consecutive rank values with no gaps, even when ties occur
+
+- Tied rows receive the same rank value
+
+**Solution:** 
+- **Correct — "It assigns consecutive rank values with no gaps":** This is the defining characteristic of `DENSE_RANK()`. After a tie at rank 2, the next distinct value receives rank 3, not rank 4. This is what makes it different from `RANK()`.
+- **Correct — "Tied rows receive the same rank value":** Both `RANK()` and `DENSE_RANK()` assign the same rank to tied rows. The difference is only in what happens to the rank that follows the tie.
+- **Wrong — "It generates gaps the same way `RANK()` does":** This describes `RANK()`, not `DENSE_RANK()`. `RANK()` skips ranks after ties (e.g., 1, 2, 2, 4). `DENSE_RANK()` does not skip (e.g., 1, 2, 2, 3).
+- **Wrong — "`PARTITION BY` is mandatory":** `PARTITION BY` is optional in any window function. When omitted, the entire result set is treated as one window.
+
+**Tags**
+- data-wrangling / window / sql-window-rank-functions (skill)
+
+##### Input 4
+**Type:** Text
+
+## Report 1: Sub-Category Contribution Within Category
+
+Rajiv needs two values in the same row: the product count for each sub-category, and the total product count for that sub-category's category. `GROUP BY` gives the first. A window function gives the second.
+
+### Step 1: Count Products By Sub-Category
+
+```sql
+WITH product_count AS (
+    SELECT
+        category,
+        sub_category,
+        COUNT(*) AS product_count
+    FROM products
+    GROUP BY
+        category,
+        sub_category
+)
+SELECT * FROM product_count;
+```
+
+![Step 1 output: product count by category and sub-category](https://cdn.enqurious.com/images/8dfa697a-f097-4b3a-832f-f8eb327432cb_image.webp)
+
+### Step 2: Add Category Total Using A Window Function
+
+```sql
+WITH product_count AS (
+    SELECT
+        category,
+        sub_category,
+        COUNT(*) AS product_count
+    FROM products
+    GROUP BY
+        category,
+        sub_category
+)
+SELECT
+    *,
+    SUM(product_count) OVER(PARTITION BY category) AS category_total
+FROM product_count;
+```
+
+Read `SUM(product_count) OVER(PARTITION BY category)` as:
+
+> "For every row, sum `product_count` across all rows that share the same `category`."
+
+Every sub-category row is preserved. Each now has the full category total beside it.
+
+![Step 2 output: product count with category_total column added to every row](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/93689c58-2f47-4fdb-9033-cc74449305a2_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+### Step 3: Calculate Contribution Percentage
+
+```sql
+WITH product_count AS (
+    SELECT
+        category,
+        sub_category,
+        COUNT(*) AS product_count
+    FROM products
+    GROUP BY
+        category,
+        sub_category
+),
+product_summary AS (
+    SELECT
+        *,
+        SUM(product_count) OVER(PARTITION BY category) AS category_total
+    FROM product_count
+)
+SELECT
+    category,
+    sub_category,
+    product_count,
+    FORMAT(product_count * 1.0 / category_total, 'P2') AS contribution
+FROM product_summary
+ORDER BY
+    category,
+    product_count * 1.0 / category_total DESC;
+```
+
+>[!IMPORTANT]
+> **`* 1.0` — why it matters:** SQL Server performs integer division when both operands are integers. `57 / 250` returns `0`, not `0.228`. Multiplying by `1.0` converts the calculation to decimal before dividing.
+>
+> **`FORMAT(value, 'P2')` — what it does:** Formats a decimal as a percentage with 2 decimal places. `FORMAT(0.228, 'P2')` returns `22.80%`. This function is SQL Server-specific.
+
+![Final Report 1 output with contribution percentages per sub-category](https://cdn.enqurious.com/images/a0f5da6f-6273-4af1-8ec3-6b4ff179ee86_image.webp)
+
+>[!TIP]
+> Window functions can be used inside CTEs. Wrapping the window result in a CTE (`product_summary`) makes the final `SELECT` clean and readable, and lets you build further calculations on top of the windowed output.
+
+---
+
+**Tags**
+
+
+##### Input 5
+**Type:** Choice
+
+**Question:** After running the complete Report 1 query, what percentage does the "Phones" sub-category contribute to the Technology category?
+
+**Options:** 
+- 47.31%
+
+- 36.76%
+
+- 12.43%
+
+- 3.51%
+
+**Correct Options:** 
+- 47.31%
+
+**Solution:** 
+- **Correct — 47.31%:** Phones is the largest sub-category in Technology. Running the Report 1 query and filtering for `category = 'Technology'` shows Phones contributing 47.31% of all Technology products.
+
+![Report 1 Technology category breakdown confirming Phones at 47.31%](https://cdn.enqurious.com/images/eb3e972b-a3d7-4886-988d-f0251f7f14a6_image.webp)
+
+- **Wrong — 36.76%:** This is the contribution of a different Technology sub-category (Machines or Copiers). Check that your `ORDER BY` is sorting by contribution descending within each category.
+- **Wrong — 12.43%:** This figure belongs to a smaller Technology sub-category. Confirm you are partitioning by `category`, not across all categories.
+- **Wrong — 3.51%:** This is the smallest Technology sub-category. If you are seeing this as Phones' contribution, the `PARTITION BY` column may be wrong or missing entirely.
+
+**Tags**
+- data-wrangling / window / sql-window-rank-functions (skill)
+
+##### Input 6
+**Type:** Text
+
+## Reports 2 And 3: Ranking Within Groups And Filtering By Rank
+
+### Report 2: Vendor Contribution And Rank Within Region
+
+The business question is: within each region, which vendors delivered the most? The window must partition by `region` so contribution and rank reset independently for each region.
+
+```sql
+WITH base_data AS (
+    SELECT
+        o.order_id,
+        v.vendor_name,
+        l.region
+    FROM orders o
+    JOIN vendors v
+        ON o.vendor_id = v.vendor_id
+    JOIN customers c
+        ON o.customer_id = c.customer_id
+    JOIN locations_01 l
+        ON c.postal_code = l.postal_code
+    WHERE o.order_delivered_customer_date IS NOT NULL
+),
+delivery_summary AS (
+    SELECT
+        region,
+        vendor_name,
+        COUNT(order_id) AS delivery_count
+    FROM base_data
+    GROUP BY region, vendor_name
+)
+SELECT
+    *,
+    FORMAT(
+        delivery_count * 1.0 / SUM(delivery_count) OVER(PARTITION BY region),
+        'P2'
+    ) AS delivery_contribution,
+    RANK() OVER(PARTITION BY region ORDER BY delivery_count DESC) AS vendor_rank
+FROM delivery_summary;
+```
+
+`SUM(delivery_count) OVER(PARTITION BY region)` gives the total deliveries within each region, not globally across all regions.
+
+![Final Report 2 output with delivery contribution and vendor rank per region](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/9adb7333-40fe-49e2-9a8c-1a77b4e7c750_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+>[!NOTE]
+> **Partition direction changes the question.** Region and vendor are independent dimensions. Changing `PARTITION BY` changes the denominator and therefore the percentages, even though the raw counts stay the same.
+>
+> | Business Question | Partition |
+> |---|---|
+> | Vendor's share within each region | `PARTITION BY region` |
+> | Region's share within each vendor's total | `PARTITION BY vendor_name` |
+
+---
+
+### Report 3: Top 3 Customers Per Region — And Why `WHERE` Fails
+
+Rajiv's first attempt filters by rank directly inside `WHERE`:
+
+```sql
+SELECT
+    *,
+    RANK() OVER(PARTITION BY region ORDER BY order_amount DESC) AS customer_rank
+FROM order_summary
+WHERE RANK() OVER(PARTITION BY region ORDER BY order_amount DESC) <= 3;
+```
+
+![SQL Server error: window functions cannot appear in the WHERE clause](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/ac586117-2cb8-47b3-8d0f-a538e4d195ff_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+>[!IMPORTANT]
+> Window functions can only appear in `SELECT` and `ORDER BY` clauses. SQL evaluates `WHERE` before computing window functions, so the rank column does not exist yet when `WHERE` runs. The fix: calculate the rank inside a CTE first, then filter it in the outer query.
+
+> **Rajiv:** It says window functions can only appear in SELECT and ORDER BY. How do I filter by rank then?
+>
+> **Sharon:** Wrap it in a CTE. Once the rank is a plain column in the CTE, the outer query can filter it with a normal `WHERE`.
+
+```sql
+WITH orders_summary AS (
+    SELECT
+        l.region,
+        c.customer_name,
+        o.order_id,
+        t.sales
+    FROM orders o
+    JOIN transactions t
+        ON o.order_id = t.order_id
+    JOIN customers c
+        ON c.customer_id = o.customer_id
+    JOIN locations_01 l
+        ON c.postal_code = l.postal_code
+    WHERE o.order_status NOT IN ('canceled', 'unavailable')
+),
+sales_summary AS (
+    SELECT
+        region,
+        customer_name,
+        SUM(sales) AS order_amount
+    FROM orders_summary
+    GROUP BY region, customer_name
+),
+rank_table AS (
+    SELECT
+        region,
+        customer_name,
+        order_amount,
+        FORMAT(
+            order_amount * 1.0 / SUM(order_amount) OVER(PARTITION BY region),
+            'P2'
+        ) AS contribution,
+        RANK() OVER(PARTITION BY region ORDER BY order_amount DESC) AS ranking
+    FROM sales_summary
+)
+SELECT *
+FROM rank_table
+WHERE ranking <= 3;
+```
+
+`WHERE ranking <= 3` works here because `ranking` is a plain integer column inside `rank_table`, not a window function call.
+
+Canceled and unavailable orders are excluded at the base level to ensure only valid transactions contribute to the sales totals.
+
+![Final Report 3 output: top 3 customers per region by order value](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/feb0ca86-d4c1-4bf4-82b2-4df9e3607d6e_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+>[!TIP]
+> To rank customers globally across all regions instead of within each region, simply remove `PARTITION BY region` from the `RANK()` call. With no partition, all rows share one ranking.
+
+---
+
+**Tags**
+
+
+##### Input 7
+**Type:** Choice
+
+**Question:** After running the Report 2 query, which vendor ranks the lowest in the East region based on delivery contribution?
+
+**Options:** 
+- Seaborne Ltd.
+
+- Velocity Logistics
+
+- Voyage Enterprises
+
+- Johnsons Logistics
+
+**Correct Options:** 
+- Johnsons Logistics
+
+**Solution:** 
+- **Correct — Johnsons Logistics:** Within the East region, Johnsons Logistics has the fewest deliveries and therefore the lowest contribution percentage. `RANK()` assigns it the highest rank number in that partition.
+
+![Report 2 East region output confirming Johnsons Logistics ranked lowest](https://cdn.enqurious.com/images/56e141ff-4323-424d-bc40-b637e13d6a4c_image.webp)
+
+- **Wrong — Seaborne Ltd.:** Seaborne Ltd. has a meaningful delivery contribution in the East region and does not rank last. Check that you are filtering or sorting within the East region only.
+- **Wrong — Velocity Logistics:** Velocity Logistics ranks in the middle of the East region. If this appears last, verify that your `ORDER BY` inside `RANK()` is sorting descending (`DESC`) so higher delivery counts get lower rank numbers.
+- **Wrong — Voyage Enterprises:** Voyage Enterprises has a higher delivery count than Johnsons Logistics in the East region. If this appears last, recheck your `PARTITION BY region` clause — you may be ranking across all regions rather than within each region separately.
+
+**Tags**
+- data-wrangling / window / sql-window-rank-functions (skill)
+
+##### Input 8
+**Type:** Choice
+
+**Question:** Which THREE of the following are mistakes to avoid when using SQL window functions? (Select 3)
+
+**Options:** 
+- Using a window function directly inside a WHERE clause instead of wrapping it in a CTE first
+
+- Omitting ORDER BY inside RANK() or LAG() when row order is meaningful
+
+- Using PARTITION BY to divide rows into groups for group-level calculations
+
+- Forgetting to multiply by 1.0 before dividing two integers in a percentage calculation
+
+- Calculating a window function result in a CTE and then filtering it in the outer query
+
+**Correct Options:** 
+- Using a window function directly inside a WHERE clause instead of wrapping it in a CTE first
+
+- Omitting ORDER BY inside RANK() or LAG() when row order is meaningful
+
+- Forgetting to multiply by 1.0 before dividing two integers in a percentage calculation
+
+**Solution:** 
+- **Correct (mistake) — Using window function in WHERE:** Window functions are not available in `WHERE`. SQL evaluates `WHERE` before computing them. This produces an error; the fix is to use a CTE.
+- **Correct (mistake) — Omitting ORDER BY inside RANK() or LAG():** Both functions depend on row order to produce meaningful results. Without `ORDER BY`, the database may assign ranks or access adjacent rows in an undefined order, producing inconsistent or incorrect output.
+- **Correct (mistake) — Forgetting * 1.0 for integer division:** SQL Server divides two integers as integers. `57 / 250` returns `0`. The result is silently wrong — no error is raised. Always multiply by `1.0` when the result should be a decimal.
+- **Wrong — Using PARTITION BY to divide rows:** This is the correct and intended use of `PARTITION BY`. It resets the window function calculation for each group without collapsing rows. This is not a mistake.
+- **Wrong — Calculating in a CTE and filtering outside:** This is the correct pattern for filtering window function results. It is not a mistake — it is the required approach.
+
+**Tags**
+- data-wrangling / window / sql-window-rank-functions (skill)
+
+##### Input 9
+**Type:** Text
+
+## Time-Series Analysis With LAG() And LEAD()
+
+### The Problem: Comparing Rows, Not Columns
+
+Robert asks for a month-on-month percentage change report for order count, by year. Year 2016 should be excluded.
+
+The formula is:
+
+```text
+MoM % change = (current_month_orders − previous_month_orders) / previous_month_orders
+```
+
+![Video](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/videos/9a4ce393-4655-4b8c-9efa-3a18c4961f2b_83d04ac6-cb74-4a96-a06a-e0d5442aa126_windows-p4.mp4)
+
+The challenge: in SQL, values are in separate rows. You cannot reference the cell above the way you would in Excel.
+
+> **Rajiv:** I need February's order count sitting next to March's row. In Excel I just reference a cell above. How do I do that in SQL?
+>
+> **Sharon:** Use `LAG()`. It shifts a column's values downward by one row, so the previous row's value appears beside the current row. Use `PARTITION BY order_year` so the window resets at the start of each year — without it, December of one year would pull from November of the next.
+
+---
+
+### LAG() And LEAD()
+
+`LAG()` retrieves a value from the **previous** row within the window.
+`LEAD()` retrieves a value from the **next** row within the window.
+
+```sql
+LAG(column)  OVER(PARTITION BY group_col ORDER BY sort_col)
+LEAD(column) OVER(PARTITION BY group_col ORDER BY sort_col)
+```
+
+![Visual showing LAG values shifting down and LEAD values shifting up within a window](https://cdn.enqurious.com/images/c644b4c7-4488-417b-9f0f-dd4dac8b6557_image.webp)
+
+| Function | Direction | Example Use Case |
+|---|---|---|
+| `LAG()` | Looks backward | Compare March orders with February orders |
+| `LEAD()` | Looks forward | Compare March orders with April orders |
+
+`ORDER BY` inside the window is required — without it, "previous" and "next" have no defined meaning.
+
+---
+
+### Building The MoM Report
+
+**Step 1 — Count orders by year and month**
+
+```sql
+WITH base_data AS (
+    SELECT
+        o.order_id,
+        DATENAME(month, o.order_purchase_date) AS month_name,
+        MONTH(o.order_purchase_date)            AS month_seq,
+        YEAR(o.order_purchase_date)             AS order_year
+    FROM orders o
+    WHERE YEAR(o.order_purchase_date) <> 2016
+)
+SELECT
+    month_name,
+    month_seq,
+    order_year,
+    COUNT(order_id) AS order_placed
+FROM base_data
+GROUP BY month_name, month_seq, order_year
+ORDER BY order_year, month_seq;
+```
+
+**Step 2 — Bring previous month's count alongside the current month**
+
+```sql
+WITH base_data AS (
+    SELECT
+        o.order_id,
+        DATENAME(month, o.order_purchase_date) AS month_name,
+        MONTH(o.order_purchase_date)            AS month_seq,
+        YEAR(o.order_purchase_date)             AS order_year
+    FROM orders o
+    WHERE YEAR(o.order_purchase_date) <> 2016
+),
+order_summary AS (
+    SELECT
+        month_name, month_seq, order_year,
+        COUNT(order_id) AS order_placed
+    FROM base_data
+    GROUP BY month_name, month_seq, order_year
+)
+SELECT
+    *,
+    LAG(order_placed) OVER(PARTITION BY order_year ORDER BY month_seq) AS order_placed_prev_month
+FROM order_summary;
+```
+
+January always shows `NULL` for `order_placed_prev_month` — there is no previous month inside that year's window.
+
+![Step 2 output: current month order count and previous month order count, with NULL for January](https://cdn.enqurious.com/images/02eab4a9-937b-443f-a1d8-3b7fdafaa4dd_image.webp)
+
+**Step 3 — Calculate MoM percentage change**
+
+```sql
+WITH base_data AS (
+    SELECT
+        o.order_id,
+        DATENAME(month, o.order_purchase_date) AS month_name,
+        MONTH(o.order_purchase_date)            AS month_seq,
+        YEAR(o.order_purchase_date)             AS order_year
+    FROM orders o
+    WHERE YEAR(o.order_purchase_date) <> 2016
+),
+order_summary AS (
+    SELECT
+        month_name, month_seq, order_year,
+        COUNT(order_id) AS order_placed
+    FROM base_data
+    GROUP BY month_name, month_seq, order_year
+),
+order_lag AS (
+    SELECT
+        *,
+        LAG(order_placed) OVER(PARTITION BY order_year ORDER BY month_seq) AS order_placed_prev_month
+    FROM order_summary
+)
+SELECT
+    order_year,
+    month_name,
+    order_placed,
+    order_placed_prev_month,
+    FORMAT(
+        (order_placed - order_placed_prev_month) * 1.0
+        / NULLIF(order_placed_prev_month, 0),
+        'P2'
+    ) AS MoM_perc_change
+FROM order_lag
+ORDER BY order_year, month_seq;
+```
+
+>[!IMPORTANT]
+> **`NULLIF(order_placed_prev_month, 0)`** prevents a division-by-zero runtime error. `NULLIF(a, b)` returns `NULL` when `a = b`, otherwise returns `a`. If the previous month had 0 orders, the denominator becomes `NULL` and the result is `NULL` instead of an error.
+
+![Final MoM output: order_year, month_name, current orders, previous month orders, and MoM percentage](https://cdn.enqurious.com/images/91f7e4a4-d11a-4a5f-93ff-62a0a2930eb0_image.webp)
+
+---
+
+**Tags**
+
+
+##### Input 10
+**Type:** Code
+
+**Question:** The MoM report above tracked order count. Now write the same report for **total sales value** instead of order count.
+
+**Language:** sql
+
+**Snippet:** -- Report: Month-on-Month % change in total sales value
+-- Exclude year 2016 | Join orders + transactions | Use LAG() | Handle NULL with NULLIF()
+
+
+**Solution:** 
+```sql
+WITH base_data AS (
+    SELECT
+        o.order_id,
+        t.sales,
+        DATENAME(month, o.order_purchase_date) AS month_name,
+        MONTH(o.order_purchase_date)            AS month_seq,
+        YEAR(o.order_purchase_date)             AS order_year
+    FROM orders o
+    JOIN transactions t
+        ON o.order_id = t.order_id
+    WHERE YEAR(o.order_purchase_date) <> 2016
+),
+monthly_sales AS (
+    SELECT
+        month_name,
+        month_seq,
+        order_year,
+        SUM(sales) AS total_sales
+    FROM base_data
+    GROUP BY month_name, month_seq, order_year
+),
+sales_lag AS (
+    SELECT
+        *,
+        LAG(total_sales) OVER(PARTITION BY order_year ORDER BY month_seq) AS prev_month_sales
+    FROM monthly_sales
+)
+SELECT
+    order_year,
+    month_name,
+    total_sales,
+    prev_month_sales,
+    FORMAT(
+        (total_sales - prev_month_sales) * 1.0
+        / NULLIF(prev_month_sales, 0),
+        'P2'
+    ) AS MoM_sales_change
+FROM sales_lag
+ORDER BY order_year, month_seq;
+```
+
+**Tags**
+- data-wrangling / window / sql-window-lag-lead (skill)
+- data-wrangling / join (skill)
+- data-wrangling / group-by-aggregate / sql-aggregate-filtering (skill)
+
+##### Input 11
+**Type:** Choice
+
+**Question:** After running the MoM order count query, what is the month-on-month percentage change in orders from February to March in the year 2017?
+
+**Options:** 
+- 50.57%
+
+- 40.00%
+
+- 21.97%
+
+- 22.53%
+
+**Correct Options:** 
+- 50.57%
+
+**Solution:** 
+- **Correct — 50.57%:** In 2017, March had significantly more orders than February. The calculation `(March − February) / February` produces approximately 50.57%, indicating strong growth from month to month.
+- **Wrong — 40.00%:** This is a plausible but incorrect value. If you are seeing this, check that `PARTITION BY order_year` is included in your `LAG()` — without it, February 2017 may be pulling December from the prior year, producing the wrong denominator.
+- **Wrong — 21.97%:** This corresponds to a different month-to-month change in 2017. Verify that your `ORDER BY month_seq` is sorting correctly and that `DATENAME()` is returning the right month names without leading or trailing spaces.
+- **Wrong — 22.53%:** This is also a value from a different month pair. Confirm that year 2016 is excluded in the `WHERE` clause — including 2016 data shifts the month sequencing and produces incorrect comparisons.
+
+**Tags**
+- data-wrangling / window / sql-window-lag-lead (skill)
+
+##### Input 12
+**Type:** Text
+
+## SQL Dialect Notes, Common Mistakes, And Summary
+
+### SQL Dialect Notes
+
+All code in this masterclass uses SQL Server (T-SQL). Use these equivalents for other databases:
+
+| Task | SQL Server | PostgreSQL |
+|---|---|---|
+| Format as percentage | `FORMAT(value, 'P2')` | `TO_CHAR(value * 100, 'FM990.00') \|\| '%'` |
+| Extract month name | `DATENAME(month, date_col)` | `TO_CHAR(date_col, 'Month')` |
+| Extract month number | `MONTH(date_col)` | `EXTRACT(MONTH FROM date_col)` |
+| Extract year | `YEAR(date_col)` | `EXTRACT(YEAR FROM date_col)` |
+| Prevent division by zero | `NULLIF(value, 0)` | `NULLIF(value, 0)` (same) |
+
+---
+
+### Common Mistakes To Avoid
+
+| Mistake | What Goes Wrong | Fix |
+|---|---|---|
+| Window function in `WHERE` | Runtime error — rank does not exist yet | Calculate in CTE, filter in outer query |
+| Missing `ORDER BY` in `RANK()` or `LAG()` | Undefined or inconsistent ordering | Always include `ORDER BY` inside the window |
+| Missing `PARTITION BY` | Calculation runs across all rows instead of per group | Add `PARTITION BY group_column` |
+| Integer division | Result is silently `0` instead of a fraction | Multiply by `1.0` before dividing |
+| `LAG()` crossing year boundaries | December pulls from November of the next year | Add `PARTITION BY order_year` to reset per year |
+| Using `RANK()` when no gaps are needed | Gaps appear in output | Use `DENSE_RANK()` instead |
+
+---
+
+### Summary
+
+Window functions calculate across related rows without collapsing the result.
+
+| Need | Pattern |
+|---|---|
+| Group total beside each row | `SUM(value) OVER(PARTITION BY group_column)` |
+| Rank within each group | `RANK() OVER(PARTITION BY group_column ORDER BY value DESC)` |
+| Unique sequence number per row | `ROW_NUMBER() OVER(ORDER BY value)` |
+| Rank with no gaps | `DENSE_RANK() OVER(ORDER BY value)` |
+| Previous row value | `LAG(value) OVER(PARTITION BY group_column ORDER BY time_column)` |
+| Next row value | `LEAD(value) OVER(PARTITION BY group_column ORDER BY time_column)` |
+
+**The one rule to remember:** Window functions can only appear in `SELECT` and `ORDER BY`. To filter on a window function result, calculate it in a CTE and apply `WHERE` in the outer query.
+
+---
+
+### Next Steps
+
+Practice by extending what you built:
+
+- Rank vendors overall instead of within each region — remove `PARTITION BY` from the rank function
+- Replace `RANK()` with `DENSE_RANK()` in Report 2 and observe what changes when delivery counts are tied
+- Calculate MoM change in total sales value — this is the coding exercise in Input 11
+- Explore window frames: `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` builds a running total
+- Try `FIRST_VALUE()` and `LAST_VALUE()` to pull the first or last value within each window
+
+---
+
+
+
+**Tags**
+

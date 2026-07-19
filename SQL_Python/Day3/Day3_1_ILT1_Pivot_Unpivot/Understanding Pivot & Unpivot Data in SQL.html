@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 9 – PIVOT & UNPIVOT | Day 3</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 40px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #0c2a3f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 40px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 16px; color: #94a3b8; max-width: 620px; line-height: 1.7; }
+  .slide-cover .badge { margin-top: 16px; background: #0c2a3f; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  .slide-section { background: #061828; }
+  .slide-section h2 { font-size: 28px; font-weight: 700; color: #38bdf8; margin-bottom: 6px; }
+  .section-tag { color: #4b5563; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
+  .slide-demo { background: #060e1a; border-left: 4px solid #38bdf8; }
+  .slide-demo h3 { font-size: 21px; color: #38bdf8; margin-bottom: 4px; }
+  .demo-label { color: #4b5563; font-size: 13px; margin-bottom: 14px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 18px; }
+  .card h4 { color: #38bdf8; margin-bottom: 8px; font-size: 14px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13px; line-height: 1.7; }
+  .hl { background: #061828; border: 1px solid #38bdf8; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+  .hl.warn { background: #1a1200; border-color: #f59e0b; }
+  .hl.green { background: #0d2d1a; border-color: #22c55e; }
+  .hl.red { background: #2d0f0f; border-color: #ef4444; }
+  .hl p { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+  pre { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 14px; overflow-x: auto; font-family: 'Cascadia Code','Consolas',monospace; font-size: 12.5px; line-height: 1.8; color: #e6edf3; }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.t th { background: #0c2a3f; color: #7dd3fc; padding: 8px 12px; text-align: left; }
+  table.t td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  table.t tr:nth-child(even) td { background: #0f172a; }
+  .quiz-box { background: #082010; border: 1px solid #22c55e; padding: 14px; border-radius: 10px; margin: 10px 0; }
+  .quiz-q { font-size: 13px; color: #f8fafc; margin-bottom: 8px; }
+  .reveal-btn { background: #38bdf8; color: #0f172a; padding: 7px 18px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; }
+  .quiz-answer { margin-top: 8px; color: #4ade80; font-size: 13px; line-height: 1.6; }
+  .chat-bubble { border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; font-size: 13px; line-height: 1.7; max-width: 90%; }
+  .chat-r { background: #0c2a3f; border: 1px solid #38bdf8; color: #bae6fd; }
+  .chat-s { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; }
+  .chat-label { font-weight: 700; font-size: 12px; margin-bottom: 4px; }
+  .pivot-demo { display: grid; grid-template-columns: 1fr 48px 1fr; gap: 8px; align-items: center; margin-top: 14px; }
+  .pivot-arrow { text-align: center; font-size: 24px; color: #38bdf8; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">DAY 3 · MODULE 9 — PIVOT & UNPIVOT in SQL</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter"></span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active">
+  <h1>🔄 PIVOT & UNPIVOT in SQL</h1>
+  <p class="subtitle">The thing that's a no-brainer in Excel — turns out SQL can do it too. Rajiv learns how to rotate rows into columns and back again.</p>
+  <div class="badge">Module 9 &nbsp;·&nbsp; Day 3 &nbsp;·&nbsp; Intermediate &nbsp;·&nbsp; 45 min self-paced</div>
+  <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">PIVOT rows → columns</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">UNPIVOT columns → rows</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">Square bracket syntax</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">Year-on-Year comparison</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: ROBERT'S EMAIL -->
+<div class="slide slide-section">
+  <div class="section-tag">The Story</div>
+  <h2>Robert's Email 📧 — "Seems like a no-brainer in Excel"</h2>
+  <div class="card" style="max-width:700px;margin:0 auto;">
+    <h4>From: Robert &nbsp;|&nbsp; To: Rajiv</h4>
+    <p style="margin-top:6px;line-height:1.8;">Hi Rajiv,<br><br>
+    Hope you are doing well. We are currently in the process of our yearly review with top customers. One important piece of information we need is the <strong>year-on-year growth of orders</strong> placed by them.<br><br>
+    If you can provide me a simple report of number of orders placed in this format:</p>
+    <table class="t" style="margin-top:12px;">
+      <tr><th>month_name</th><th>[2017]</th><th>[2018]</th></tr>
+      <tr><td>January</td><td>...</td><td>...</td></tr>
+      <tr><td>February</td><td>...</td><td>...</td></tr>
+      <tr><td>March</td><td>...</td><td>...</td></tr>
+    </table>
+    <p style="margin-top:10px;color:#94a3b8;font-size:13px;">I guess this is easily doable. Seems like a no-brainer in Excel though :)</p>
+    <p style="margin-top:8px;">Looking forward, Robert</p>
+  </div>
+  <div class="hl warn" style="margin-top:16px;max-width:700px;margin-left:auto;margin-right:auto;">
+    <p><strong style="color:#f59e0b;">Rajiv's problem:</strong> He can write the month-by-month order counts. But getting 2017 and 2018 as <em>side-by-side columns</em>? In Excel that's just a pivot table drag. In SQL... he's stuck. He pings Sharon.</p>
+  </div>
+</div>
+
+<!-- SLIDE 3: WHAT IS PIVOT -->
+<div class="slide slide-content">
+  <h3>🔄 What Does PIVOT Actually Do?</h3>
+  <div class="pivot-demo">
+    <div>
+      <p style="color:#94a3b8;font-size:12px;margin-bottom:8px;"><strong>Before PIVOT</strong> — rows format:</p>
+      <table class="t">
+        <tr><th>month_name</th><th>order_year</th><th>order_placed</th></tr>
+        <tr><td>January</td><td>2017</td><td>211</td></tr>
+        <tr><td>January</td><td>2018</td><td>264</td></tr>
+        <tr><td>February</td><td>2017</td><td>198</td></tr>
+        <tr><td>February</td><td>2018</td><td>310</td></tr>
+      </table>
+    </div>
+    <div class="pivot-arrow">→</div>
+    <div>
+      <p style="color:#94a3b8;font-size:12px;margin-bottom:8px;"><strong>After PIVOT</strong> — columns format:</p>
+      <table class="t">
+        <tr><th>month_name</th><th>[2017]</th><th>[2018]</th></tr>
+        <tr><td>January</td><td>211</td><td>264</td></tr>
+        <tr><td>February</td><td>198</td><td>310</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="two-col" style="margin-top:16px;">
+    <div class="hl">
+      <p><strong style="color:#38bdf8;">PIVOT</strong> takes unique values from one column (order_year → 2017, 2018) and turns each into its own column, applying an aggregate function (SUM of order_placed) to fill the cells.</p>
+    </div>
+    <div class="card">
+      <h4>The 3-Part PIVOT Syntax</h4>
+      <pre style="font-size:12px;margin-top:6px;">
+PIVOT(
+    <span class="fn">SUM</span>(<span class="col">order_placed</span>)   <span class="cm">-- what to aggregate</span>
+    <span class="kw">FOR</span> [<span class="col">order_year</span>]     <span class="cm">-- which column to rotate</span>
+    <span class="kw">IN</span> (
+        [<span class="str">2017</span>],          <span class="cm">-- each unique value becomes a column</span>
+        [<span class="str">2018</span>]           <span class="cm">-- square brackets are MANDATORY</span>
+    )
+) <span class="kw">AS</span> pvt             <span class="cm">-- alias is required</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: DEMO — PIVOT STEP BY STEP -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Building the PIVOT Query Step by Step</h3>
+  <div class="demo-label">Table: orders | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:10px;"><strong style="color:#38bdf8;">Step 1:</strong> Build the base data first (the "long" format)</p>
+      <pre style="font-size:12px;line-height:1.75;">
+<span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">o</span>.<span class="col">order_id</span>,
+        <span class="cm">-- DATENAME gives "January", "February"...
+        -- Use month NAME in SELECT, month NUMBER for ORDER BY</span>
+        <span class="fn">DATENAME</span>(month, <span class="tbl">o</span>.<span class="col">order_purchase_date</span>) <span class="kw">AS</span> month_name,
+        <span class="fn">MONTH</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>)             <span class="kw">AS</span> month_seq,
+        <span class="fn">YEAR</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>)              <span class="kw">AS</span> order_year
+    <span class="kw">FROM</span> <span class="tbl">orders</span> <span class="tbl">o</span>
+    <span class="cm">-- 2016 data is incomplete — exclude it</span>
+    <span class="kw">WHERE</span> <span class="fn">YEAR</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>) &lt;&gt; <span class="str">2016</span>
+),
+<span class="cm">-- Step 2: Aggregate to one row per month per year</span>
+order_summary <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="col">month_name</span>,
+        <span class="col">month_seq</span>,
+        <span class="col">order_year</span>,
+        <span class="fn">COUNT</span>(<span class="col">order_id</span>) <span class="kw">AS</span> order_placed
+    <span class="kw">FROM</span> base_data
+    <span class="kw">GROUP BY</span> <span class="col">month_name</span>, <span class="col">month_seq</span>, <span class="col">order_year</span>
+)
+<span class="cm">-- Run this first to see the "long" format output ↑</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> order_summary <span class="kw">ORDER BY</span> <span class="col">order_year</span>, <span class="col">month_seq</span>;</pre>
+    </div>
+    <div>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:10px;"><strong style="color:#38bdf8;">Step 3:</strong> Replace final SELECT with PIVOT</p>
+      <pre style="font-size:12px;line-height:1.75;">
+<span class="cm">-- Replace "SELECT * FROM order_summary" with this:</span>
+<span class="kw">SELECT</span>
+    <span class="col">month_name</span>,
+    [<span class="str">2017</span>],
+    [<span class="str">2018</span>]
+<span class="kw">FROM</span> order_summary
+    PIVOT(
+        <span class="fn">SUM</span>(<span class="col">order_placed</span>)
+        <span class="kw">FOR</span> [<span class="col">order_year</span>]
+        <span class="kw">IN</span> (
+            [<span class="str">2017</span>],
+            [<span class="str">2018</span>]
+        )
+    ) <span class="kw">AS</span> pvt
+<span class="cm">-- Note: month_seq no longer available after PIVOT
+-- Can't ORDER BY month_seq here — include it before
+-- or just accept alphabetical month ordering in output</span>
+<span class="kw">ORDER BY</span> <span class="col">month_name</span>;</pre>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ After running this PIVOT, which month in 2017 had the HIGHEST number of orders?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>November 2017</strong> — the highest order count in the 2017 column. Run the query and look for the biggest value in [2017].</p></div>
+      </div>
+      <div class="quiz-box" style="margin-top:10px;">
+        <p class="quiz-q">❓ What is the number of orders placed in August 2018?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>360</strong> — look at August row in the [2018] column.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: PIVOT SYNTAX RULES -->
+<div class="slide slide-content">
+  <h3>⚠️ PIVOT Rules You Must Know</h3>
+  <div class="two-col">
+    <div>
+      <table class="t">
+        <tr><th>Rule</th><th>Why It Matters</th></tr>
+        <tr><td>Values in IN() must use [square brackets]</td><td>Numbers like 2017 can't be bare column names — mandatory</td></tr>
+        <tr><td>Alias after PIVOT is required (<code>AS pvt</code>)</td><td>SQL requires the derived table to have a name</td></tr>
+        <tr><td>Years in IN() must be hard-coded</td><td>PIVOT needs exact known values — can't use subquery inside IN()</td></tr>
+        <tr><td>Only ONE aggregate function allowed</td><td>PIVOT applies one function across all pivoted columns</td></tr>
+        <tr><td>month_seq disappears after PIVOT if not in SELECT</td><td>You can't ORDER BY month_seq outside the PIVOT unless it's kept</td></tr>
+      </table>
+      <div class="hl warn" style="margin-top:12px;">
+        <p><strong style="color:#f59e0b;">The month ordering trap:</strong> If you ORDER BY month_name, months sort alphabetically (April, August, December...). To get Jan→Dec order you need to either keep month_seq in the PIVOT output or accept alphabetical order for this demo.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h4>✅ TRUE or ❌ FALSE?</h4>
+        <div class="quiz-box" style="margin-top:6px;">
+          <p class="quiz-q">Q: PIVOT rotates unique values from one column into multiple columns — TRUE or FALSE?</p>
+          <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+          <div class="quiz-answer" style="display:none"><p>✅ TRUE — this is the core behavior of PIVOT.</p></div>
+        </div>
+        <div class="quiz-box" style="margin-top:8px;">
+          <p class="quiz-q">Q: NULL values in the value column ARE considered when computing a PIVOT aggregation — TRUE or FALSE?</p>
+          <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+          <div class="quiz-answer" style="display:none"><p>✅ FALSE — NULLs are ignored in aggregations. PIVOT with SUM treats NULL as 0 in the output cell.</p></div>
+        </div>
+        <div class="quiz-box" style="margin-top:8px;">
+          <p class="quiz-q">Q: UNPIVOT rotates a table by turning unique values from one column into multiple columns — TRUE or FALSE?</p>
+          <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+          <div class="quiz-answer" style="display:none"><p>✅ FALSE — that's PIVOT's job. UNPIVOT does the OPPOSITE: it turns multiple columns back into rows.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: UNPIVOT CONCEPT -->
+<div class="slide slide-content">
+  <h3>🔃 UNPIVOT — The Reverse Operation</h3>
+  <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">Sharon continues: "What if you already HAVE the pivoted format and need to turn it back into rows?"</p>
+  <div class="pivot-demo">
+    <div>
+      <p style="color:#94a3b8;font-size:12px;margin-bottom:8px;"><strong>Before UNPIVOT</strong> — columns format:</p>
+      <table class="t">
+        <tr><th>month_name</th><th>[2017]</th><th>[2018]</th></tr>
+        <tr><td>January</td><td>211</td><td>264</td></tr>
+        <tr><td>February</td><td>198</td><td>310</td></tr>
+      </table>
+      <p style="color:#64748b;font-size:12px;margin-top:6px;">Source: <code>unpivot_example</code> table in mskl-masterclass</p>
+    </div>
+    <div class="pivot-arrow">→</div>
+    <div>
+      <p style="color:#94a3b8;font-size:12px;margin-bottom:8px;"><strong>After UNPIVOT</strong> — rows format:</p>
+      <table class="t">
+        <tr><th>month_name</th><th>order_year</th><th>order_count</th></tr>
+        <tr><td>January</td><td>2017</td><td>211</td></tr>
+        <tr><td>January</td><td>2018</td><td>264</td></tr>
+        <tr><td>February</td><td>2017</td><td>198</td></tr>
+        <tr><td>February</td><td>2018</td><td>310</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="hl" style="margin-top:14px;">
+    <p><strong style="color:#38bdf8;">When would you use UNPIVOT?</strong><br>
+    When data arrives pre-pivoted (e.g. from Excel, a legacy report, or an external system) but you need it in rows format for further SQL analysis, joining, or filtering. UNPIVOT un-flattens the data so SQL can work with it naturally.</p>
+  </div>
+</div>
+
+<!-- SLIDE 7: DEMO - UNPIVOT -->
+<div class="slide slide-demo">
+  <h3>Live Demo — UNPIVOT Syntax</h3>
+  <div class="demo-label">Table: unpivot_example | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:12.5px;line-height:1.8;">
+<span class="cm">-- Step 1: Look at the source table (already in column format)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">unpivot_example</span>;
+
+<span class="cm">-- Step 2: Write the column names out explicitly
+-- (required — UNPIVOT needs to know which columns to melt)</span>
+<span class="kw">SELECT</span>
+    <span class="col">month_name</span>,
+    [<span class="str">2017</span>],
+    [<span class="str">2018</span>]
+<span class="kw">FROM</span> <span class="tbl">unpivot_example</span>;
+
+<span class="cm">-- Step 3: Wrap in subquery and apply UNPIVOT
+-- The subquery becomes the "source" table
+-- UNPIVOT melts [2017] and [2018] columns into rows</span>
+<span class="kw">SELECT</span>
+    <span class="col">month_name</span>,
+    <span class="col">order_year</span>,    <span class="cm">-- new column: holds the year value ("2017" or "2018")</span>
+    <span class="col">order_count</span>    <span class="cm">-- new column: holds the numeric count from the old columns</span>
+<span class="kw">FROM</span> (
+    <span class="kw">SELECT</span>
+        <span class="col">month_name</span>,
+        [<span class="str">2017</span>],
+        [<span class="str">2018</span>]
+    <span class="kw">FROM</span> <span class="tbl">unpivot_example</span>
+) <span class="col">p</span>
+UNPIVOT (
+    <span class="col">order_count</span>           <span class="cm">-- name for the VALUE column</span>
+    <span class="kw">FOR</span> <span class="col">order_year</span>        <span class="cm">-- name for the KEY column (holds "2017", "2018")</span>
+    <span class="kw">IN</span> ([<span class="str">2017</span>], [<span class="str">2018</span>]) <span class="cm">-- which columns to melt into rows</span>
+) <span class="kw">AS</span> result;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>PIVOT vs UNPIVOT at a glance</h4>
+        <table class="t" style="margin-top:6px;">
+          <tr><th>Operation</th><th>Direction</th><th>Use When</th></tr>
+          <tr><td>PIVOT</td><td>Rows → Columns</td><td>Data is in rows, you want columns for comparison</td></tr>
+          <tr><td>UNPIVOT</td><td>Columns → Rows</td><td>Data arrives pre-pivoted, you need rows for SQL analysis</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:13px;">Both require:<br>• Square brackets around year values<br>• An alias on the operation block<br>• Hard-coded column/value names</p>
+      </div>
+      <div class="hl" style="margin-top:12px;">
+        <p><strong style="color:#38bdf8;">Remember the structure:</strong><br>
+        UNPIVOT has 3 parts too:<br>
+        1. <code>order_count</code> — name for the values column<br>
+        2. <code>FOR order_year</code> — name for the key column<br>
+        3. <code>IN ([2017], [2018])</code> — which columns to melt</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: COMMON MISTAKES -->
+<div class="slide slide-content">
+  <h3>🚫 Common Mistakes — Module 9</h3>
+  <table class="t" style="margin-bottom:16px;">
+    <tr><th>Mistake</th><th>What Goes Wrong</th><th>Fix</th></tr>
+    <tr><td>Missing square brackets on values</td><td style="color:#f87171;">SQL error — numeric literals can't be bare column names</td><td>Always write [2017] not 2017</td></tr>
+    <tr><td>Missing alias after PIVOT/UNPIVOT</td><td style="color:#f87171;">SQL error — derived table must have alias</td><td>Add AS pvt or AS result</td></tr>
+    <tr><td>Using a subquery inside IN()</td><td style="color:#f87171;">PIVOT does not support dynamic values in IN() — error</td><td>Hard-code the values: IN ([2017],[2018])</td></tr>
+    <tr><td>ORDER BY month_name (string)</td><td style="color:#f87171;">Alphabetical order — August before January</td><td>Include month_seq in order_summary and ORDER BY it before PIVOT</td></tr>
+    <tr><td>Confusing PIVOT and UNPIVOT direction</td><td style="color:#f87171;">Output is backwards — columns when you need rows or vice versa</td><td>PIVOT: rows→cols, UNPIVOT: cols→rows</td></tr>
+  </table>
+  <div class="quiz-box">
+    <p class="quiz-q">❓ Which statement is INCORRECT about PIVOT in SQL?<br>a) PIVOT converts rows to columns  &nbsp; b) UNPIVOT converts columns to rows  &nbsp; c) UNPIVOT rotates unique values from one column into multiple columns  &nbsp; d) NULL values in aggregations are not considered</p>
+    <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+    <div class="quiz-answer" style="display:none"><p>✅ <strong>c) is INCORRECT</strong> — that's the definition of PIVOT, not UNPIVOT. UNPIVOT does the opposite: it melts multiple columns back into rows.</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 9: WRAP UP -->
+<div class="slide slide-section" style="text-align:center;align-items:center;">
+  <div class="section-tag">Summary</div>
+  <h2>PIVOT & UNPIVOT in 60 seconds ⚡</h2>
+  <div class="two-col" style="max-width:800px;margin-top:20px;text-align:left;">
+    <div class="card">
+      <h4>PIVOT — Rows to Columns</h4>
+      <pre style="font-size:12px;margin-top:8px;">
+<span class="kw">SELECT</span> month_name, [<span class="str">2017</span>], [<span class="str">2018</span>]
+<span class="kw">FROM</span> order_summary
+PIVOT(
+    <span class="fn">SUM</span>(order_placed)
+    <span class="kw">FOR</span> [order_year]
+    <span class="kw">IN</span> ([<span class="str">2017</span>], [<span class="str">2018</span>])
+) <span class="kw">AS</span> pvt;</pre>
+    </div>
+    <div class="card">
+      <h4>UNPIVOT — Columns to Rows</h4>
+      <pre style="font-size:12px;margin-top:8px;">
+<span class="kw">SELECT</span> month_name, order_year, order_count
+<span class="kw">FROM</span> (<span class="kw">SELECT</span> month_name, [<span class="str">2017</span>], [<span class="str">2018</span>]
+       <span class="kw">FROM</span> unpivot_example) p
+UNPIVOT(
+    order_count
+    <span class="kw">FOR</span> order_year <span class="kw">IN</span> ([<span class="str">2017</span>], [<span class="str">2018</span>])
+) <span class="kw">AS</span> result;</pre>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const total = slides.length;
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  function changeSlide(dir) { showSlide(current + dir); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+  counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>

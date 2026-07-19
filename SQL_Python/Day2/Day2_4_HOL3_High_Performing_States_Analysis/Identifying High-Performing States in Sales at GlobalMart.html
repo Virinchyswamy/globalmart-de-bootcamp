@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 8 – High-Performing States | Day 2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; }
+  nav .logo { font-weight: 700; font-size: 14px; color: #22c55e; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #22c55e; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 40px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #0a2a12 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 38px; font-weight: 800; color: #22c55e; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 16px; color: #94a3b8; max-width: 620px; line-height: 1.7; }
+  .slide-cover .badge { margin-top: 16px; background: #082010; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  .slide-section { background: #061208; }
+  .slide-section h2 { font-size: 28px; font-weight: 700; color: #22c55e; margin-bottom: 6px; }
+  .section-tag { color: #4b5563; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
+  .slide-demo { background: #061208; border-left: 4px solid #22c55e; }
+  .slide-demo h3 { font-size: 21px; color: #22c55e; margin-bottom: 4px; }
+  .demo-label { color: #4b5563; font-size: 13px; margin-bottom: 14px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 18px; }
+  .card h4 { color: #22c55e; margin-bottom: 8px; font-size: 14px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13px; line-height: 1.7; }
+  .card ul { padding-left: 16px; }
+  .hl { background: #082010; border: 1px solid #22c55e; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+  .hl.blue { background: #0c2a3f; border-color: #38bdf8; }
+  .hl.red { background: #2d0f0f; border-color: #ef4444; }
+  .hl.warn { background: #1a1200; border-color: #f59e0b; }
+  .hl p { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+  pre { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 14px; overflow-x: auto; font-family: 'Cascadia Code','Consolas',monospace; font-size: 12.5px; line-height: 1.8; color: #e6edf3; }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.t th { background: #082010; color: #4ade80; padding: 8px 12px; text-align: left; }
+  table.t td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  table.t tr:nth-child(even) td { background: #0f172a; }
+  .quiz-box { background: #082010; border: 1px solid #22c55e; padding: 14px; border-radius: 10px; margin: 10px 0; }
+  .quiz-q { font-size: 13px; color: #f8fafc; margin-bottom: 8px; }
+  .reveal-btn { background: #22c55e; color: #0f172a; padding: 7px 18px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; }
+  .quiz-answer { margin-top: 8px; color: #4ade80; font-size: 13px; line-height: 1.6; }
+  .over-demo { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
+  .over-card { flex: 1; min-width: 160px; background: #0a2a12; border: 1px solid #22c55e; border-radius: 8px; padding: 12px 14px; }
+  .over-card h5 { color: #4ade80; font-size: 13px; margin-bottom: 6px; }
+  .over-card p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .state-yes { color: #4ade80; font-weight: 600; }
+  .state-no  { color: #f87171; font-weight: 600; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">DAY 2 · MODULE 8 — High-Performing States</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter"></span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active">
+  <h1>🗺️ Identifying High-Performing States</h1>
+  <p class="subtitle">The Senior VP believes all states are doing well. Your job: use SQL to find which states actually beat the national average in sales — and which ones fall short.</p>
+  <div class="badge">Module 8 &nbsp;·&nbsp; Day 2 &nbsp;·&nbsp; Advanced &nbsp;·&nbsp; 30 min self-paced</div>
+  <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">AVG() OVER() — global average</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">Empty OVER() trick</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">3-CTE pattern</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">WHERE on CTE result</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide slide-section">
+  <div class="section-tag">The Challenge</div>
+  <h2>Is the VP Right? Are All States Performing Well? 🤔</h2>
+  <p style="color:#94a3b8;font-size:14px;margin-bottom:20px;">GlobalMart operates across 49+ states. The Senior VP is "optimistic about robust sales across all states." The data team needs to validate — or challenge — this belief.</p>
+  <div class="two-col">
+    <div class="card">
+      <h4>The Business Question</h4>
+      <p>Which states have <strong>average sales per transaction</strong> that exceed the national average?</p>
+      <p style="margin-top:10px;">This identifies genuine outperformers from the noise — states that are actually above the benchmark, not just "doing OK."</p>
+      <p style="margin-top:10px;color:#22c55e;font-size:13px;">Spoiler: Only 13 states beat the national average. The VP may be surprised.</p>
+    </div>
+    <div class="card">
+      <h4>The SQL Challenge</h4>
+      <p>To compare each state to the national average, we need the national average on <strong>every single row</strong> alongside the state's average.</p>
+      <p style="margin-top:10px;">The national average is computed from ALL states — not partitioned. This is the <strong>empty OVER()</strong> use case.</p>
+      <p style="margin-top:10px;font-family:monospace;font-size:12px;background:#0d1117;padding:8px;border-radius:6px;">AVG(sales) OVER() — no PARTITION BY, no ORDER BY</p>
+    </div>
+  </div>
+  <div class="hl" style="margin-top:18px;">
+    <p><strong style="color:#22c55e;">Tables (no ex_ prefix — original GlobalMart dataset):</strong><br>
+    <code>transactions</code> &nbsp;·&nbsp; <code>orders</code> &nbsp;·&nbsp; <code>customers</code> &nbsp;·&nbsp; <code>locations_01</code></p>
+  </div>
+</div>
+
+<!-- SLIDE 3: EMPTY OVER() EXPLAINED -->
+<div class="slide slide-content">
+  <h3>🌍 The Empty OVER() — One Window That Covers Everything</h3>
+  <div class="two-col">
+    <div>
+      <div class="over-demo">
+        <div class="over-card">
+          <h5>OVER(PARTITION BY state)</h5>
+          <p>Creates one window per state. Each window computes independently. You get a different AVG per state.</p>
+          <p style="margin-top:6px;color:#f87171;">Not what we want — this gives state average, not national.</p>
+        </div>
+        <div class="over-card" style="border-color:#22c55e;">
+          <h5>OVER() — empty</h5>
+          <p>Creates ONE window covering ALL rows. Computes a single global value. That value appears on every row.</p>
+          <p style="margin-top:6px;color:#4ade80;">This is what we want — national average on every state row.</p>
+        </div>
+      </div>
+      <div class="hl" style="margin-top:14px;">
+        <p><strong style="color:#22c55e;">Visualize it:</strong><br>
+        Imagine 49 state rows. With <code>OVER()</code>, SQL puts the average of ALL 49 states' averages on each row. Now you can compare state vs. national in a simple WHERE clause.</p>
+      </div>
+    </div>
+    <div>
+      <table class="t">
+        <tr><th>state</th><th>state_avg_sales</th><th>national_avg (OVER())</th><th>above?</th></tr>
+        <tr><td>Texas</td><td>450.12</td><td style="color:#94a3b8;">220.45</td><td class="state-yes">✅ YES</td></tr>
+        <tr><td>Indiana</td><td>380.67</td><td style="color:#94a3b8;">220.45</td><td class="state-yes">✅ YES</td></tr>
+        <tr><td>California</td><td>290.33</td><td style="color:#94a3b8;">220.45</td><td class="state-yes">✅ YES</td></tr>
+        <tr><td>Washington</td><td>198.20</td><td style="color:#94a3b8;">220.45</td><td class="state-no">❌ NO</td></tr>
+      </table>
+      <p style="color:#64748b;font-size:12px;margin-top:6px;">(Illustrative values — national_avg is the same on every row)</p>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ If OVER() had no effect and just returned the avg per row, what would the national_avg column show for Texas?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ It would show Texas's own average (same as state_avg_sales). The magic of <code>OVER()</code> is that it uses ALL rows — not just the current state's rows — to compute one shared value.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: BUILD STEP BY STEP -->
+<div class="slide slide-content">
+  <h3>Building the Solution — 3 CTEs, 3 Clear Steps</h3>
+  <div class="three-col">
+    <div class="card">
+      <h4>CTE 1 — TransactionData</h4>
+      <p>Join transactions → orders → customers → locations_01 to get one row per transaction with its state.</p>
+      <p style="margin-top:8px;color:#64748b;font-size:12px;">Think of this as the "master dataset" — everything needed in one place.</p>
+      <pre style="font-size:11px;margin-top:8px;line-height:1.7;">
+<span class="kw">SELECT</span> <span class="tbl">t</span>.*,
+  <span class="tbl">o</span>.<span class="col">order_purchase_date</span>,
+  <span class="tbl">l</span>.<span class="col">state</span>
+<span class="kw">FROM</span> <span class="tbl">transactions</span> <span class="tbl">t</span>
+<span class="kw">JOIN</span> <span class="tbl">orders</span> <span class="tbl">o</span>
+    <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">Order_ID</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+<span class="kw">JOIN</span> <span class="tbl">customers</span> <span class="tbl">c</span>
+    <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">Customer_ID</span> = <span class="tbl">c</span>.<span class="col">Customer_ID</span>
+<span class="kw">JOIN</span> <span class="tbl">locations_01</span> <span class="tbl">l</span>
+    <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">postal_code</span> = <span class="tbl">l</span>.<span class="col">postal_code</span></pre>
+    </div>
+    <div class="card">
+      <h4>CTE 2 — StateSummary</h4>
+      <p>Aggregate to one row per state. Compute average sales per transaction for each state.</p>
+      <p style="margin-top:8px;color:#64748b;font-size:12px;">After this CTE, each state = one row with one sales value.</p>
+      <pre style="font-size:11px;margin-top:8px;line-height:1.7;">
+<span class="kw">SELECT</span>
+  <span class="col">state</span>,
+  <span class="fn">AVG</span>(<span class="col">sales</span>) <span class="kw">AS</span> sales
+<span class="kw">FROM</span> TransactionData
+<span class="kw">GROUP BY</span> <span class="col">state</span>
+
+<span class="cm">-- Result: ~49 rows
+-- One average per state</span></pre>
+    </div>
+    <div class="card">
+      <h4>CTE 3 — AvgSales</h4>
+      <p>Add the global national average using <code>AVG() OVER()</code> — one value for all rows.</p>
+      <p style="margin-top:8px;color:#64748b;font-size:12px;">Now every state row has: its own average AND the national benchmark side by side.</p>
+      <pre style="font-size:11px;margin-top:8px;line-height:1.7;">
+<span class="kw">SELECT</span> *,
+  <span class="cm">-- Empty OVER() = single global avg
+  -- Same value on ALL state rows</span>
+  <span class="fn">AVG</span>(<span class="col">sales</span>)
+      <span class="kw">OVER</span>()
+      <span class="kw">AS</span> avg_national_sales
+<span class="kw">FROM</span> StateSummary</pre>
+    </div>
+  </div>
+  <div class="hl" style="margin-top:16px;">
+    <p><strong style="color:#22c55e;">Final SELECT:</strong> Filter WHERE sales &gt; avg_national_sales. That's it! The heavy lifting was done by the window function. The final query is just a comparison.</p>
+    <pre style="font-size:12.5px;margin-top:8px;">
+<span class="kw">SELECT</span> <span class="col">state</span>, <span class="col">sales</span>
+<span class="kw">FROM</span> AvgSales
+<span class="kw">WHERE</span> <span class="col">sales</span> > <span class="col">avg_national_sales</span>; <span class="cm">-- numeric compare — works!</span></pre>
+  </div>
+</div>
+
+<!-- SLIDE 5: FULL DEMO -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Full Solution: High-Performing States 🌟</h3>
+  <div class="demo-label">Tables: transactions, orders, customers, locations_01 (no ex_ prefix) | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:12px;line-height:1.78;">
+<span class="cm">-- CTE 1: Build master dataset with state per transaction</span>
+<span class="kw">WITH</span> TransactionData <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">t</span>.*,
+        <span class="tbl">o</span>.<span class="col">order_purchase_date</span> <span class="kw">AS</span> Order_Date,
+        <span class="tbl">l</span>.<span class="col">state</span>
+    <span class="kw">FROM</span> <span class="tbl">transactions</span> <span class="tbl">t</span>
+    <span class="kw">JOIN</span> <span class="tbl">orders</span> <span class="tbl">o</span>
+        <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">Order_ID</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">customers</span> <span class="tbl">c</span>
+        <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">Customer_ID</span> = <span class="tbl">c</span>.<span class="col">Customer_ID</span>
+    <span class="kw">JOIN</span> <span class="tbl">locations_01</span> <span class="tbl">l</span>
+        <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">postal_code</span> = <span class="tbl">l</span>.<span class="col">postal_code</span>
+),
+<span class="cm">-- CTE 2: Aggregate to one row per state
+-- AVG(sales) = average transaction value in that state</span>
+StateSummary <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="col">state</span>,
+        <span class="fn">AVG</span>(<span class="col">sales</span>) <span class="kw">AS</span> sales
+    <span class="kw">FROM</span> TransactionData
+    <span class="kw">GROUP BY</span> <span class="col">state</span>
+),
+<span class="cm">-- CTE 3: Add national average using window function
+-- OVER() with NO arguments = one window = ALL rows = global value
+-- This single value gets stamped on every row in StateSummary</span>
+AvgSales <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        *,
+        <span class="fn">AVG</span>(<span class="col">sales</span>) <span class="kw">OVER</span>() <span class="kw">AS</span> avg_national_sales
+    <span class="kw">FROM</span> StateSummary
+)
+<span class="cm">-- Final: keep only states whose avg sales beats the national avg
+-- sales and avg_national_sales are both numbers → comparison works</span>
+<span class="kw">SELECT</span>
+    <span class="col">state</span>,
+    <span class="col">sales</span>
+<span class="kw">FROM</span> AvgSales
+<span class="kw">WHERE</span> (
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> <span class="col">sales</span> > <span class="col">avg_national_sales</span> <span class="kw">THEN</span> <span class="str">1</span>
+        <span class="kw">ELSE</span> <span class="str">0</span>
+    <span class="kw">END</span>
+) = <span class="str">1</span>;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Simpler WHERE — also works</h4>
+        <pre style="font-size:12px;margin-top:8px;">
+<span class="cm">-- You can also write it simply as:</span>
+<span class="kw">SELECT</span> <span class="col">state</span>, <span class="col">sales</span>
+<span class="kw">FROM</span> AvgSales
+<span class="kw">WHERE</span> <span class="col">sales</span> > <span class="col">avg_national_sales</span>;
+
+<span class="cm">-- The CASE WHEN version and this produce
+-- identical results. Both are correct.</span></pre>
+      </div>
+      <div class="quiz-box" style="margin-top:14px;">
+        <p class="quiz-q">❓ How many states have average sales above the national average?<br>a) 10 &nbsp; b) 11 &nbsp; c) 12 &nbsp; d) 13</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ d) <strong>13 states</strong> — run the full query in SSMS and count the rows returned.</p></div>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ Which of these states are above the national average?<br>a) Texas &nbsp; b) Washington &nbsp; c) Indiana &nbsp; d) California</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none">
+          <p>✅ <span class="state-yes">Texas ✅ &nbsp; Indiana ✅ &nbsp; California ✅</span><br>
+          <span class="state-no">Washington ❌</span> — Washington's average falls below the national benchmark. The VP was wrong about this one.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: WHY NOT SUBQUERY? -->
+<div class="slide slide-content">
+  <h3>❓ Could We Use a Subquery Instead?</h3>
+  <div class="two-col">
+    <div>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:12px;">Yes — here are two ways to get the same result:</p>
+      <div class="card" style="margin-bottom:14px;">
+        <h4>Option 1 — Subquery in WHERE</h4>
+        <pre style="font-size:11.5px;margin-top:8px;">
+<span class="kw">WHERE</span> sales > (
+    <span class="kw">SELECT</span> <span class="fn">AVG</span>(sales)
+    <span class="kw">FROM</span> StateSummary
+)
+<span class="cm">-- Runs AVG() once as a scalar subquery
+-- Compares each state row to that scalar</span></pre>
+      </div>
+      <div class="card">
+        <h4>Option 2 — Window Function (our approach)</h4>
+        <pre style="font-size:11.5px;margin-top:8px;">
+<span class="fn">AVG</span>(<span class="col">sales</span>) <span class="kw">OVER</span>() <span class="kw">AS</span> avg_national_sales
+<span class="cm">-- Computes the same value but puts it on
+-- every row as a visible column
+-- Then WHERE sales > avg_national_sales</span></pre>
+      </div>
+    </div>
+    <div>
+      <table class="t" style="margin-bottom:14px;">
+        <tr><th>Aspect</th><th>Subquery</th><th>Window OVER()</th></tr>
+        <tr><td>Result correct?</td><td style="color:#4ade80;">✅</td><td style="color:#4ade80;">✅</td></tr>
+        <tr><td>Can see the national avg in output?</td><td style="color:#f87171;">❌ Hidden in WHERE</td><td style="color:#4ade80;">✅ Column visible</td></tr>
+        <tr><td>Reuse value without recalculating?</td><td style="color:#f87171;">❌ Need to re-subquery</td><td style="color:#4ade80;">✅ Already a column</td></tr>
+        <tr><td>Easy to add to output for audit?</td><td style="color:#f87171;">❌ Hard</td><td style="color:#4ade80;">✅ Already there</td></tr>
+      </table>
+      <div class="hl">
+        <p><strong style="color:#22c55e;">Recommendation:</strong> In production reports, use the window function. It makes the national average visible and auditable in the output. With a subquery, the benchmark disappears — the reader can't verify what you compared against.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: COMMON MISTAKES -->
+<div class="slide slide-content">
+  <h3>🚫 Common Mistakes — Module 8</h3>
+  <table class="t" style="margin-bottom:16px;">
+    <tr><th>Mistake</th><th>What Goes Wrong</th><th>Fix</th></tr>
+    <tr><td>AVG(sales) in SELECT without OVER()</td><td style="color:#f87171;">Error — can't use aggregate in SELECT without GROUP BY</td><td>Add OVER() to make it a window function</td></tr>
+    <tr><td>PARTITION BY state in OVER()</td><td style="color:#f87171;">Returns each state's own average — not national</td><td>Use empty OVER() for the global average</td></tr>
+    <tr><td>Filter too early (in StateSummary CTE)</td><td style="color:#f87171;">Filters before national avg is computed — wrong benchmark</td><td>Filter only in the final query after OVER()</td></tr>
+    <tr><td>Using ex_transactions instead of transactions</td><td style="color:#f87171;">Wrong dataset — Module 8 uses non-ex_ tables</td><td>Use: transactions, orders, customers, locations_01</td></tr>
+    <tr><td>Joining on wrong column names</td><td style="color:#f87171;">Case sensitivity: Order_ID vs order_id</td><td>Check data dictionary — note mixed case column names in transactions table</td></tr>
+  </table>
+  <div class="hl warn" style="margin-top:4px;">
+    <p><strong style="color:#f59e0b;">⚠️ Table naming gotcha for Module 8:</strong><br>
+    Unlike Modules 6 and 7, Module 8 uses the <strong>original</strong> GlobalMart tables — no <code>ex_</code> prefix. Use <code>transactions</code>, <code>orders</code>, <code>customers</code>, <code>locations_01</code>. Running the query on <code>ex_transactions</code> will give different (wrong) results.</p>
+  </div>
+</div>
+
+<!-- SLIDE 8: WRAP UP -->
+<div class="slide slide-section" style="text-align:center;align-items:center;">
+  <div class="section-tag">Summary</div>
+  <h2>Day 2 Complete 🎓</h2>
+  <div class="three-col" style="margin-top:20px;max-width:900px;text-align:left;">
+    <div class="card">
+      <h4>Module 8 — Key Lesson</h4>
+      <p>Empty <code>OVER()</code> = one window over ALL rows = a global benchmark on every row. Filter in outer query.</p>
+      <p style="margin-top:8px;color:#4ade80;font-size:13px;">Result: 13 states above national average. Washington is NOT one of them.</p>
+    </div>
+    <div class="card">
+      <h4>Day 2 Window Functions Mastery</h4>
+      <ul>
+        <li>PARTITION BY without ORDER BY → group total</li>
+        <li>PARTITION BY with ORDER BY → running total</li>
+        <li>Empty OVER() → global total/average</li>
+        <li>Filter by window result → use CTE first</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Real Business Impact</h4>
+      <p>These 4 modules let you answer questions that aggregate reports can't: trends over time, rankings within groups, tipping points, benchmark comparisons. All from the same SQL engine.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const total = slides.length;
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  function changeSlide(dir) { showSlide(current + dir); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+  counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>

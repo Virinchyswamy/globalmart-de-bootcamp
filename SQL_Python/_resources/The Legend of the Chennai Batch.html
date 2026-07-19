@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Legend of the Chennai Batch</title>
+<style>
+/* ── Tokens ──────────────────────────────────────────────────────── */
+:root {
+  --ink:    #08090E;
+  --paper:  #111420;
+  --card:   #181C2E;
+  --border: #272B40;
+  --body:   #DDD8CE;
+  --muted:  #7A7E96;
+  --warm:   #EEE9E0;
+
+  --coral:  #FF6B6B;
+  --teal:   #3ECFB8;
+  --gold:   #FFD166;
+  --lav:    #B388FF;
+  --lime:   #69DB7C;
+  --sky:    #66D9E8;
+  --rose:   #FF8FAB;
+  --orange: #FFA94D;
+
+  --ch1: var(--coral);
+  --ch2: var(--teal);
+  --ch3: var(--gold);
+  --ch4: var(--lime);
+  --ch5: var(--lav);
+  --ch6: var(--orange);
+
+  --ff-display: Georgia, 'Times New Roman', serif;
+  --ff-body:    system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ff-mono:    'JetBrains Mono', 'Consolas', monospace;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--ink);
+  color: var(--body);
+  font-family: var(--ff-body);
+  font-size: 1.05rem;
+  line-height: 1.78;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────── */
+.story {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 1.5rem 6rem;
+}
+
+/* ── Hero ──────────────────────────────────────────────────────── */
+.hero {
+  text-align: center;
+  padding: 5rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 0%, rgba(255,107,107,.18) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 40% at 20% 100%, rgba(62,207,184,.12) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 35% at 80% 90%, rgba(179,136,255,.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  font-family: var(--ff-mono);
+  font-size: .72rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+.hero h1 {
+  font-family: var(--ff-display);
+  font-size: clamp(2.4rem, 8vw, 4rem);
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--warm);
+  text-wrap: balance;
+  margin-bottom: .8rem;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--coral);
+}
+.hero-sub {
+  font-size: 1rem;
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 auto 2rem;
+  text-wrap: balance;
+}
+.hero-meta {
+  display: inline-flex;
+  gap: 1.5rem;
+  font-family: var(--ff-mono);
+  font-size: .78rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.hero-meta span { color: var(--teal); }
+
+/* ── Chapter banner ──────────────────────────────────────────────── */
+.chapter {
+  margin: 4rem -1.5rem 2.5rem;
+  padding: 1.4rem 2rem 1.2rem;
+  position: relative;
+  overflow: hidden;
+}
+.chapter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: .12;
+}
+.chapter-num {
+  font-family: var(--ff-display);
+  font-size: 5rem;
+  font-weight: 700;
+  line-height: .85;
+  opacity: .2;
+  position: absolute;
+  right: 1.5rem;
+  bottom: -.6rem;
+  letter-spacing: -.04em;
+}
+.chapter-label {
+  font-family: var(--ff-mono);
+  font-size: .7rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  opacity: .7;
+  margin-bottom: .3rem;
+}
+.chapter h2 {
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--warm);
+  position: relative;
+  z-index: 1;
+}
+.chapter-time {
+  font-family: var(--ff-mono);
+  font-size: .75rem;
+  opacity: .55;
+  margin-top: .25rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Body text ──────────────────────────────────────────────────── */
+p { margin-bottom: 1.1rem; }
+p:last-child { margin-bottom: 0; }
+
+.name {
+  font-weight: 700;
+  padding: .05rem .3rem;
+  border-radius: 3px;
+  font-size: .96em;
+}
+
+/* ── Dialogue ──────────────────────────────────────────────────── */
+.dialogue {
+  margin: 1.4rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+}
+.line {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 .9rem;
+  align-items: start;
+}
+.line-bar {
+  width: 3px;
+  border-radius: 2px;
+  margin-top: .3rem;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+.line-inner { }
+.speaker {
+  font-size: .72rem;
+  font-weight: 700;
+  font-family: var(--ff-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: .15rem;
+}
+.line-text {
+  font-size: .94rem;
+  line-height: 1.6;
+  color: var(--body);
+  background: var(--card);
+  border-radius: 0 8px 8px 8px;
+  padding: .55rem .85rem;
+  border: 1px solid var(--border);
+}
+.line-text code {
+  font-family: var(--ff-mono);
+  font-size: .82em;
+  background: rgba(255,255,255,.07);
+  padding: .05rem .3rem;
+  border-radius: 3px;
+}
+
+/* ── Pull quote ──────────────────────────────────────────────────── */
+.pull {
+  margin: 2.5rem 0;
+  padding: 1.2rem 1.5rem;
+  border-left: 4px solid var(--gold);
+  position: relative;
+}
+.pull p {
+  font-family: var(--ff-display);
+  font-size: 1.45rem;
+  font-style: italic;
+  line-height: 1.38;
+  color: var(--warm);
+  margin: 0;
+  text-wrap: balance;
+}
+.pull-attr {
+  font-family: var(--ff-mono);
+  font-size: .72rem;
+  color: var(--muted);
+  margin-top: .5rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* ── Code moment ──────────────────────────────────────────────────── */
+.code-block {
+  background: #05060B;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  font-family: var(--ff-mono);
+  font-size: .8rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin: 1.2rem 0;
+  white-space: pre;
+}
+.code-block .kw  { color: #FF7B72; }
+.code-block .fn  { color: #D2A8FF; }
+.code-block .st  { color: #A5D6FF; }
+.code-block .cm  { color: #6A7090; font-style: italic; }
+.code-block .err { color: #F85149; text-decoration: wavy underline; }
+
+/* ── Scene break ──────────────────────────────────────────────────── */
+.scene-break {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  margin: 2rem 0;
+  color: var(--border);
+  font-family: var(--ff-mono);
+  font-size: .7rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.scene-break::before, .scene-break::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Rank cards ──────────────────────────────────────────────────── */
+.rank-section {
+  margin: 3rem -1.5rem 0;
+  padding: 2rem 1.5rem;
+  background: var(--paper);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.rank-section h3 {
+  font-family: var(--ff-display);
+  font-size: 1.2rem;
+  color: var(--warm);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .75rem;
+}
+.rank-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .75rem .9rem;
+  border-top: 3px solid currentColor;
+}
+.rank-card-name {
+  font-weight: 700;
+  font-size: .85rem;
+  color: var(--warm);
+  margin-bottom: .2rem;
+}
+.rank-card-title {
+  font-family: var(--ff-mono);
+  font-size: .7rem;
+  color: currentColor;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: .25rem;
+}
+.rank-card-desc {
+  font-size: .75rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* ── Epilogue ──────────────────────────────────────────────────── */
+.epilogue {
+  text-align: center;
+  padding: 4rem 1rem 2rem;
+}
+.epilogue h2 {
+  font-family: var(--ff-display);
+  font-size: 1.8rem;
+  font-style: italic;
+  color: var(--warm);
+  margin-bottom: .8rem;
+}
+.epilogue p { color: var(--muted); max-width: 520px; margin: 0 auto .8rem; }
+
+/* ── Name color assignments ──────────────────────────────────────── */
+.n-aman-s  { background: rgba(255,107,107,.18); color: var(--coral); }
+.n-aman-t  { background: rgba(255,107,107,.18); color: #FF9F9F; }
+.n-amar    { background: rgba(62,207,184,.18);  color: var(--teal); }
+.n-avis    { background: rgba(255,209,102,.18); color: var(--gold); }
+.n-karthik { background: rgba(105,219,124,.18); color: var(--lime); }
+.n-devan   { background: rgba(179,136,255,.18); color: var(--lav); }
+.n-harsh   { background: rgba(255,107,107,.18); color: var(--coral); }
+.n-heema   { background: rgba(102,217,232,.18); color: var(--sky); }
+.n-hritin  { background: rgba(255,143,171,.18); color: var(--rose); }
+.n-pratik  { background: rgba(62,207,184,.18);  color: var(--teal); }
+.n-gaurav  { background: rgba(255,169,77,.18);  color: var(--orange); }
+.n-ganadeep{ background: rgba(105,219,124,.18); color: var(--lime); }
+.n-payal   { background: rgba(255,107,107,.18); color: var(--coral); }
+.n-prishita{ background: rgba(179,136,255,.18); color: var(--lav); }
+.n-raj     { background: rgba(255,209,102,.18); color: var(--gold); }
+.n-kamal   { background: rgba(102,217,232,.18); color: var(--sky); }
+.n-sneha   { background: rgba(255,143,171,.18); color: var(--rose); }
+.n-saket   { background: rgba(255,169,77,.18);  color: var(--orange); }
+.n-santosh { background: rgba(105,219,124,.18); color: var(--lime); }
+.n-shivam  { background: rgba(62,207,184,.18);  color: var(--teal); }
+.n-sujit   { background: rgba(255,107,107,.18); color: var(--coral); }
+.n-sukrit  { background: rgba(179,136,255,.18); color: var(--lav); }
+.n-sushant { background: rgba(255,209,102,.18); color: var(--gold); }
+.n-nikshitha{background: rgba(102,217,232,.18); color: var(--sky); }
+.n-yogesh  { background: rgba(105,219,124,.18); color: var(--lime); }
+.n-virinchy{ background: rgba(255,107,107,.18); color: #FF9060; }
+
+/* dialogue bar colors */
+.bar-coral   { background: var(--coral); }
+.bar-teal    { background: var(--teal); }
+.bar-gold    { background: var(--gold); }
+.bar-lav     { background: var(--lav); }
+.bar-lime    { background: var(--lime); }
+.bar-sky     { background: var(--sky); }
+.bar-rose    { background: var(--rose); }
+.bar-orange  { background: var(--orange); }
+.bar-peach   { background: #FF9060; }
+
+/* speaker label colors */
+.sp-coral    { color: var(--coral); }
+.sp-teal     { color: var(--teal); }
+.sp-gold     { color: var(--gold); }
+.sp-lav      { color: var(--lav); }
+.sp-lime     { color: var(--lime); }
+.sp-sky      { color: var(--sky); }
+.sp-rose     { color: var(--rose); }
+.sp-orange   { color: var(--orange); }
+.sp-peach    { color: #FF9060; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HERO ════════════════════ -->
+<div class="hero">
+  <p class="hero-eyebrow">Tredence Chennai Office · Enqurious Training Program · 2026</p>
+  <h1>The <em>Legend</em> of the<br/>Chennai Batch</h1>
+  <p class="hero-sub">A true* story of 25 brilliant, chaotic, occasionally napping data engineers who came to learn SQL and accidentally discovered themselves.</p>
+  <div class="hero-meta">
+    <span>25 learners</span>
+    <span>1 patient mentor</span>
+    <span>∞ SQL errors</span>
+  </div>
+  <p style="font-size:.7rem;color:var(--muted);margin-top:1.5rem">* Mostly true. Possibly exaggerated. Definitely legendary.</p>
+</div>
+
+<!-- ═══════════════ CHAPTER 1 ════════════════ -->
+<div class="chapter" style="color:var(--coral);">
+  <div class="chapter-label">Chapter One</div>
+  <h2>The Great Arrival (Or: "Sir, Is the WiFi Working?")</h2>
+  <div class="chapter-time">8:47 AM — Tredence Chennai, 3rd Floor</div>
+  <div class="chapter-num">1</div>
+</div>
+
+<div class="story">
+
+<p>The Tredence Chennai office smelled of fresh filter coffee and quiet ambition on a perfectly ordinary morning — until 25 data engineering learners arrived, and it stopped being ordinary forever.</p>
+
+<p><span class="name n-nikshitha">T Nikshitha</span> was, as always, the first one in. She had arrived at 8:43 AM, set up her laptop, colour-coded her notebook tabs (pink for SQL, green for Python, blue for "things Virinchy Sir said that I need to Google later"), and was already scanning the room like a hawk waiting for lunch time — which, at 8:44 AM, was still four hours and sixteen minutes away. She knew. She was counting.</p>
+
+<p>At 8:52 AM, <span class="name n-yogesh">Yogesh Patidar</span> burst through the door like he had somewhere more important to be than the place he was already arriving at. He dropped into a chair, opened his laptop, and started answering questions that hadn't been asked yet.</p>
+
+<p>The two <span class="name n-aman-s">Amans</span> arrived together — <span class="name n-aman-s">Aman Shankar Verma</span> and <span class="name n-aman-t">Aman Thapliyal</span> — which would cause Virinchy Sir exactly eleven moments of confusion throughout the day. They walked in mid-debate.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Aman S.</div>
+      <div class="line-text">I'm telling you, a <code>NULL</code> is basically the universe saying "I don't know yet."</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-teal"></div>
+    <div class="line-inner">
+      <div class="speaker sp-teal">Aman T.</div>
+      <div class="line-text">It is NOT the universe. It's just a missing value in a database.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Aman S.</div>
+      <div class="line-text">But what IS a missing value, philosophically?</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-amardeep">Amardeep Meena</span> walked in texting his mother: <em>"Reached office safely; training starting soon;"</em> — with a semicolon. This was not the last semicolon Amardeep would type today. Not even close.</p>
+
+<p><span class="name n-harsh">Harsh Kumar</span> entered loudly, laughing at something on his phone. He sat down still laughing, opened his laptop, typed one line of SQL, got an error, and laughed louder. <span class="name n-hritin">Hritin Raj</span> slid in quietly and opened no fewer than six Stack Overflow tabs before anyone said good morning.</p>
+
+<p><span class="name n-pratik">Kumar Pratik</span> connected to the WiFi, ran a speed test, and had already read ahead three modules by the time Virinchy Sir opened his slide deck.</p>
+
+<p><span class="name n-sujit">Sujit Kumar</span> greeted everyone cheerfully, sat down, and immediately raised his hand.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Sujit Kumar</div>
+      <div class="line-text">Sir, before we start — which company pays the most for someone who knows Databricks?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">…We haven't started yet, Sujit.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Sujit Kumar</div>
+      <div class="line-text">I know sir. I'm planning ahead.</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-shivam">Shivam Kumar</span> was trying to install Python on his phone. <span class="name n-devan">Devanand P</span> was writing a comment block above a <code>SELECT *</code> that explained, in painstaking detail, what <code>SELECT *</code> does. <span class="name n-prishita">Prishita Shukla</span> had already uncapped three highlighters. <span class="name n-sneha">S R Sneha</span> was Googling "is Python case sensitive" for what she would later confirm was not her first time.</p>
+
+<p>And then, from the back, <span class="name n-heema">Heemansh Bhawsar</span> — who had been so quiet that three people hadn't noticed he was there — said nothing at all. He just smiled and opened his terminal. He would later ask the most thoughtful question of the entire day, but that was hours away.</p>
+
+<p>At exactly 9:01 AM, <span class="name n-virinchy">Virinchy Sir</span> from Enqurious clicked his first slide.</p>
+
+<div class="pull">
+  <p>"Good morning, everyone. Today we begin with SQL. By the end of this week, you'll be thinking in queries."</p>
+  <div class="pull-attr">— Virinchy Sir, 9:01 AM, unaware of what he was unleashing</div>
+</div>
+
+</div><!-- end story -->
+
+<!-- ═══════════════ CHAPTER 2 ════════════════ -->
+<div class="chapter" style="color:var(--teal);">
+  <div class="chapter-label">Chapter Two</div>
+  <h2>SELECT * FROM brain WHERE coffee > 0</h2>
+  <div class="chapter-time">9:15 AM — First Query Exercise</div>
+  <div class="chapter-num">2</div>
+</div>
+
+<div class="story">
+
+<p>The first exercise was simple: write a query to join the <code>transactions</code> and <code>products</code> tables on <code>product_id</code>. Virinchy Sir had barely finished the sentence when <span class="name n-yogesh">Yogesh Patidar</span> had already typed his answer, hit run, and was looking around waiting for the next question.</p>
+
+<p><span class="name n-pratik">Kumar Pratik</span> finished two seconds later. He then opened the next module and started reading about window functions, which they weren't covering until Day 5.</p>
+
+<p><span class="name n-bysani">Bysani Karthik</span> stared at the blank query editor for thirty seconds, then looked up.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-lime"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lime">Bysani Karthik</div>
+      <div class="line-text">Sir, can we just do this in Excel? I have VLOOKUP mapped to a shortcut key.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Karthik, the dataset has 4.7 million rows.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-lime"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lime">Bysani Karthik</div>
+      <div class="line-text">...I have a fast laptop.</div>
+    </div>
+  </div>
+</div>
+
+<p>Meanwhile, <span class="name n-devan">Devanand P</span> had written his query. All forty-seven lines of it. He had added a comment above every clause.</p>
+
+<div class="code-block"><span class="cm">-- This SELECT statement selects the columns we want to select</span>
+<span class="kw">SELECT</span>
+  <span class="cm">-- t refers to the transactions table (aliased as t above)</span>
+  t.order_id,
+  <span class="cm">-- p refers to the products table (aliased as p below)</span>
+  p.product_name,
+  <span class="cm">-- Sales_Amount is the amount of the sale in sales currency</span>
+  t.Sales_Amount
+  <span class="cm">-- ... (continues for 41 more lines) ...</span></div>
+
+<p>"Devanand," said Virinchy Sir gently, "your query is correct. But it's also the length of a short story."</p>
+<p>"Thank you sir," said Devanand, missing the point entirely. "I can add more comments if needed."</p>
+
+<p>Over at her desk, <span class="name n-payal">Payal</span> had been quietly working through the exercise when she noticed something. She squinted at the slide. She looked again. She raised her hand.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Payal</div>
+      <div class="line-text">Sir, I think there's a typo in Slide 12. The column name in the code is <code>product_Id</code> but the table has <code>product_id</code> — lowercase d.</div>
+    </div>
+  </div>
+</div>
+
+<p>Virinchy Sir looked at the slide. He looked at the table. He looked back at the slide. Thirty seconds passed.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">...Yes. That's a typo. Good catch, Payal. Everyone else, please update your notes.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-lav"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lav">Prishita Shukla</div>
+      <div class="line-text">Already done. I used red pen for errors.</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-raj">Raj Sharma</span> had been staring at the JOIN syntax with increasing suspicion.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-gold"></div>
+    <div class="line-inner">
+      <div class="speaker sp-gold">Raj Sharma</div>
+      <div class="line-text">Sir, I just want to understand — why can't I use VLOOKUP?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-lime"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lime">Bysani Karthik</div>
+      <div class="line-text">Same question sir.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Gentlemen. There is no VLOOKUP in SQL. There is no spreadsheet. There are only queries.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-gold"></div>
+    <div class="line-inner">
+      <div class="speaker sp-gold">Raj Sharma</div>
+      <div class="line-text">What about INDEX MATCH?</div>
+    </div>
+  </div>
+</div>
+
+<p>From the back of the room, <span class="name n-heema">Heemansh Bhawsar</span> said nothing. He had already finished the exercise, run it successfully, and was now reading the pandas documentation.</p>
+
+<p>At 9:47 AM, <span class="name n-amardeep">Amardeep Meena</span> ran his first successful query and instinctively typed a semicolon in the Slack channel to announce it. <span class="name n-saket">Saket Ranjan</span>, noticing the LEFT JOIN in the exercise, raised his hand.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-orange"></div>
+    <div class="line-inner">
+      <div class="speaker sp-orange">Saket Ranjan</div>
+      <div class="line-text">Sir, LEFT JOIN — does this mean only the left side of the body? Like, for the LEFT specifically?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Saket. It refers to the left table in the query. Not the left side of anything anatomical.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-orange"></div>
+    <div class="line-inner">
+      <div class="speaker sp-orange">Saket Ranjan</div>
+      <div class="line-text">Okay sir. And RIGHT JOIN is the other table?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Yes. Exactly.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-orange"></div>
+    <div class="line-inner">
+      <div class="speaker sp-orange">Saket Ranjan</div>
+      <div class="line-text">And FULL OUTER JOIN is for when you skip leg day?</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-harsh">Harsh Kumar</span> laughed so loudly that someone on the second floor looked up from their laptop.</p>
+
+</div>
+
+<!-- ═══════════════ CHAPTER 3 ════════════════ -->
+<div class="chapter" style="color:var(--gold);">
+  <div class="chapter-label">Chapter Three</div>
+  <h2>The Python Pandemonium</h2>
+  <div class="chapter-time">10:30 AM — Python & Pandas</div>
+  <div class="chapter-num">3</div>
+</div>
+
+<div class="story">
+
+<p>The shift to Python produced a new and interesting chaos. Virinchy Sir introduced the pandas library. <span class="name n-ganadeep">P V Ganadeep</span> wrote it down carefully in his notes as <em>PAND-us</em>. He would spend three days pronouncing it this way with complete confidence.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-lime"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lime">P V Ganadeep</div>
+      <div class="line-text">Sir, this PAND-us library — it is only for data analysis, or also for machine learning?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">It's — Ganadeep, just to confirm, you mean… pandas? The library?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-lime"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lime">P V Ganadeep</div>
+      <div class="line-text">Yes sir, PAND-us. I just said.</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-shivam">Shivam Kumar</span> had, by now, accepted that Python was not going to run on his phone and had switched to his laptop. He <code>pip install</code>-ed eleven packages, several of which were not relevant to anything being taught. He then got a dependency conflict error and stared at it with the philosophical stillness of someone watching rain.</p>
+
+<p><span class="name n-sushant">Sushant Kumar</span> had loaded his DataFrame. He then ran <code>df.head()</code>. He looked at the output. He ran <code>df.head()</code> again. And again. On the sixth run, <span class="name n-gaurav">M Gaurav Kumar</span>, who sat next to him, leaned over.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-orange"></div>
+    <div class="line-inner">
+      <div class="speaker sp-orange">M Gaurav Kumar</div>
+      <div class="line-text">Bhai, the data is not going to change.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-gold"></div>
+    <div class="line-inner">
+      <div class="speaker sp-gold">Sushant Kumar</div>
+      <div class="line-text">I know. I just like to be sure.</div>
+    </div>
+  </div>
+</div>
+
+<p>He ran it four more times before proceeding.</p>
+
+<p><span class="name n-hritin">Hritin Raj</span> had found a Stack Overflow answer from 2019 that seemed to solve the exercise. He copy-pasted it. It worked perfectly. He sat back with a troubled expression.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-rose"></div>
+    <div class="line-inner">
+      <div class="speaker sp-rose">Hritin Raj</div>
+      <div class="line-text">Sir, it worked. But I don't know why.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">That is both the beauty and the danger of Stack Overflow, Hritin.</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-gaurav">M Gaurav Kumar</span> had, at this point, asked eleven questions in forty-five minutes. They were all good questions. Virinchy Sir was impressed but also slightly tired. <span class="name n-sneha">S R Sneha</span> was Googling "pandas case sensitive column names" and then, a few minutes later, "is Python case sensitive" — again. <span class="name n-sukrit">Sukrit Ghosh</span> had forty-seven browser tabs open. When someone pointed this out, he said, "I know which one I need," and opened a new one.</p>
+
+<p>Then <span class="name n-kamal">Remalli Kamal Kumar</span>, who had been working quietly and intensely, accidentally typed something in his terminal. The room went silent because everyone could see his screen.</p>
+
+<div class="code-block"><span class="err">$ git push --force origin main</span></div>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-sky"></div>
+    <div class="line-inner">
+      <div class="speaker sp-sky">Remalli Kamal Kumar</div>
+      <div class="line-text">Oh no. I was in the wrong terminal window.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-lav"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lav">Prishita Shukla</div>
+      <div class="line-text">That's a shared repo isn't it?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Everyone close your terminals. Kamal — put your hands up where I can see them.</div>
+    </div>
+  </div>
+</div>
+
+<p>It was a personal repo. No data was harmed. <span class="name n-harsh">Harsh Kumar</span> laughed for four minutes.</p>
+
+<div class="pull">
+  <p>"Sir, in Rajasthan, we have a system for handling this kind of situation too."</p>
+  <div class="pull-attr">— Santosh Kumar, to nobody's complete surprise</div>
+</div>
+
+<p>Nobody asked what the Rajasthan system was. <span class="name n-santosh">Santosh Kumar</span> explained it anyway. It was, by all accounts, a completely different system that somehow arrived at the same answer.</p>
+
+<p>Meanwhile, <span class="name n-aviskar">Aviskar M Dhavale</span> had been following along carefully — until Virinchy Sir reached the most critical part of the <code>np.where()</code> explanation, at which exact moment Aviskar's laptop screen went dark. He had accidentally pressed the power button instead of the Escape key. By the time it came back on, the slide had changed.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-gold"></div>
+    <div class="line-inner">
+      <div class="speaker sp-gold">Aviskar M Dhavale</div>
+      <div class="line-text">Sir, can you go back? I think I missed something important.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Aviskar, that was the single most important slide of the session.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-gold"></div>
+    <div class="line-inner">
+      <div class="speaker sp-gold">Aviskar M Dhavale</div>
+      <div class="line-text">I know sir. The timing was very unfortunate.</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════════════ CHAPTER 4 ════════════════ -->
+<div class="chapter" style="color:var(--lime);">
+  <div class="chapter-label">Chapter Four</div>
+  <h2>The Sacred Hour of Sambar</h2>
+  <div class="chapter-time">1:00 PM — Lunch</div>
+  <div class="chapter-num">4</div>
+</div>
+
+<div class="story">
+
+<p>At exactly 1:00 PM and zero seconds, <span class="name n-nikshitha">T Nikshitha</span> spoke.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-sky"></div>
+    <div class="line-inner">
+      <div class="speaker sp-sky">T Nikshitha</div>
+      <div class="line-text">Sir, it is 1 PM.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Nikshitha, I have a watch.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-sky"></div>
+    <div class="line-inner">
+      <div class="speaker sp-sky">T Nikshitha</div>
+      <div class="line-text">I know sir. I just wanted to confirm we are aligned.</div>
+    </div>
+  </div>
+</div>
+
+<p>The batch descended on the cafeteria in a wave. The great theological debate of the Chennai Batch began, as it does every day, over food.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-gold"></div>
+    <div class="line-inner">
+      <div class="speaker sp-gold">Raj Sharma</div>
+      <div class="line-text">The biryani here is honestly better than the SQL joins we've been doing all morning.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-sky"></div>
+    <div class="line-inner">
+      <div class="speaker sp-sky">T Nikshitha</div>
+      <div class="line-text">Excuse me, we are in CHENNAI. You will respect the dosa.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-orange"></div>
+    <div class="line-inner">
+      <div class="speaker sp-orange">M Gaurav Kumar</div>
+      <div class="line-text">I have a question — can a dosa and biryani be joined? Like a LEFT JOIN?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Harsh Kumar</div>
+      <div class="line-text">That would be a FULL OUTER JOIN. Take the best of both.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-lime"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lime">Bysani Karthik</div>
+      <div class="line-text">Can we do this in Excel?</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-amar">Amardeep Meena</span> messaged the group chat: <em>"Great lunch today. Sambar was 10/10;"</em></p>
+
+<p><span class="name n-prishita">Prishita Shukla</span> had used the lunch break to rewrite her morning notes in two colors. <span class="name n-pratik">Kumar Pratik</span> had completed tomorrow's exercises. <span class="name n-heema">Heemansh Bhawsar</span> sat quietly with his rice, looking like a man who had just had a very good idea and was letting it settle.</p>
+
+<p><span class="name n-sujit">Sujit Kumar</span>, mid-conversation about career paths, turned to <span class="name n-sukrit">Sukrit Ghosh</span>.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Sujit Kumar</div>
+      <div class="line-text">Sukrit, how many tabs do you have open on your laptop right now?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-lav"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lav">Sukrit Ghosh</div>
+      <div class="line-text">Forty-nine. I closed one at lunch.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Sujit Kumar</div>
+      <div class="line-text">Are any of them about salaries?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-lav"></div>
+    <div class="line-inner">
+      <div class="speaker sp-lav">Sukrit Ghosh</div>
+      <div class="line-text">...Three of them are.</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-aman-s">Aman Shankar Verma</span> was still thinking about NULLs.</p>
+
+</div>
+
+<!-- ═══════════════ CHAPTER 5 ════════════════ -->
+<div class="chapter" style="color:var(--lav);">
+  <div class="chapter-label">Chapter Five</div>
+  <h2>pivot_table Strikes Back</h2>
+  <div class="chapter-time">2:15 PM — Post-Lunch Afternoon</div>
+  <div class="chapter-num">5</div>
+</div>
+
+<div class="story">
+
+<p>The post-lunch session was known, in most training programmes, as the Valley of Shadows — that gentle 2 PM haze where the sambar weighs heavily on the mind and the screen starts to blur. Virinchy Sir, who had seen many batches, was prepared.</p>
+
+<p>He was not fully prepared for <span class="name n-heema">Heemansh Bhawsar</span>.</p>
+
+<p>Heemansh, who had been the quietest presence in the room all day, raised his hand at 2:17 PM and asked a question so precise and so unexpectedly deep about DataFrame indexing that Virinchy Sir stopped, looked at his slides, looked at Heemansh, and said, "That is — actually an extremely good question. Where did that come from?"</p>
+
+<p>Heemansh shrugged. "I was thinking at lunch."</p>
+
+<p>The pivot table exercise arrived like a plot twist. The task was clear: take the long-format monthly sales data and pivot it so months became columns. Fourteen people immediately understood. Nine people ran <code>.melt()</code> instead. Two people accidentally dropped the DataFrame entirely. <span class="name n-sushant">Sushant Kumar</span> ran <code>df.head()</code> six times before attempting it.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-teal"></div>
+    <div class="line-inner">
+      <div class="speaker sp-teal">Aman Thapliyal</div>
+      <div class="line-text">Sir, I did the pivot. But the months are in the wrong order — January comes after April.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">That's because they're sorted alphabetically as strings. You need to sort the columns after pivoting.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-teal"></div>
+    <div class="line-inner">
+      <div class="speaker sp-teal">Aman Thapliyal</div>
+      <div class="line-text">Alphabetically? April before January is correct alphabetically though, sir.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Yes. That's the problem.</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-raj">Raj Sharma</span> had pivoted successfully but was visibly unsatisfied.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-gold"></div>
+    <div class="line-inner">
+      <div class="speaker sp-gold">Raj Sharma</div>
+      <div class="line-text">Sir, this is basically a pivot table. Like in Excel.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Yes, Raj. It is exactly like a pivot table. That's why it's called pivot_table.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-gold"></div>
+    <div class="line-inner">
+      <div class="speaker sp-gold">Raj Sharma</div>
+      <div class="line-text">So I could have used Excel.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">Raj. The dataset. Four point seven million rows.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-gold"></div>
+    <div class="line-inner">
+      <div class="speaker sp-gold">Raj Sharma</div>
+      <div class="line-text">Right. Right. No. I know.</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-prishita">Prishita Shukla</span> had added a fourth highlighter colour: orange, for "things Raj says that technically aren't wrong."</p>
+
+<p>At 3:45 PM, <span class="name n-aman-s">Aman Shankar Verma</span> raised his hand for the first time since morning.</p>
+
+<div class="dialogue">
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Aman Shankar Verma</div>
+      <div class="line-text">Sir, when we do <code>.melt()</code> to go from wide to long — is that like… unbecoming? Like the data is shedding its shape?</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-peach"></div>
+    <div class="line-inner">
+      <div class="speaker sp-peach">Virinchy Sir</div>
+      <div class="line-text">…In a sense, yes. That is actually a reasonable way to think about it.</div>
+    </div>
+  </div>
+  <div class="line">
+    <div class="line-bar bar-coral"></div>
+    <div class="line-inner">
+      <div class="speaker sp-coral">Aman Shankar Verma</div>
+      <div class="line-text">Data has an ego, sir. We must respect its transformations.</div>
+    </div>
+  </div>
+</div>
+
+<p><span class="name n-ganadeep">P V Ganadeep</span> nodded slowly. <span class="name n-harsh">Harsh Kumar</span> was already laughing.</p>
+
+<p>By 4:30 PM, <span class="name n-pratik">Kumar Pratik</span> had finished all exercises including the bonus ones, reviewed the next day's material, built a small helper function to automate a repetitive step, and was now reading a Medium article about Spark optimisation. <span class="name n-yogesh">Yogesh Patidar</span>, not to be outdone, had answered three of Virinchy Sir's rhetorical questions. Correctly.</p>
+
+<p><span class="name n-sneha">S R Sneha</span>, at 4:48 PM, Googled "is pandas case sensitive." This was a different question from "is Python case sensitive," and showed meaningful growth.</p>
+
+</div>
+
+<!-- ═══════════════ CHAPTER 6 ════════════════ -->
+<div class="chapter" style="color:var(--orange);">
+  <div class="chapter-label">Chapter Six</div>
+  <h2>The Grand DENSE_RANK() of the Chennai Batch</h2>
+  <div class="chapter-time">5:30 PM — End of Day Ceremony</div>
+  <div class="chapter-num">6</div>
+</div>
+
+<div class="story">
+<p>As the day wound down, Virinchy Sir looked at his batch — tired, caffeinated, slightly confused, but unmistakably sharper than they had been eight hours ago. He decided that if <code>DENSE_RANK()</code> could rank vendors, it could certainly rank this batch. Not by performance — but by the one quality each of them had shown in abundance.</p>
+</div>
+
+<div class="rank-section">
+  <h3 style="font-family:var(--ff-display);font-style:italic">DENSE_RANK() OVER (ORDER BY Uniqueness DESC)</h3>
+  <div class="rank-grid">
+
+    <div class="rank-card" style="color:var(--lime)">
+      <div class="rank-card-name">Yogesh Patidar</div>
+      <div class="rank-card-title">The Answer Before the Question</div>
+      <div class="rank-card-desc">Finishes your sentences. Correctly. It's uncanny and slightly frightening.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--teal)">
+      <div class="rank-card-name">Kumar Pratik</div>
+      <div class="rank-card-title">The Time Traveller</div>
+      <div class="rank-card-desc">Currently studying Day 12 material. It is Day 8. No explanation offered.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--coral)">
+      <div class="rank-card-name">Payal</div>
+      <div class="rank-card-title">The Bug Whisperer</div>
+      <div class="rank-card-desc">Found a typo in the instructor's slide. The instructor did not find it first.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--lav)">
+      <div class="rank-card-name">Prishita Shukla</div>
+      <div class="rank-card-title">The Chromatic Scholar</div>
+      <div class="rank-card-desc">Four-colour note system. Each pen means something. The system works.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--sky)">
+      <div class="rank-card-name">Heemansh Bhawsar</div>
+      <div class="rank-card-title">The Quiet Storm</div>
+      <div class="rank-card-desc">Invisible until he asks a question that stops the room for three minutes.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--coral)">
+      <div class="rank-card-name">Aman Shankar Verma</div>
+      <div class="rank-card-title">The Data Philosopher</div>
+      <div class="rank-card-desc">Sees NULLs as existential. Has begun to change minds. This is dangerous.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--teal)">
+      <div class="rank-card-name">Aman Thapliyal</div>
+      <div class="rank-card-title">The Grounding Force</div>
+      <div class="rank-card-desc">Told Aman S. that NULL is just a missing value. Has been outvoted philosophically.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--teal)">
+      <div class="rank-card-name">Amardeep Meena</div>
+      <div class="rank-card-title">The Semicolon Devotee</div>
+      <div class="rank-card-desc">Adds semicolons to Slack messages; WhatsApp messages; good mornings;</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--gold)">
+      <div class="rank-card-name">Aviskar M Dhavale</div>
+      <div class="rank-card-title">Master of Timing</div>
+      <div class="rank-card-desc">Closes laptop at peak information density. Every time. No exceptions.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--lime)">
+      <div class="rank-card-name">Bysani Karthik</div>
+      <div class="rank-card-title">Excel's Last Defender</div>
+      <div class="rank-card-desc">"Can we do this in Excel?" — asked 8 times. Answered 8 times. Will ask again tomorrow.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--lav)">
+      <div class="rank-card-name">Devanand P</div>
+      <div class="rank-card-title">Lord of Comments</div>
+      <div class="rank-card-desc">47-line query. 39 lines are comments. His code is self-documenting to a fault.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--coral)">
+      <div class="rank-card-name">Harsh Kumar</div>
+      <div class="rank-card-title">The Laugh Track</div>
+      <div class="rank-card-desc">Laughs at his own errors. Room joins in. Errors get fixed faster. Coincidence?</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--rose)">
+      <div class="rank-card-name">Hritin Raj</div>
+      <div class="rank-card-title">Stack Overflow Whisperer</div>
+      <div class="rank-card-desc">Code works. He doesn't know why. He will not ask. The answer works.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--orange)">
+      <div class="rank-card-name">M Gaurav Kumar</div>
+      <div class="rank-card-title">The Question Machine</div>
+      <div class="rank-card-desc">11 questions in 45 minutes. All good ones. Virinchy Sir is hydrating more.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--lime)">
+      <div class="rank-card-name">P V Ganadeep</div>
+      <div class="rank-card-title">The Confident Mispronouncer</div>
+      <div class="rank-card-desc">PAND-us. Delivered with such certainty that three people started saying it too.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--gold)">
+      <div class="rank-card-name">Raj Sharma</div>
+      <div class="rank-card-title">Excel's Other Defender</div>
+      <div class="rank-card-desc">Technically correct every time. Spiritually committed to the spreadsheet.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--sky)">
+      <div class="rank-card-name">Remalli Kamal Kumar</div>
+      <div class="rank-card-title">The Force Pusher</div>
+      <div class="rank-card-desc">git push --force. Wrong window. Nobody hurt. Legend born.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--rose)">
+      <div class="rank-card-name">S R Sneha</div>
+      <div class="rank-card-title">Consistently Consistent</div>
+      <div class="rank-card-desc">Googled "is Python case sensitive" 3 times. By afternoon upgraded to "is pandas case sensitive." Growth.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--orange)">
+      <div class="rank-card-name">Saket Ranjan</div>
+      <div class="rank-card-title">The Anatomist</div>
+      <div class="rank-card-desc">Asked if FULL OUTER JOIN is for when you skip leg day. The room has not recovered.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--lime)">
+      <div class="rank-card-name">Santosh Kumar</div>
+      <div class="rank-card-title">The Rajasthan Systems Expert</div>
+      <div class="rank-card-desc">Every problem has a Rajasthan equivalent. He will find it. The answer is always right.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--teal)">
+      <div class="rank-card-name">Shivam Kumar</div>
+      <div class="rank-card-title">Mobile Pioneer</div>
+      <div class="rank-card-desc">Attempted pip install on a phone. Innovator. Visionary. Eventually switched to laptop.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--coral)">
+      <div class="rank-card-name">Sujit Kumar</div>
+      <div class="rank-card-title">The Strategic Planner</div>
+      <div class="rank-card-desc">Salary research before Day 1 began. Not distracted — just parallel processing.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--lav)">
+      <div class="rank-card-name">Sukrit Ghosh</div>
+      <div class="rank-card-title">The Tab Economist</div>
+      <div class="rank-card-desc">47–51 tabs. Each serves a purpose. The browser hasn't crashed. Respect.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--gold)">
+      <div class="rank-card-name">Sushant Kumar</div>
+      <div class="rank-card-title">The Thorough One</div>
+      <div class="rank-card-desc">Runs df.head() until the data earns his trust. Data always earns it. Eventually.</div>
+    </div>
+
+    <div class="rank-card" style="color:var(--sky)">
+      <div class="rank-card-name">T Nikshitha</div>
+      <div class="rank-card-title">The Timekeeper</div>
+      <div class="rank-card-desc">Lunch at 1:00:00. Not 1:01. Not 12:59. The clock is not a suggestion.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EPILOGUE -->
+<div class="story">
+<div class="epilogue">
+  <h2>6:00 PM — The Hero's Journey Begins</h2>
+  <p>They came in the morning as twenty-five people who had heard of SQL. They left in the evening as twenty-five people who had written it, broken it, fixed it, argued about it, laughed at it, and — somewhere between the LEFT JOINs and the pivot tables and the semicolons and the forty-seven browser tabs — begun to understand it.</p>
+  <p><span class="name n-virinchy">Virinchy Sir</span> packed his laptop. He looked at the room — the empty chairs, the half-finished coffee cups, the whiteboard still covered in aggregate functions. He smiled.</p>
+  <p>Tomorrow, they would learn window functions. <span class="name n-yogesh">Yogesh</span> had already read ahead. <span class="name n-pratik">Pratik</span> had finished all the exercises. <span class="name n-nikshitha">Nikshitha</span> had already set her alarm.</p>
+  <p><span class="name n-bysani">Bysani</span> sent a message in the group chat at 6:04 PM.</p>
+  <div class="dialogue" style="max-width:440px;margin:1.5rem auto">
+    <div class="line">
+      <div class="line-bar bar-lime"></div>
+      <div class="line-inner">
+        <div class="speaker sp-lime">Bysani Karthik</div>
+        <div class="line-text">Good session today. Sir, one question — can DENSE_RANK do this in Excel?</div>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:1rem"><span class="name n-amardeep">Amardeep</span> replied: <em>No Karthik;</em></p>
+  <p style="color:var(--muted);font-size:.85rem;margin-top:2rem">— End of Day 1. See you tomorrow at 9 AM sharp. (Nikshitha will remind you at 8:59.) —</p>
+</div>
+</div>
+
+</body>
+</html>

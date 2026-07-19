@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3 – Product Performance Analysis | Day 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #22c55e; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #22c55e; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 48px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #052e16 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 42px; font-weight: 800; color: #22c55e; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 17px; color: #94a3b8; max-width: 620px; }
+  .slide-cover .badge { margin-top: 20px; background: #14532d; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 34px; font-weight: 700; color: #22c55e; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 24px; font-weight: 700; color: #f8fafc; margin-bottom: 18px; }
+
+  .slide-demo { background: #0a1a0a; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 4px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 18px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px 24px; }
+  .card h4 { color: #22c55e; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul { padding-left: 16px; }
+
+  .highlight-box { background: #0d2d1a; border: 1px solid #22c55e; border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.info { background: #1a2e4a; border-color: #3b82f6; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.8; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 16px; }
+  .metric-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px; text-align: center; }
+  .metric-card .metric-name { font-size: 12px; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+  .metric-card .metric-col { font-size: 15px; font-weight: 700; color: #22c55e; }
+  .metric-card .metric-desc { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+
+  .step-flow { display: flex; align-items: flex-start; gap: 0; flex-wrap: wrap; margin-top: 16px; }
+  .step-box { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; flex: 1; min-width: 160px; }
+  .step-box h5 { color: #22c55e; font-size: 13px; margin-bottom: 4px; }
+  .step-box p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .step-arrow { display: flex; align-items: center; color: #334155; font-size: 20px; padding: 0 8px; align-self: center; }
+
+  table.sql-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  table.sql-table th { background: #14532d; color: #fff; padding: 8px 12px; text-align: left; }
+  table.sql-table td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+
+  .q-box { background: #1e293b; border-left: 3px solid #22c55e; border-radius: 6px; padding: 14px 18px; margin-bottom: 12px; }
+  .q-box .q-text { font-size: 14px; color: #f8fafc; margin-bottom: 6px; }
+  .q-box .q-answer { font-size: 13px; color: #22c55e; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 1 · MODULE 3 — Product Performance Analysis</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 10</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Product Performance<br>Analysis at GlobalMart</h1>
+    <p class="subtitle">You've just joined GlobalMart. The Product Management Team needs you — every query you write directly influences product strategy.</p>
+    <div class="badge">Module 3 &nbsp;·&nbsp; Day 1 &nbsp;·&nbsp; Scenario &nbsp;·&nbsp; 45 min</div>
+    <div style="margin-top:32px; display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
+      <span style="background:#1e293b; padding:6px 14px; border-radius:20px; font-size:13px; color:#94a3b8;">CTEs</span>
+      <span style="background:#1e293b; padding:6px 14px; border-radius:20px; font-size:13px; color:#94a3b8;">JOINs</span>
+      <span style="background:#1e293b; padding:6px 14px; border-radius:20px; font-size:13px; color:#94a3b8;">GROUP BY</span>
+      <span style="background:#1e293b; padding:6px 14px; border-radius:20px; font-size:13px; color:#94a3b8;">CASE WHEN</span>
+      <span style="background:#1e293b; padding:6px 14px; border-radius:20px; font-size:13px; color:#94a3b8;">FORMAT</span>
+      <span style="background:#1e293b; padding:6px 14px; border-radius:20px; font-size:13px; color:#94a3b8;">Aggregations</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: THE MISSION -->
+  <div class="slide slide-section">
+    <div class="section-tag">Business Context</div>
+    <h2>Your Mission Today</h2>
+    <div class="two-col" style="margin-top:24px;">
+      <div>
+        <div class="card">
+          <h4>Who you are</h4>
+          <p>A new data analyst at <strong>GlobalMart</strong> — a fast-growing e-commerce giant across 120 markets in North America and Europe, selling Technology, Office Supplies, and Furniture.</p>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4>What the Product Team wants</h4>
+          <p>A summary report at <strong>category × sub-category</strong> level showing:</p>
+          <ul style="margin-top:10px;">
+            <li>Total products available</li>
+            <li>Products with no photos</li>
+            <li>Total sales value</li>
+            <li>Total units sold</li>
+            <li>Percentage with no photos</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box info">
+          <p><strong style="color:#60a5fa;">Database Credentials (SSMS)</strong></p>
+          <table class="sql-table" style="margin-top:10px;">
+            <tr><td>Server</td><td>mentorskool.database.windows.net</td></tr>
+            <tr><td>Username</td><td>mskllearnlogin</td></tr>
+            <tr><td>Password</td><td>!@#sw2aq1</td></tr>
+            <tr><td>Database</td><td>mskl-masterclass</td></tr>
+            <tr><td>Auth</td><td>SQL Server Authentication</td></tr>
+          </table>
+        </div>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">Important business rule:</strong><br>
+          An order is only considered fulfilled when it has been <strong>delivered</strong> to the customer. Cancelled, shipped, or pending orders must be excluded.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: THE REPORT STRUCTURE -->
+  <div class="slide slide-content">
+    <h3>The Report We're Building</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">Each row = one category + sub-category combination</p>
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-name">Column 1</div>
+        <div class="metric-col">category</div>
+        <div class="metric-desc">e.g. Technology, Furniture</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Column 2</div>
+        <div class="metric-col">sub_category</div>
+        <div class="metric-desc">e.g. Phones, Binders</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Column 3</div>
+        <div class="metric-col">tot_products</div>
+        <div class="metric-desc">COUNT of products in this group</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Column 4</div>
+        <div class="metric-col">no_photos</div>
+        <div class="metric-desc">Products with product_photos_qty = 0</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Column 5</div>
+        <div class="metric-col">total_sales_value</div>
+        <div class="metric-desc">SUM of sales for delivered orders</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Column 6</div>
+        <div class="metric-col">total_units_sold</div>
+        <div class="metric-desc">SUM of quantity for delivered orders</div>
+      </div>
+      <div class="metric-card" style="grid-column: span 2;">
+        <div class="metric-name">Column 7</div>
+        <div class="metric-col">no_photo_percentage</div>
+        <div class="metric-desc">no_photos ÷ tot_products as a percentage (FORMAT function)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: THE DATA MODEL -->
+  <div class="slide slide-content">
+    <h3>Which Tables Do We Need?</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>ex_transactions</h4>
+          <p>One row per line item in an order. Has <code>sales_amount</code>, <code>quantity</code>, <code>product_id</code>, <code>order_id</code>.</p>
+        </div>
+        <div class="card" style="margin-top:12px;">
+          <h4>ex_orders</h4>
+          <p>One row per order. Has <code>order_id</code>, <code>order_status</code>. We need this to filter to <strong>delivered</strong> orders only.</p>
+        </div>
+        <div class="card" style="margin-top:12px;">
+          <h4>ex_products</h4>
+          <p>One row per product. Has <code>product_id</code>, <code>category</code>, <code>sub_category</code>, <code>product_photos_qty</code>.</p>
+        </div>
+      </div>
+      <div>
+        <div class="step-flow" style="flex-direction:column; gap:10px;">
+          <div class="step-box">
+            <h5>Step 1 — Granularity mismatch</h5>
+            <p>Transactions are at line-item level. Report needs category level. We must aggregate upward.</p>
+          </div>
+          <div class="step-box">
+            <h5>Step 2 — Filter delivered orders</h5>
+            <p>JOIN ex_transactions with ex_orders and keep only <code>order_status = 'delivered'</code>.</p>
+          </div>
+          <div class="step-box">
+            <h5>Step 3 — Add category info</h5>
+            <p>JOIN the result with ex_products to get <code>category</code> and <code>sub_category</code>.</p>
+          </div>
+          <div class="step-box">
+            <h5>Step 4 — Aggregate by category</h5>
+            <p>GROUP BY category + sub_category, compute all 5 metrics.</p>
+          </div>
+        </div>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">This is the CTE pattern:</strong> Each step becomes a named CTE, making the logic easy to read and debug.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: DEMO - CTE 1 -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — CTE Step 1: base_data</h3>
+    <div class="demo-label">First CTE: aggregate transactions to product level | mskl-masterclass</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- CTE 1: base_data
+-- Goal: bring transaction data to PRODUCT level
+-- (transactions are at line-item level, too granular)
+-- We also join ex_orders to keep only DELIVERED orders</span>
+
+<span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">t</span>.<span class="col">product_id</span>,
+
+        <span class="cm">-- Total revenue from each product</span>
+        <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>) <span class="kw">AS</span> total_sales,
+
+        <span class="cm">-- Total units sold from each product</span>
+        <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">quantity</span>)     <span class="kw">AS</span> total_qty
+    <span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+
+    <span class="cm">-- JOIN with orders table to apply the business rule:
+    -- only count sales for orders that were actually delivered</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+        <span class="kw">ON</span>  <span class="tbl">t</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+        <span class="kw">AND</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+
+    <span class="cm">-- Group to product level (one row per product)</span>
+    <span class="kw">GROUP BY</span> <span class="tbl">t</span>.<span class="col">product_id</span>
+)
+
+<span class="cm">-- Run this first to see the intermediate result</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> base_data;
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>What this CTE does</h4>
+          <p>Collapses millions of transaction rows down to one row per product, with total sales and total units sold — but only for delivered orders.</p>
+        </div>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">Why join the filter on the JOIN line?</strong><br>
+          Writing <code>AND o.order_status = 'delivered'</code> directly on the JOIN line is equivalent to putting it in WHERE, but it's a common pattern in CTE-based queries to keep filters close to the relevant join.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: DEMO - CTE 2 -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — CTE Step 2: product_summary_data</h3>
+    <div class="demo-label">Second CTE: add category info + flag products with no photos</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="cm">-- ... same as CTE 1 above ...</span>
+),
+
+product_summary_data <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">p</span>.<span class="col">product_id</span>,
+        <span class="tbl">p</span>.<span class="col">category</span>,
+        <span class="tbl">p</span>.<span class="col">sub_category</span>,
+        <span class="tbl">b</span>.<span class="col">total_sales</span>,
+        <span class="tbl">b</span>.<span class="col">total_qty</span>,
+        <span class="tbl">p</span>.<span class="col">product_photos_qty</span>,
+
+        <span class="cm">-- Create a 1/0 flag: 1 = no photo, 0 = has photo
+        -- Later we SUM this column to count products with no photos</span>
+        <span class="kw">CASE</span>
+            <span class="kw">WHEN</span> <span class="col">product_photos_qty</span> = <span class="str">0</span> <span class="kw">THEN</span> <span class="str">1</span>
+            <span class="kw">ELSE</span> <span class="str">0</span>
+        <span class="kw">END</span> <span class="kw">AS</span> prod_with_no_photo
+
+    <span class="kw">FROM</span> <span class="tbl">ex_products</span> <span class="tbl">p</span>
+
+    <span class="cm">-- JOIN with base_data to bring in sales and qty
+    -- Only products that actually had delivered sales appear</span>
+    <span class="kw">JOIN</span> base_data <span class="tbl">b</span>
+        <span class="kw">ON</span> <span class="tbl">p</span>.<span class="col">product_id</span> = <span class="tbl">b</span>.<span class="col">product_id</span>
+)
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> product_summary_data;
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>The CASE WHEN flag trick</h4>
+          <p>Instead of counting separately, we create a <strong>binary column</strong>: 1 for "no photo", 0 for "has photo".</p>
+          <p style="margin-top:8px;">Then in CTE 3, <code>SUM(prod_with_no_photo)</code> gives us the total count of products with no photos.</p>
+          <p style="margin-top:8px; color:#94a3b8; font-size:13px;">This is a very common industry pattern — far more flexible than using COUNT with a condition.</p>
+        </div>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">Data at this point:</strong> One row per product with its category, subcategory, sales, quantity, and a flag showing whether it has photos.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: DEMO - CTE 3 FINAL -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — CTE Step 3: final_cte + Full Query</h3>
+    <div class="demo-label">Third CTE: aggregate to category level and build the report</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="cm">-- ... CTE 1 ...</span>
+),
+product_summary_data <span class="kw">AS</span> (
+    <span class="cm">-- ... CTE 2 ...</span>
+),
+
+final_cte <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="col">category</span>,
+        <span class="col">sub_category</span>,
+
+        <span class="cm">-- Count of distinct products in each group</span>
+        <span class="fn">COUNT</span>(<span class="col">product_id</span>)              <span class="kw">AS</span> tot_products,
+
+        <span class="cm">-- Sum the 1/0 flag = count of no-photo products</span>
+        <span class="fn">SUM</span>(<span class="col">prod_with_no_photo</span>)         <span class="kw">AS</span> no_photos,
+
+        <span class="cm">-- Total revenue for each category/sub-category</span>
+        <span class="fn">SUM</span>(<span class="col">total_sales</span>)               <span class="kw">AS</span> total_sales_value,
+
+        <span class="cm">-- Total units sold</span>
+        <span class="fn">SUM</span>(<span class="col">total_qty</span>)                 <span class="kw">AS</span> total_units_sold,
+
+        <span class="cm">-- Percentage of products with no photos
+        -- Multiply by 1.0 to avoid integer division
+        -- FORMAT(..., 'P2') shows it as "12.50%"</span>
+        <span class="fn">FORMAT</span>(
+            <span class="str">1.0</span> * <span class="fn">SUM</span>(<span class="col">prod_with_no_photo</span>)
+                / <span class="fn">COUNT</span>(<span class="col">product_id</span>),
+            <span class="str">'P2'</span>
+        )                             <span class="kw">AS</span> no_photo_percentage
+
+    <span class="kw">FROM</span> product_summary_data
+    <span class="kw">GROUP BY</span> <span class="col">category</span>, <span class="col">sub_category</span>
+)
+
+<span class="cm">-- Final output: the full report sorted alphabetically</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> final_cte
+<span class="kw">ORDER BY</span> <span class="col">category</span>, <span class="col">sub_category</span>;
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>FORMAT('P2') explained</h4>
+          <p><code>FORMAT(value, 'P2')</code> formats a decimal as a percentage with 2 decimal places.</p>
+          <p style="margin-top:8px;">Example: <code>FORMAT(0.5, 'P2')</code> → <code>50.00%</code></p>
+          <p style="margin-top:8px; color:#94a3b8; font-size:13px;">Note: <code>1.0 * sum / count</code> forces decimal math (not integer division).</p>
+        </div>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">The 3-CTE flow reads top-down:</strong></p>
+          <ol style="padding-left:16px; margin-top:8px; font-size:13px; line-height:2;">
+            <li><code>base_data</code> → product-level sales (filtered to delivered)</li>
+            <li><code>product_summary_data</code> → adds category + photo flag</li>
+            <li><code>final_cte</code> → aggregates to category level</li>
+            <li>Final SELECT → output the report</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: QUIZ QUESTIONS (BUSINESS QUESTIONS) -->
+  <div class="slide slide-content">
+    <h3>Business Questions — What the Self-Paced Scenario Tests</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">Learners answer these by modifying the final SELECT from the full query above:</p>
+
+    <div class="q-box">
+      <div class="q-text">Q1. Which sub-category has the <strong>lowest total sales value</strong>?</div>
+      <div class="q-answer">→ Order final_cte by total_sales_value ASC · Answer: Fasteners</div>
+    </div>
+    <div class="q-box">
+      <div class="q-text">Q2. What is the <strong>percentage of products with no photos</strong> in the Accessories sub-category?</div>
+      <div class="q-answer">→ Filter WHERE category = 'Technology' AND sub_category = 'Accessories' · Answer: 50.00%</div>
+    </div>
+    <div class="q-box">
+      <div class="q-text">Q3. Which sub-category has the <strong>highest number of products with no photos</strong>?</div>
+      <div class="q-answer">→ Order by no_photos DESC · Answer: Paper</div>
+    </div>
+    <div class="q-box">
+      <div class="q-text">Q4. Which two sub-categories of <strong>Technology contribute most in total sales</strong>?</div>
+      <div class="q-answer">→ Filter WHERE category = 'Technology', order by total_sales_value DESC · Answer: Phones, Machines</div>
+    </div>
+    <div class="q-box">
+      <div class="q-text">Q5. In Office Supplies, which sub-category has the <strong>highest total_units_sold</strong>?</div>
+      <div class="q-answer">→ Filter WHERE category = 'Office Supplies', order by total_units_sold DESC · Answer: Binders</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: FULL QUERY REFERENCE -->
+  <div class="slide slide-demo">
+    <h3>Full Solution Query — For Reference</h3>
+    <div class="demo-label">Complete working query | Run in SSMS · mskl-masterclass</div>
+    <pre style="font-size:12px; line-height:1.7;">
+<span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="cm">-- CTE 1: Aggregate transactions to product level (delivered orders only)</span>
+    <span class="kw">SELECT</span>  <span class="tbl">t</span>.<span class="col">product_id</span>,
+            <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>) <span class="kw">AS</span> total_sales,
+            <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">quantity</span>)     <span class="kw">AS</span> total_qty
+    <span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span> <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span> <span class="kw">AND</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+    <span class="kw">GROUP BY</span> <span class="tbl">t</span>.<span class="col">product_id</span>
+),
+product_summary_data <span class="kw">AS</span> (
+    <span class="cm">-- CTE 2: Join with products table to get category info + photo flag</span>
+    <span class="kw">SELECT</span>  <span class="tbl">p</span>.<span class="col">product_id</span>, <span class="tbl">p</span>.<span class="col">category</span>, <span class="tbl">p</span>.<span class="col">sub_category</span>,
+            <span class="tbl">b</span>.<span class="col">total_sales</span>, <span class="tbl">b</span>.<span class="col">total_qty</span>, <span class="tbl">p</span>.<span class="col">product_photos_qty</span>,
+            <span class="kw">CASE WHEN</span> <span class="col">product_photos_qty</span> = <span class="str">0</span> <span class="kw">THEN</span> <span class="str">1</span> <span class="kw">ELSE</span> <span class="str">0</span> <span class="kw">END</span> <span class="kw">AS</span> prod_with_no_photo
+    <span class="kw">FROM</span> <span class="tbl">ex_products</span> <span class="tbl">p</span>
+    <span class="kw">JOIN</span> base_data <span class="tbl">b</span> <span class="kw">ON</span> <span class="tbl">p</span>.<span class="col">product_id</span> = <span class="tbl">b</span>.<span class="col">product_id</span>
+),
+final_cte <span class="kw">AS</span> (
+    <span class="cm">-- CTE 3: Aggregate to category + sub_category level for the report</span>
+    <span class="kw">SELECT</span>  <span class="col">category</span>, <span class="col">sub_category</span>,
+            <span class="fn">COUNT</span>(<span class="col">product_id</span>)                                            <span class="kw">AS</span> tot_products,
+            <span class="fn">SUM</span>(<span class="col">prod_with_no_photo</span>)                                       <span class="kw">AS</span> no_photos,
+            <span class="fn">SUM</span>(<span class="col">total_sales</span>)                                             <span class="kw">AS</span> total_sales_value,
+            <span class="fn">SUM</span>(<span class="col">total_qty</span>)                                               <span class="kw">AS</span> total_units_sold,
+            <span class="fn">FORMAT</span>(<span class="str">1.0</span> * <span class="fn">SUM</span>(<span class="col">prod_with_no_photo</span>) / <span class="fn">COUNT</span>(<span class="col">product_id</span>), <span class="str">'P2'</span>) <span class="kw">AS</span> no_photo_percentage
+    <span class="kw">FROM</span> product_summary_data
+    <span class="kw">GROUP BY</span> <span class="col">category</span>, <span class="col">sub_category</span>
+)
+<span class="cm">-- Final SELECT: change this line to answer each business question</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> final_cte <span class="kw">ORDER BY</span> <span class="col">category</span>, <span class="col">sub_category</span>;
+    </pre>
+  </div>
+
+  <!-- SLIDE 10: WRAP UP -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Module 3 Complete</div>
+    <h2>Key Takeaways</h2>
+    <div class="three-col" style="margin-top:28px; max-width:900px; text-align:left;">
+      <div class="card">
+        <h4>Granularity thinking</h4>
+        <p>Always ask: "What level is my data at, and what level does the report need?" Bridge the gap with aggregation.</p>
+      </div>
+      <div class="card">
+        <h4>Chained CTEs</h4>
+        <p>Each CTE solves one piece of the problem. The next CTE builds on the previous one — like assembly lines.</p>
+      </div>
+      <div class="card">
+        <h4>CASE WHEN flags</h4>
+        <p>Create a 1/0 column for a condition, then SUM it to count occurrences. Very common in real analytics work.</p>
+      </div>
+      <div class="card">
+        <h4>Business rules first</h4>
+        <p>"Delivered orders only" was the key constraint. Always clarify business rules before writing any SQL.</p>
+      </div>
+      <div class="card">
+        <h4>Modular answering</h4>
+        <p>Write the full report once, then modify only the final SELECT to answer each business question differently.</p>
+      </div>
+      <div class="card">
+        <h4>Up Next</h4>
+        <p>Module 4: Customer Loyalty Program — apply this exact same CTE pattern to a much richer analytics problem.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

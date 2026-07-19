@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 12 – SQL Optimization | Day 3</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; }
+  nav .logo { font-weight: 700; font-size: 14px; color: #22c55e; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #22c55e; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 40px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #061208 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 36px; font-weight: 800; color: #22c55e; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 15px; color: #94a3b8; max-width: 660px; line-height: 1.7; }
+  .slide-cover .badge { margin-top: 16px; background: #061208; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  .slide-section { background: #040c06; }
+  .slide-section h2 { font-size: 26px; font-weight: 700; color: #22c55e; margin-bottom: 6px; }
+  .section-tag { color: #4b5563; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 20px; font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .five-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px 16px; }
+  .card h4 { color: #22c55e; margin-bottom: 8px; font-size: 13px; }
+  .card p, .card li { color: #cbd5e1; font-size: 12px; line-height: 1.7; }
+  .card ul { padding-left: 14px; }
+  .bp-card { background: #1e293b; border-left: 4px solid #22c55e; border-radius: 0 10px 10px 0; padding: 14px 18px; margin-bottom: 12px; }
+  .bp-card h4 { color: #22c55e; font-size: 14px; margin-bottom: 6px; }
+  .bp-card p { color: #cbd5e1; font-size: 13px; line-height: 1.6; }
+  .bp-card .avoid { color: #f87171; font-size: 12px; margin-top:6px; }
+  .bp-card .better { color: #4ade80; font-size: 12px; margin-top:4px; }
+  .hl { background: #061208; border: 1px solid #22c55e; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+  .hl.red { background: #2d0f0f; border-color: #ef4444; }
+  .hl.blue { background: #061828; border-color: #38bdf8; }
+  .hl.warn { background: #1a1200; border-color: #f59e0b; }
+  .hl p { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+  pre { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 12px; overflow-x: auto; font-family: 'Cascadia Code','Consolas',monospace; font-size: 12px; line-height: 1.7; color: #e6edf3; }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.t th { background: #061208; color: #4ade80; padding: 8px 12px; text-align: left; }
+  table.t td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  table.t tr:nth-child(even) td { background: #0f172a; }
+  .quiz-box { background: #082010; border: 1px solid #22c55e; padding: 12px; border-radius: 10px; margin: 8px 0; }
+  .quiz-q { font-size: 13px; color: #f8fafc; margin-bottom: 8px; }
+  .reveal-btn { background: #22c55e; color: #0f172a; padding: 6px 16px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 12px; }
+  .quiz-answer { margin-top: 6px; color: #4ade80; font-size: 13px; line-height: 1.6; }
+  .idx-type { text-align:center; padding: 16px; background: #1e293b; border-radius: 10px; }
+  .idx-type .icon { font-size: 28px; }
+  .idx-type h5 { color: #22c55e; font-size: 13px; margin: 6px 0; }
+  .idx-type p { color: #94a3b8; font-size: 12px; }
+  .num-badge { display:inline-block; background:#22c55e; color:#0f172a; width:24px; height:24px; border-radius:50%; text-align:center; line-height:24px; font-weight:700; font-size:12px; margin-right:8px; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">DAY 3 · MODULE 12 — SQL Optimization Strategies</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter"></span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active">
+  <h1>⚡ SQL Optimization Strategies</h1>
+  <p class="subtitle">GlobalMart's dashboards are slowing down and cloud costs are rising. The COO wants answers. Your job: write queries that are fast, lean, and scalable — without sacrificing insight quality.</p>
+  <div class="badge">Module 12 &nbsp;·&nbsp; Day 3 &nbsp;·&nbsp; Intermediate &nbsp;·&nbsp; 180 min self-paced</div>
+  <div style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:12px;color:#94a3b8;">Indexing</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:12px;color:#94a3b8;">SELECT * avoidance</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:12px;color:#94a3b8;">Filter early</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:12px;color:#94a3b8;">Join order</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:12px;color:#94a3b8;">Cardinality filters</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:12px;color:#94a3b8;">GROUP BY vs DISTINCT</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:12px;color:#94a3b8;">Pre-aggregated views</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: WHY IT MATTERS -->
+<div class="slide slide-section">
+  <div class="section-tag">The Problem</div>
+  <h2>The COO's Concern — "Our Costs Are Rising"</h2>
+  <p style="color:#94a3b8;font-size:14px;margin-bottom:18px;">GlobalMart: 10M+ customers, 500K products, millions of daily transactions. Dashboards that once ran instantly now take minutes. Cloud bills are growing.</p>
+  <table class="t">
+    <tr><th>❌ Slow Queries Mean</th><th>✅ Fast Queries Enable</th></tr>
+    <tr><td>Delayed business decisions</td><td>Real-time insights when needed</td></tr>
+    <tr><td>Higher cloud costs (Snowflake/BigQuery charge per data scanned)</td><td>Lower compute & storage bills</td></tr>
+    <tr><td>Frustrated stakeholders waiting for reports</td><td>Smooth, responsive dashboards</td></tr>
+    <tr><td>Analysts blocked waiting for queries to finish</td><td>Faster iteration and exploration</td></tr>
+  </table>
+  <div class="hl" style="margin-top:18px;">
+    <p><strong style="color:#22c55e;">The key insight:</strong> In cloud platforms like Snowflake or BigQuery, you are often charged for the amount of data your query <em>scans</em> — not just what it returns. A query that scans 10 GB but returns 100 rows still costs 10 GB worth of compute. Optimization directly reduces your bill.</p>
+  </div>
+  <div class="quiz-box" style="margin-top:14px;">
+    <p class="quiz-q">❓ What is the PRIMARY business impact of slow queries at GlobalMart?</p>
+    <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+    <div class="quiz-answer" style="display:none"><p>✅ <strong>Delayed decisions, higher cloud costs, and frustrated stakeholders</strong> — all three together. Speed and cost are interlinked on modern cloud data platforms.</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 3: INDEXING EXPLAINED -->
+<div class="slide slide-content">
+  <h3>📚 Indexing — The Library Analogy</h3>
+  <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">Without an index, SQL must check every row. With an index, it jumps directly to relevant rows. Think of it like a library.</p>
+  <div class="two-col">
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div class="idx-type">
+          <div class="icon">📖</div>
+          <h5>Clustered Index</h5>
+          <p>Determines physical row order in the table. One per table. Auto-created on primary key. Best for range queries and sorting.</p>
+          <pre style="font-size:11px;margin-top:8px;text-align:left;">
+<span class="kw">CREATE</span> CLUSTERED INDEX
+IX_Student_Score
+<span class="kw">ON</span> student(total_score DESC);</pre>
+        </div>
+        <div class="idx-type">
+          <div class="icon">🗂️</div>
+          <h5>Non-Clustered Index</h5>
+          <p>Separate structure with pointers. Multiple allowed per table. Best for WHERE, JOIN, ORDER BY columns.</p>
+          <pre style="font-size:11px;margin-top:8px;text-align:left;">
+<span class="kw">CREATE NONCLUSTERED</span> INDEX
+IX_Student_Name
+<span class="kw">ON</span> student(name ASC);</pre>
+        </div>
+      </div>
+      <table class="t" style="font-size:12px;">
+        <tr><th>Scan Type</th><th>Speed</th><th>When</th></tr>
+        <tr><td>Index Seek</td><td style="color:#4ade80;">Fast ✅</td><td>Index exists and is used</td></tr>
+        <tr><td>Index Scan</td><td style="color:#fbbf24;">Medium ⚠️</td><td>Index exists but range is large</td></tr>
+        <tr><td>Table Scan</td><td style="color:#f87171;">Slow ❌</td><td>No index — reads every row</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="quiz-box">
+        <p class="quiz-q">❓ What is the PRIMARY function of a clustered index?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>It determines the physical order of rows in a table</strong> — rows are stored on disk in the index order. Since each table can only have ONE clustered index, choose wisely (usually the primary key).</p></div>
+      </div>
+      <div class="quiz-box" style="margin-top:8px;">
+        <p class="quiz-q">❓ How do indexes improve SQL query performance?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>They allow the engine to perform an index seek</strong> — jumping directly to relevant rows using pointers instead of scanning the entire table. Like using a library index card vs browsing every shelf.</p></div>
+      </div>
+      <div class="hl" style="margin-top:10px;">
+        <p><strong style="color:#22c55e;">Best Practice for Indexing:</strong><br>
+        • Always define primary keys on every table<br>
+        • Use numeric keys (INT/BIGINT) over string IDs<br>
+        • Create non-clustered indexes on WHERE/JOIN/ORDER BY columns<br>
+        • Avoid indexing rarely-queried columns</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: BEST PRACTICES 1-3 -->
+<div class="slide slide-content">
+  <h3>⚡ Best Practices 1–3: The Query Foundation</h3>
+  <div class="bp-card">
+    <h4><span class="num-badge">1</span> Fetch Only Necessary Columns — No SELECT *</h4>
+    <p class="avoid">❌ SELECT * FROM transactions WHERE order_date &gt;= '2025-05-01' — scans ALL columns including shipping_address, billing_address etc.</p>
+    <p class="better">✅ SELECT product_id, SUM(quantity * price - discount) AS total_sales FROM transactions WHERE order_date &gt;= '2025-05-01' GROUP BY product_id</p>
+    <p style="margin-top:6px;font-size:12px;color:#94a3b8;">SELECT * can process 10 GB; targeted SELECT may only scan 3 GB. Same result, 3× the cost difference.</p>
+  </div>
+  <div class="bp-card">
+    <h4><span class="num-badge">2</span> Apply WHERE Conditions Early — Don't Wait Until HAVING</h4>
+    <p class="avoid">❌ GROUP BY state, product_category HAVING state = 'New York' — groups ALL 50M rows first, then filters. Wasteful.</p>
+    <p class="better">✅ WHERE state = 'New York' GROUP BY product_category — filters first, only 2M rows go into GROUP BY.</p>
+    <p style="margin-top:6px;font-size:12px;color:#94a3b8;">HAVING is for filtering AFTER aggregation. Use WHERE for row-level filtering before aggregation.</p>
+  </div>
+  <div class="bp-card">
+    <h4><span class="num-badge">3</span> Start WITH the Highest Granularity Table and Join Forward</h4>
+    <p class="avoid">❌ FROM locations (500 rows) → JOIN customers → JOIN orders → JOIN transactions (100M rows) — data explodes outward</p>
+    <p class="better">✅ FROM transactions (100M rows) → JOIN orders → JOIN customers → JOIN locations — reduces as you go</p>
+    <p style="margin-top:6px;font-size:12px;color:#94a3b8;">Transactions has the most rows (highest granularity). Start there, join toward smaller lookup tables.</p>
+  </div>
+</div>
+
+<!-- SLIDE 5: BEST PRACTICES 4-6 -->
+<div class="slide slide-content">
+  <h3>⚡ Best Practices 4–6: Filtering, Types & Deduplication</h3>
+  <div class="bp-card">
+    <h4><span class="num-badge">4</span> Filter High-Cardinality Columns First</h4>
+    <p><strong>High cardinality</strong> = many unique values (customer_id, order_id). <strong>Low cardinality</strong> = few unique values (state, category).</p>
+    <p class="better">✅ Filtering on order_id or customer_id first eliminates most rows immediately. Cardinality hint: WHERE customer_id = 10298 AND state = 'New York' — customer filter first.</p>
+    <p style="margin-top:6px;font-size:12px;color:#94a3b8;">High-cardinality filters narrow the dataset dramatically. Fewer rows = cheaper subsequent operations.</p>
+  </div>
+  <div class="bp-card">
+    <h4><span class="num-badge">5</span> Choose Data Types Wisely — Numeric IDs Over String IDs</h4>
+    <p class="avoid">❌ customer_id = 'CUST_000001' (VARCHAR) — string comparison, larger index, slower join</p>
+    <p class="better">✅ customer_id = 1002 (INT) — numeric comparison, compact index, faster join</p>
+    <p style="margin-top:6px;font-size:12px;color:#94a3b8;">INT uses 4 bytes. VARCHAR(20) uses up to 20 bytes. 5× storage difference × millions of rows = significant performance gap.</p>
+  </div>
+  <div class="bp-card">
+    <h4><span class="num-badge">6</span> Prefer GROUP BY Over DISTINCT</h4>
+    <p class="avoid">❌ SELECT DISTINCT customer_id FROM transactions — fetches all rows, THEN removes duplicates</p>
+    <p class="better">✅ SELECT customer_id FROM transactions GROUP BY customer_id — groups during the scan, reduces early</p>
+    <p style="margin-top:6px;font-size:12px;color:#94a3b8;">GROUP BY groups rows AS they are scanned. DISTINCT first materialises all rows, then deduplicates. GROUP BY is faster and also gives you aggregations.</p>
+  </div>
+  <div class="quiz-box" style="margin-top:6px;">
+    <p class="quiz-q">❓ Why is GROUP BY preferred over DISTINCT for large datasets?</p>
+    <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+    <div class="quiz-answer" style="display:none"><p>✅ <strong>GROUP BY groups data during the scan itself</strong>, reducing unnecessary memory usage. DISTINCT fetches all rows first, then eliminates duplicates — two passes instead of one.</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 6: BEST PRACTICES 7-10 -->
+<div class="slide slide-content">
+  <h3>⚡ Best Practices 7–10: Architecture-Level Wins</h3>
+  <div class="two-col">
+    <div>
+      <div class="bp-card">
+        <h4><span class="num-badge">7</span> Pre-Aggregate Using Views or Temp Tables</h4>
+        <p>If the same complex joins run for every daily/weekly dashboard, save the result as a VIEW. Downstream queries hit the lightweight view instead of re-running expensive joins.</p>
+        <pre style="font-size:11px;margin-top:8px;">
+<span class="kw">CREATE VIEW</span> monthly_sales_summary <span class="kw">AS</span>
+<span class="kw">SELECT</span> l.region,
+    <span class="fn">FORMAT</span>(o.order_date, <span class="str">'yyyy-MM'</span>) <span class="kw">AS</span> month,
+    <span class="fn">SUM</span>(t.sales_amount) <span class="kw">AS</span> total_sales
+<span class="kw">FROM</span> transactions t
+<span class="kw">JOIN</span> orders o <span class="kw">ON</span> t.order_id = o.order_id
+<span class="kw">JOIN</span> locations l <span class="kw">ON</span> o.location_id = l.location_id
+<span class="kw">GROUP BY</span> l.region,
+    <span class="fn">FORMAT</span>(o.order_date, <span class="str">'yyyy-MM'</span>);</pre>
+      </div>
+      <div class="bp-card" style="margin-top:10px;">
+        <h4><span class="num-badge">8</span> Use Numeric Primary Keys + Clustered Indexes</h4>
+        <p>Numeric PKs → faster joins, smaller indexes, more efficient sorting. Clustered indexes ensure rows are physically stored in join/filter order. Index Seek &gt;&gt; Table Scan.</p>
+      </div>
+    </div>
+    <div>
+      <div class="bp-card">
+        <h4><span class="num-badge">9</span> GROUP BY Over DISTINCT (reinforced)</h4>
+        <p>Applies everywhere you need unique rows. When aggregating counts, sums, or averages — GROUP BY is natural and efficient. DISTINCT is a last resort.</p>
+      </div>
+      <div class="bp-card" style="margin-top:10px;">
+        <h4><span class="num-badge">10</span> Pre-Aggregated Views / Summary Tables</h4>
+        <p>Create scheduled summary tables (materialized views or temp tables) for repetitive report logic. Week-over-week sales? Pre-aggregate Sunday night. Dashboards query the summary, not raw 100M row tables.</p>
+      </div>
+      <div class="quiz-box" style="margin-top:10px;">
+        <p class="quiz-q">❓ Which is MOST efficient for generating weekly regional sales reports?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>Creating a pre-aggregated view</strong> that summarises weekly sales, then querying the view. Avoids re-running complex joins and aggregations for every report request.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: THE 10 PRACTICES CHEAT SHEET -->
+<div class="slide slide-content">
+  <h3>📋 All 10 Best Practices — Quick Reference</h3>
+  <div class="two-col">
+    <div>
+      <table class="t" style="font-size:12px;">
+        <tr><th>#</th><th>Practice</th><th>Core Rule</th></tr>
+        <tr><td>1</td><td>No SELECT *</td><td>Only fetch columns you need</td></tr>
+        <tr><td>2</td><td>WHERE early</td><td>Filter before GROUP BY, not in HAVING</td></tr>
+        <tr><td>3</td><td>Start high granularity</td><td>FROM transactions → join to lookup tables</td></tr>
+        <tr><td>4</td><td>High-cardinality first</td><td>customer_id filter before state filter</td></tr>
+        <tr><td>5</td><td>Right data types</td><td>INT for IDs, not VARCHAR</td></tr>
+        <tr><td>6</td><td>GROUP BY not DISTINCT</td><td>Groups during scan, not after</td></tr>
+        <tr><td>7</td><td>Pre-aggregated views</td><td>Save repetitive join+aggregate as VIEW</td></tr>
+        <tr><td>8</td><td>Numeric PKs + indexes</td><td>Clustered index on PK, non-clustered on filter cols</td></tr>
+        <tr><td>9</td><td>GROUP BY reinforced</td><td>Never DISTINCT when GROUP BY can do it</td></tr>
+        <tr><td>10</td><td>Summary cubes</td><td>Pre-aggregate overnight, query lightweight tables</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="quiz-box">
+        <p class="quiz-q">❓ Which query is MORE efficient for calculating total sales per product for May 2025?<br><br>
+        a) SELECT * FROM transactions WHERE order_date &gt;= '2025-05-01'<br>
+        b) SELECT product_id, SUM(quantity * price - discount) FROM transactions WHERE order_date &gt;= '2025-05-01' AND order_date &lt; '2025-06-01' GROUP BY product_id</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>b)</strong> — selects only needed columns, applies tight date range (upper bound included), and aggregates in-query. Option a) scans all columns and all dates from May onwards.</p></div>
+      </div>
+      <div class="quiz-box" style="margin-top:10px;">
+        <p class="quiz-q">❓ Why are numeric primary keys preferred over alphanumeric strings?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>Numeric keys consume less storage and are faster for sorting, comparisons, and indexing.</strong> INT = 4 bytes, 'CUST_000001' = 12+ bytes. Every join and filter on this column benefits from the compact numeric type.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: SLOW vs FAST PATTERNS -->
+<div class="slide slide-content">
+  <h3>🔴 vs 🟢 — Slow Patterns and Their Fixes</h3>
+  <div class="three-col">
+    <div class="card" style="border-color:#ef4444;">
+      <h4 style="color:#f87171;">🔴 SELECT * + no filter</h4>
+      <pre style="font-size:11px;">
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span> transactions
+<span class="kw">WHERE</span>
+  state = <span class="str">'New York'</span>;</pre>
+      <p style="margin-top:8px;">Scans ALL columns, ALL rows, then filters. Inefficient at scale.</p>
+    </div>
+    <div class="card" style="border-color:#22c55e;">
+      <h4 style="color:#4ade80;">🟢 Targeted SELECT + early filter</h4>
+      <pre style="font-size:11px;">
+<span class="kw">SELECT</span> product_category,
+  <span class="fn">SUM</span>(quantity * price) <span class="kw">AS</span> sales
+<span class="kw">FROM</span> transactions
+<span class="kw">WHERE</span> state = <span class="str">'New York'</span>
+<span class="kw">GROUP BY</span> product_category;</pre>
+      <p style="margin-top:8px;">Reads only needed columns. Filters before grouping. 3–5× faster.</p>
+    </div>
+    <div class="card" style="border-color:#22c55e;">
+      <h4 style="color:#4ade80;">🟢 Correct join order</h4>
+      <pre style="font-size:11px;">
+<span class="kw">FROM</span> transactions t      <span class="cm">-- 100M rows</span>
+<span class="kw">JOIN</span> orders o           <span class="cm">-- 20M rows</span>
+  <span class="kw">ON</span> t.order_id = o.order_id
+<span class="kw">JOIN</span> customers c        <span class="cm">-- 5M rows</span>
+  <span class="kw">ON</span> o.customer_id = c.id
+<span class="kw">JOIN</span> locations l        <span class="cm">-- 500 rows</span>
+  <span class="kw">ON</span> c.location_id = l.id</pre>
+      <p style="margin-top:8px;">Starts from fact table, joins progressively to smaller lookup tables.</p>
+    </div>
+  </div>
+  <div class="hl" style="margin-top:16px;">
+    <p><strong style="color:#22c55e;">The mindset shift:</strong> Don't write SQL that gets the correct answer. Write SQL that gets the correct answer <em>using the least possible data</em>. Every unnecessary column, every unfiltered row, every repeated aggregation costs money in the cloud.</p>
+  </div>
+</div>
+
+<!-- SLIDE 9: WRAP UP -->
+<div class="slide slide-section" style="text-align:center;align-items:center;">
+  <div class="section-tag">Day 3 Complete</div>
+  <h2>From Correct to Fast — The Analyst's Responsibility ⚡</h2>
+  <div class="three-col" style="max-width:900px;margin-top:20px;text-align:left;">
+    <div class="card">
+      <h4>Query Design (BP 1–3)</h4>
+      <ul>
+        <li>SELECT only what you need</li>
+        <li>WHERE before GROUP BY</li>
+        <li>Start from highest-granularity table</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Data Design (BP 4–6)</h4>
+      <ul>
+        <li>Filter high-cardinality first</li>
+        <li>INT/BIGINT over VARCHAR for IDs</li>
+        <li>GROUP BY beats DISTINCT</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Architecture (BP 7–10)</h4>
+      <ul>
+        <li>Pre-aggregate in views</li>
+        <li>Clustered + non-clustered indexes</li>
+        <li>Summary tables for repeated reports</li>
+      </ul>
+    </div>
+  </div>
+  <div class="hl" style="max-width:700px;margin-top:20px;text-align:left;">
+    <p><strong style="color:#22c55e;">Day 3 Complete.</strong> You've covered PIVOT/UNPIVOT (Module 9), ranking top cities with window functions + pivot (Module 10), correlated subqueries with NOT EXISTS (Module 11), and 10 SQL optimization strategies for production-scale analytics (Module 12).</p>
+  </div>
+</div>
+
+</div>
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const total = slides.length;
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  function changeSlide(dir) { showSlide(current + dir); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+  counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>

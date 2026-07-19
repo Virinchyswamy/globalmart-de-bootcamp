@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 11 – Tracking Retained Orders | Day 3</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; }
+  nav .logo { font-weight: 700; font-size: 14px; color: #a78bfa; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #a78bfa; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 40px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1a0a3d 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 38px; font-weight: 800; color: #a78bfa; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 16px; color: #94a3b8; max-width: 640px; line-height: 1.7; }
+  .slide-cover .badge { margin-top: 16px; background: #1a0a3d; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  .slide-section { background: #0e0820; }
+  .slide-section h2 { font-size: 28px; font-weight: 700; color: #a78bfa; margin-bottom: 6px; }
+  .section-tag { color: #4b5563; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+  .slide-content h3 { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
+  .slide-demo { background: #080616; border-left: 4px solid #a78bfa; }
+  .slide-demo h3 { font-size: 21px; color: #a78bfa; margin-bottom: 4px; }
+  .demo-label { color: #4b5563; font-size: 13px; margin-bottom: 14px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 18px; }
+  .card h4 { color: #a78bfa; margin-bottom: 8px; font-size: 14px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13px; line-height: 1.7; }
+  .hl { background: #1a0a3d; border: 1px solid #a78bfa; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+  .hl.green { background: #0d2d1a; border-color: #22c55e; }
+  .hl.red { background: #2d0f0f; border-color: #ef4444; }
+  .hl.orange { background: #1a1200; border-color: #f59e0b; }
+  .hl p { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+  pre { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 14px; overflow-x: auto; font-family: 'Cascadia Code','Consolas',monospace; font-size: 12.5px; line-height: 1.8; color: #e6edf3; }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.t th { background: #2d1060; color: #c4b5fd; padding: 8px 12px; text-align: left; }
+  table.t td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  table.t tr:nth-child(even) td { background: #0f172a; }
+  .quiz-box { background: #082010; border: 1px solid #22c55e; padding: 14px; border-radius: 10px; margin: 10px 0; }
+  .quiz-q { font-size: 13px; color: #f8fafc; margin-bottom: 8px; }
+  .reveal-btn { background: #a78bfa; color: #0f172a; padding: 7px 18px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; }
+  .quiz-answer { margin-top: 8px; color: #4ade80; font-size: 13px; line-height: 1.6; }
+  .flow-box { display: flex; gap: 0; align-items: stretch; margin-top: 14px; border-radius: 10px; overflow: hidden; }
+  .flow-step { flex: 1; background: #1e293b; padding: 12px 14px; border-right: 2px solid #0f172a; text-align: center; }
+  .flow-step:last-child { border-right: none; }
+  .flow-step h5 { color: #a78bfa; font-size: 12px; margin-bottom: 4px; }
+  .flow-step p { color: #94a3b8; font-size: 11px; }
+  .flow-step .num { font-size: 22px; font-weight: 800; color: #c4b5fd; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">DAY 3 · MODULE 11 — Tracking Retained Orders</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter"></span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active">
+  <h1>📦 Tracking Retained Orders</h1>
+  <p class="subtitle">What makes some orders perfect? Find every delivered order that customers kept — using correlated subqueries with NOT EXISTS.</p>
+  <div class="badge">Module 11 &nbsp;·&nbsp; Day 3 &nbsp;·&nbsp; Intermediate &nbsp;·&nbsp; 30 min self-paced</div>
+  <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">Correlated Subquery</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">NOT EXISTS</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">ex_orders + ex_returns</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">CAST to DATE</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide slide-section">
+  <div class="section-tag">The Mission</div>
+  <h2>Find Every Order That Was Delivered AND Never Returned 🎯</h2>
+  <p style="color:#94a3b8;font-size:14px;margin-bottom:18px;">GlobalMart wants to find the orders that represent operational perfection — delivered successfully, no returns, customers happy.</p>
+  <div class="flow-box">
+    <div class="flow-step">
+      <div class="num">📦</div>
+      <h5>Delivered</h5>
+      <p>order_status = 'delivered' in ex_orders</p>
+    </div>
+    <div class="flow-step">
+      <div class="num">❌</div>
+      <h5>NOT in ex_returns</h5>
+      <p>order_id does NOT appear in the returns table</p>
+    </div>
+    <div class="flow-step">
+      <div class="num">✅</div>
+      <h5>Retained Order</h5>
+      <p>Delivered + never returned = customer satisfaction</p>
+    </div>
+    <div class="flow-step">
+      <div class="num">4,467</div>
+      <h5>Total</h5>
+      <p>Orders that meet both conditions</p>
+    </div>
+  </div>
+  <div class="two-col" style="margin-top:18px;">
+    <div class="card">
+      <h4>Tables Used</h4>
+      <table class="t" style="margin-top:6px;">
+        <tr><th>Table</th><th>Key Columns</th><th>Role</th></tr>
+        <tr><td>ex_orders</td><td>order_id, customer_id, order_purchase_date, order_status</td><td>Main table — source of orders</td></tr>
+        <tr><td>ex_returns</td><td>order_id</td><td>If order_id is here → it was returned</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h4>Why a Correlated Subquery?</h4>
+      <p>We can't just do LEFT JOIN and check for NULL — that's one approach. The scenario specifically requires you to use <code>NOT EXISTS</code>.</p>
+      <p style="margin-top:8px;">NOT EXISTS runs a mini-subquery <em>for each row</em> of the outer query, checking if that order_id exists in ex_returns. If not → row is kept.</p>
+      <p style="margin-top:8px;color:#a78bfa;">The word "correlated" means the subquery references a column from the outer query (<code>o.order_id</code>).</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: CORRELATED SUBQUERY EXPLAINED -->
+<div class="slide slide-content">
+  <h3>🔗 Understanding Correlated Subqueries</h3>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <h4>Regular Subquery — runs once</h4>
+        <pre style="font-size:12px;margin-top:8px;">
+<span class="cm">-- This subquery runs ONCE for the whole query
+-- Result is a static list of values</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> customer_id <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> customer_id <span class="kw">FROM</span> <span class="tbl">vip_customers</span>
+);
+<span class="cm">-- Subquery is independent — no outer reference</span></pre>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <h4>Correlated Subquery — runs per row</h4>
+        <pre style="font-size:12px;margin-top:8px;">
+<span class="cm">-- This subquery runs ONCE FOR EACH ROW in ex_orders
+-- It references o.order_id from the outer query
+-- ↓ This is the "correlation"</span>
+<span class="kw">WHERE NOT EXISTS</span> (
+    <span class="kw">SELECT</span> <span class="str">1</span>
+    <span class="kw">FROM</span> <span class="tbl">ex_returns</span> <span class="tbl">r</span>
+    <span class="kw">WHERE</span> <span class="tbl">r</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    <span class="cm">-- ↑ o.order_id comes from outer query row</span>
+)</pre>
+      </div>
+    </div>
+    <div>
+      <div class="hl">
+        <p><strong style="color:#a78bfa;">How it works row-by-row:</strong></p>
+        <p style="margin-top:8px;">For each order in ex_orders, SQL asks: "Does this order_id appear anywhere in ex_returns?"</p>
+        <p style="margin-top:8px;">• If YES → NOT EXISTS = FALSE → row is EXCLUDED<br>
+        • If NO → NOT EXISTS = TRUE → row is INCLUDED ✅</p>
+        <p style="margin-top:8px;">The <code>SELECT 1</code> inside doesn't matter — SQL only cares whether the subquery returns ANY rows, not what it returns.</p>
+      </div>
+      <div class="hl orange" style="margin-top:12px;">
+        <p><strong style="color:#f59e0b;">NOT EXISTS vs LEFT JOIN + IS NULL:</strong><br>
+        Both find the same rows. NOT EXISTS is often cleaner and more readable for "exclusion" logic. LEFT JOIN approach: <code>LEFT JOIN ex_returns r ON o.order_id = r.order_id WHERE r.order_id IS NULL</code> — same result, different style.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: FULL DEMO -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Find All Retained Orders 📦</h3>
+  <div class="demo-label">Tables: ex_orders, ex_returns | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:12px;line-height:1.8;">
+<span class="cm">-- Main query: select delivered orders from ex_orders
+-- that do NOT appear in ex_returns</span>
+<span class="kw">SELECT</span>
+    <span class="tbl">o</span>.<span class="col">order_id</span>,
+    <span class="tbl">o</span>.<span class="col">customer_id</span>,
+    <span class="cm">-- CAST removes the time portion from datetime
+    -- so output shows clean dates like 2017-01-05</span>
+    <span class="fn">CAST</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span> <span class="kw">AS DATE</span>) <span class="kw">AS</span> order_purchase_date,
+    <span class="tbl">o</span>.<span class="col">order_status</span>
+<span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+<span class="kw">WHERE</span>
+    <span class="cm">-- Condition 1: order was actually delivered</span>
+    <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+    <span class="cm">-- Condition 2: this order_id does NOT exist in ex_returns
+    -- Correlated: references o.order_id from outer query
+    -- SELECT 1 = just checking for existence, value doesn't matter</span>
+    <span class="kw">AND NOT EXISTS</span> (
+        <span class="kw">SELECT</span> <span class="str">1</span>
+        <span class="kw">FROM</span> <span class="tbl">ex_returns</span> <span class="tbl">r</span>
+        <span class="kw">WHERE</span> <span class="tbl">r</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    )
+<span class="kw">ORDER BY</span> <span class="col">order_purchase_date</span>;</pre>
+      <p style="color:#64748b;font-size:12px;margin-top:8px;">To get just the count, wrap in a CTE:</p>
+      <pre style="font-size:12px;margin-top:6px;">
+<span class="kw">WITH</span> summary <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> <span class="tbl">o</span>.<span class="col">order_id</span>, <span class="tbl">o</span>.<span class="col">customer_id</span>,
+        <span class="fn">CAST</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span> <span class="kw">AS DATE</span>) <span class="kw">AS</span> order_purchase_date,
+        <span class="tbl">o</span>.<span class="col">order_status</span>
+    <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">WHERE NOT EXISTS</span> (
+        <span class="kw">SELECT</span> <span class="str">1</span>
+        <span class="kw">FROM</span> <span class="tbl">ex_returns</span> <span class="tbl">r</span>
+        <span class="kw">WHERE</span> <span class="tbl">r</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    ) <span class="kw">AND</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+)
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">AS</span> order_count <span class="kw">FROM</span> summary;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Expected Output (full list)</h4>
+        <table class="t" style="margin-top:6px;font-size:12px;">
+          <tr><th>order_id</th><th>customer_id</th><th>order_purchase_date</th><th>order_status</th></tr>
+          <tr><td>CA-2014-146500</td><td>...</td><td>2016-10-03</td><td>delivered</td></tr>
+          <tr><td>CA-2015-156524</td><td>...</td><td>...</td><td>delivered</td></tr>
+          <tr><td>CA-2017-140676</td><td>...</td><td>...</td><td>delivered</td></tr>
+          <tr><td colspan="4" style="color:#64748b;text-align:center;">... 4,467 rows total</td></tr>
+        </table>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ How many orders were successfully delivered AND never returned?<br>a) 4,467 &nbsp; b) 5,210 &nbsp; c) 4,986 &nbsp; d) 3,123</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ a) <strong>4,467</strong> — run the COUNT(*) version to verify.</p></div>
+      </div>
+      <div class="quiz-box" style="margin-top:10px;">
+        <p class="quiz-q">❓ What is the earliest order date among all retained orders?<br>a) 2016-10-04 &nbsp; b) 2016-09-29 &nbsp; c) 2016-10-03 &nbsp; d) 2016-10-10</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ c) <strong>2016-10-03</strong> — add ORDER BY order_purchase_date ASC to see the earliest row first.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: QUIZ - WHICH ORDERS? -->
+<div class="slide slide-content">
+  <h3>🧠 Quiz — Which Orders Were Retained?</h3>
+  <div class="two-col">
+    <div>
+      <div class="quiz-box">
+        <p class="quiz-q">❓ Which of these order IDs were successfully delivered AND NOT returned?<br><br>
+        a) CA-2015-156524<br>
+        b) CA-2015-154956<br>
+        c) CA-2014-146500<br>
+        d) CA-2017-140676</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none">
+          <p>✅ <strong>a, c, d</strong> — CA-2015-156524, CA-2014-146500, and CA-2017-140676 are all retained (delivered, not returned).</p>
+          <p style="margin-top:6px;color:#f87171;">❌ <strong>CA-2015-154956</strong> — this order appears in ex_returns, so NOT EXISTS = FALSE and it's excluded.</p>
+        </div>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ What does <code>SELECT 1</code> mean inside a NOT EXISTS subquery?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ It means "return any value" — SQL only checks WHETHER rows exist, not WHAT they contain. SELECT 1, SELECT *, SELECT 'x' all behave identically inside EXISTS/NOT EXISTS.</p></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Logic Walkthrough</h4>
+        <p>For order CA-2015-154956:</p>
+        <p style="margin-top:8px;font-family:monospace;font-size:12px;background:#0d1117;padding:10px;border-radius:6px;">
+          1. Outer query: pick up CA-2015-154956 from ex_orders<br>
+          2. Subquery runs: SELECT 1 FROM ex_returns WHERE order_id = 'CA-2015-154956'<br>
+          3. Subquery FINDS a match → returns a row<br>
+          4. NOT EXISTS = FALSE → this row is EXCLUDED
+        </p>
+        <p style="margin-top:10px;">For order CA-2014-146500:</p>
+        <p style="margin-top:8px;font-family:monospace;font-size:12px;background:#0d1117;padding:10px;border-radius:6px;">
+          1. Outer query: pick up CA-2014-146500 from ex_orders<br>
+          2. Subquery runs: SELECT 1 FROM ex_returns WHERE order_id = 'CA-2014-146500'<br>
+          3. Subquery finds NO match → returns no rows<br>
+          4. NOT EXISTS = TRUE → this row is INCLUDED ✅
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: COMMON MISTAKES -->
+<div class="slide slide-content">
+  <h3>🚫 Common Mistakes — Module 11</h3>
+  <table class="t" style="margin-bottom:16px;">
+    <tr><th>Mistake</th><th>What Goes Wrong</th><th>Fix</th></tr>
+    <tr><td>Missing AND o.order_status = 'delivered'</td><td style="color:#f87171;">Includes in-transit, cancelled orders — wrong count</td><td>Both conditions are required</td></tr>
+    <tr><td>Using EXISTS instead of NOT EXISTS</td><td style="color:#f87171;">Returns returned orders — the exact opposite!</td><td>Use NOT EXISTS to exclude orders in returns table</td></tr>
+    <tr><td>Forgetting the correlation (o.order_id in subquery WHERE)</td><td style="color:#f87171;">Subquery runs independently — checks all returns at once instead of per row</td><td>r.order_id = o.order_id — the outer reference is mandatory</td></tr>
+    <tr><td>Not CAST-ing order_purchase_date</td><td style="color:#f87171;">Output shows timestamp like 2017-01-05 09:32:15.000</td><td>CAST(order_purchase_date AS DATE) for clean date</td></tr>
+    <tr><td>Using SELECT * in correlated subquery</td><td style="color:#f87171;">Works but wasteful — selects all columns just to check existence</td><td>SELECT 1 is conventional and clearer in intent</td></tr>
+  </table>
+  <div class="hl" style="margin-top:4px;">
+    <p><strong style="color:#a78bfa;">NOT EXISTS vs LEFT JOIN NULL check — which to use?</strong><br>
+    Both find the same rows. In most SQL engines they perform similarly. The convention for this module uses NOT EXISTS because it directly expresses the intent: "find orders for which NO return record exists." It reads more naturally for exclusion logic.</p>
+  </div>
+</div>
+
+<!-- SLIDE 7: WRAP UP -->
+<div class="slide slide-section" style="text-align:center;align-items:center;">
+  <div class="section-tag">Summary</div>
+  <h2>The DNA of Operational Excellence 🧬</h2>
+  <div class="three-col" style="max-width:900px;margin-top:20px;text-align:left;">
+    <div class="card">
+      <h4>The Pattern</h4>
+      <pre style="font-size:12px;margin-top:6px;">
+<span class="kw">WHERE</span> condition_1
+<span class="kw">AND NOT EXISTS</span> (
+    <span class="kw">SELECT</span> <span class="str">1</span>
+    <span class="kw">FROM</span> other_table
+    <span class="kw">WHERE</span> other_table.key
+        = outer_table.key
+)</pre>
+    </div>
+    <div class="card">
+      <h4>Key Numbers</h4>
+      <p>Total retained orders: <strong style="color:#a78bfa;">4,467</strong></p>
+      <p style="margin-top:8px;">Earliest retained order: <strong style="color:#a78bfa;">2016-10-03</strong></p>
+      <p style="margin-top:8px;">Excluded order example: <strong style="color:#f87171;">CA-2015-154956</strong> (returned)</p>
+    </div>
+    <div class="card">
+      <h4>Why Correlated?</h4>
+      <p>The subquery references <code>o.order_id</code> from the outer query. This means SQL re-runs the subquery for EVERY row — checking each order against the returns table individually.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const total = slides.length;
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  function changeSlide(dir) { showSlide(current + dir); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+  counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>

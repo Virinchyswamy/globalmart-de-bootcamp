@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recursive CTE Activity — The Gossip Chain</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--pk:#f472b6;--pk2:#fbcfe8;--a:#38bdf8;--g:#22c55e;--y:#f59e0b;--p:#a78bfa;--text:#e6edf3;--muted:#8b949e}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100}
+.nbadge{font-size:.7rem;font-weight:800;letter-spacing:2px;color:var(--pk);text-transform:uppercase}
+.ntitle{font-size:.82rem;color:var(--muted);margin-left:10px}
+.nnav{display:flex;align-items:center;gap:6px}
+.nb{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nb:hover{background:var(--pk);color:#000;border-color:var(--pk)}
+.nc{font-size:12px;color:var(--muted);min-width:80px;text-align:center}
+.deck{padding-top:52px;height:100vh;overflow-y:auto}
+.slide{display:none;min-height:calc(100vh - 52px);padding:22px 52px 30px;flex-direction:column;gap:13px;animation:fi .2s ease}
+.slide.active{display:flex}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Typography */
+.badge{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+h1{font-size:2.2rem;font-weight:900;line-height:1.1}
+h2{font-size:1.4rem;font-weight:800;margin-bottom:2px}
+.sub{font-size:.9rem;color:var(--muted);margin-top:4px}
+p{font-size:.87rem;color:#c9d1d9;line-height:1.7}
+.big{font-size:1.65rem;font-weight:900;line-height:1.2;color:var(--text)}
+
+/* Layout */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.card h3{font-size:.85rem;font-weight:700;margin-bottom:7px}
+
+/* Color boxes */
+.pink{background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.3);border-radius:10px;padding:12px 16px}
+.blue{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.3);border-radius:10px;padding:12px 16px}
+.green{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:12px 16px}
+.purple{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px 16px}
+.yellow{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px}
+.red{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px}
+
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;gap:12px;align-items:flex-start}
+.snum{font-weight:900;font-size:.75rem;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.spk{background:var(--pk);color:#000}
+.sbl{background:var(--a);color:#000}
+.sgo{background:var(--g);color:#000}
+.stxt{font-size:.85rem;color:#c9d1d9;line-height:1.65}
+.stxt strong{color:var(--text)}
+
+/* Code */
+pre{background:#090d1a;border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:.77rem;line-height:1.9;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a)}
+.kw{color:#ff7b72;font-weight:700}
+.fn{color:#d2a8ff}
+.str{color:#a5d6ff}
+.cm{color:#6e7681;font-style:italic}
+.col{color:#79c0ff}
+.tbl{color:#ffa657}
+.hl-b{background:rgba(56,189,248,.2);border-radius:3px;padding:0 3px}
+.hl-p{background:rgba(167,139,250,.2);border-radius:3px;padding:0 3px}
+.hl-g{background:rgba(34,197,94,.2);border-radius:3px;padding:0 3px}
+.hl-pk{background:rgba(244,114,182,.2);border-radius:3px;padding:0 3px}
+
+/* Tables */
+table{width:100%;border-collapse:collapse}
+th{background:rgba(244,114,182,.08);color:var(--pk2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;font-weight:700}
+td{padding:6px 10px;border-bottom:1px solid var(--border);font-size:.8rem;color:#c9d1d9}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* Chain visual */
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:8px 0}
+.cnode{background:rgba(244,114,182,.12);border:1px solid rgba(244,114,182,.35);border-radius:8px;padding:5px 11px;font-size:.79rem;font-weight:700;color:var(--pk2)}
+.cnode.start{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:var(--y)}
+.cnode.end{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:var(--g);font-size:.7rem}
+.carr{color:var(--muted);font-size:.85rem;font-weight:700}
+
+/* Parts badges */
+.bp{display:inline-block;padding:2px 10px;border-radius:100px;font-size:.7rem;font-weight:800}
+.base-b{background:rgba(56,189,248,.15);color:var(--a);border:1px solid rgba(56,189,248,.3)}
+.rec-b{background:rgba(167,139,250,.15);color:var(--p);border:1px solid rgba(167,139,250,.3)}
+
+/* Reveal buttons */
+.rev-btn{display:block;width:100%;padding:9px;border-radius:9px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:800;border:none;transition:all .15s;text-align:center;margin-bottom:8px}
+.rbpk{background:rgba(244,114,182,.12);border:1px solid rgba(244,114,182,.4);color:var(--pk)}
+.rbb{background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);color:var(--a)}
+.rbg{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.4);color:var(--g)}
+.rby{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:var(--y)}
+.hidden{display:none}
+
+/* Act badge */
+.act{display:inline-flex;align-items:center;gap:7px;background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.3);border-radius:100px;padding:4px 14px;font-size:.72rem;font-weight:800;letter-spacing:1px;color:var(--pk);text-transform:uppercase;margin-bottom:8px}
+
+/* Output rows */
+.out-row{display:flex;align-items:center;gap:10px;padding:7px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;font-size:.78rem}
+.out-name{color:var(--pk2);font-weight:700;min-width:130px}
+.out-hop{background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.25);color:var(--pk);font-size:.67rem;font-weight:800;padding:1px 8px;border-radius:100px;min-width:55px;text-align:center}
+.out-chain{color:#c9d1d9;font-size:.7rem;flex:1}
+
+/* Timer */
+.timer-box{background:var(--bg2);border:2px solid rgba(244,114,182,.4);border-radius:14px;padding:14px 20px;text-align:center}
+.tdig{font-family:'JetBrains Mono',monospace;font-size:4rem;font-weight:700;color:var(--pk);line-height:1;letter-spacing:4px;transition:color .3s}
+.tdig.warn{color:var(--y)}
+.tdig.danger{color:#ef4444;animation:flash 1s infinite}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
+.tbtn{background:var(--pk);color:#000;border:none;font-family:'Inter',sans-serif;font-weight:900;font-size:.9rem;padding:8px 22px;border-radius:8px;cursor:pointer;margin-top:8px;transition:filter .15s}
+.tbtn:hover{filter:brightness(1.12)}
+.tbtn.run{background:#ef4444;color:#fff}
+.treset{background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-family:'Inter',sans-serif;font-size:.75rem;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;margin-left:6px}
+
+/* Scoreboard */
+.score-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.sc{background:var(--bg2);border:2px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;transition:border-color .3s,box-shadow .3s}
+.sc.winner{border-color:var(--y);box-shadow:0 0 16px rgba(245,158,11,.2)}
+.sc-name{font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:6px}
+.sc-score{font-family:'JetBrains Mono',monospace;font-size:2.4rem;font-weight:800;color:var(--pk);line-height:1}
+.sc-btn{padding:4px 0;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;border:none;width:100%;margin-top:4px;transition:all .12s}
+.s5{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--g)}
+.s2{background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);color:var(--a)}
+.su{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5;font-size:.62rem}
+.reset-sc{background:var(--bg2);border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:7px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.73rem}
+</style>
+</head>
+<body>
+<nav>
+  <div style="display:flex;align-items:center">
+    <span class="nbadge">Day 4 · Activity</span>
+    <span class="ntitle">Recursive CTE — The Gossip Chain</span>
+  </div>
+  <div class="nnav">
+    <button class="nb" onclick="go(-1)">← Prev</button>
+    <span class="nc" id="ctr">1 / 12</span>
+    <button class="nb" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 0: TITLE -->
+<div class="slide active">
+  <div style="text-align:center;padding-top:18px">
+    <div style="font-size:4rem;margin-bottom:10px">🤫</div>
+    <div class="badge" style="justify-content:center;display:block;text-align:center">Day 4 End-of-Day Activity · Recursive CTE</div>
+    <h1 style="color:var(--pk);font-size:2.8rem;margin-top:8px">The GlobalMart Gossip Chain</h1>
+    <p style="font-size:1.05rem;color:var(--muted);margin-top:10px;line-height:1.7">A rumour is spreading through the office.<br>Your job: trace the entire gossip chain using a <strong style="color:var(--pk2)">Recursive CTE</strong>.</p>
+  </div>
+  <div class="three" style="margin-top:6px">
+    <div class="card" style="text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:6px">🧍→🧍→🧍</div>
+      <h3 style="color:var(--pk);text-align:center">Act 1</h3>
+      <p style="font-size:.82rem">Stand up and physically form the gossip chain</p>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:4px">~5 min</p>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:6px">⌨️</div>
+      <h3 style="color:var(--a);text-align:center">Act 2</h3>
+      <p style="font-size:.82rem">Groups write the Recursive CTE — first correct wins</p>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:4px">~12 min</p>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:6px">🏆</div>
+      <h3 style="color:var(--g);text-align:center">Act 3</h3>
+      <p style="font-size:.82rem">Reveal + explain + award points</p>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:4px">~5 min</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 1: THE SCENARIO -->
+<div class="slide">
+  <div><div class="badge">The Story</div>
+  <h2 style="color:var(--pk)">Someone Started a Rumour at GlobalMart</h2></div>
+  <div class="pink" style="padding:20px;text-align:center">
+    <p style="font-size:1.15rem;font-weight:700;color:var(--pk2);font-style:italic">"Did you hear? The CEO is relocating the entire GlobalMart office to Antarctica. Free penguins for everyone."</p>
+    <p style="margin-top:8px;font-size:.83rem;color:var(--muted)">Someone said this to a colleague. That colleague told another. And another. And another.</p>
+  </div>
+  <div class="two">
+    <div>
+      <p style="font-weight:700;margin-bottom:8px">The gossip_chain table captures who told whom:</p>
+      <table>
+        <tr><th>from_person</th><th>to_person</th></tr>
+        <tr><td>Yogesh</td><td>Sujit</td></tr>
+        <tr><td>Sujit</td><td>Sukrit</td></tr>
+        <tr><td>Sukrit</td><td>Sushant</td></tr>
+        <tr><td>Sushant</td><td>Nikshitha</td></tr>
+        <tr><td>Nikshitha</td><td>Raj</td></tr>
+        <tr><td>Raj</td><td>Prishita</td></tr>
+        <tr><td colspan="2" style="color:var(--muted);font-style:italic;text-align:center">… (22 rows total — using everyone in this batch!)</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="yellow" style="margin-bottom:10px">
+        <p style="font-weight:700;color:var(--y);margin-bottom:6px">The Question We Need to Answer:</p>
+        <p style="font-size:.9rem;line-height:1.75">Starting from <strong>Yogesh</strong> — who are ALL the people who eventually heard this rumour, directly or indirectly? How many hops did it take to reach each person?</p>
+      </div>
+      <div class="pink">
+        <p style="font-weight:700;color:var(--pk);margin-bottom:5px">Why can't normal SQL answer this?</p>
+        <p style="font-size:.82rem;line-height:1.7">Because we don't know in advance how long the chain is. Yogesh told Sujit (1 hop). Sujit told Sukrit (2 hops). Sukrit told Sushant (3 hops)… We need the query to <strong>keep going automatically until the chain ends.</strong> That's exactly what Recursive CTE does.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE FULL DATA -->
+<div class="slide">
+  <div><div class="badge">The Data</div>
+  <h2 style="color:var(--pk)">The Complete Gossip Chain — All 22 Rows</h2>
+  <p class="sub">Every person in this batch is in the data. Run this in SSMS first.</p></div>
+  <pre style="font-size:.72rem"><span class="cm">-- SETUP: Run this first in SSMS (creates a session temp table)</span>
+<span class="kw">SELECT</span> * <span class="kw">INTO</span> <span class="tbl">#gossip_chain</span>
+<span class="kw">FROM</span> (<span class="kw">VALUES</span>
+    (<span class="str">'Yogesh'</span>,       <span class="str">'Sujit'</span>),      (<span class="str">'Sujit'</span>,        <span class="str">'Sukrit'</span>),
+    (<span class="str">'Sukrit'</span>,       <span class="str">'Sushant'</span>),    (<span class="str">'Sushant'</span>,      <span class="str">'Nikshitha'</span>),
+    (<span class="str">'Nikshitha'</span>,    <span class="str">'Raj'</span>),         (<span class="str">'Raj'</span>,          <span class="str">'Prishita'</span>),
+    (<span class="str">'Prishita'</span>,     <span class="str">'Payal'</span>),       (<span class="str">'Payal'</span>,        <span class="str">'Ganadeep'</span>),
+    (<span class="str">'Ganadeep'</span>,     <span class="str">'Gaurav'</span>),
+    (<span class="str">'Kumar Pratik'</span>, <span class="str">'Hritin'</span>),      (<span class="str">'Hritin'</span>,       <span class="str">'Heemansh'</span>),
+    (<span class="str">'Heemansh'</span>,    <span class="str">'Harsh'</span>),       (<span class="str">'Harsh'</span>,        <span class="str">'Devanand'</span>),
+    (<span class="str">'Devanand'</span>,    <span class="str">'Bysani'</span>),      (<span class="str">'Bysani'</span>,       <span class="str">'Aviskar'</span>),
+    (<span class="str">'Aviskar'</span>,     <span class="str">'Amardeep'</span>),    (<span class="str">'Amardeep'</span>,     <span class="str">'Aman T'</span>),
+    (<span class="str">'Aman T'</span>,      <span class="str">'Aman S'</span>),
+    (<span class="str">'Shivam'</span>,      <span class="str">'Santosh'</span>),     (<span class="str">'Santosh'</span>,      <span class="str">'Saket'</span>),
+    (<span class="str">'Saket'</span>,       <span class="str">'Sneha'</span>),       (<span class="str">'Sneha'</span>,        <span class="str">'Kamal'</span>)
+) <span class="kw">AS</span> <span class="col">gossip</span>(<span class="col">from_person</span>, <span class="col">to_person</span>)
+
+<span class="cm">-- Verify it worked:</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">#gossip_chain</span></pre>
+  <div class="three" style="margin-top:4px">
+    <div class="pink" style="font-size:.79rem">
+      <p style="font-weight:700;color:var(--pk);margin-bottom:5px">Chain 1 (9 people)</p>
+      <div class="chain">
+        <span class="cnode start">Yogesh</span><span class="carr">→</span><span class="cnode">Sujit</span><span class="carr">→</span><span class="cnode">Sukrit</span><span class="carr">→</span><span class="cnode">Sushant</span><span class="carr">→</span><span class="cnode">Nikshitha</span><span class="carr">→</span><span class="cnode">Raj</span><span class="carr">→</span><span class="cnode">Prishita</span><span class="carr">→</span><span class="cnode">Payal</span><span class="carr">→</span><span class="cnode end">Gaurav</span>
+      </div>
+    </div>
+    <div class="pink" style="font-size:.79rem">
+      <p style="font-weight:700;color:var(--pk);margin-bottom:5px">Chain 2 (8 people)</p>
+      <div class="chain">
+        <span class="cnode start">Kumar Pratik</span><span class="carr">→</span><span class="cnode">Hritin</span><span class="carr">→</span><span class="cnode">Heemansh</span><span class="carr">→</span><span class="cnode">Harsh</span><span class="carr">→</span><span class="cnode">Devanand</span><span class="carr">→</span><span class="cnode">Bysani</span><span class="carr">→</span><span class="cnode">Aviskar</span><span class="carr">→</span><span class="cnode">Amardeep</span><span class="carr">→</span><span class="cnode end">Aman S</span>
+      </div>
+    </div>
+    <div class="pink" style="font-size:.79rem">
+      <p style="font-weight:700;color:var(--pk);margin-bottom:5px">Chain 3 (4 people)</p>
+      <div class="chain">
+        <span class="cnode start">Shivam</span><span class="carr">→</span><span class="cnode">Santosh</span><span class="carr">→</span><span class="cnode">Saket</span><span class="carr">→</span><span class="cnode">Sneha</span><span class="carr">→</span><span class="cnode end">Kamal</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: ACT 1 — STAND UP -->
+<div class="slide">
+  <div class="act">🎭 Act 1 · Physical Activity · ~5 minutes</div>
+  <h2 style="color:var(--pk)">Stand Up and Form the Chain</h2>
+  <p class="sub">Before writing SQL — become the chain. This is how Recursive CTE actually works.</p>
+  <div class="two">
+    <div>
+      <div class="yellow" style="margin-bottom:10px">
+        <p style="font-weight:700;color:var(--y);font-size:.9rem;margin-bottom:6px">Instructions for instructor:</p>
+        <div class="steps">
+          <div class="step"><div class="snum spk">1</div><div class="stxt">Ask everyone to sit. Then call out pairings one by one.</div></div>
+          <div class="step"><div class="snum spk">2</div><div class="stxt">Say: <em>"Yogesh told Sujit the rumour. Yogesh and Sujit — stand up!"</em></div></div>
+          <div class="step"><div class="snum spk">3</div><div class="stxt">Say: <em>"Sujit told Sukrit. Sukrit — stand up behind Sujit!"</em></div></div>
+          <div class="step"><div class="snum spk">4</div><div class="stxt">Continue: Sukrit → Sushant → Nikshitha → Raj → Prishita → Payal → Ganadeep → Gaurav</div></div>
+          <div class="step"><div class="snum spk">5</div><div class="stxt">Ask the class: <em>"How many people are standing? How many hops from Yogesh to Gaurav?"</em></div></div>
+          <div class="step"><div class="snum spk">6</div><div class="stxt">Say: <em>"Gaurav told nobody. So the chain ENDS here. THIS is what Recursive CTE detects automatically!"</em></div></div>
+          <div class="step"><div class="snum spk">7</div><div class="stxt">Ask everyone to sit. Now ask: <em>"What was the Base Case here? What was the Recursive Case?"</em></div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px">
+        <h3 style="color:var(--pk)">The Mapping — Physical → SQL</h3>
+        <table>
+          <tr><th>Physical activity</th><th>Recursive CTE equivalent</th></tr>
+          <tr><td>Yogesh stands up first</td><td>Base Case — the starting row</td></tr>
+          <tr><td>Sujit stands behind Yogesh</td><td>Recursive Case — hop 1 extension</td></tr>
+          <tr><td>Sukrit stands behind Sujit</td><td>Recursive Case — hop 2 extension</td></tr>
+          <tr><td>Gaurav has nobody behind him</td><td>Recursive Case returns 0 rows — STOP</td></tr>
+          <tr><td>The full standing line</td><td>UNION ALL of all iterations</td></tr>
+        </table>
+      </div>
+      <div class="pink">
+        <p style="font-weight:700;color:var(--pk);margin-bottom:4px">Ask the class:</p>
+        <ul style="font-size:.82rem;color:#c9d1d9;padding-left:16px;line-height:2">
+          <li>Who was the Base Case? <em style="color:var(--pk2)">(Yogesh — starting row)</em></li>
+          <li>What was the connection rule? <em style="color:var(--pk2)">(to_person of prev = from_person of next)</em></li>
+          <li>What stopped the chain? <em style="color:var(--pk2)">(Gaurav told nobody)</em></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: ACT 2 — SQL CHALLENGE -->
+<div class="slide">
+  <div class="act">⌨️ Act 2 · SQL Challenge · 12 min timer</div>
+  <h2 style="color:var(--a)">Write the Recursive CTE</h2>
+  <div class="two">
+    <div>
+      <div class="blue" style="margin-bottom:10px">
+        <p style="font-weight:800;color:var(--a);font-size:.95rem;margin-bottom:6px">The Challenge:</p>
+        <p style="font-size:.88rem;line-height:1.75">Write a Recursive CTE using <code>#gossip_chain</code> to find <strong>all people who heard the rumour starting from Yogesh</strong>.<br><br>Your output must show: the person's name, the full chain path (how they heard it), and how many hops from Yogesh.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--pk)">Expected output format:</h3>
+        <table>
+          <tr><th>person_who_heard_it</th><th>hops_from_yogesh</th><th>how_they_heard_it</th></tr>
+          <tr><td>Sujit</td><td>1</td><td>Yogesh → Sujit</td></tr>
+          <tr><td>Sukrit</td><td>2</td><td>Yogesh → Sujit → Sukrit</td></tr>
+          <tr><td>Sushant</td><td>3</td><td>Yogesh → Sujit → Sukrit → Sushant</td></tr>
+          <tr><td colspan="3" style="color:var(--muted);font-style:italic">… continues until the chain ends</td></tr>
+        </table>
+      </div>
+      <div class="yellow" style="margin-top:10px">
+        <p style="font-size:.82rem;font-weight:700;color:var(--y)">Rules:</p>
+        <ul style="font-size:.82rem;color:#c9d1d9;padding-left:16px;line-height:1.9">
+          <li>Use <code>#gossip_chain</code> as your source table</li>
+          <li>Start with <code>WHERE from_person = 'Yogesh'</code> in the Base Case</li>
+          <li>Add a termination guard: <code>WHERE level &lt; 20</code></li>
+          <li>Order results by hops_from_yogesh ASC</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="timer-box">
+        <div class="badge" style="margin-bottom:6px;text-align:center">GROUP TIMER · 12 MINUTES</div>
+        <div class="tdig" id="tdig">12:00</div>
+        <div style="margin-top:10px">
+          <button class="tbtn" id="tbtn" onclick="toggleTimer()">▶ Start</button>
+          <button class="treset" onclick="resetTimer()">↺ Reset</button>
+        </div>
+        <p style="font-size:.72rem;color:var(--muted);margin-top:8px">Yellow at 3 min left · Red flash at 1 min left</p>
+      </div>
+      <div class="card" style="margin-top:10px">
+        <h3 style="color:var(--pk)">Hint: the skeleton structure</h3>
+        <pre style="font-size:.73rem"><span class="kw">WITH</span> <span class="fn">_______</span> <span class="kw">AS</span> (
+    <span class="cm">-- Base Case: WHERE ________</span>
+    <span class="kw">SELECT</span> from_person, to_person,
+           <span class="fn">CAST</span>(_______ + <span class="str">' → '</span> + _______ <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> chain,
+           1 <span class="kw">AS</span> level
+    <span class="kw">FROM</span> <span class="tbl">#gossip_chain</span>
+    <span class="kw">WHERE</span> _______ = <span class="str">'Yogesh'</span>
+
+    <span class="kw">UNION ALL</span>
+
+    <span class="cm">-- Recursive Case: JOIN against _______</span>
+    <span class="kw">SELECT</span> g.from_person, g.to_person,
+           <span class="fn">CAST</span>(_______ + <span class="str">' → '</span> + _______ <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)),
+           _______ + 1
+    <span class="kw">FROM</span> <span class="tbl">#gossip_chain</span> g
+    <span class="kw">JOIN</span> _______ <span class="kw">ON</span> _______._______  = _______.to_person
+    <span class="kw">WHERE</span> _______ &lt; 20
+)
+<span class="kw">SELECT</span> to_person <span class="kw">AS</span> person_who_heard_it, level <span class="kw">AS</span> hops, chain <span class="kw">AS</span> how_they_heard_it
+<span class="kw">FROM</span> _______ <span class="kw">ORDER BY</span> level</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: THINK BEFORE YOU CODE -->
+<div class="slide">
+  <h2 style="color:var(--pk)">Think Before You Code — 3 Questions</h2>
+  <p style="margin-bottom:4px">Discuss with your group for 2 minutes. Answer these before writing a single line.</p>
+  <div class="steps" style="gap:14px">
+    <div class="step">
+      <div class="snum spk" style="width:30px;height:30px;font-size:.9rem">1</div>
+      <div class="stxt" style="font-size:.95rem">
+        <strong>What is the Base Case here?</strong><br>
+        <span style="color:var(--muted)">Where does the chain START? What rows does the Base Case produce? How many rows come out of the Base Case for this data?</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="snum spk" style="width:30px;height:30px;font-size:.9rem">2</div>
+      <div class="stxt" style="font-size:.95rem">
+        <strong>What is the Recursive Case doing?</strong><br>
+        <span style="color:var(--muted)">It takes the previous result and finds "who did this person tell next?" — what is the JOIN condition? Which column from the CTE connects to which column from the table?</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="snum spk" style="width:30px;height:30px;font-size:.9rem">3</div>
+      <div class="stxt" style="font-size:.95rem">
+        <strong>When does the recursion STOP?</strong><br>
+        <span style="color:var(--muted)">Gaurav heard the rumour but told nobody. What happens when the Recursive Case tries to find "who did Gaurav tell?" — what does it return? And why does that make SQL stop?</span>
+      </div>
+    </div>
+  </div>
+  <div class="pink" style="margin-top:8px">
+    <p style="font-size:.83rem;font-weight:700;color:var(--pk)">Group challenge: whichever group can answer all 3 correctly out loud first gets +2 bonus points before coding begins.</p>
+  </div>
+</div>
+
+<!-- SLIDE 6: HINT 1 — BASE CASE -->
+<div class="slide">
+  <h2 style="color:var(--a)">Hint 1 — The Base Case</h2>
+  <button class="rev-btn rbb" onclick="tog('h1','this')" id="h1btn" style="max-width:400px">▼ Reveal Hint 1 — Base Case</button>
+  <div id="h1" class="hidden">
+    <div class="blue" style="margin-bottom:10px">
+      <p style="font-weight:700;color:var(--a);margin-bottom:4px">Base Case = the starting row</p>
+      <p style="font-size:.83rem;line-height:1.7">Yogesh started the rumour. So the Base Case asks: <strong>"What rows in gossip_chain have Yogesh as the from_person?"</strong> There is exactly one: Yogesh → Sujit. That one row is our starting seed.</p>
+    </div>
+    <pre style="font-size:.78rem"><span class="cm">-- BASE CASE: Yogesh told one person (Sujit)</span>
+<span class="hl-b"><span class="kw">SELECT</span>
+    <span class="col">from_person</span>,
+    <span class="col">to_person</span>,
+    <span class="fn">CAST</span>(<span class="col">from_person</span> + <span class="str">' → '</span> + <span class="col">to_person</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">chain</span>,
+    1 <span class="kw">AS</span> <span class="col">level</span>
+<span class="kw">FROM</span> <span class="tbl">#gossip_chain</span>
+<span class="kw">WHERE</span> <span class="col">from_person</span> = <span class="str">'Yogesh'</span>   <span class="cm">-- only Yogesh's direct tell</span></span></pre>
+    <div class="card" style="margin-top:10px">
+      <h3 style="color:var(--a)">What this produces:</h3>
+      <table>
+        <tr><th>from_person</th><th>to_person</th><th>chain</th><th>level</th></tr>
+        <tr><td>Yogesh</td><td>Sujit</td><td>Yogesh → Sujit</td><td style="color:var(--a)">1</td></tr>
+      </table>
+      <p style="font-size:.8rem;margin-top:8px;color:var(--muted)">Just ONE row. But this becomes the seed for the recursive case. From Sujit, we'll find who Sujit told. From that person, who they told. And so on.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: HINT 2 — RECURSIVE CASE -->
+<div class="slide">
+  <h2 style="color:var(--p)">Hint 2 — The Recursive Case</h2>
+  <button class="rev-btn" onclick="tog('h2','this')" id="h2btn" style="max-width:400px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--p)">▼ Reveal Hint 2 — Recursive Case</button>
+  <div id="h2" class="hidden">
+    <div class="purple" style="margin-bottom:10px">
+      <p style="font-weight:700;color:var(--p);margin-bottom:4px">Recursive Case = "who did this person tell next?"</p>
+      <p style="font-size:.83rem;line-height:1.7">Take the previous result (e.g., Sujit). Find the row in gossip_chain where <code>from_person = Sujit</code>. That gives us Sukrit. Extend the chain: <code>Yogesh → Sujit → Sukrit</code>. Repeat.</p>
+      <p style="font-size:.83rem;font-weight:700;margin-top:8px;color:var(--pk2)">Connection rule: <code>g.from_person = cte.to_person</code> — "the new row's sender = the previous result's receiver"</p>
+    </div>
+    <pre style="font-size:.78rem"><span class="kw">UNION ALL</span>
+
+<span class="cm">-- RECURSIVE CASE: who did each person tell next?</span>
+<span class="hl-p"><span class="kw">SELECT</span>
+    <span class="col">g</span>.<span class="col">from_person</span>,
+    <span class="col">g</span>.<span class="col">to_person</span>,
+    <span class="fn">CAST</span>(<span class="col">rt</span>.<span class="col">chain</span> + <span class="str">' → '</span> + <span class="col">g</span>.<span class="col">to_person</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">chain</span>,
+    <span class="col">rt</span>.<span class="col">level</span> + 1 <span class="kw">AS</span> <span class="col">level</span>
+<span class="kw">FROM</span> <span class="tbl">#gossip_chain</span> <span class="col">g</span>
+<span class="kw">JOIN</span> <span class="fn">rumour_trail</span> <span class="col">rt</span>
+    <span class="kw">ON</span>  <span class="hl-g"><span class="col">g</span>.<span class="col">from_person</span> = <span class="col">rt</span>.<span class="col">to_person</span></span>   <span class="cm">-- ← connection: new sender = previous receiver</span>
+<span class="kw">WHERE</span> <span class="hl-pk"><span class="col">rt</span>.<span class="col">level</span> &lt; 20</span>                        <span class="cm">-- ← termination guard</span></span></pre>
+    <div class="two" style="margin-top:10px">
+      <div class="green"><p style="font-size:.82rem"><strong style="color:var(--g)">The connection rule:</strong> <code>g.from_person = rt.to_person</code> means "I want to find the row where the SENDER is the same person who was the RECEIVER in the previous step." This is how we follow the chain one hop at a time.</p></div>
+      <div class="pink"><p style="font-size:.82rem"><strong style="color:var(--pk)">When it stops:</strong> When Gaurav is the <code>rt.to_person</code>, SQL looks for a row in gossip_chain where <code>from_person = 'Gaurav'</code>. There is none. Recursive Case returns 0 rows. SQL stops automatically.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: FULL ANSWER -->
+<div class="slide">
+  <h2 style="color:var(--g)">The Full Answer</h2>
+  <button class="rev-btn rbg" onclick="tog('ans','this')" id="ansbtn" style="max-width:400px">▼ Reveal Full SQL Answer</button>
+  <div id="ans" class="hidden">
+<pre style="font-size:.76rem"><span class="kw">WITH</span> <span class="fn">rumour_trail</span> <span class="kw">AS</span> (
+
+    <span class="cm">-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    -- BASE CASE: Yogesh is where the rumour started
+    -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+    <span class="hl-b"><span class="kw">SELECT</span>
+        <span class="col">from_person</span>,
+        <span class="col">to_person</span>,
+        <span class="fn">CAST</span>(<span class="col">from_person</span> + <span class="str">' → '</span> + <span class="col">to_person</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">chain</span>,
+        1 <span class="kw">AS</span> <span class="col">level</span>
+    <span class="kw">FROM</span>  <span class="tbl">#gossip_chain</span>
+    <span class="kw">WHERE</span> <span class="col">from_person</span> = <span class="str">'Yogesh'</span></span>
+
+    <span class="kw">UNION ALL</span>
+
+    <span class="cm">-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    -- RECURSIVE CASE: who did each person tell next?
+    -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+    <span class="hl-p"><span class="kw">SELECT</span>
+        <span class="col">g</span>.<span class="col">from_person</span>,
+        <span class="col">g</span>.<span class="col">to_person</span>,
+        <span class="fn">CAST</span>(<span class="col">rt</span>.<span class="col">chain</span> + <span class="str">' → '</span> + <span class="col">g</span>.<span class="col">to_person</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">chain</span>,
+        <span class="col">rt</span>.<span class="col">level</span> + 1
+    <span class="kw">FROM</span> <span class="tbl">#gossip_chain</span> <span class="col">g</span>
+    <span class="kw">JOIN</span> <span class="fn">rumour_trail</span> <span class="col">rt</span>
+        <span class="kw">ON</span> <span class="hl-g"><span class="col">g</span>.<span class="col">from_person</span> = <span class="col">rt</span>.<span class="col">to_person</span></span>   <span class="cm">-- connection: sender = previous receiver</span>
+    <span class="kw">WHERE</span> <span class="col">rt</span>.<span class="col">level</span> &lt; 20</span>
+)
+<span class="cm">-- OUTER QUERY: show everyone who heard the rumour</span>
+<span class="kw">SELECT</span>
+    <span class="col">to_person</span>   <span class="kw">AS</span> <span class="col">person_who_heard_it</span>,
+    <span class="col">level</span>       <span class="kw">AS</span> <span class="col">hops_from_yogesh</span>,
+    <span class="col">chain</span>       <span class="kw">AS</span> <span class="col">how_they_heard_it</span>
+<span class="kw">FROM</span>   <span class="fn">rumour_trail</span>
+<span class="kw">ORDER BY</span> <span class="col">level</span>, <span class="col">to_person</span></pre>
+  </div>
+</div>
+
+<!-- SLIDE 9: EXPECTED OUTPUT -->
+<div class="slide">
+  <h2 style="color:var(--pk)">Expected Output — Starting from Yogesh</h2>
+  <p style="margin-bottom:10px">The rumour reached <strong style="color:var(--pk2)">9 people</strong> in Yogesh's chain. Here is what the query returns:</p>
+  <div class="two">
+    <div>
+      <div class="out-row"><span class="out-name">Sujit</span><span class="out-hop">hop 1</span><span class="out-chain">Yogesh → Sujit</span></div>
+      <div class="out-row"><span class="out-name">Sukrit</span><span class="out-hop">hop 2</span><span class="out-chain">Yogesh → Sujit → Sukrit</span></div>
+      <div class="out-row"><span class="out-name">Sushant</span><span class="out-hop">hop 3</span><span class="out-chain">Yogesh → Sujit → Sukrit → Sushant</span></div>
+      <div class="out-row"><span class="out-name">Nikshitha</span><span class="out-hop">hop 4</span><span class="out-chain">Yogesh → … → Nikshitha</span></div>
+      <div class="out-row"><span class="out-name">Raj</span><span class="out-hop">hop 5</span><span class="out-chain">Yogesh → … → Raj</span></div>
+      <div class="out-row"><span class="out-name">Prishita</span><span class="out-hop">hop 6</span><span class="out-chain">Yogesh → … → Prishita</span></div>
+      <div class="out-row"><span class="out-name">Payal</span><span class="out-hop">hop 7</span><span class="out-chain">Yogesh → … → Payal</span></div>
+      <div class="out-row"><span class="out-name">Ganadeep</span><span class="out-hop">hop 8</span><span class="out-chain">Yogesh → … → Ganadeep</span></div>
+      <div class="out-row"><span class="out-name" style="color:var(--g)">Gaurav ← STOP</span><span class="out-hop">hop 9</span><span class="out-chain">Yogesh → … → Gaurav</span></div>
+    </div>
+    <div>
+      <div class="yellow" style="margin-bottom:10px">
+        <p style="font-weight:700;color:var(--y);margin-bottom:6px">Now try these bonus queries:</p>
+        <div class="steps">
+          <div class="step"><div class="snum sgo" style="font-size:.7rem">B1</div><div class="stxt">Change <code>'Yogesh'</code> to <code>'Kumar Pratik'</code> — how long is that chain?</div></div>
+          <div class="step"><div class="snum sgo" style="font-size:.7rem">B2</div><div class="stxt">Change to <code>'Shivam'</code> — compare chain lengths</div></div>
+          <div class="step"><div class="snum sgo" style="font-size:.7rem">B3</div><div class="stxt">Remove the WHERE in the Base Case — what happens? (returns ALL chains simultaneously)</div></div>
+          <div class="step"><div class="snum sgo" style="font-size:.7rem">B4</div><div class="stxt">Add <code>COUNT(*) AS total_heard</code> in the outer query using a subquery — which person reached the most people?</div></div>
+        </div>
+      </div>
+      <div class="pink">
+        <p style="font-size:.82rem;font-weight:700;color:var(--pk)">The key insight:</p>
+        <p style="font-size:.82rem;margin-top:4px;line-height:1.7">We didn't know in advance that Yogesh's chain is 9 people long. We didn't write 9 JOINs. The Recursive CTE <strong>figured out the depth by itself</strong> — one hop at a time, stopping when there was nobody left to tell.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: LEADERBOARD -->
+<div class="slide">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div><div class="badge">Live Scoring</div><h2 style="color:var(--pk)">Leaderboard</h2></div>
+    <button class="reset-sc" onclick="resetScores()">↺ Reset All</button>
+  </div>
+  <div class="score-cards">
+    <div class="sc" id="sc1">
+      <div class="sc-name">Group 1<br><span style="font-size:.67rem;color:var(--muted)">Aman S · Aman T<br>Amardeep · Aviskar · Bysani</span></div>
+      <div class="sc-score" id="ss1">0</div>
+      <button class="sc-btn s5" onclick="award(1,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(1,2)">+2 Bonus</button>
+      <button class="sc-btn su" onclick="award(1,-1)">−1 Undo</button>
+    </div>
+    <div class="sc" id="sc2">
+      <div class="sc-name">Group 2<br><span style="font-size:.67rem;color:var(--muted)">Devanand · Harsh<br>Heemansh · Hritin · Pratik</span></div>
+      <div class="sc-score" id="ss2">0</div>
+      <button class="sc-btn s5" onclick="award(2,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(2,2)">+2 Bonus</button>
+      <button class="sc-btn su" onclick="award(2,-1)">−1 Undo</button>
+    </div>
+    <div class="sc" id="sc3">
+      <div class="sc-name">Group 3<br><span style="font-size:.67rem;color:var(--muted)">Gaurav · Ganadeep<br>Payal · Prishita · Raj</span></div>
+      <div class="sc-score" id="ss3">0</div>
+      <button class="sc-btn s5" onclick="award(3,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(3,2)">+2 Bonus</button>
+      <button class="sc-btn su" onclick="award(3,-1)">−1 Undo</button>
+    </div>
+    <div class="sc" id="sc4">
+      <div class="sc-name">Group 4<br><span style="font-size:.67rem;color:var(--muted)">Kamal · Sneha<br>Saket · Santosh · Shivam</span></div>
+      <div class="sc-score" id="ss4">0</div>
+      <button class="sc-btn s5" onclick="award(4,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(4,2)">+2 Bonus</button>
+      <button class="sc-btn su" onclick="award(4,-1)">−1 Undo</button>
+    </div>
+    <div class="sc" id="sc5">
+      <div class="sc-name">Group 5<br><span style="font-size:.67rem;color:var(--muted)">Sujit · Sukrit<br>Sushant · Nikshitha · Yogesh</span></div>
+      <div class="sc-score" id="ss5">0</div>
+      <button class="sc-btn s5" onclick="award(5,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(5,2)">+2 Bonus</button>
+      <button class="sc-btn su" onclick="award(5,-1)">−1 Undo</button>
+    </div>
+  </div>
+  <div id="winner-banner" style="display:none;text-align:center;padding:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;font-size:.9rem;font-weight:800;color:#fcd34d;margin-top:8px"></div>
+</div>
+
+<!-- SLIDE 11: KEY TAKEAWAYS -->
+<div class="slide">
+  <div><div class="badge">Wrap-Up</div>
+  <h2 style="color:var(--pk)">What You Just Built — In Plain English</h2></div>
+  <div class="three">
+    <div class="blue" style="text-align:center;padding:16px">
+      <div style="font-size:2rem;margin-bottom:8px">🏁</div>
+      <h3 style="color:var(--a);text-align:center;margin-bottom:6px">Base Case</h3>
+      <p style="font-size:.82rem;line-height:1.7">The starting row. <code>WHERE from_person = 'Yogesh'</code> gave us hop 1: Yogesh → Sujit. The chain starts here. Runs <strong>once</strong>.</p>
+    </div>
+    <div class="purple" style="text-align:center;padding:16px">
+      <div style="font-size:2rem;margin-bottom:8px">🔄</div>
+      <h3 style="color:var(--p);text-align:center;margin-bottom:6px">Recursive Case</h3>
+      <p style="font-size:.82rem;line-height:1.7">Extends the chain one hop at a time. <code>g.from_person = rt.to_person</code> is the rule that chains each new row to the previous result. Runs <strong>once per hop</strong>.</p>
+    </div>
+    <div class="green" style="text-align:center;padding:16px">
+      <div style="font-size:2rem;margin-bottom:8px">🛑</div>
+      <h3 style="color:var(--g);text-align:center;margin-bottom:6px">Termination</h3>
+      <p style="font-size:.82rem;line-height:1.7">When Gaurav's row is in the CTE, SQL looks for <code>from_person = 'Gaurav'</code> — finds nothing. Recursive Case returns 0 rows. SQL <strong>stops automatically</strong>.</p>
+    </div>
+  </div>
+  <div class="two" style="margin-top:4px">
+    <div class="card">
+      <h3 style="color:var(--pk)">The one rule that connects everything:</h3>
+      <pre style="font-size:.82rem"><span class="cm">-- sender of new row = receiver of previous row</span>
+<span class="kw">JOIN</span> <span class="fn">rumour_trail</span> <span class="col">rt</span>
+    <span class="kw">ON</span> <span class="col">g</span>.<span class="col">from_person</span> = <span class="col">rt</span>.<span class="col">to_person</span></pre>
+      <p style="font-size:.8rem;margin-top:8px;color:var(--muted)">This is the SAME pattern as patient pathways, flight routes, org charts, supply chains. Change the table and column names — the structure is identical.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--pk)">Real-world uses you'll see at Tredence:</h3>
+      <table>
+        <tr><th>Scenario</th><th>Connection rule</th></tr>
+        <tr><td>Org chart reporting chains</td><td>manager_id = employee_id</td></tr>
+        <tr><td>Customer referral tracking</td><td>referred_by = customer_id</td></tr>
+        <tr><td>Supply chain stage tracking</td><td>to_stage = from_stage</td></tr>
+        <tr><td>Incident escalation chains</td><td>escalated_to = ticket_id</td></tr>
+        <tr><td>Flight route connections</td><td>arrival_city = departure_city</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+// Navigation
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const N=slides.length;
+const ctr=document.getElementById('ctr');
+function show(n){slides[cur].classList.remove('active');cur=(n+N)%N;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+N;document.querySelector('.deck').scrollTop=0;}
+function go(d){show(cur+d);}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+
+// Reveal toggle
+function tog(id,btnId){
+  const el=document.getElementById(id);
+  const shown=el.classList.toggle('hidden')==false;
+  const btn=document.getElementById(id+'btn');
+  if(btn)btn.textContent=btn.textContent.replace(shown?'▼':'▲',shown?'▲':'▼');
+}
+
+// Timer
+let timerSec=12*60,timerIv=null,timerRun=false;
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function updateDisp(){
+  const el=document.getElementById('tdig');
+  el.textContent=fmt(timerSec);
+  el.className='tdig'+(timerSec<=60?' danger':timerSec<=180?' warn':'');
+}
+function toggleTimer(){
+  const btn=document.getElementById('tbtn');
+  if(timerRun){clearInterval(timerIv);timerRun=false;btn.textContent='▶ Resume';btn.classList.remove('run');}
+  else{
+    if(timerSec<=0)return;
+    timerRun=true;btn.textContent='⏸ Pause';btn.classList.add('run');
+    timerIv=setInterval(()=>{if(timerSec<=0){clearInterval(timerIv);timerRun=false;btn.textContent='⏱ Time!';btn.classList.remove('run');return;}timerSec--;updateDisp();},1000);
+  }
+}
+function resetTimer(){clearInterval(timerIv);timerRun=false;timerSec=12*60;updateDisp();const btn=document.getElementById('tbtn');btn.textContent='▶ Start';btn.classList.remove('run');}
+
+// Leaderboard
+const scores=[0,0,0,0,0,0];
+function award(g,pts){scores[g]=Math.max(0,scores[g]+pts);document.getElementById('ss'+g).textContent=scores[g];updateWinner();}
+function updateWinner(){
+  const max=Math.max(...scores.slice(1));
+  for(let i=1;i<=5;i++)document.getElementById('sc'+i).classList.toggle('winner',scores[i]===max&&max>0);
+  const w=[];for(let i=1;i<=5;i++)if(scores[i]===max&&max>0)w.push('Group '+i);
+  const b=document.getElementById('winner-banner');
+  if(w.length){b.style.display='block';b.textContent='🏆 Leading: '+w.join(' · ')+' — '+max+' pts';}
+  else b.style.display='none';
+}
+function resetScores(){for(let i=1;i<=5;i++){scores[i]=0;document.getElementById('ss'+i).textContent='0';document.getElementById('sc'+i).classList.remove('winner');}document.getElementById('winner-banner').style.display='none';}
+</script>
+</body>
+</html>

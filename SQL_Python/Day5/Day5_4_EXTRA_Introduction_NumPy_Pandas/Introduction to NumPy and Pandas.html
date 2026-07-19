@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 5 – Introduction to NumPy and Pandas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;--orange:#f97316;--np:#06b6d4;--pd:#f472b6}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
+.nav-title{font-size:12px;color:var(--muted);font-weight:500}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nav-btn:hover{background:var(--a);color:#fff;border-color:var(--a)}
+.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
+.deck{padding-top:52px;height:100vh}
+.slide{display:none;height:calc(100vh - 52px);padding:26px 52px;flex-direction:column;justify-content:flex-start;gap:13px;overflow:hidden;animation:fadein .25s ease}
+.slide.active{display:flex}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:2.2rem;font-weight:900;line-height:1.1}
+h2{font-size:1.45rem;font-weight:800;line-height:1.2}
+h3{font-size:.92rem;font-weight:700;margin-bottom:5px}
+p,li{font-size:.86rem;color:#c9d1d9;line-height:1.65}
+ul{padding-left:18px}li{margin-bottom:3px}
+.sub{font-size:.86rem;color:var(--muted);margin-top:3px}
+.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 15px}
+.hl{border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:10px 14px}
+.hl.np{background:rgba(6,182,212,.06);border-color:var(--np)}
+.hl.pd{background:rgba(244,114,182,.06);border-color:var(--pd)}
+.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
+.hl.yl{background:rgba(245,158,11,.06);border-color:var(--yellow)}
+.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.85;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
+.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.nm{color:#ffa657}.var{color:#79c0ff}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{background:rgba(59,130,246,.1);color:var(--a2);padding:6px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.73rem;letter-spacing:.5px}
+td{padding:5px 10px;border-bottom:1px solid var(--border);color:#c9d1d9;font-size:.78rem}
+tr:hover td{background:rgba(255,255,255,.02)}
+.ok{color:var(--green);font-weight:600}.no{color:var(--red)}
+.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px}
+.quiz p{font-size:.83rem;font-weight:600;color:var(--text);margin-bottom:8px}
+.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:4px 14px;border-radius:7px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.76rem;font-weight:700}
+.ans{display:none;margin-top:8px;padding:9px 12px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 7px 7px 0;font-size:.8rem;color:#86efac;line-height:1.65}
+.np-badge{display:inline-block;font-size:.65rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.35);color:var(--np);border-radius:100px;padding:2px 10px}
+.pd-badge{display:inline-block;font-size:.65rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.35);color:var(--pd);border-radius:100px;padding:2px 10px}
+/* MCQ */
+.checkpoint-header{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.25);border-radius:12px;padding:11px 16px;display:flex;align-items:center;gap:12px}
+.cp-badge{font-size:.63rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--a);color:#000;padding:3px 10px;border-radius:100px}
+.cp-title{font-size:.95rem;font-weight:800;color:var(--text)}
+.cp-sub{font-size:.76rem;color:var(--muted)}
+.mcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mcq-card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.mcq-q{font-size:.82rem;font-weight:700;color:var(--text);line-height:1.5}
+.mcq-q code{font-size:.75rem}
+.opts{display:flex;flex-direction:column;gap:4px}
+.opt{display:flex;align-items:flex-start;gap:7px;padding:5px 9px;border-radius:7px;border:1px solid var(--border);cursor:pointer;transition:all .15s;font-size:.76rem;color:#c9d1d9;background:transparent;font-family:'Inter',sans-serif;text-align:left;width:100%}
+.opt:hover:not(.disabled){background:rgba(255,255,255,.03);border-color:#30363d}
+.opt.correct{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.5);color:var(--green);pointer-events:none}
+.opt.wrong{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.3);color:#f87171;pointer-events:none}
+.opt.disabled{pointer-events:none;opacity:.55}
+.opt-key{font-weight:800;font-size:.7rem;color:var(--muted);min-width:14px;flex-shrink:0;margin-top:1px}
+.opt.correct .opt-key{color:var(--green)}
+.opt.wrong .opt-key{color:#f87171}
+.mcq-exp{display:none;margin-top:3px;padding:7px 10px;background:rgba(34,197,94,.07);border-left:2px solid var(--green);border-radius:0 5px 5px 0;font-size:.74rem;color:#86efac;line-height:1.6;animation:fadein .2s}
+.mcq-score{font-size:.8rem;font-weight:700;color:var(--muted);text-align:center}
+.mcq-score span{color:var(--a);font-size:1rem}
+/* Practice */
+.practice-header{background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.28);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:12px}
+.pr-badge{font-size:.63rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--orange);color:#000;padding:3px 10px;border-radius:100px}
+.pr-title{font-size:.95rem;font-weight:800;color:var(--text)}
+.pr-sub{font-size:.75rem;color:var(--muted)}
+.task-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 15px}
+.task-box h3{color:var(--orange);font-size:.86rem;margin-bottom:8px}
+.task-steps{display:flex;flex-direction:column;gap:6px}
+.task-step{display:flex;gap:9px;align-items:flex-start;font-size:.8rem;color:#c9d1d9;line-height:1.6}
+.step-num{min-width:20px;height:20px;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.35);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:var(--orange);flex-shrink:0;margin-top:2px}
+.sol-btn{background:rgba(249,115,22,.09);border:1px solid rgba(249,115,22,.3);color:var(--orange);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.76rem;font-weight:700;transition:all .15s;margin-top:4px}
+.sol-btn:hover{background:rgba(249,115,22,.18)}
+.solution{display:none;animation:fadein .2s}
+.vscode-note{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.25);border-radius:9px;padding:8px 13px;font-size:.76rem;color:var(--a2)}
+/* Self-practice banner */
+.self-banner{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.28);border-radius:9px;padding:7px 14px;display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.self-tag{font-size:.6rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--yellow);color:#000;padding:2px 9px;border-radius:100px;white-space:nowrap;flex-shrink:0}
+.self-msg{font-size:.77rem;color:#fcd34d}
+/* Setup steps */
+.setup-steps{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+.setup-step{display:flex;gap:10px;align-items:flex-start;font-size:.8rem;color:#c9d1d9;line-height:1.6}
+.setup-num{min-width:22px;height:22px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:var(--a2);flex-shrink:0;margin-top:2px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <span class="nav-badge">Day 5 · Module 3</span>
+    <span class="nav-title">Introduction to NumPy and Pandas</span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" onclick="go(-1)">← Prev</button>
+    <span class="nav-counter" id="ctr">1 / 16</span>
+    <button class="nav-btn" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <div class="tag">Day 5 · Module 3</div>
+    <h1 style="color:var(--text)"><span style="color:var(--np)">NumPy</span> + <span style="color:var(--pd)">Pandas</span><br>Your Data Toolkit</h1>
+    <p class="sub">Plain Python is great. But when you have 100,000 rows of data, you need something faster.</p>
+  </div>
+  <div class="two">
+    <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:12px;padding:14px 16px">
+      <span class="np-badge" style="margin-bottom:8px;display:inline-block">NumPy</span>
+      <h3 style="color:var(--np);margin-bottom:6px">Numerical Python</h3>
+      <ul style="font-size:.82rem;color:#c9d1d9">
+        <li>Works with arrays of numbers</li>
+        <li>Vectorized math — no loops needed</li>
+        <li>50× faster than plain Python lists</li>
+        <li>Foundation for Pandas, Matplotlib, scikit-learn</li>
+      </ul>
+    </div>
+    <div style="background:rgba(244,114,182,.06);border:1px solid rgba(244,114,182,.2);border-radius:12px;padding:14px 16px">
+      <span class="pd-badge" style="margin-bottom:8px;display:inline-block">Pandas</span>
+      <h3 style="color:var(--pd);margin-bottom:6px">Panel Data</h3>
+      <ul style="font-size:.82rem;color:#c9d1d9">
+        <li>Works with tabular data (rows + columns)</li>
+        <li>Think: Excel or SQL, but in Python</li>
+        <li>Read CSV, Excel, databases directly</li>
+        <li>Filter, group, merge, reshape — all in code</li>
+      </ul>
+    </div>
+  </div>
+  <div class="hl yl">
+    <p style="font-size:.84rem"><strong style="color:var(--yellow)">Install once, use forever:</strong> In VS Code terminal → <code>pip install numpy pandas</code></p>
+  </div>
+  <div class="three">
+    <div class="card" style="text-align:center;padding:10px">
+      <div style="font-size:1.4rem;margin-bottom:4px">🔢</div>
+      <p style="font-size:.76rem;color:var(--muted)">Arrays &amp; Math</p>
+      <p style="font-size:.8rem;font-weight:700;color:var(--np)">NumPy</p>
+    </div>
+    <div class="card" style="text-align:center;padding:10px">
+      <div style="font-size:1.4rem;margin-bottom:4px">📊</div>
+      <p style="font-size:.76rem;color:var(--muted)">Tables &amp; Analysis</p>
+      <p style="font-size:.8rem;font-weight:700;color:var(--pd)">Pandas</p>
+    </div>
+    <div class="card" style="text-align:center;padding:10px">
+      <div style="font-size:1.4rem;margin-bottom:4px">🚀</div>
+      <p style="font-size:.76rem;color:var(--muted)">Speed + Power</p>
+      <p style="font-size:.8rem;font-weight:700;color:var(--green)">Together</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: SETUP GUIDE (FOR STUDENTS) -->
+<div class="slide">
+  <div class="tag">Before You Begin</div>
+  <h2>Getting Started — Setup Guide</h2>
+  <p class="sub" style="margin-bottom:4px">Your instructor uses this file live in class. When it's shared with you, follow these steps so everything works.</p>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <h3 style="color:var(--a2);margin-bottom:8px">Files you will receive</h3>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:8px 12px;font-size:.78rem;display:flex;align-items:center;gap:8px">
+            <code style="font-size:.73rem">📄 Introduction to NumPy and Pandas.html</code>
+            <span style="color:var(--muted);font-size:.7rem">← this file</span>
+          </div>
+          <div style="background:rgba(244,114,182,.07);border:1px solid rgba(244,114,182,.2);border-radius:8px;padding:8px 12px;font-size:.78rem;display:flex;align-items:center;gap:8px">
+            <code style="font-size:.73rem">📋 batch_data.csv</code>
+            <span style="color:var(--muted);font-size:.7rem">← your dataset (25 students)</span>
+          </div>
+        </div>
+        <p style="margin-top:8px;font-size:.76rem;color:var(--yellow)">&#9888; Keep both files in the same folder. This is required.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--a2);margin-bottom:8px">Set up VS Code</h3>
+        <div class="setup-steps">
+          <div class="setup-step"><span class="setup-num">1</span>Create a folder on your Desktop — e.g. <code>Python_Practice</code></div>
+          <div class="setup-step"><span class="setup-num">2</span>Put both files inside that folder</div>
+          <div class="setup-step"><span class="setup-num">3</span>Open VS Code → <strong>File → Open Folder</strong> → select <code>Python_Practice</code></div>
+          <div class="setup-step"><span class="setup-num">4</span>Create a new file: <code>my_practice.py</code></div>
+          <div class="setup-step"><span class="setup-num">5</span>Write your code, then press <strong>Ctrl + F5</strong> to run</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <h3 style="color:var(--pd);margin-bottom:8px">Loading the dataset in your code</h3>
+        <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="cm"># Because you opened the folder in VS Code,</span>
+<span class="cm"># Python finds the CSV right next to your .py file</span>
+<span class="var">df</span> = pd.<span class="fn">read_csv</span>(<span class="st">"batch_data.csv"</span>)
+
+<span class="fn">print</span>(<span class="var">df</span>.shape)    <span class="cm"># (25, 6)</span>
+<span class="fn">print</span>(<span class="var">df</span>.<span class="fn">head</span>())   <span class="cm"># first 5 rows</span></pre>
+        <div class="hl rd" style="margin-top:8px">
+          <p style="font-size:.77rem;color:#f87171"><strong>Common mistake:</strong> If you get <code>FileNotFoundError</code> — you did not open the folder in VS Code. Go to File → Open Folder and select the folder that contains <code>batch_data.csv</code>.</p>
+        </div>
+      </div>
+      <div class="hl yl">
+        <h3 style="color:var(--yellow);font-size:.82rem;margin-bottom:5px">About the quiz &amp; practice slides</h3>
+        <p style="font-size:.78rem;color:#fcd34d">Your instructor <strong>skips</strong> the <span style="background:rgba(59,130,246,.15);padding:1px 6px;border-radius:4px">CHECKPOINT</span> and <span style="background:rgba(249,115,22,.15);padding:1px 6px;border-radius:4px">PRACTICE</span> slides during the live session. Those slides are <strong>for you</strong> — open this file after class and attempt them on your own.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3 (was 2): WHY NOT PLAIN PYTHON? -->
+<div class="slide">
+  <span class="np-badge" style="margin-bottom:4px">NumPy</span>
+  <h2 style="color:var(--np)">Why Not Plain Python Lists?</h2>
+  <p class="sub" style="margin-bottom:10px">Python lists can do math. But they're slow and verbose. NumPy fixes both.</p>
+  <div class="two">
+    <div>
+      <div class="hl rd" style="margin-bottom:10px">
+        <h3 style="color:var(--red);margin-bottom:6px">Plain Python — the painful way</h3>
+        <pre style="font-size:.73rem"><span class="var">scores</span> = [<span class="nm">85</span>, <span class="nm">92</span>, <span class="nm">78</span>, <span class="nm">65</span>, <span class="nm">90</span>]
+
+<span class="cm"># Add 10 bonus marks to every score</span>
+<span class="var">bonused</span> = []
+<span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">scores</span>:
+    <span class="var">bonused</span>.<span class="fn">append</span>(<span class="var">s</span> + <span class="nm">10</span>)
+
+<span class="cm"># Calculate average</span>
+<span class="var">avg</span> = <span class="fn">sum</span>(<span class="var">scores</span>) / <span class="fn">len</span>(<span class="var">scores</span>)
+
+<span class="cm"># Square every score — another loop</span>
+<span class="var">sq</span> = [<span class="var">s</span>**<span class="nm">2</span> <span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">scores</span>]</pre>
+        <p style="font-size:.76rem;color:#fca5a5;margin-top:6px">Works. But with 1 million rows? Takes seconds per operation.</p>
+      </div>
+    </div>
+    <div>
+      <div class="hl np" style="margin-bottom:10px">
+        <h3 style="color:var(--np);margin-bottom:6px">NumPy — the fast way</h3>
+        <pre style="font-size:.73rem"><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="var">scores</span> = np.<span class="fn">array</span>([<span class="nm">85</span>, <span class="nm">92</span>, <span class="nm">78</span>, <span class="nm">65</span>, <span class="nm">90</span>])
+
+<span class="cm"># Add 10 to ALL scores — no loop!</span>
+<span class="var">bonused</span> = <span class="var">scores</span> + <span class="nm">10</span>
+
+<span class="cm"># Average in one line</span>
+<span class="var">avg</span> = <span class="var">scores</span>.<span class="fn">mean</span>()
+
+<span class="cm"># Square every score — no loop!</span>
+<span class="var">sq</span> = <span class="var">scores</span> ** <span class="nm">2</span></pre>
+        <p style="font-size:.76rem;color:#86efac;margin-top:6px">Same result. 50× faster on large data. Cleaner code.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.82rem;margin-bottom:6px">List vs Array — key difference</h3>
+        <table>
+          <tr><th></th><th>Python List</th><th>NumPy Array</th></tr>
+          <tr><td style="font-size:.75rem">Math ops</td><td class="no">Need a loop</td><td class="ok">Vectorized</td></tr>
+          <tr><td style="font-size:.75rem">Speed</td><td class="no">Slow</td><td class="ok">Very fast</td></tr>
+          <tr><td style="font-size:.75rem">Data types</td><td>Mixed OK</td><td>Same type only</td></tr>
+          <tr><td style="font-size:.75rem">Memory</td><td>More</td><td class="ok">Less</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: NUMPY — CREATING ARRAYS -->
+<div class="slide">
+  <span class="np-badge" style="margin-bottom:4px">NumPy</span>
+  <h2 style="color:var(--np)">Creating Arrays</h2>
+  <div class="two">
+    <div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># From a Python list</span>
+<span class="var">a</span> = np.<span class="fn">array</span>([<span class="nm">10</span>, <span class="nm">20</span>, <span class="nm">30</span>, <span class="nm">40</span>, <span class="nm">50</span>])
+
+<span class="cm"># Array of zeros / ones</span>
+np.<span class="fn">zeros</span>(<span class="nm">5</span>)         <span class="cm"># [0. 0. 0. 0. 0.]</span>
+np.<span class="fn">ones</span>(<span class="nm">5</span>)          <span class="cm"># [1. 1. 1. 1. 1.]</span>
+
+<span class="cm"># Like range() but for arrays</span>
+np.<span class="fn">arange</span>(<span class="nm">1</span>, <span class="nm">11</span>)    <span class="cm"># [1 2 3 4 5 6 7 8 9 10]</span>
+np.<span class="fn">arange</span>(<span class="nm">0</span>, <span class="nm">1</span>, <span class="nm">0.2</span>) <span class="cm"># [0. 0.2 0.4 0.6 0.8]</span>
+
+<span class="cm"># N evenly spaced numbers between start and stop</span>
+np.<span class="fn">linspace</span>(<span class="nm">0</span>, <span class="nm">100</span>, <span class="nm">5</span>)  <span class="cm"># [0. 25. 50. 75. 100.]</span>
+
+<span class="cm"># Check properties</span>
+<span class="fn">print</span>(<span class="var">a</span>.shape)        <span class="cm"># (5,) — 5 items, 1D</span>
+<span class="fn">print</span>(<span class="var">a</span>.dtype)        <span class="cm"># int64</span>
+<span class="fn">print</span>(<span class="var">a</span>.ndim)         <span class="cm"># 1</span>
+<span class="fn">print</span>(<span class="var">a</span>.size)         <span class="cm"># 5 (total elements)</span></pre>
+    </div>
+    <div>
+      <div class="hl np" style="margin-bottom:10px">
+        <h3 style="color:var(--np);margin-bottom:6px">Indexing + Slicing — same as lists</h3>
+        <pre style="background:transparent;border:none;padding:0;font-size:.74rem"><span class="var">a</span> = np.<span class="fn">array</span>([<span class="nm">10</span>, <span class="nm">20</span>, <span class="nm">30</span>, <span class="nm">40</span>, <span class="nm">50</span>])
+
+<span class="var">a</span>[<span class="nm">0</span>]          <span class="cm"># 10</span>
+<span class="var">a</span>[<span class="nm">-1</span>]         <span class="cm"># 50</span>
+<span class="var">a</span>[<span class="nm">1</span>:<span class="nm">4</span>]         <span class="cm"># [20 30 40]</span>
+<span class="var">a</span>[<span class="var">a</span> > <span class="nm">25</span>]      <span class="cm"># [30 40 50] ← boolean filter!</span></pre>
+      </div>
+      <div class="card" style="margin-bottom:10px">
+        <h3 style="font-size:.82rem;margin-bottom:6px">Useful creation functions</h3>
+        <table>
+          <tr><th>Function</th><th>What it creates</th></tr>
+          <tr><td><code>np.array([...])</code></td><td>From a list</td></tr>
+          <tr><td><code>np.zeros(n)</code></td><td>n zeros</td></tr>
+          <tr><td><code>np.ones(n)</code></td><td>n ones</td></tr>
+          <tr><td><code>np.arange(a,b)</code></td><td>a to b-1 (like range)</td></tr>
+          <tr><td><code>np.linspace(a,b,n)</code></td><td>n evenly spaced between a and b</td></tr>
+          <tr><td><code>np.random.randint(a,b,n)</code></td><td>n random ints between a and b</td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>❓ What is the output of <code>np.arange(2, 10, 3)</code>?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <strong>[2, 5, 8]</strong> — starts at 2, adds 3 each time, stops before 10. Same logic as Python's range().</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: NUMPY — OPERATIONS + STATS -->
+<div class="slide">
+  <span class="np-badge" style="margin-bottom:4px">NumPy</span>
+  <h2 style="color:var(--np)">Vectorized Operations + Statistics</h2>
+  <p class="sub" style="margin-bottom:10px">Apply math to every element at once. No loops. This is why NumPy exists.</p>
+  <div class="two">
+    <div>
+      <pre><span class="var">scores</span> = np.<span class="fn">array</span>([<span class="nm">85</span>, <span class="nm">92</span>, <span class="nm">78</span>, <span class="nm">65</span>, <span class="nm">90</span>, <span class="nm">63</span>, <span class="nm">94</span>])
+
+<span class="cm"># Arithmetic — applied to every element</span>
+<span class="var">scores</span> + <span class="nm">5</span>             <span class="cm"># [90 97 83 70 95 68 99]</span>
+<span class="var">scores</span> * <span class="nm">2</span>             <span class="cm"># [170 184 156 130 180 126 188]</span>
+<span class="var">scores</span> / <span class="nm">100</span>           <span class="cm"># [0.85 0.92 ...]</span>
+<span class="var">scores</span> ** <span class="nm">2</span>            <span class="cm"># [7225 8464 ...]</span>
+
+<span class="cm"># Two arrays — element-by-element</span>
+<span class="var">quiz1</span> = np.<span class="fn">array</span>([<span class="nm">80</span>, <span class="nm">75</span>, <span class="nm">90</span>])
+<span class="var">quiz2</span> = np.<span class="fn">array</span>([<span class="nm">70</span>, <span class="nm">85</span>, <span class="nm">80</span>])
+<span class="var">avg</span>   = (<span class="var">quiz1</span> + <span class="var">quiz2</span>) / <span class="nm">2</span>  <span class="cm"># [75. 80. 85.]</span>
+
+<span class="cm"># Boolean filter</span>
+<span class="var">scores</span>[<span class="var">scores</span> >= <span class="nm">85</span>]    <span class="cm"># [85 92 90 94] — only high scorers</span>
+np.<span class="fn">sum</span>(<span class="var">scores</span> >= <span class="nm">85</span>)    <span class="cm"># 4 — count of high scorers</span></pre>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px">
+        <h3 style="font-size:.82rem;margin-bottom:8px">Built-in statistics functions</h3>
+        <table>
+          <tr><th>Function</th><th>What it returns</th><th>Example</th></tr>
+          <tr><td><code>.sum()</code></td><td>Total of all values</td><td style="font-size:.74rem">567</td></tr>
+          <tr><td><code>.mean()</code></td><td>Average</td><td style="font-size:.74rem">81.0</td></tr>
+          <tr><td><code>.max()</code></td><td>Highest value</td><td style="font-size:.74rem">94</td></tr>
+          <tr><td><code>.min()</code></td><td>Lowest value</td><td style="font-size:.74rem">63</td></tr>
+          <tr><td><code>.std()</code></td><td>Standard deviation</td><td style="font-size:.74rem">11.4</td></tr>
+          <tr><td><code>.median()</code></td><td>Middle value</td><td style="font-size:.74rem">85.0</td></tr>
+          <tr><td><code>np.sort(a)</code></td><td>Sorted copy</td><td style="font-size:.74rem">[63 65 78...]</td></tr>
+        </table>
+      </div>
+      <div class="hl np">
+        <h3 style="font-size:.82rem;color:var(--np);margin-bottom:4px">Where will you use this?</h3>
+        <p style="font-size:.8rem">NumPy powers Pandas under the hood. Every DataFrame column is a NumPy array. When Pandas runs <code>.mean()</code> or <code>.sum()</code>, it's calling NumPy. You don't always use NumPy directly — but knowing it explains why Pandas is fast.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: NUMPY — 2D ARRAYS -->
+<div class="slide">
+  <span class="np-badge" style="margin-bottom:4px">NumPy</span>
+  <h2 style="color:var(--np)">2D Arrays — Rows and Columns</h2>
+  <p class="sub" style="margin-bottom:10px">A 2D array is like a table — rows and columns. Think of it as a simple spreadsheet without column names.</p>
+  <div class="two">
+    <div>
+      <pre><span class="cm"># Create a 2D array (3 rows × 4 columns)</span>
+<span class="var">marks</span> = np.<span class="fn">array</span>([
+    [<span class="nm">85</span>, <span class="nm">92</span>, <span class="nm">78</span>, <span class="nm">88</span>],   <span class="cm"># Yogesh</span>
+    [<span class="nm">94</span>, <span class="nm">91</span>, <span class="nm">85</span>, <span class="nm">96</span>],   <span class="cm"># Hritin</span>
+    [<span class="nm">63</span>, <span class="nm">58</span>, <span class="nm">72</span>, <span class="nm">60</span>]    <span class="cm"># Ganadeep</span>
+])
+
+<span class="fn">print</span>(<span class="var">marks</span>.shape)     <span class="cm"># (3, 4) — 3 rows, 4 cols</span>
+<span class="fn">print</span>(<span class="var">marks</span>.ndim)      <span class="cm"># 2</span>
+<span class="fn">print</span>(<span class="var">marks</span>.size)      <span class="cm"># 12 total elements</span>
+
+<span class="cm"># Access: [row, column] — both 0-indexed</span>
+<span class="var">marks</span>[<span class="nm">0</span>, <span class="nm">0</span>]     <span class="cm"># 85  (Yogesh, first subject)</span>
+<span class="var">marks</span>[<span class="nm">1</span>, <span class="nm">-1</span>]    <span class="cm"># 96  (Hritin, last subject)</span>
+<span class="var">marks</span>[<span class="nm">2</span>, :]     <span class="cm"># [63 58 72 60]  (all of Ganadeep)</span>
+<span class="var">marks</span>[:, <span class="nm">0</span>]     <span class="cm"># [85 94 63]  (first subject, all)</span>
+
+<span class="cm"># Math still vectorized</span>
+<span class="var">marks</span>.<span class="fn">mean</span>(axis=<span class="nm">1</span>)  <span class="cm"># avg per student (row avg)</span>
+<span class="var">marks</span>.<span class="fn">mean</span>(axis=<span class="nm">0</span>)  <span class="cm"># avg per subject (col avg)</span></pre>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px">
+        <h3 style="font-size:.82rem;margin-bottom:6px">Shape, ndim, size — demystified</h3>
+        <table>
+          <tr><th>Property</th><th>Means</th><th>Our example</th></tr>
+          <tr><td><code>.shape</code></td><td>Tuple of dimensions</td><td>(3, 4)</td></tr>
+          <tr><td><code>.ndim</code></td><td>Number of dimensions</td><td>2</td></tr>
+          <tr><td><code>.size</code></td><td>Total element count</td><td>12</td></tr>
+          <tr><td><code>.dtype</code></td><td>Data type of elements</td><td>int64</td></tr>
+        </table>
+      </div>
+      <div class="card" style="margin-bottom:10px">
+        <h3 style="font-size:.82rem;margin-bottom:6px">axis=0 vs axis=1</h3>
+        <table>
+          <tr><th>axis</th><th>Means</th><th>Example result</th></tr>
+          <tr><td><code>axis=0</code></td><td>Down the rows (per column)</td><td style="font-size:.74rem">avg of each subject</td></tr>
+          <tr><td><code>axis=1</code></td><td>Across the columns (per row)</td><td style="font-size:.74rem">avg of each student</td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>❓ For a 2D array with shape (5, 3) — how many rows and columns?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <strong>5 rows, 3 columns.</strong> Shape is always (rows, columns). Total elements = 5 × 3 = 15.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7 (was 6): CHECKPOINT QUIZ 1 — NumPy -->
+<div class="slide">
+  <div class="self-banner"><span class="self-tag">Self Practice</span><span class="self-msg">Instructor skips this slide during class — attempt this on your own after the session.</span></div>
+  <div class="checkpoint-header" style="margin-bottom:12px">
+    <span class="cp-badge">Checkpoint 1</span>
+    <div>
+      <div class="cp-title">Quick Quiz — NumPy</div>
+      <div class="cp-sub">Click an option. Instant feedback.</div>
+    </div>
+  </div>
+  <div class="mcq-grid" id="cp1">
+    <div class="mcq-card">
+      <div class="mcq-q">What does <code>np.array([1,2,3]) + 10</code> return?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','nq1')"><span class="opt-key">A</span>Error — can't add int to array</button>
+        <button class="opt" onclick="mcq(this,'wrong','nq1')"><span class="opt-key">B</span>[1, 2, 3, 10]</button>
+        <button class="opt" onclick="mcq(this,'correct','nq1')"><span class="opt-key">C</span>[11, 12, 13]</button>
+        <button class="opt" onclick="mcq(this,'wrong','nq1')"><span class="opt-key">D</span>16</button>
+      </div>
+      <div class="mcq-exp" id="nq1">Vectorized operation — 10 is added to every element. No loop needed. This is broadcasting.</div>
+    </div>
+    <div class="mcq-card">
+      <div class="mcq-q"><code>a = np.array([4, 7, 2, 9, 1])</code><br>What does <code>a[a > 5]</code> return?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','nq2')"><span class="opt-key">A</span>[4, 7, 2, 9, 1]</button>
+        <button class="opt" onclick="mcq(this,'correct','nq2')"><span class="opt-key">B</span>[7, 9]</button>
+        <button class="opt" onclick="mcq(this,'wrong','nq2')"><span class="opt-key">C</span>[True, True, False...]</button>
+        <button class="opt" onclick="mcq(this,'wrong','nq2')"><span class="opt-key">D</span>2</button>
+      </div>
+      <div class="mcq-exp" id="nq2">Boolean indexing — <code>a > 5</code> creates a mask [F,T,F,T,F], then only elements where True are returned: <strong>[7, 9]</strong>.</div>
+    </div>
+    <div class="mcq-card">
+      <div class="mcq-q">A NumPy array has <code>shape = (4, 6)</code>. What is <code>.size</code>?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','nq3')"><span class="opt-key">A</span>4</button>
+        <button class="opt" onclick="mcq(this,'wrong','nq3')"><span class="opt-key">B</span>6</button>
+        <button class="opt" onclick="mcq(this,'correct','nq3')"><span class="opt-key">C</span>24</button>
+        <button class="opt" onclick="mcq(this,'wrong','nq3')"><span class="opt-key">D</span>(4, 6)</button>
+      </div>
+      <div class="mcq-exp" id="nq3"><code>.size</code> = total number of elements = 4 × 6 = <strong>24</strong>. <code>.shape</code> gives the tuple, <code>.ndim</code> gives 2.</div>
+    </div>
+    <div class="mcq-card">
+      <div class="mcq-q">What is the difference between <code>np.arange(5)</code> and <code>np.linspace(0, 5, 5)</code>?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','nq4')"><span class="opt-key">A</span>They return the same thing</button>
+        <button class="opt" onclick="mcq(this,'correct','nq4')"><span class="opt-key">B</span>arange gives [0,1,2,3,4]; linspace gives [0, 1.25, 2.5, 3.75, 5.0]</button>
+        <button class="opt" onclick="mcq(this,'wrong','nq4')"><span class="opt-key">C</span>linspace only works with integers</button>
+        <button class="opt" onclick="mcq(this,'wrong','nq4')"><span class="opt-key">D</span>arange stops before 5, linspace includes 5</button>
+      </div>
+      <div class="mcq-exp" id="nq4"><code>arange</code> steps by 1 (like range). <code>linspace(0,5,5)</code> gives exactly 5 evenly spaced values from 0 to 5 inclusive. Both are right — choice depends on whether you want step size or number of points.</div>
+    </div>
+  </div>
+  <div class="mcq-score">Score: <span id="cp1-s">0</span> / 4</div>
+</div>
+
+<!-- SLIDE 8 (was 7): CODING PRACTICE 1 — NUMPY -->
+<div class="slide">
+  <div class="self-banner"><span class="self-tag">Self Practice</span><span class="self-msg">Instructor skips this slide during class — attempt this on your own after the session.</span></div>
+  <div class="practice-header" style="margin-bottom:12px">
+    <span class="pr-badge">Practice 1</span>
+    <div>
+      <div class="pr-title">Coding Practice — NumPy</div>
+      <div class="pr-sub">Open VS Code · Create <code>practice_numpy.py</code> · Try before revealing</div>
+    </div>
+  </div>
+  <div class="two">
+    <div class="task-box">
+      <h3>Your Task</h3>
+      <p style="font-size:.79rem;color:var(--muted);margin-bottom:8px">Batch quiz scores for 8 students:</p>
+      <pre style="margin-bottom:10px;font-size:.74rem"><span class="var">scores</span> = np.<span class="fn">array</span>([<span class="nm">63</span>, <span class="nm">94</span>, <span class="nm">91</span>, <span class="nm">85</span>,
+                      <span class="nm">14</span>, <span class="nm">38</span>, <span class="nm">85</span>, <span class="nm">82</span>])</pre>
+      <div class="task-steps">
+        <div class="task-step"><span class="step-num">1</span>Print the shape, size and data type of the array</div>
+        <div class="task-step"><span class="step-num">2</span>Add 5 bonus marks to every score and print the result</div>
+        <div class="task-step"><span class="step-num">3</span>Print the mean, max, min and standard deviation</div>
+        <div class="task-step"><span class="step-num">4</span>Filter and print only scores that are 80 or above</div>
+        <div class="task-step"><span class="step-num">5</span>Count how many students scored below 50</div>
+        <div class="task-step"><span class="step-num">★</span>BONUS: Create a 2D array — 2 rows (Quiz 1 and Quiz 2), 4 columns (first 4 students). Print the average score per student (axis=1) and per quiz (axis=0)</div>
+      </div>
+    </div>
+    <div>
+      <button class="sol-btn" onclick="toggleSol(this,'sol1')">▶ Show Solution</button>
+      <div class="solution" id="sol1">
+        <pre style="font-size:.71rem"><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="var">scores</span> = np.<span class="fn">array</span>([<span class="nm">63</span>, <span class="nm">94</span>, <span class="nm">91</span>, <span class="nm">85</span>,
+                    <span class="nm">14</span>, <span class="nm">38</span>, <span class="nm">85</span>, <span class="nm">82</span>])
+
+<span class="cm"># 1. Properties</span>
+<span class="fn">print</span>(<span class="var">scores</span>.shape)      <span class="cm"># (8,)</span>
+<span class="fn">print</span>(<span class="var">scores</span>.size)       <span class="cm"># 8</span>
+<span class="fn">print</span>(<span class="var">scores</span>.dtype)      <span class="cm"># int64</span>
+
+<span class="cm"># 2. Add bonus</span>
+<span class="fn">print</span>(<span class="var">scores</span> + <span class="nm">5</span>)
+
+<span class="cm"># 3. Stats</span>
+<span class="fn">print</span>(<span class="var">scores</span>.<span class="fn">mean</span>())     <span class="cm"># 69.0</span>
+<span class="fn">print</span>(<span class="var">scores</span>.<span class="fn">max</span>())      <span class="cm"># 94</span>
+<span class="fn">print</span>(<span class="var">scores</span>.<span class="fn">min</span>())      <span class="cm"># 14</span>
+<span class="fn">print</span>(<span class="var">scores</span>.<span class="fn">std</span>())      <span class="cm"># 27.2</span>
+
+<span class="cm"># 4. Filter >= 80</span>
+<span class="fn">print</span>(<span class="var">scores</span>[<span class="var">scores</span> >= <span class="nm">80</span>])  <span class="cm"># [94 91 85 85 82]</span>
+
+<span class="cm"># 5. Count below 50</span>
+<span class="fn">print</span>(np.<span class="fn">sum</span>(<span class="var">scores</span> < <span class="nm">50</span>))   <span class="cm"># 2</span>
+
+<span class="cm"># ★ BONUS: 2D array</span>
+<span class="var">quiz</span> = np.<span class="fn">array</span>([
+    [<span class="nm">63</span>, <span class="nm">94</span>, <span class="nm">91</span>, <span class="nm">85</span>],   <span class="cm"># Quiz 1</span>
+    [<span class="nm">70</span>, <span class="nm">88</span>, <span class="nm">79</span>, <span class="nm">90</span>]    <span class="cm"># Quiz 2</span>
+])
+<span class="fn">print</span>(<span class="var">quiz</span>.<span class="fn">mean</span>(axis=<span class="nm">1</span>))  <span class="cm"># avg per quiz row</span>
+<span class="fn">print</span>(<span class="var">quiz</span>.<span class="fn">mean</span>(axis=<span class="nm">0</span>))  <span class="cm"># avg per student col</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: WHAT IS PANDAS? -->
+<div class="slide">
+  <span class="pd-badge" style="margin-bottom:4px">Pandas</span>
+  <h2 style="color:var(--pd)">What is Pandas? Series and DataFrame</h2>
+  <p class="sub" style="margin-bottom:10px">Pandas gives you two core data structures. Master these and you can analyse any dataset.</p>
+  <div class="two">
+    <div>
+      <div class="hl pd" style="margin-bottom:10px">
+        <h3 style="color:var(--pd);margin-bottom:6px">Series — a single labelled column</h3>
+        <pre style="font-size:.73rem"><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="cm"># A Series = 1D array with labels (index)</span>
+<span class="var">scores</span> = pd.<span class="fn">Series</span>(
+    [<span class="nm">63</span>, <span class="nm">94</span>, <span class="nm">91</span>, <span class="nm">85</span>],
+    index=[<span class="st">"Yogesh"</span>, <span class="st">"Hritin"</span>, <span class="st">"Prishita"</span>, <span class="st">"Raj"</span>]
+)
+
+<span class="var">scores</span>[<span class="st">"Hritin"</span>]      <span class="cm"># 94</span>
+<span class="var">scores</span>.<span class="fn">mean</span>()          <span class="cm"># 83.25</span>
+<span class="var">scores</span>[<span class="var">scores</span> > <span class="nm">85</span>]   <span class="cm"># Hritin, Prishita</span></pre>
+        <p style="font-size:.76rem;margin-top:8px">Think of a Series as a single column from a spreadsheet — values with labels.</p>
+      </div>
+    </div>
+    <div>
+      <div class="hl pd" style="margin-bottom:10px">
+        <h3 style="color:var(--pd);margin-bottom:6px">DataFrame — a full table (rows + columns)</h3>
+        <pre style="font-size:.73rem"><span class="cm"># A DataFrame = multiple Series side by side</span>
+<span class="var">df</span> = pd.<span class="fn">DataFrame</span>({
+    <span class="st">"name"</span>:  [<span class="st">"Yogesh"</span>, <span class="st">"Hritin"</span>, <span class="st">"Prishita"</span>],
+    <span class="st">"score"</span>: [<span class="nm">63</span>,      <span class="nm">94</span>,      <span class="nm">91</span>],
+    <span class="st">"group"</span>: [<span class="st">"G1"</span>,    <span class="st">"G2"</span>,    <span class="st">"G1"</span>]
+})
+
+<span class="cm"># Looks like this:
+#      name  score group
+#  0  Yogesh    63    G1
+#  1  Hritin    94    G2
+#  2 Prishita   91    G1</span></pre>
+        <p style="font-size:.76rem;margin-top:8px">Think of a DataFrame as an Excel sheet — but in Python, with superpowers.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.82rem;margin-bottom:4px">Series vs DataFrame</h3>
+        <table>
+          <tr><th></th><th>Series</th><th>DataFrame</th></tr>
+          <tr><td style="font-size:.75rem">Dimensions</td><td>1D (one column)</td><td>2D (rows + cols)</td></tr>
+          <tr><td style="font-size:.75rem">Like</td><td>A list with labels</td><td>A table / spreadsheet</td></tr>
+          <tr><td style="font-size:.75rem">Access</td><td>series["label"]</td><td>df["col"]</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: CREATING & READING DataFrames -->
+<div class="slide">
+  <span class="pd-badge" style="margin-bottom:4px">Pandas</span>
+  <h2 style="color:var(--pd)">Creating and Reading DataFrames</h2>
+  <div class="two">
+    <div>
+      <h3 style="margin-bottom:6px;color:var(--a2)">Create from a dictionary</h3>
+      <pre style="margin-bottom:10px"><span class="var">df</span> = pd.<span class="fn">DataFrame</span>({
+    <span class="st">"name"</span>:       [<span class="st">"Yogesh"</span>,<span class="st">"Hritin"</span>,<span class="st">"Prishita"</span>,<span class="st">"Raj"</span>],
+    <span class="st">"group"</span>:      [<span class="st">"G1"</span>,    <span class="st">"G2"</span>,    <span class="st">"G1"</span>,      <span class="st">"G3"</span>],
+    <span class="st">"quiz_score"</span>: [<span class="nm">63</span>,     <span class="nm">94</span>,     <span class="nm">91</span>,       <span class="nm">85</span>],
+    <span class="st">"attendance"</span>: [<span class="nm">95</span>,     <span class="nm">98</span>,     <span class="nm">92</span>,       <span class="nm">88</span>]
+})</pre>
+      <h3 style="margin-bottom:6px;color:var(--a2)">Create from a list of dicts</h3>
+      <pre><span class="var">data</span> = [
+    {<span class="st">"name"</span>: <span class="st">"Yogesh"</span>, <span class="st">"score"</span>: <span class="nm">63</span>},
+    {<span class="st">"name"</span>: <span class="st">"Hritin"</span>, <span class="st">"score"</span>: <span class="nm">94</span>},
+]
+<span class="var">df</span> = pd.<span class="fn">DataFrame</span>(<span class="var">data</span>)</pre>
+    </div>
+    <div>
+      <div class="hl pd" style="margin-bottom:10px">
+        <h3 style="color:var(--pd);margin-bottom:6px">Read from a file — most common in practice</h3>
+        <pre style="font-size:.73rem"><span class="cm"># Read a CSV file</span>
+<span class="var">df</span> = pd.<span class="fn">read_csv</span>(<span class="st">"sales_data.csv"</span>)
+
+<span class="cm"># Read an Excel file</span>
+<span class="var">df</span> = pd.<span class="fn">read_excel</span>(<span class="st">"sales_data.xlsx"</span>,
+                   sheet_name=<span class="st">"Sheet1"</span>)
+
+<span class="cm"># VS Code tip: file must be in the same folder
+# as your .py file, OR use full path</span>
+<span class="var">df</span> = pd.<span class="fn">read_csv</span>(<span class="st">r"C:\data\sales.csv"</span>)</pre>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.82rem;margin-bottom:6px">Saving a DataFrame</h3>
+        <pre style="font-size:.73rem;background:var(--code);border:1px solid var(--border);"><span class="cm"># Save to CSV (no row numbers)</span>
+<span class="var">df</span>.<span class="fn">to_csv</span>(<span class="st">"output.csv"</span>, index=<span class="kw">False</span>)
+
+<span class="cm"># Save to Excel</span>
+<span class="var">df</span>.<span class="fn">to_excel</span>(<span class="st">"output.xlsx"</span>, index=<span class="kw">False</span>)</pre>
+      </div>
+      <div class="quiz" style="margin-top:10px">
+        <p>❓ When reading a CSV, what argument stops Pandas adding an extra row-number column when saving?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <code>index=False</code> in <code>to_csv()</code> / <code>to_excel()</code>. Without it, Pandas writes the index (0, 1, 2...) as an extra column called "Unnamed: 0" — which causes confusion later.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: EXPLORING A DATAFRAME -->
+<div class="slide">
+  <span class="pd-badge" style="margin-bottom:4px">Pandas</span>
+  <h2 style="color:var(--pd)">Exploring Your Data — First 5 Minutes</h2>
+  <p class="sub" style="margin-bottom:10px">Every time you load a new dataset, run these commands before doing anything else.</p>
+  <div class="two">
+    <pre><span class="var">df</span> = pd.<span class="fn">read_csv</span>(<span class="st">"batch_data.csv"</span>)
+
+<span class="cm"># ── SHAPE ──────────────────────────────</span>
+<span class="fn">print</span>(<span class="var">df</span>.shape)
+<span class="cm"># (25, 6) → 25 rows, 6 columns</span>
+
+<span class="fn">print</span>(<span class="var">df</span>.columns)
+<span class="cm"># Index(['name','group','quiz_score',
+#        'attendance_pct','assignments_submitted','city'])</span>
+
+<span class="cm"># ── PREVIEW ────────────────────────────</span>
+<span class="var">df</span>.<span class="fn">head</span>()              <span class="cm"># first 5 rows</span>
+<span class="var">df</span>.<span class="fn">tail</span>()              <span class="cm"># last 5 rows</span>
+<span class="var">df</span>.<span class="fn">sample</span>(<span class="nm">3</span>)           <span class="cm"># 3 random rows</span>
+
+<span class="cm"># ── INFO ───────────────────────────────</span>
+<span class="var">df</span>.<span class="fn">info</span>()
+<span class="cm"># RangeIndex: 25 entries, 0 to 24
+#  Column                 Non-Null  Dtype
+#  name                   25        object
+#  group                  25        object
+#  quiz_score             24        float64  ← 1 null! (Sujit)
+#  attendance_pct         25        float64
+#  assignments_submitted  25        int64
+#  city                   25        object</span>
+
+<span class="cm"># ── DESCRIBE ───────────────────────────</span>
+<span class="var">df</span>.<span class="fn">describe</span>()
+<span class="cm">#        quiz_score  attendance_pct  assignments_submitted
+# count  24.00       25.00           25.00
+# mean   65.46       83.96            3.04
+# std    19.58        9.98            0.89
+# min    14.00       45.00            1.00  ← Ganadeep
+# 25%    52.75       77.00            3.00
+# 50%    69.00       86.00            3.00
+# 75%    79.75       91.00            4.00
+# max    94.00       98.00            4.00  ← Hritin</span></pre>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <h3 style="font-size:.82rem;margin-bottom:6px">What to look for</h3>
+        <table>
+          <tr><th>Check</th><th>How</th></tr>
+          <tr><td style="font-size:.76rem">Any missing values?</td><td style="font-size:.76rem"><code>df.info()</code> — Non-Null counts</td></tr>
+          <tr><td style="font-size:.76rem">Right data types?</td><td style="font-size:.76rem"><code>df.dtypes</code> — dates should be datetime, not object</td></tr>
+          <tr><td style="font-size:.76rem">Any outliers?</td><td style="font-size:.76rem"><code>df.describe()</code> — look at min/max</td></tr>
+          <tr><td style="font-size:.76rem">Duplicates?</td><td style="font-size:.76rem"><code>df.duplicated().sum()</code></td></tr>
+        </table>
+      </div>
+      <div class="hl pd">
+        <h3 style="color:var(--pd);font-size:.82rem;margin-bottom:4px">Two things jump out immediately</h3>
+        <p style="font-size:.79rem">
+          <code>df.info()</code> → <code>quiz_score</code> has 24 non-null (not 25). Sujit Kumar never took the quiz.<br><br>
+          <code>df.describe()</code> → <code>attendance_pct min = 45.0</code>. That's Ganadeep. One line of code, one flag.
+        </p>
+      </div>
+      <div class="quiz">
+        <p>❓ What's the quickest way to check if any column has missing values?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <code>df.isnull().sum()</code> — returns the count of NaN per column. Zero means clean. Non-zero means you have work to do.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: SELECTING & FILTERING -->
+<div class="slide">
+  <span class="pd-badge" style="margin-bottom:4px">Pandas</span>
+  <h2 style="color:var(--pd)">Selecting Columns and Filtering Rows</h2>
+  <div class="two">
+    <div>
+      <h3 style="margin-bottom:6px;color:var(--a2)">Selecting columns</h3>
+      <pre><span class="cm"># Single column → returns a Series</span>
+<span class="var">df</span>[<span class="st">"name"</span>]
+
+<span class="cm"># Multiple columns → returns a DataFrame</span>
+<span class="var">df</span>[[<span class="st">"name"</span>, <span class="st">"quiz_score"</span>]]
+
+<span class="cm"># By position: .iloc[rows, cols]</span>
+<span class="var">df</span>.<span class="fn">iloc</span>[<span class="nm">0</span>]           <span class="cm"># first row (as Series)</span>
+<span class="var">df</span>.<span class="fn">iloc</span>[<span class="nm">0</span>:<span class="nm">3</span>]         <span class="cm"># rows 0, 1, 2</span>
+<span class="var">df</span>.<span class="fn">iloc</span>[<span class="nm">0</span>, <span class="nm">2</span>]        <span class="cm"># row 0, column 2</span>
+
+<span class="cm"># By label: .loc[rows, cols]</span>
+<span class="var">df</span>.<span class="fn">loc</span>[<span class="nm">0</span>, <span class="st">"name"</span>]    <span class="cm"># 'Yogesh'</span>
+<span class="var">df</span>.<span class="fn">loc</span>[:<span class="nm">3</span>, [<span class="st">"name"</span>,<span class="st">"score"</span>]]</pre>
+    </div>
+    <div>
+      <h3 style="margin-bottom:6px;color:var(--a2)">Filtering rows (the most used operation)</h3>
+      <pre><span class="cm"># Single condition</span>
+<span class="var">df</span>[<span class="var">df</span>[<span class="st">"quiz_score"</span>] > <span class="nm">80</span>]
+
+<span class="cm"># Multiple conditions — use & and |</span>
+<span class="var">df</span>[(<span class="var">df</span>[<span class="st">"quiz_score"</span>] > <span class="nm">80</span>) &
+   (<span class="var">df</span>[<span class="st">"group"</span>] == <span class="st">"G1"</span>)]
+
+<span class="var">df</span>[(<span class="var">df</span>[<span class="st">"quiz_score"</span>] > <span class="nm">90</span>) |
+   (<span class="var">df</span>[<span class="st">"attendance"</span>] >= <span class="nm">95</span>)]
+
+<span class="cm"># Filter by list of values</span>
+<span class="var">df</span>[<span class="var">df</span>[<span class="st">"group"</span>].<span class="fn">isin</span>([<span class="st">"G1"</span>, <span class="st">"G2"</span>])]
+
+<span class="cm"># Filter text</span>
+<span class="var">df</span>[<span class="var">df</span>[<span class="st">"name"</span>].<span class="fn">str</span>.<span class="fn">startswith</span>(<span class="st">"Y"</span>)]</pre>
+      <div class="hl rd" style="margin-top:10px">
+        <h3 style="color:var(--red);font-size:.82rem;margin-bottom:4px">Common mistake: single = in filter</h3>
+        <pre style="background:transparent;border:none;padding:0;font-size:.73rem"><span class="cm"># ❌ Wrong</span>
+<span class="var">df</span>[<span class="var">df</span>[<span class="st">"group"</span>] = <span class="st">"G1"</span>]   <span class="cm"># SyntaxError</span>
+<span class="cm"># ✅ Correct — comparison, not assignment</span>
+<span class="var">df</span>[<span class="var">df</span>[<span class="st">"group"</span>] == <span class="st">"G1"</span>]</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: OPERATIONS — NEW COLS, GROUPBY, SORT -->
+<div class="slide">
+  <span class="pd-badge" style="margin-bottom:4px">Pandas</span>
+  <h2 style="color:var(--pd)">Common Operations — New Columns · GroupBy · Sort</h2>
+  <div class="two">
+    <div>
+      <h3 style="margin-bottom:6px;color:var(--a2)">Adding a new column</h3>
+      <pre><span class="cm"># New column = calculation on existing columns</span>
+<span class="var">df</span>[<span class="st">"grade"</span>] = <span class="var">df</span>[<span class="st">"quiz_score"</span>].<span class="fn">apply</span>(
+    <span class="kw">lambda</span> <span class="var">s</span>:
+        <span class="st">"A"</span> <span class="kw">if</span> <span class="var">s</span> >= <span class="nm">90</span> <span class="kw">else</span>
+        <span class="st">"B"</span> <span class="kw">if</span> <span class="var">s</span> >= <span class="nm">75</span> <span class="kw">else</span>
+        <span class="st">"C"</span> <span class="kw">if</span> <span class="var">s</span> >= <span class="nm">50</span> <span class="kw">else</span> <span class="st">"F"</span>
+)
+
+<span class="cm"># Simple derived column</span>
+<span class="var">df</span>[<span class="st">"bonus_score"</span>] = <span class="var">df</span>[<span class="st">"quiz_score"</span>] + <span class="nm">5</span>
+<span class="var">df</span>[<span class="st">"passed"</span>]     = <span class="var">df</span>[<span class="st">"quiz_score"</span>] >= <span class="nm">50</span></pre>
+      <h3 style="margin-bottom:6px;margin-top:10px;color:var(--a2)">Sorting</h3>
+      <pre><span class="cm"># Sort by score, highest first</span>
+<span class="var">df</span>.<span class="fn">sort_values</span>(<span class="st">"quiz_score"</span>, ascending=<span class="kw">False</span>)
+
+<span class="cm"># Sort by multiple columns</span>
+<span class="var">df</span>.<span class="fn">sort_values</span>([<span class="st">"group"</span>,<span class="st">"quiz_score"</span>],
+               ascending=[<span class="kw">True</span>,<span class="kw">False</span>])</pre>
+    </div>
+    <div>
+      <h3 style="margin-bottom:6px;color:var(--a2)">GroupBy — aggregate by category</h3>
+      <pre><span class="cm"># Average score per group</span>
+<span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">"group"</span>)[<span class="st">"quiz_score"</span>].<span class="fn">mean</span>()
+
+<span class="cm"># Multiple aggregations at once</span>
+<span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">"group"</span>).<span class="fn">agg</span>({
+    <span class="st">"quiz_score"</span>:  [<span class="st">"mean"</span>, <span class="st">"max"</span>, <span class="st">"count"</span>],
+    <span class="st">"attendance"</span>: <span class="st">"mean"</span>
+})</pre>
+      <div class="card" style="margin-top:10px;margin-bottom:10px">
+        <h3 style="font-size:.82rem;margin-bottom:6px">Other useful operations</h3>
+        <table>
+          <tr><th>Operation</th><th>Code</th></tr>
+          <tr><td style="font-size:.75rem">Count occurrences</td><td><code>df["group"].value_counts()</code></td></tr>
+          <tr><td style="font-size:.75rem">Unique values</td><td><code>df["group"].unique()</code></td></tr>
+          <tr><td style="font-size:.75rem">Column stats</td><td><code>df["score"].sum() / .mean()</code></td></tr>
+          <tr><td style="font-size:.75rem">Rename column</td><td><code>df.rename(columns={"old":"new"})</code></td></tr>
+          <tr><td style="font-size:.75rem">Drop column</td><td><code>df.drop(columns=["col"])</code></td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>❓ What does <code>df.groupby("group")["score"].mean()</code> return?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ The average score for each unique group — one row per group. Like a SQL <code>SELECT group, AVG(score) GROUP BY group</code>.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13: MISSING DATA -->
+<div class="slide">
+  <span class="pd-badge" style="margin-bottom:4px">Pandas</span>
+  <h2 style="color:var(--pd)">Handling Missing Data</h2>
+  <p class="sub" style="margin-bottom:10px">Real data is always messy. Someone didn't fill the form. The system crashed. Ganadeep was asleep. Missing values (NaN) must be handled before analysis.</p>
+  <div class="two">
+    <div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="var">df</span> = pd.<span class="fn">DataFrame</span>({
+    <span class="st">"name"</span>:  [<span class="st">"Yogesh"</span>, <span class="st">"Hritin"</span>, <span class="st">"Prishita"</span>, <span class="st">"Raj"</span>],
+    <span class="st">"score"</span>: [<span class="nm">63</span>,      <span class="kw">None</span>,     <span class="nm">91</span>,         <span class="nm">85</span>],
+    <span class="st">"city"</span>:  [<span class="st">"Delhi"</span>, <span class="st">"Mumbai"</span>, <span class="kw">None</span>,       <span class="st">"Pune"</span>]
+})
+
+<span class="cm"># 1. Detect missing values</span>
+<span class="var">df</span>.<span class="fn">isnull</span>()            <span class="cm"># True/False per cell</span>
+<span class="var">df</span>.<span class="fn">isnull</span>().<span class="fn">sum</span>()      <span class="cm"># count per column</span>
+<span class="cm"># score    1
+# city     1</span>
+
+<span class="cm"># 2. Drop rows with any missing value</span>
+<span class="var">df</span>.<span class="fn">dropna</span>()            <span class="cm"># removes Hritin + Prishita</span>
+
+<span class="cm"># 3. Drop only if a specific column is null</span>
+<span class="var">df</span>.<span class="fn">dropna</span>(subset=[<span class="st">"score"</span>])
+
+<span class="cm"># 4. Fill missing with a value</span>
+<span class="var">df</span>[<span class="st">"score"</span>].<span class="fn">fillna</span>(<span class="nm">0</span>)          <span class="cm"># fill with 0</span>
+<span class="var">df</span>[<span class="st">"score"</span>].<span class="fn">fillna</span>(<span class="var">df</span>[<span class="st">"score"</span>].<span class="fn">mean</span>())  <span class="cm"># fill with avg</span>
+<span class="var">df</span>[<span class="st">"city"</span>].<span class="fn">fillna</span>(<span class="st">"Unknown"</span>)   <span class="cm"># fill text</span></pre>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px">
+        <h3 style="font-size:.82rem;margin-bottom:6px">dropna vs fillna — when to use which</h3>
+        <table>
+          <tr><th>Situation</th><th>Use</th></tr>
+          <tr><td style="font-size:.75rem">Row is completely useless without that value</td><td style="font-size:.75rem"><code>.dropna()</code></td></tr>
+          <tr><td style="font-size:.75rem">Can substitute a sensible default</td><td style="font-size:.75rem"><code>.fillna(0)</code> or <code>.fillna("Unknown")</code></td></tr>
+          <tr><td style="font-size:.75rem">Numeric — substitute with mean/median</td><td style="font-size:.75rem"><code>.fillna(df["col"].mean())</code></td></tr>
+          <tr><td style="font-size:.75rem">Forward fill (carry last known value)</td><td style="font-size:.75rem"><code>.ffill()</code></td></tr>
+        </table>
+      </div>
+      <div class="hl rd" style="margin-bottom:10px">
+        <h3 style="color:var(--red);font-size:.82rem;margin-bottom:4px">NaN in numeric ops</h3>
+        <p style="font-size:.8rem">If a column has NaN, <code>.mean()</code> skips it automatically. But <code>.sum()</code> treats it as 0. Always check with <code>.isnull().sum()</code> first.</p>
+      </div>
+      <div class="quiz">
+        <p>❓ You want to keep rows only where the "score" column is NOT null. What's the one-liner?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <code>df = df.dropna(subset=["score"])</code> — or equivalently <code>df[df["score"].notnull()]</code>. Both keep only rows where score has a value.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15 (was 14): CHECKPOINT QUIZ 2 — Pandas -->
+<div class="slide">
+  <div class="self-banner"><span class="self-tag">Self Practice</span><span class="self-msg">Instructor skips this slide during class — attempt this on your own after the session.</span></div>
+  <div class="checkpoint-header" style="margin-bottom:12px">
+    <span class="cp-badge">Checkpoint 2</span>
+    <div>
+      <div class="cp-title">Quick Quiz — Pandas</div>
+      <div class="cp-sub">Click an option. Instant feedback.</div>
+    </div>
+  </div>
+  <div class="mcq-grid" id="cp2">
+    <div class="mcq-card">
+      <div class="mcq-q">What does <code>df["score"]</code> return?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','pq1')"><span class="opt-key">A</span>A DataFrame with one column</button>
+        <button class="opt" onclick="mcq(this,'correct','pq1')"><span class="opt-key">B</span>A Series (one column, with index)</button>
+        <button class="opt" onclick="mcq(this,'wrong','pq1')"><span class="opt-key">C</span>A Python list</button>
+        <button class="opt" onclick="mcq(this,'wrong','pq1')"><span class="opt-key">D</span>A NumPy array</button>
+      </div>
+      <div class="mcq-exp" id="pq1">Single bracket <code>df["col"]</code> returns a <strong>Series</strong>. Double bracket <code>df[["col"]]</code> returns a single-column <strong>DataFrame</strong>. Subtle but important.</div>
+    </div>
+    <div class="mcq-card">
+      <div class="mcq-q">How do you filter rows where score > 80 AND group is "G1"?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','pq2')"><span class="opt-key">A</span><code>df[df["score"] > 80 and df["group"] == "G1"]</code></button>
+        <button class="opt" onclick="mcq(this,'correct','pq2')"><span class="opt-key">B</span><code>df[(df["score"] > 80) & (df["group"] == "G1")]</code></button>
+        <button class="opt" onclick="mcq(this,'wrong','pq2')"><span class="opt-key">C</span><code>df[df["score"] > 80, df["group"] == "G1"]</code></button>
+        <button class="opt" onclick="mcq(this,'wrong','pq2')"><span class="opt-key">D</span><code>df.filter(score > 80, group="G1")</code></button>
+      </div>
+      <div class="mcq-exp" id="pq2">In Pandas, use <code>&</code> (bitwise AND) and <code>|</code> (bitwise OR) — not Python's <code>and</code>/<code>or</code>. Each condition must be wrapped in parentheses.</div>
+    </div>
+    <div class="mcq-card">
+      <div class="mcq-q"><code>df.shape</code> returns <code>(100, 5)</code>. What does this mean?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','pq3')"><span class="opt-key">A</span>5 rows, 100 columns</button>
+        <button class="opt" onclick="mcq(this,'correct','pq3')"><span class="opt-key">B</span>100 rows, 5 columns</button>
+        <button class="opt" onclick="mcq(this,'wrong','pq3')"><span class="opt-key">C</span>500 total cells</button>
+        <button class="opt" onclick="mcq(this,'wrong','pq3')"><span class="opt-key">D</span>5 groups of 100</button>
+      </div>
+      <div class="mcq-exp" id="pq3">Shape is always (rows, columns). 100 rows, 5 columns. Total cells = 100 × 5 = 500, but <code>.shape</code> doesn't tell you that directly.</div>
+    </div>
+    <div class="mcq-card">
+      <div class="mcq-q">What does <code>df.groupby("group")["score"].mean()</code> do?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','pq4')"><span class="opt-key">A</span>Returns the overall mean of all scores</button>
+        <button class="opt" onclick="mcq(this,'wrong','pq4')"><span class="opt-key">B</span>Returns one row — the group with the highest mean</button>
+        <button class="opt" onclick="mcq(this,'correct','pq4')"><span class="opt-key">C</span>Returns the average score for each group — one row per group</button>
+        <button class="opt" onclick="mcq(this,'wrong','pq4')"><span class="opt-key">D</span>Sorts the DataFrame by group then score</button>
+      </div>
+      <div class="mcq-exp" id="pq4">GroupBy splits the data by "group", then calculates mean score within each group. Result: one row per unique group value. SQL equivalent: <code>SELECT group, AVG(score) GROUP BY group</code>.</div>
+    </div>
+  </div>
+  <div class="mcq-score">Score: <span id="cp2-s">0</span> / 4</div>
+</div>
+
+<!-- SLIDE 16 (was 15): CODING PRACTICE 2 — PANDAS -->
+<div class="slide">
+  <div class="self-banner"><span class="self-tag">Self Practice</span><span class="self-msg">Instructor skips this slide during class — attempt this on your own after the session using <code style="font-size:.72rem;color:#fcd34d">batch_data.csv</code>.</span></div>
+  <div class="practice-header" style="margin-bottom:10px">
+    <span class="pr-badge">Practice 2</span>
+    <div>
+      <div class="pr-title">Coding Practice — Pandas with Real Data</div>
+      <div class="pr-sub">File → Open Folder in VS Code · Create <code>practice_pandas.py</code> · Load <code>batch_data.csv</code> · Try before revealing</div>
+    </div>
+  </div>
+  <div class="two">
+    <div class="task-box">
+      <h3>Your Task</h3>
+      <p style="font-size:.79rem;color:var(--muted);margin-bottom:8px">Load the real batch dataset — 25 students, 6 columns:</p>
+      <pre style="margin-bottom:10px;font-size:.74rem"><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="var">df</span> = pd.<span class="fn">read_csv</span>(<span class="st">"batch_data.csv"</span>)
+<span class="cm"># columns: name, group, quiz_score,
+#           attendance_pct, assignments_submitted, city</span></pre>
+      <div class="task-steps">
+        <div class="task-step"><span class="step-num">1</span>Print shape, columns, and first 5 rows. What is the shape?</div>
+        <div class="task-step"><span class="step-num">2</span>Check for missing values using <code>isnull().sum()</code>. Which column has a null? Fill it with <code>0</code>.</div>
+        <div class="task-step"><span class="step-num">3</span>Add a column <code>"grade"</code> — <code>"Pass"</code> if quiz_score ≥ 50, else <code>"Fail"</code></div>
+        <div class="task-step"><span class="step-num">4</span>Print average quiz_score per group using groupby. Which group leads?</div>
+        <div class="task-step"><span class="step-num">5</span>Sort by <code>attendance_pct</code> descending — print the top 5 students</div>
+        <div class="task-step"><span class="step-num">★</span>BONUS: Find students whose attendance is below 80 AND who failed. Print their names.</div>
+      </div>
+    </div>
+    <div>
+      <button class="sol-btn" onclick="toggleSol(this,'sol2')">▶ Show Solution</button>
+      <div class="solution" id="sol2">
+        <pre style="font-size:.69rem"><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="var">df</span> = pd.<span class="fn">read_csv</span>(<span class="st">"batch_data.csv"</span>)
+
+<span class="cm"># 1. Shape + preview</span>
+<span class="fn">print</span>(<span class="var">df</span>.shape)    <span class="cm"># (25, 6)</span>
+<span class="fn">print</span>(<span class="var">df</span>.columns)  <span class="cm"># name, group, quiz_score, ...</span>
+<span class="fn">print</span>(<span class="var">df</span>.<span class="fn">head</span>())
+
+<span class="cm"># 2. Missing values</span>
+<span class="fn">print</span>(<span class="var">df</span>.<span class="fn">isnull</span>().<span class="fn">sum</span>())
+<span class="cm"># quiz_score has 1 null (Sujit Kumar)</span>
+<span class="var">df</span>[<span class="st">"quiz_score"</span>] = <span class="var">df</span>[<span class="st">"quiz_score"</span>].<span class="fn">fillna</span>(<span class="nm">0</span>)
+
+<span class="cm"># 3. Add grade column</span>
+<span class="var">df</span>[<span class="st">"grade"</span>] = <span class="var">df</span>[<span class="st">"quiz_score"</span>].<span class="fn">apply</span>(
+    <span class="kw">lambda</span> <span class="var">s</span>: <span class="st">"Pass"</span> <span class="kw">if</span> <span class="var">s</span> >= <span class="nm">50</span> <span class="kw">else</span> <span class="st">"Fail"</span>
+)
+
+<span class="cm"># 4. GroupBy: avg quiz_score per group</span>
+<span class="fn">print</span>(<span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">"group"</span>)[<span class="st">"quiz_score"</span>].<span class="fn">mean</span>())
+<span class="cm"># G1    74.0  ← leads the batch
+# G2    63.4
+# G3    49.4  ← Sujit's 0 pulls it down
+# G4    61.6
+# G5    65.8</span>
+
+<span class="cm"># 5. Top 5 by attendance</span>
+<span class="fn">print</span>(<span class="var">df</span>.<span class="fn">sort_values</span>(<span class="st">"attendance_pct"</span>,
+      ascending=<span class="kw">False</span>)[[<span class="st">"name"</span>,<span class="st">"attendance_pct"</span>]].<span class="fn">head</span>(<span class="nm">5</span>))
+<span class="cm"># Hritin Raj      98.0
+# Heemansh        96.0
+# S R Sneha       95.0
+# Yogesh Patidar  95.0
+# Payal           93.0</span>
+
+<span class="cm"># ★ BONUS: low attendance AND failed</span>
+<span class="var">risk</span> = <span class="var">df</span>[
+    (<span class="var">df</span>[<span class="st">"attendance_pct"</span>] < <span class="nm">80</span>) &
+    (<span class="var">df</span>[<span class="st">"grade"</span>] == <span class="st">"Fail"</span>)
+]
+<span class="fn">print</span>(<span class="var">risk</span>[<span class="st">"name"</span>].<span class="fn">tolist</span>())
+<span class="cm"># ['P V Ganadeep','Devanand P',
+#  'Shivam Kumar','Sushant Kumar']</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const total=slides.length;
+const ctr=document.getElementById('ctr');
+function show(n){slides[cur].classList.remove('active');cur=(n+total)%total;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+total;}
+function go(d){show(cur+d)}
+function rev(btn){btn.nextElementSibling.style.display='block';btn.style.display='none';}
+function toggleSol(btn,id){
+  const sol=document.getElementById(id);
+  const open=sol.style.display==='block';
+  sol.style.display=open?'none':'block';
+  btn.textContent=open?'▶ Show Solution':'▼ Hide Solution';
+}
+function mcq(el,verdict,expId){
+  const opts=el.closest('.opts').querySelectorAll('.opt');
+  if(el.classList.contains('correct')||el.classList.contains('wrong')) return;
+  opts.forEach(o=>o.classList.add('disabled'));
+  el.classList.add(verdict);
+  opts.forEach(o=>{
+    if(o!==el && o.onclick && o.onclick.toString().includes("'correct'")) o.classList.add('correct');
+  });
+  document.getElementById(expId).style.display='block';
+  const grid=el.closest('[id^="cp"]');
+  if(grid){
+    const sid=grid.id==='cp1'?'cp1-s':'cp2-s';
+    const cards=grid.querySelectorAll('.mcq-card');
+    let correct=0;
+    cards.forEach(c=>{if(c.querySelector('.opt.correct')) correct++;});
+    document.getElementById(sid).textContent=correct;
+  }
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);
+});
+ctr.textContent='1 / '+total;
+</script>
+</body>
+</html>

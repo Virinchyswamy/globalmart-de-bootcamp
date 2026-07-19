@@ -1,0 +1,571 @@
+# Sales-Category Analysis Report of Globalmart
+## Content Type
+Scenario
+
+## Overview
+GlobalMart’s product portfolio spans multiple categories like Technology, Furniture, and Office Supplies — each with dozens of sub-categories and hundreds of SKUs. As sales grow, the management team wants to understand **which sub-categories drive the most revenue** within each category and how sales are distributed overall.
+
+Basic aggregation reports can show total sales per sub-category, but they don’t reveal **how much each contributes to its category** or **which sub-category dominates overall performance**. To address this, GlobalMart’s data team is creating a **Sales–Category Analysis Report** using SQL with **window functions and common table expressions (CTEs)**.
+
+This report helps the team:
+
+- Calculate total and cumulative sales within each category.
+    
+- Measure each sub-category’s contribution percentage.
+    
+- Identify top-performing sub-categories contributing over 50% of category sales.
+    
+
+By combining aggregation with advanced SQL operations like `SUM() OVER()` and `RANK() OVER()`, the analysis provides a clear, data-driven view of where sales strength truly lies.
+
+In this exercise, we’ll walk through how this SQL report is built step-by-step — from summarizing category-level sales to ranking sub-categories and highlighting key contributors.
+
+## Learning Objectives
+- Demonstrate use of JOIN, GROUP BY, and WHERE clause to ensure accurate filtering and calculations.
+- Demonstrate knowledge of common table expressions (CTEs) to structure and simplify complex queries.
+- Implement window functions to calculate cumulative totals, percentages, and rankings.
+
+## Prerequisites
+- SQL Data Wrangling-Basic
+- SQL Data Wrangling-Intermediate
+- SQL Data Wrangling-Advanced
+- Understanding CTE as great method for sub-querying
+
+## Duration of Completion
+60 minutes
+
+## Level
+Advanced
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+GlobalMart’s product portfolio spans multiple categories like Technology, Furniture, and Office Supplies — each with dozens of sub-categories and hundreds of SKUs. As sales grow, the management team wants to understand **which sub-categories drive the most revenue** within each category and how sales are distributed overall.
+
+Basic aggregation reports can show total sales per sub-category, but they don’t reveal **how much each contributes to its category** or **which sub-category dominates overall performance**. To address this, GlobalMart’s data team is creating a **Sales–Category Analysis Report** using SQL with **window functions and common table expressions (CTEs)**.
+
+This report helps the team:
+
+- Calculate total and cumulative sales within each category.
+    
+- Measure each sub-category’s contribution percentage.
+    
+- Identify top-performing sub-categories contributing over 50% of category sales.
+    
+
+By combining aggregation with advanced SQL operations like `SUM() OVER()` and `RANK() OVER()`, the analysis provides a clear, data-driven view of where sales strength truly lies.
+
+In this exercise, we’ll walk through how this SQL report is built step-by-step — from summarizing category-level sales to ranking sub-categories and highlighting key contributors.
+
+#### Level
+advanced
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+**GlobalMart**, an emerging E-Commerce player in North America and Europe, specializes in Technology, Office Supplies, and Furniture across 120 markets. 
+
+
+You recently joined GlobalMart as a Data Analyst.  
+
+  
+The upper management wants a detailed categorical analysis.  You have been asked to prepare a report as shown in Result 1 and then Using Result 1, identify the first sub-category in each category where the cumulative contribution exceeds 50% of the category’s total sales as shown in Result 2
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/16fe932d-6017-4fa4-a086-b3e37f31bce5_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+Here are the **definitions** of the columns : 
+
+- **category** - The category of a product
+    
+- **sub_category** - The subcategory of the product
+    
+- **sales** - total sales for a given sub-category under a given category
+    
+- **tot_cat_sales** - total sales for a given category
+    
+- **cumm_sales** - total cumulative sales till a given sub-category
+    
+- **contrib_1** - % contribution of a given sub_category to category sales
+    
+- **contrib_2** - % contribution till a given sub_category to category sales
+    
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+>[!NOTE]
+- Server name : mentorskool.database.windows.net
+  Username : mskllearnlogin
+  Password : !@#sw2aq1
+- The data dictionary and the ER-diagram is shown below:
+
+Use the **mskl-masterclass** database
+
+![Image-ER-diagram.png](https://cdn.enqurious.com/images/751b06c3-2660-442d-b3d8-5170bd949c92_ER-diagram.webp)
+
+Download the data dictionary from [<u>here</u>](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/documents/e371a6e8-1636-4548-ab09-8147657b2521_83d04ac6-cb74-4a96-a06a-e0d5442aa126_Data_dictionary_for_MC.xlsx).
+
+
+**Tags**
+
+
+##### Input 3
+**Type:** Code
+
+**Question:** Result 1 :
+
+Write an SQL query to prepare a report as per the below format (The data shown is only for illustrative purposes) :
+
+| category | sub_category | sales | tot_cat_sales | cumm_sales | contrib_1 | contrib_2 |
+|----------|--------------|-------|---------------|------------|-----------|-----------|
+| A1       | B1           | 100   | 390           | 100        | 25.64%    | 25.64%    |
+| A1       | B2           | 130   | 390           | 230        | 33.33%    | 58.97%    |
+| A1       | B3           | 160   | 390           | 390        | 41.03%    | 100.00%   |
+| A2       | B4           | 120   | 440           | 120        | 27.27%    | 27.27%    |
+| A2       | B5           | 140   | 440           | 260        | 31.82%    | 59.09%    |
+| A2       | B6           | 180   | 440           | 440        | 40.91%    | 100.00%   |
+| A3       | B7           | 80    | 300           | 80         | 26.67%    | 26.67%    |
+| A3       | B8           | 100   | 300           | 180        | 33.33%    | 60.00%    |
+| A3       | B9           | 120   | 300           | 300        | 40.00%    | 100.00%   |
+| A4       | B10          | 150   | 530           | 150        | 28.30%    | 28.30%    |
+| A4       | B11          | 180   | 530           | 330        | 33.96%    | 62.26%    |
+| A4       | B12          | 200   | 530           | 530        | 37.74%    | 100.00%   |
+
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+## Understanding the Problem
+
+
+GlobalMart management wants to understand **how each product sub-category contributes to its parent category’s sales**. The report should not only show sales per sub-category but also:
+
+1. **Total sales for the category** (`tot_cat_sales`)
+    
+2. **Cumulative sales** (`cumm_sales`) as we move through sub-categories
+    
+3. **Contribution % of each sub-category** to its category (`contrib_1`)
+    
+4. **Cumulative contribution %** up to that sub-category (`contrib_2`)
+    
+
+This helps management quickly identify which sub-categories drive the most value within each category.
+
+---
+
+## Step 1: What information do we need?
+
+
+- **category** → Product category (Technology, Furniture, etc.)
+    
+- **sub_category** → Sub-group under category (e.g., Chairs, Phones, Paper).
+    
+- **sales** → Total sales for each sub-category.
+    
+- **tot_cat_sales** → Total sales of the entire category.
+    
+- **cumm_sales** → Running total of sales within category as we move sub-category by sub-category.
+    
+- **contrib_1** → `%` of sub-category sales / category sales.
+    
+- **contrib_2** → `%` cumulative sales / category sales.
+    
+
+---
+
+## Step 2: Where is this data found?
+
+|Table|Purpose|
+|---|---|
+|**ex_transactions**|Contains `sales_amount` (raw sales per product).|
+|**ex_products**|Contains `category` and `sub_category` linked to each product.|
+
+We join these two tables to link transactions with product categories.
+
+---
+
+## Logic Before Building the Solution
+
+
+1. **Base Aggregation**
+    
+    - Aggregate sales by category and sub_category.
+        
+2. **Calculate Totals**
+    
+    - Compute category-level total sales (`tot_cat_sales`).
+        
+    - Compute cumulative sales (`cumm_sales`) within each category.
+        
+3. **Derive Percentages**
+    
+    - Contribution of sub-category = `sales / tot_cat_sales`.
+        
+    - Cumulative contribution = `cumm_sales / tot_cat_sales`.
+        
+4. **Formatting & Ordering**
+    
+    - Format as percentages.
+        
+    - Order by category and sales for readability.
+        
+
+---
+
+## Final Working Solution
+
+```sql
+-- Step 1: Aggregate base data 
+WITH base_data AS 
+(     
+SELECT          
+   p.category,          
+   p.sub_category,         
+   ROUND(SUM(t.sales_amount), 0) AS sales     
+FROM ex_transactions t     
+JOIN ex_products p         
+   ON p.product_id = t.product_id     
+GROUP BY p.category, p.sub_category ),  
+-- Step 2: Calculate category totals and cumulative sales 
+running_totals AS 
+(     
+SELECT  *,         
+   SUM(sales) OVER(PARTITION BY category) AS tot_cat_sales,         
+   SUM(sales) OVER(PARTITION BY category ORDER BY sub_category) AS cumm_sales     
+FROM base_data 
+)  
+-- Step 3: Final output with contributions 
+SELECT      
+   category,     
+   sub_category,     
+   sales,     
+   tot_cat_sales,     
+   cumm_sales,     
+   FORMAT(1.0 * sales / tot_cat_sales, 'P2') AS contrib_1,     
+   FORMAT(1.0 * cumm_sales / tot_cat_sales, 'P2') AS contrib_2 
+FROM running_totals 
+ORDER BY category, sales;
+```
+
+---
+
+## Common Mistakes & Point Deductions
+
+
+1. **Not joining products and transactions correctly** → `category` and `sub_category` won’t be available.
+    
+2. **Forgetting `PARTITION BY category` in window functions** → totals will be wrong (all categories lumped together).
+    
+3. **Not ordering inside `cumm_sales`** → cumulative sums will not align properly with sub-categories.
+    
+4. **Forgetting to format percentages (`FORMAT`)** → results will show as decimals (e.g., `0.2564` instead of `25.64%`).
+    
+5. **Ordering only by sales instead of category + sales** → output won’t be grouped by category as expected.
+
+**Tags**
+- data-wrangling / derived-column (skill)
+- data-wrangling / math-calculations (skill)
+- data-wrangling / group (skill)
+- data-wrangling / aggregate (skill)
+
+##### Input 4
+**Type:** Choice
+
+**Question:** How many sales were recorded for the subcategory 'Appliances'?
+
+**Options:** 
+- 165836
+
+- 160793
+
+- 106949
+
+- 202426
+
+**Correct Options:** 
+- 106949
+
+**Tags**
+- sql (tool)
+
+##### Input 5
+**Type:** Choice
+
+**Question:** Which category has the lowest sales
+
+**Options:** 
+- Furniture
+
+- Office Supplies
+
+- Technology
+
+**Correct Options:** 
+- Office Supplies
+
+**Tags**
+- sql (tool)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** Choose all the incorrect statements
+
+**Options:** 
+- Art contributes to 18.64% of sales in Office Supplies
+
+- Chairs contribute the most to total sales in Furniture
+
+- Machines are 2nd highest contributors to sales in Technology
+
+- Labels generate 12264 in sales
+
+**Correct Options:** 
+- Art contributes to 18.64% of sales in Office Supplies
+
+- Machines are 2nd highest contributors to sales in Technology
+
+**Tags**
+- sql (tool)
+
+##### Input 7
+**Type:** Code
+
+**Question:** Result 2 : 
+
+Write an SQL query to prepare a report as per the below format (The data shown is only for illustrative purposes) :
+
+| category | sub_category | sales | tot_cat_sales | cumm_sales | contrib_1 | contrib_2 |
+|----------|--------------|-------|---------------|------------|-----------|-----------|
+| A1       | B2           | 130   | 390           | 230        | 33.33%    | 58.97%    |
+| A2       | B5           | 140   | 440           | 260        | 31.82%    | 59.09%    |
+| A3       | B8           | 100   | 300           | 180        | 33.33%    | 60.00%    |
+| A4       | B11          | 180   | 530           | 330        | 33.96%    | 62.26%    |
+
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+## Understanding the Problem
+
+
+We must identify, **for each category**, the **first sub-category that causes the cumulative sales share to exceed 50%** of that category’s total sales.  
+In other words, order sub-categories (by sales) within each category, compute cumulative sales, and pick the sub-category where the cumulative contribution first crosses 50%.
+
+This highlights the _tipping point_ sub-category per category — the minimal set of sub-categories accounting for more than half the category sales.
+
+---
+
+## Step 1: What information do we need?
+
+- `category` — product category.
+    
+- `sub_category` — product sub-category.
+    
+- `sales` — total sales per sub_category.
+    
+- `tot_cat_sales` — total sales for the category.
+    
+- `cumm_sales` — running cumulative sales within the category (based on chosen ordering).
+    
+- `contrib_1` — % contribution of the sub_category to the category (`sales / tot_cat_sales`).
+    
+- `contrib_2` — % cumulative contribution up to that sub_category (`cumm_sales / tot_cat_sales`).
+    
+
+---
+
+## Step 2: Where is this data found?
+
+|Table|Purpose|
+|---|---|
+|`ex_transactions`|`sales_amount` per transaction (source of sales)|
+|`ex_products`|`category` and `sub_category` for each product|
+
+We join `ex_transactions` → `ex_products`, aggregate sales by category/sub_category, then use window functions.
+
+---
+
+## Logic Before Building the Solution
+
+1. Aggregate `sales` by `category, sub_category`.
+    
+2. Compute `tot_cat_sales` (sum over category).
+    
+3. Compute `cumm_sales` using `SUM(...) OVER (PARTITION BY category ORDER BY sales)` — **order by `sales` ascending** so cumulative builds from smaller to larger sub-categories (this matches the sample outputs where the first sub-category to push cumulative >50% is the middle-sized one).
+    
+4. Compute `contrib_1` and `contrib_2`.
+    
+5. Filter rows where `contrib_2 > 0.5` (cumulative share exceeds 50%).
+    
+6. From those rows, pick the **smallest sales** (first in ascending order) — we use `RANK()` over the filtered set and pick `ranks = 1`.
+    
+
+---
+
+## Building the Solution — Step-by-Step (Phases)
+
+
+**Phase 1 — Aggregate base sales by category/sub_category**
+
+```sql
+WITH base_data AS 
+(   
+SELECT     
+   p.category,     
+   p.sub_category,     
+   ROUND(SUM(t.sales_amount), 0) AS sales   
+FROM ex_transactions t   
+JOIN ex_products p     
+   ON p.product_id = t.product_id   
+GROUP BY p.category, p.sub_category ),
+```
+
+
+**Phase 2 — Compute category totals and cumulative sales (order by sales ascending)**
+
+```sql
+running_totals AS 
+(   
+SELECT     *,     
+   SUM(sales) OVER (PARTITION BY category) AS total_cat_sales,     
+   SUM(sales) OVER (PARTITION BY category ORDER BY sales) AS cumm_sales   
+FROM base_data ),
+```
+
+
+**Phase 3 — Compute contribution percentages (and keep numeric pct for logic)**
+
+```sql
+contribution_summary AS 
+(   
+SELECT     *,     
+   FORMAT(1.0 * sales / total_cat_sales, 'P2') AS contrib_1,     
+   1.0 * cumm_sales / total_cat_sales AS pct_contrib_2,     
+   FORMAT(1.0 * cumm_sales / total_cat_sales, 'P2') AS contrib_2   
+FROM running_totals ),
+```
+
+
+**Phase 4 — From rows where cumulative share > 50%, rank by sales (ascending) and pick the first one per category**
+
+```sql
+ranking_table AS 
+(   
+SELECT     *,     
+RANK() OVER (PARTITION BY category ORDER BY sales) AS ranks   
+FROM contribution_summary   
+WHERE pct_contrib_2 > 0.5 )
+```
+
+---
+
+## Final Working Solution
+
+```sql
+WITH base_data AS 
+(   
+SELECT     
+   p.category,     
+   p.sub_category,     
+   ROUND(SUM(t.sales_amount), 0) AS sales   
+FROM ex_transactions t   
+JOIN ex_products p     
+   ON p.product_id = t.product_id   
+GROUP BY p.category, p.sub_category ), 
+ running_totals AS 
+(   
+SELECT     *,     
+   SUM(sales) OVER (PARTITION BY category) AS total_cat_sales,     
+   SUM(sales) OVER (PARTITION BY category ORDER BY sales) AS cumm_sales   
+FROM base_data 
+),  
+contribution_summary AS 
+(   
+SELECT     *,     
+   FORMAT(1.0 * sales / total_cat_sales, 'P2') AS contrib_1,     
+   1.0 * cumm_sales / total_cat_sales AS pct_contrib_2,     
+   FORMAT(1.0 * cumm_sales / total_cat_sales, 'P2') AS contrib_2   
+FROM running_totals 
+),  
+ranking_table AS 
+(   
+SELECT     *,     
+   RANK() OVER (PARTITION BY category ORDER BY sales DESC) AS ranks   
+FROM contribution_summary   
+WHERE pct_contrib_2 > 0.5 
+)  
+SELECT   
+   category,   
+   sub_category,   
+   sales,   
+   total_cat_sales,   
+   cumm_sales,   
+   contrib_1,   
+   contrib_2 
+FROM ranking_table 
+WHERE ranks = 1;
+```
+
+---
+
+## Common Mistakes & Point Deductions
+
+
+1. **Wrong ORDER direction for cumulative sum** — using `ORDER BY sales DESC` will accumulate from largest to smallest and pick a different sub-category (not the intended tipping point).
+    
+2. **Applying the `pct_contrib_2 > 0.5` filter too early** (inside the window calculation) — you must compute window functions first, then filter.
+    
+3. **Not partitioning window functions by `category`** — will mix categories together.
+    
+4. **Using `ROW_NUMBER()` or `RANK()` before filtering** — ranking must be computed over the filtered set so the smallest sales among those exceeding 50% becomes rank = 1.
+    
+5. **Not preserving a numeric `pct_contrib_2` for logic** — formatting to `'P2'` before logic prevents numeric comparisons. Keep an unformatted numeric column for WHERE, then format for display.
+    
+6. **Not handling ties** — `RANK()` handles ties by assigning same rank; if you want break ties differently, consider `ROW_NUMBER()` with a deterministic tie-breaker.
+
+**Tags**
+- data-wrangling / derived-column (skill)
+- data-wrangling / math-calculations (skill)
+- data-wrangling / group (skill)
+- data-wrangling / aggregate (skill)
+
+##### Input 8
+**Type:** Choice
+
+**Question:** _____ is the 2nd highest contributor to sales in Office Supplies
+
+**Options:** 
+- Appliances
+
+- Binders
+
+- Envelopes
+
+- Fasteners
+
+**Correct Options:** 
+- Binders
+
+**Tags**
+- sql (tool)

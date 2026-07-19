@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 7 – Analyzing Seasonal Discount on Products</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;--orange:#fb923c}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
+.nav-title{font-size:12px;color:var(--muted);font-weight:500}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nav-btn:hover{background:var(--a);color:#fff;border-color:var(--a)}
+.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
+.deck{padding-top:52px;height:100vh}
+.slide{display:none;height:calc(100vh - 52px);padding:28px 52px;flex-direction:column;justify-content:flex-start;gap:14px;overflow:hidden;animation:fadein .25s ease}
+.slide.active{display:flex}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:2.1rem;font-weight:900;color:var(--a);line-height:1.1}
+h2{font-size:1.5rem;font-weight:800;color:var(--a);line-height:1.2}
+h3{font-size:.95rem;font-weight:700;color:var(--a2);margin-bottom:6px}
+p,li{font-size:.87rem;color:#c9d1d9;line-height:1.7}
+ul{padding-left:18px}li{margin-bottom:4px}
+.sub{font-size:.87rem;color:var(--muted);margin-top:4px}
+.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:13px 15px}
+.hl{background:rgba(59,130,246,.06);border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:10px 14px}
+.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
+.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
+.hl.yl{background:rgba(245,158,11,.06);border-color:var(--yellow)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.82;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.79rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
+.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.nm{color:#ffa657}.var{color:#79c0ff}
+table{width:100%;border-collapse:collapse;font-size:.81rem}
+th{background:rgba(59,130,246,.12);color:var(--a2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;letter-spacing:.5px}
+td{padding:6px 10px;border-bottom:1px solid var(--border);color:#c9d1d9}
+tr:hover td{background:rgba(255,255,255,.02)}
+.ok{color:var(--green);font-weight:600}
+.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:11px 15px}
+.quiz p{font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:9px}
+.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:5px 15px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.77rem;font-weight:700}
+.ans{display:none;margin-top:9px;padding:9px 12px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.82rem;color:#c9d1d9;line-height:1.7}
+.ans code{font-size:.76rem}
+.badge-row{display:flex;gap:7px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:3px 11px;font-size:.74rem;font-weight:600;color:var(--muted)}
+.tier{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:.76rem;font-weight:700}
+.premium{background:rgba(167,139,250,.15);border:1px solid var(--purple);color:var(--purple)}
+.midrange{background:rgba(59,130,246,.12);border:1px solid var(--a);color:var(--a2)}
+.budget{background:rgba(148,163,184,.12);border:1px solid #64748b;color:#94a3b8}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <span class="nav-badge">Day 7 · Module 1</span>
+    <span class="nav-title">Analyzing Seasonal Discount on Products at GlobalMart</span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" onclick="go(-1)">← Prev</button>
+    <span class="nav-counter" id="ctr">1 / 6</span>
+    <button class="nav-btn" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <div class="tag">Day 7 · Module 1 · List Comprehension in Practice</div>
+    <h1>Analyzing Seasonal Discount<br>on Products at GlobalMart</h1>
+    <p class="sub">Apply seasonal discounts and categorize products using list comprehensions — advanced real-world practice</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>🎯 The Goal</h3>
+      <p>GlobalMart runs seasonal discount campaigns. The pricing team needs to:</p>
+      <ul style="margin-top:6px">
+        <li>Apply each product's discount to its price</li>
+        <li>Classify each product as <span class="tier premium">Premium</span>, <span class="tier midrange">Mid-range</span>, or <span class="tier budget">Budget</span> based on discounted price</li>
+        <li>Generate a summary report by category and price tier</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📋 The Two Tasks</h3>
+      <div style="margin-top:6px">
+        <p style="margin-bottom:8px"><strong>Task 1 — Apply Discounts</strong></p>
+        <p style="font-size:.83rem;color:var(--muted)">discounted_price = price × (1 − discount)<br><span style="font-size:.78rem">discount is a decimal: 0.20 = 20% off</span></p>
+        <p style="margin-top:8px;margin-bottom:4px"><strong>Task 2 — Categorize Products</strong></p>
+        <ul style="font-size:.82rem">
+          <li><span class="tier premium">Premium</span> → discounted price &gt; 200</li>
+          <li><span class="tier midrange">Mid-range</span> → 100 &lt; price ≤ 200</li>
+          <li><span class="tier budget">Budget</span> → price ≤ 100</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="badge-row">
+    <div class="badge">List Comprehension</div>
+    <div class="badge">Nested if-else in comprehension</div>
+    <div class="badge">groupby().agg()</div>
+    <div class="badge">np.where()</div>
+  </div>
+</div>
+
+<!-- SLIDE 2: SQL MENTAL MODEL (NEW) -->
+<div class="slide">
+  <h2>SQL Mental Model — Visualise the Pipeline Before Writing Python</h2>
+  <p class="sub" style="margin-bottom:10px">Every Python step in this module has a direct SQL equivalent. Understand the SQL first — Python is just a different syntax for the same idea.</p>
+  <div class="two">
+    <pre style="font-size:.72rem;line-height:1.78"><span class="cm">-- Step 1: JOIN (pandas: .merge())</span>
+<span class="kw">SELECT</span> t.*, p.product_name, p.category, p.sub_category
+<span class="kw">FROM</span> transactions t
+<span class="kw">JOIN</span> products p <span class="kw">ON</span> t.product_id = p.product_id;
+
+<span class="cm">-- Step 2: Compute price + apply discount</span>
+<span class="cm">-- discount is already decimal (0.45 = 45% off — do NOT /100)</span>
+<span class="kw">SELECT</span> *,
+  <span class="kw">CASE WHEN</span> qty = <span class="nm">0</span> <span class="kw">THEN NULL</span>
+       <span class="kw">ELSE</span> sales_amt / qty
+  <span class="kw">END</span> <span class="kw">AS</span> price,
+  price * (<span class="nm">1</span> - discount) <span class="kw">AS</span> discounted_price
+<span class="kw">FROM</span> joined;
+<span class="cm">-- Python: np.where(qty==0, np.nan, sales_amt/qty)
+--          df['price'] * (1 - df['discount'])</span></pre>
+    <pre style="font-size:.72rem;line-height:1.78"><span class="cm">-- Step 3: Classify tiers (pandas: nested ternary in list comp)</span>
+<span class="kw">SELECT</span> *,
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> discounted_price > <span class="nm">200</span> <span class="kw">THEN</span> <span class="st">'Premium'</span>
+    <span class="kw">WHEN</span> discounted_price > <span class="nm">100</span> <span class="kw">THEN</span> <span class="st">'Mid-range'</span>
+    <span class="kw">ELSE</span> <span class="st">'Budget'</span>
+  <span class="kw">END</span> <span class="kw">AS</span> price_category
+<span class="kw">FROM</span> enriched;
+<span class="cm">-- Python: ['Premium' if p>200 else 'Mid-range' if p>100 else 'Budget'
+--          for p in df['discounted_price']]</span>
+
+<span class="cm">-- Step 4: Aggregate by category (pandas: groupby().agg())</span>
+<span class="kw">SELECT</span> category,
+  <span class="fn">AVG</span>(sales_amt)        <span class="kw">AS</span> original_price,
+  <span class="fn">AVG</span>(discounted_price) <span class="kw">AS</span> discounted_price
+<span class="kw">FROM</span> enriched <span class="kw">GROUP BY</span> category;
+<span class="cm">-- Python: df.groupby('category').agg(
+--           original_price=('sales_amt','mean'), ...)</span></pre>
+  </div>
+</div>
+
+<!-- SLIDE 3: LOAD DATA -->
+<div class="slide">
+  <h2>Loading the Data — What We're Working With</h2>
+  <div class="two">
+    <div>
+      <pre><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> <span class="var">np</span>
+
+<span class="cm"># GlobalMart product and transaction data</span>
+<span class="var">products</span> = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'products'</span>)
+<span class="var">trans</span>    = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'transactions'</span>)
+
+<span class="cm"># Merge: bring product info into each transaction row</span>
+<span class="var">df</span> = <span class="var">trans</span>.<span class="fn">merge</span>(<span class="var">products</span>, <span class="var">on</span>=<span class="st">'product_id'</span>)
+
+<span class="cm"># price is not a direct column — compute from sales_amt and qty</span>
+<span class="var">df</span>[<span class="st">'price'</span>] = <span class="var">np</span>.<span class="fn">where</span>(<span class="var">df</span>[<span class="st">'qty'</span>] == <span class="nm">0</span>, <span class="var">np</span>.nan,
+                       <span class="var">df</span>[<span class="st">'sales_amt'</span>] / <span class="var">df</span>[<span class="st">'qty'</span>])
+
+<span class="cm"># discount is already a decimal fraction (NOT a percentage!)
+# e.g., 0.20 means 20% off — do NOT divide by 100
+# discounted_price = price × (1 - discount)</span></pre>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Transaction data structure</h3>
+        <table>
+          <tr><th>Column</th><th>Example</th><th>Note</th></tr>
+          <tr><td><code>sales_amt</code></td><td style="font-size:.77rem">261.96</td><td style="font-size:.77rem">total sale value</td></tr>
+          <tr><td><code>qty</code></td><td style="font-size:.77rem">2</td><td style="font-size:.77rem">units sold</td></tr>
+          <tr><td><code>discount</code></td><td style="font-size:.77rem">0.20 (= 20% off)</td><td style="font-size:.77rem">decimal, not %</td></tr>
+          <tr><td><code>category</code></td><td style="font-size:.77rem">Furniture</td><td style="font-size:.77rem">from products join</td></tr>
+        </table>
+      </div>
+      <div class="hl yl">
+        <h3 style="color:var(--yellow);font-size:.83rem;margin-bottom:6px">⚠️ discount is already a decimal</h3>
+        <p style="font-size:.85rem;font-weight:600;text-align:center;padding:6px 0">discounted_price = price × (1 − discount)</p>
+        <p style="font-size:.8rem;margin-top:4px;color:var(--muted);text-align:center">e.g. price=191.52, discount=0.45 → 191.52 × 0.55 = 105.33</p>
+      </div>
+      <div class="quiz">
+        <p>❓ A product has price=₹500, discount=0.20. What is the discounted price?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <strong>₹400</strong> — 500 × (1 − 0.20) = 500 × 0.80 = 400.00<br>discount=0.20 means 20% off. It's already a fraction, so we do NOT divide by 100.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: APPLY DISCOUNTS (LIST COMPREHENSION) -->
+<div class="slide">
+  <h2>Task 1 — Apply Discounts Using List Comprehension</h2>
+  <p class="sub" style="margin-bottom:12px">List comprehension applies the discount formula to every product in one line — no loops, no append().</p>
+  <div class="two">
+    <div>
+      <pre><span class="cm"># Traditional loop approach — verbose</span>
+<span class="var">discounted_prices</span> = []
+<span class="kw">for</span> _, <span class="var">row</span> <span class="kw">in</span> <span class="var">df</span>.<span class="fn">iterrows</span>():
+    <span class="var">disc_price</span> = <span class="var">row</span>[<span class="st">'price'</span>] * (<span class="nm">1</span> - <span class="var">row</span>[<span class="st">'discount'</span>])
+    <span class="var">discounted_prices</span>.<span class="fn">append</span>(<span class="var">disc_price</span>)
+
+<span class="cm"># ✅ List comprehension — one clean line</span>
+<span class="var">discounted_prices</span> = [
+    <span class="var">row</span>[<span class="st">'price'</span>] * (<span class="nm">1</span> - <span class="var">row</span>[<span class="st">'discount'</span>])
+    <span class="kw">for</span> _, <span class="var">row</span> <span class="kw">in</span> <span class="var">df</span>.<span class="fn">iterrows</span>()
+]
+
+<span class="cm"># Add as a new column</span>
+<span class="var">df</span>[<span class="st">'discounted_price'</span>] = <span class="var">discounted_prices</span>
+
+<span class="cm"># ✅ Even simpler — pandas vectorized (fastest)</span>
+<span class="var">df</span>[<span class="st">'discounted_price'</span>] = (
+    <span class="var">df</span>[<span class="st">'price'</span>] * (<span class="nm">1</span> - <span class="var">df</span>[<span class="st">'discount'</span>])
+)</pre>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Which approach to use?</h3>
+        <table>
+          <tr><th>Approach</th><th>Best for</th></tr>
+          <tr><td style="font-size:.78rem">List comprehension</td><td style="font-size:.78rem">When you need a list for further processing</td></tr>
+          <tr><td style="font-size:.78rem">Pandas vectorized</td><td style="font-size:.78rem">When working directly with DataFrame columns — fastest</td></tr>
+          <tr><td style="font-size:.78rem"><code>.apply(lambda)</code></td><td style="font-size:.78rem">When logic is complex / uses multiple columns per row</td></tr>
+        </table>
+      </div>
+      <div class="hl">
+        <h3 style="font-size:.84rem;margin-bottom:6px">The syntax breakdown</h3>
+        <pre style="background:transparent;border:none;padding:0;font-size:.77rem;">[  <span style="color:var(--green)">row['price'] * (1 - row['discount'])</span>
+   <span style="color:var(--a)">for _, row in df.iterrows()</span>  ]
+↑ expression applied to each row     ↑ loop</pre>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you compute discounted_price in a SELECT?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL:</span><br>
+          <code>SELECT price * (1 - discount) AS discounted_price FROM products;</code><br>
+          <span style="color:var(--muted);font-size:.79rem">discount is already decimal (0.45 = 45% off) — no /100 needed</span><br><br>
+          <span style="color:var(--a2);font-weight:700">Python (list comprehension):</span><br>
+          <code>[row['price'] * (1 - row['discount']) for _, row in df.iterrows()]</code><br>
+          Same logic as the SQL expression — applied to every row.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: CATEGORIZE PRODUCTS -->
+<div class="slide">
+  <h2>Task 2 — Categorize Products Using Nested if-else</h2>
+  <p class="sub" style="margin-bottom:12px">A list comprehension with a nested ternary classifies every product into a price tier in a single pass.</p>
+  <div class="two">
+    <div>
+      <pre><span class="cm"># Categorization rules:
+# > 200  → Premium
+# > 100  → Mid-range  (≤ 200 implied by reaching this branch)
+# else   → Budget (≤ 100)</span>
+
+<span class="cm"># List comprehension with nested ternary</span>
+<span class="var">df</span>[<span class="st">'price_category'</span>] = [
+    <span class="st">'Premium'</span>    <span class="kw">if</span>   <span class="var">price</span> > <span class="nm">200</span>
+    <span class="kw">else</span> <span class="st">'Mid-range'</span> <span class="kw">if</span> <span class="var">price</span> > <span class="nm">100</span>
+    <span class="kw">else</span> <span class="st">'Budget'</span>
+    <span class="kw">for</span> <span class="var">price</span> <span class="kw">in</span> <span class="var">df</span>[<span class="st">'discounted_price'</span>]
+]
+
+<span class="fn">print</span>(<span class="var">df</span>[[<span class="st">'product_name'</span>,<span class="st">'price'</span>,<span class="st">'discount'</span>,
+             <span class="st">'discounted_price'</span>,<span class="st">'price_category'</span>]].<span class="fn">head</span>())
+<span class="cm"># product_name              | price   | disc | disc_price | category
+# Bush Somerset Bookcase    | 130.98  | 0.00 | 130.98     | Mid-range
+# Hon Fabric Chairs         | 243.98  | 0.00 | 243.98     | Premium
+# Self-Adhesive Labels      |   7.31  | 0.00 |   7.31     | Budget
+# Bretford Slim Table       | 191.52  | 0.45 | 105.33     | Mid-range</span></pre>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Ternary chain — how it evaluates</h3>
+        <pre style="font-size:.76rem;background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2)">For price = 105.33 (Bretford Table, 45% discount):
+1. price > 200? → NO → check next
+2. price > 100? → YES → "Mid-range" ✅
+
+For price = 243.98 (Hon Chairs, no discount):
+1. price > 200? → YES → "Premium" ✅  (stop here)
+
+For price = 7.31 (Self-Adhesive Labels):
+1. price > 200? → NO
+2. price > 100? → NO → "Budget" ✅</pre>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you classify each product into Premium / Mid-range / Budget?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL CASE WHEN:</span><br>
+          <code>CASE WHEN discounted_price &gt; 200 THEN 'Premium'<br>
+          &nbsp;&nbsp;&nbsp;&nbsp; WHEN discounted_price &gt; 100 THEN 'Mid-range'<br>
+          &nbsp;&nbsp;&nbsp;&nbsp; ELSE 'Budget'<br>
+          END AS price_category</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python ternary in list comprehension:</span><br>
+          <code>['Premium' if p &gt; 200 else 'Mid-range' if p &gt; 100 else 'Budget'<br>
+          &nbsp;for p in df['discounted_price']]</code><br>
+          One-to-one mapping: each WHEN → each <code>if</code>; ELSE → final <code>else</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: SUMMARY REPORT -->
+<div class="slide">
+  <h2>Summary Report — Grouped by Category and Price Tier</h2>
+  <p class="sub" style="margin-bottom:12px">After tagging each product, we aggregate to see how many products fall into each tier within each category, and the average original vs discounted price.</p>
+  <div class="two">
+    <pre><span class="cm"># Build the Seasonal Discount Impact Analysis</span>
+<span class="var">impact</span> = <span class="var">df</span>.<span class="fn">groupby</span>([<span class="st">'category'</span>,<span class="st">'price_category'</span>]).<span class="fn">agg</span>(
+    <span class="var">product_count</span>    = (<span class="st">'product_name'</span>,     <span class="st">'count'</span>),
+    <span class="var">avg_orig_price</span>   = (<span class="st">'sales_amt'</span>,        <span class="st">'mean'</span>),
+    <span class="var">avg_disc_price</span>   = (<span class="st">'discounted_price'</span>, <span class="st">'mean'</span>),
+    <span class="var">avg_discount</span>     = (<span class="st">'discount'</span>,         <span class="st">'mean'</span>),
+).<span class="fn">round</span>(<span class="nm">2</span>).<span class="fn">reset_index</span>()
+
+<span class="fn">print</span>(<span class="var">impact</span>)
+<span class="cm"># category   | price_category | product_count | avg_orig | avg_disc
+# Furniture  | Budget         | ...           | ...      | ...
+# Furniture  | Mid-range      | ...           | ...      | ...
+# Furniture  | Premium        | ...           | ...      | ...
+# Technology | Premium        | ...           | ...      | ...</span>
+
+<span class="cm"># Category-level summary (without price tier breakdown)</span>
+<span class="var">category_summary</span> = <span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'category'</span>).<span class="fn">agg</span>(
+    <span class="var">original_price</span>   = (<span class="st">'sales_amt'</span>,        <span class="st">'mean'</span>),
+    <span class="var">discounted_price</span> = (<span class="st">'discounted_price'</span>, <span class="st">'mean'</span>),
+).<span class="fn">reset_index</span>()</pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Actual category summary from the data</h3>
+        <table>
+          <tr><th>Category</th><th>Avg Original</th><th>Avg Discounted</th></tr>
+          <tr><td style="font-size:.78rem">Furniture</td><td style="font-size:.78rem" class="ok">349.56</td><td style="font-size:.78rem">75.31</td></tr>
+          <tr><td style="font-size:.78rem">Office Supplies</td><td style="font-size:.78rem" class="ok">120.65</td><td style="font-size:.78rem">29.13</td></tr>
+          <tr><td style="font-size:.78rem">Technology</td><td style="font-size:.78rem" class="ok">444.37</td><td style="font-size:.78rem">100.79</td></tr>
+        </table>
+      </div>
+      <div class="hl gr">
+        <h3 style="color:var(--green);font-size:.84rem;margin-bottom:6px">Full pipeline recap</h3>
+        <pre style="background:transparent;border:none;padding:0;font-size:.77rem;"><span class="nm">1</span>. Load → merge transactions + products
+<span class="nm">2</span>. Compute price = sales_amt / qty (np.where guard)
+<span class="nm">3</span>. Apply discount → discounted_price = price*(1-discount)
+<span class="nm">4</span>. Categorize → price_category (list comprehension)
+<span class="nm">5</span>. groupby(category) → summary report</pre>
+      </div>
+      <div class="quiz">
+        <p>💡 Think in SQL first — how would you build the category-level discount summary?</p>
+        <button class="reveal" onclick="rev(this)">Show SQL → Python</button>
+        <div class="ans">
+          <span style="color:var(--a2);font-weight:700">SQL GROUP BY:</span><br>
+          <code>SELECT category,<br>
+          &nbsp; AVG(sales_amt) AS original_price,<br>
+          &nbsp; AVG(discounted_price) AS disc_price<br>
+          FROM enriched_table GROUP BY category;</code><br><br>
+          <span style="color:var(--a2);font-weight:700">Python:</span><br>
+          <code>df.groupby('category').agg(<br>
+          &nbsp; original_price=('sales_amt','mean'),<br>
+          &nbsp; discounted_price=('discounted_price','mean'))</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: FULL CODE + CHEAT SHEET -->
+<div class="slide">
+  <h2>Complete Solution + Concept Recap</h2>
+  <div class="two">
+    <pre style="font-size:.73rem;line-height:1.78"><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> <span class="var">np</span>
+
+<span class="cm"># Load</span>
+<span class="var">product_df</span> = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'products'</span>)
+<span class="var">trans_df</span>   = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'transactions'</span>)
+<span class="var">df</span> = <span class="var">trans_df</span>.<span class="fn">merge</span>(<span class="var">product_df</span>, <span class="var">on</span>=<span class="st">'product_id'</span>)
+
+<span class="cm"># Select relevant columns</span>
+<span class="var">df</span> = <span class="var">df</span>[[<span class="st">'product_id'</span>,<span class="st">'sales_amt'</span>,<span class="st">'qty'</span>,<span class="st">'discount'</span>,
+          <span class="st">'product_name'</span>,<span class="st">'category'</span>,<span class="st">'sub_category'</span>]]
+
+<span class="cm"># Task 1: Compute price, then apply discount
+# discount is DECIMAL (0.20 = 20% off) — no /100</span>
+<span class="var">df</span>[<span class="st">'price'</span>] = <span class="var">np</span>.<span class="fn">where</span>(<span class="var">df</span>[<span class="st">'qty'</span>]==<span class="nm">0</span>, <span class="var">np</span>.nan, <span class="var">df</span>[<span class="st">'sales_amt'</span>]/<span class="var">df</span>[<span class="st">'qty'</span>])
+<span class="var">df</span>[<span class="st">'discounted_price'</span>] = <span class="var">df</span>[<span class="st">'price'</span>] * (<span class="nm">1</span> - <span class="var">df</span>[<span class="st">'discount'</span>])
+
+<span class="cm"># Task 2: Categorize by discounted price</span>
+<span class="var">df</span>[<span class="st">'price_category'</span>] = [
+    <span class="st">'Premium'</span>    <span class="kw">if</span>   <span class="var">p</span> > <span class="nm">200</span>
+    <span class="kw">else</span> <span class="st">'Mid-range'</span> <span class="kw">if</span> <span class="var">p</span> > <span class="nm">100</span>
+    <span class="kw">else</span> <span class="st">'Budget'</span>
+    <span class="kw">for</span> <span class="var">p</span> <span class="kw">in</span> <span class="var">df</span>[<span class="st">'discounted_price'</span>]
+]
+
+<span class="cm"># Discount impact analysis (by category + price tier)</span>
+<span class="var">impact</span> = <span class="var">df</span>.<span class="fn">groupby</span>([<span class="st">'category'</span>,<span class="st">'price_category'</span>]).<span class="fn">agg</span>(
+    <span class="var">product_count</span>  = (<span class="st">'product_name'</span>,     <span class="st">'count'</span>),
+    <span class="var">avg_orig_price</span> = (<span class="st">'sales_amt'</span>,        <span class="st">'mean'</span>),
+    <span class="var">avg_disc_price</span> = (<span class="st">'discounted_price'</span>, <span class="st">'mean'</span>),
+).<span class="fn">round</span>(<span class="nm">2</span>).<span class="fn">reset_index</span>()
+
+<span class="cm"># Summary by category only</span>
+<span class="var">category_summary</span> = <span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'category'</span>).<span class="fn">agg</span>(
+    <span class="var">original_price</span>   = (<span class="st">'sales_amt'</span>,        <span class="st">'mean'</span>),
+    <span class="var">discounted_price</span> = (<span class="st">'discounted_price'</span>, <span class="st">'mean'</span>),
+).<span class="fn">round</span>(<span class="nm">2</span>).<span class="fn">reset_index</span>()</pre>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Ternary in list comprehension — syntax patterns</h3>
+        <table>
+          <tr><th>Pattern</th><th>Use for</th></tr>
+          <tr><td><code>[expr for x in lst]</code></td><td style="font-size:.78rem">Transform every item</td></tr>
+          <tr><td><code>[expr for x in lst if cond]</code></td><td style="font-size:.78rem">Filter + transform</td></tr>
+          <tr><td><code>[a if c1 else b if c2 else d for x in lst]</code></td><td style="font-size:.78rem">Multi-category classification</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">SQL ↔ Python quick reference</h3>
+        <table>
+          <tr><th>Concept</th><th>SQL</th><th>Python</th></tr>
+          <tr><td style="font-size:.74rem">Join tables</td><td><code style="font-size:.70rem">JOIN products ON product_id</code></td><td><code style="font-size:.70rem">.merge(product_df, on='product_id')</code></td></tr>
+          <tr><td style="font-size:.74rem">Guard ÷ zero</td><td><code style="font-size:.70rem">CASE WHEN qty=0 THEN NULL ELSE sales_amt/qty END</code></td><td><code style="font-size:.70rem">np.where(df['qty']==0, np.nan, df['sales_amt']/df['qty'])</code></td></tr>
+          <tr><td style="font-size:.74rem">Apply discount</td><td><code style="font-size:.70rem">price * (1 - discount)</code></td><td><code style="font-size:.70rem">df['price'] * (1 - df['discount'])</code></td></tr>
+          <tr><td style="font-size:.74rem">Classify tiers</td><td><code style="font-size:.70rem">CASE WHEN … THEN 'Premium' … END</code></td><td><code style="font-size:.70rem">['Premium' if p&gt;200 else … for p in col]</code></td></tr>
+          <tr><td style="font-size:.74rem">Aggregate</td><td><code style="font-size:.70rem">GROUP BY category + AVG()</code></td><td><code style="font-size:.70rem">.groupby('category').agg(col=('src','mean'))</code></td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>💡 Full review: a product has price=₹150, discount=0.40. Discounted price = ? Which tier?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ 150 × (1 − 0.40) = 150 × 0.60 = <strong>₹90.00</strong> → <span class="tier budget">Budget</span> (90 ≤ 100)<br>discount=0.40 means 40% off (already decimal — do NOT do 1−40/100 in Python code).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+let cur=0;const slides=document.querySelectorAll('.slide');const total=slides.length;const ctr=document.getElementById('ctr');
+function show(n){slides[cur].classList.remove('active');cur=(n+total)%total;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+total;}
+function go(d){show(cur+d)}function rev(btn){btn.nextElementSibling.style.display='block';btn.style.display='none';}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+ctr.textContent='1 / '+total;
+</script>
+</body>
+</html>

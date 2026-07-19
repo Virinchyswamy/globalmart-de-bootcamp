@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 6 – Regional Sales Performance | Day 2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; }
+  nav .logo { font-weight: 700; font-size: 14px; color: #f59e0b; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #f59e0b; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 40px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #2d1b0e 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 40px; font-weight: 800; color: #f59e0b; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 16px; color: #94a3b8; max-width: 620px; line-height: 1.7; }
+  .slide-cover .badge { margin-top: 16px; background: #3d2000; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  .slide-section { background: #1a1200; }
+  .slide-section h2 { font-size: 30px; font-weight: 700; color: #f59e0b; margin-bottom: 6px; }
+  .section-tag { color: #78716c; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
+  .slide-demo { background: #0a1628; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 21px; color: #f59e0b; margin-bottom: 4px; }
+  .demo-label { color: #78716c; font-size: 13px; margin-bottom: 14px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 20px; }
+  .card h4 { color: #f59e0b; margin-bottom: 8px; font-size: 14px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13px; line-height: 1.7; }
+  .card ul { padding-left: 16px; }
+  .hl { background: #1a1200; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+  .hl.green { background: #0d2d1a; border-color: #22c55e; }
+  .hl.red { background: #2d0f0f; border-color: #ef4444; }
+  .hl.blue { background: #0c2a3f; border-color: #38bdf8; }
+  .hl p { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+  pre { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 14px; overflow-x: auto; font-family: 'Cascadia Code','Consolas',monospace; font-size: 12.5px; line-height: 1.8; color: #e6edf3; }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.t th { background: #3d2000; color: #f59e0b; padding: 8px 12px; text-align: left; }
+  table.t td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  table.t tr:nth-child(even) td { background: #0f172a; }
+  .quiz-box { background: #1a2e1a; border: 1px solid #22c55e; padding: 14px; border-radius: 10px; margin: 10px 0; }
+  .quiz-q { font-size: 13px; color: #f8fafc; margin-bottom: 8px; }
+  .reveal-btn { background: #f59e0b; color: #0f172a; padding: 7px 18px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; }
+  .quiz-answer { margin-top: 8px; color: #4ade80; font-size: 13px; line-height: 1.6; }
+  .chain-box { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .chain-step { background: #1e293b; border: 1px solid #f59e0b; padding: 8px 14px; border-radius: 8px; font-size: 13px; color: #fcd34d; font-weight: 600; }
+  .chain-arrow { color: #64748b; font-size: 18px; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">DAY 2 · MODULE 6 — Regional Sales Performance</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter"></span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active">
+  <h1>📊 Regional Sales Performance Analysis</h1>
+  <p class="subtitle">Going beyond raw numbers — track sales trends over time, measure campaign performance, and connect marketing spend to actual regional revenue</p>
+  <div class="badge">Module 6 &nbsp;·&nbsp; Day 2 &nbsp;·&nbsp; Advanced &nbsp;·&nbsp; 30 min self-paced</div>
+  <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">MTD — Month to Date</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">YTD — Year to Date</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">Running SUM() OVER</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">Campaign Metrics JOIN</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE 3-REPORT OVERVIEW -->
+<div class="slide slide-section">
+  <div class="section-tag">The Challenge</div>
+  <h2>Leadership Has 3 Unanswered Questions</h2>
+  <p style="color:#94a3b8;font-size:14px;margin-bottom:20px;">GlobalMart's leadership team has detailed data — but no visibility into what matters. The data team must build a unified Regional Sales & Marketing Performance Report.</p>
+  <div class="three-col">
+    <div class="card">
+      <h4>📅 Task 1 — Sales Over Time</h4>
+      <p><em>"How are sales building up in each region, day by day, week by week?"</em></p>
+      <p style="margin-top:10px;">Needs: MTD (month-to-date) and YTD (year-to-date) running totals, broken down by region.</p>
+    </div>
+    <div class="card">
+      <h4>📣 Task 2 — Campaign Performance</h4>
+      <p><em>"Which marketing channels are getting the most clicks and conversions?"</em></p>
+      <p style="margin-top:10px;">Needs: campaign + channel + metrics JOIN. Sum impressions, clicks, conversions.</p>
+    </div>
+    <div class="card">
+      <h4>🗺️ Task 3 — Campaign Impact by Region</h4>
+      <p><em>"Do our best-performing campaigns actually generate revenue in each region?"</em></p>
+      <p style="margin-top:10px;">No direct campaign→region link. Must chain 5 tables together to derive it.</p>
+    </div>
+  </div>
+  <div class="hl" style="margin-top:18px;">
+    <p><strong style="color:#f59e0b;">Tables used (all ex_ prefix + locations_01):</strong><br>
+    <code>ex_orders</code> &nbsp;·&nbsp; <code>ex_customers</code> &nbsp;·&nbsp; <code>ex_transactions</code> &nbsp;·&nbsp; <code>locations_01</code> &nbsp;·&nbsp; <code>ex_campaigns</code> &nbsp;·&nbsp; <code>ex_campaign_metrics</code> &nbsp;·&nbsp; <code>ex_channel</code></p>
+  </div>
+</div>
+
+<!-- SLIDE 3: MTD/YTD CONCEPT -->
+<div class="slide slide-content">
+  <h3>📅 What are MTD and YTD? And Why SUM() OVER() with ORDER BY?</h3>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <h4>Regular SUM() — just a total</h4>
+        <p>GROUP BY collapses everything into one row per group. You get one final total — not how it built up over time.</p>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <h4>SUM() OVER() with ORDER BY — running total</h4>
+        <p>With ORDER BY inside the window, SQL accumulates the total as it walks through rows in order. Each row shows: "how much did we sell from the start until this date?"</p>
+        <p style="margin-top:8px;font-family:monospace;background:#0d1117;padding:8px;border-radius:6px;font-size:12px;">SUM(sales) OVER(<br>&nbsp; PARTITION BY region, year, month<br>&nbsp; ORDER BY order_date<br>)</p>
+        <p style="margin-top:8px;">This is MTD. The SUM resets at the start of each month (because PARTITION includes month).</p>
+      </div>
+    </div>
+    <div>
+      <table class="t">
+        <tr><th>Region</th><th>Date</th><th>Sales</th><th>MTD</th><th>YTD</th></tr>
+        <tr><td>East</td><td>Jan 5</td><td>1720.98</td><td>1720.98</td><td>1720.98</td></tr>
+        <tr><td>East</td><td>Jan 10</td><td>1529.16</td><td style="color:#f59e0b;">3250.14</td><td style="color:#f59e0b;">3250.14</td></tr>
+        <tr><td>East</td><td>Feb 2</td><td>900.00</td><td style="color:#4ade80;">900.00 ← resets</td><td style="color:#f59e0b;">4150.14</td></tr>
+      </table>
+      <div class="hl" style="margin-top:14px;">
+        <p><strong style="color:#f59e0b;">The key difference:</strong><br>
+        <strong>MTD</strong>: PARTITION BY region, year, <strong>month</strong> → resets at start of each month<br>
+        <strong>YTD</strong>: PARTITION BY region, <strong>year</strong> → resets at start of each year<br><br>
+        Same ORDER BY order_date — the difference is just in PARTITION BY!
+        </p>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ If MTD and YTD both use ORDER BY order_date, what creates the difference between them?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ The <strong>PARTITION BY</strong> clause. MTD partitions by month (so resets monthly), YTD partitions by year only (so accumulates all year).</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: DEMO - TASK 1 MTD/YTD -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Task 1: MTD & YTD Regional Sales 📅</h3>
+  <div class="demo-label">Tables: ex_orders, ex_customers, ex_transactions, locations_01 | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:12px;line-height:1.75;">
+<span class="cm">-- CTE 1: Get all delivered orders with region + sales
+-- ex_ prefix tables are the 'extended' GlobalMart dataset</span>
+<span class="kw">WITH</span> DeliveredOrders <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">l</span>.<span class="col">region</span>,
+        <span class="cm">-- CAST to DATE removes the time component for cleaner grouping</span>
+        <span class="fn">CAST</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span> <span class="kw">AS DATE</span>) <span class="kw">AS</span> order_date,
+        <span class="tbl">t</span>.<span class="col">sales_amount</span>
+    <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+        <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">locations_01</span> <span class="tbl">l</span>
+        <span class="kw">ON</span> <span class="tbl">l</span>.<span class="col">postal_code</span> = <span class="tbl">c</span>.<span class="col">postal_code</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+        <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    <span class="cm">-- Only delivered orders represent real completed revenue</span>
+    <span class="kw">WHERE</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+),
+<span class="cm">-- CTE 2: Aggregate to one row per region+date, extract date parts</span>
+AggregatedSales <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="col">region</span>,
+        <span class="col">order_date</span>,
+        <span class="fn">YEAR</span>(<span class="col">order_date</span>)               <span class="kw">AS</span> sales_year,
+        <span class="fn">MONTH</span>(<span class="col">order_date</span>)              <span class="kw">AS</span> sales_month,
+        <span class="fn">DATENAME</span>(MONTH, <span class="col">order_date</span>)   <span class="kw">AS</span> month_name,
+        <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="col">sales_amount</span>), <span class="str">2</span>)   <span class="kw">AS</span> total_sales
+    <span class="kw">FROM</span> DeliveredOrders
+    <span class="cm">-- Must GROUP BY ALL non-aggregated columns</span>
+    <span class="kw">GROUP BY</span> <span class="col">region</span>, <span class="col">order_date</span>,
+             <span class="fn">YEAR</span>(<span class="col">order_date</span>),
+             <span class="fn">MONTH</span>(<span class="col">order_date</span>),
+             <span class="fn">DATENAME</span>(MONTH, <span class="col">order_date</span>)
+)
+<span class="cm">-- Final: compute MTD and YTD using running SUM() OVER</span>
+<span class="kw">SELECT</span>
+    <span class="col">region</span>, <span class="col">order_date</span>,
+    <span class="col">sales_year</span> <span class="kw">AS</span> Year, <span class="col">month_name</span> <span class="kw">AS</span> Month_name,
+    <span class="col">total_sales</span> <span class="kw">AS</span> Sales,
+    <span class="cm">-- MTD: cumulative within same region + year + month</span>
+    <span class="fn">SUM</span>(<span class="col">total_sales</span>) <span class="kw">OVER</span>(
+        <span class="kw">PARTITION BY</span> <span class="col">region</span>, <span class="col">sales_year</span>, <span class="col">sales_month</span>
+        <span class="kw">ORDER BY</span> <span class="col">order_date</span>
+    ) <span class="kw">AS</span> MTD,
+    <span class="cm">-- YTD: cumulative within same region + year only (spans all months)</span>
+    <span class="fn">SUM</span>(<span class="col">total_sales</span>) <span class="kw">OVER</span>(
+        <span class="kw">PARTITION BY</span> <span class="col">region</span>, <span class="col">sales_year</span>
+        <span class="kw">ORDER BY</span> <span class="col">order_date</span>
+    ) <span class="kw">AS</span> YTD
+<span class="kw">FROM</span> AggregatedSales
+<span class="kw">ORDER BY</span> <span class="col">region</span>, <span class="col">order_date</span>;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>🎯 Predict the output</h4>
+        <p>East region has these 3 rows after aggregation:</p>
+        <table class="t" style="margin-top:8px;font-size:12px;">
+          <tr><th>Date</th><th>Sales</th></tr>
+          <tr><td>Jan 5, 2023</td><td>1720.98</td></tr>
+          <tr><td>Jan 10, 2023</td><td>1529.16</td></tr>
+          <tr><td>Feb 2, 2023</td><td>900.00</td></tr>
+        </table>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ What values will appear in MTD and YTD for the Feb 2, 2023 row for East?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none">
+          <p>✅ <strong>MTD = 900.00</strong> (first day of February — month starts fresh)<br>
+          <strong>YTD = 4150.14</strong> (all year: 1720.98 + 1529.16 + 900.00 — year never resets)</p>
+        </div>
+      </div>
+      <div class="hl red" style="margin-top:12px;">
+        <p><strong style="color:#f87171;">Common Mistake:</strong> Using <code>ORDER BY month_name</code> (alphabetical string) instead of <code>ORDER BY order_date</code>. Alphabetically, August comes before January — completely wrong accumulation order!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: DEMO - TASK 2 CAMPAIGN METRICS -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Task 2: Campaign Performance 📣</h3>
+  <div class="demo-label">Tables: ex_campaigns, ex_campaign_metrics, ex_channel | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <h4>Table Relationships for Task 2</h4>
+        <div class="chain-box">
+          <div class="chain-step">ex_campaigns</div>
+          <div class="chain-arrow">↕</div>
+          <div class="chain-step">ex_campaign_metrics</div>
+        </div>
+        <div class="chain-box" style="margin-top:8px;">
+          <div class="chain-step">ex_campaigns</div>
+          <div class="chain-arrow">↕</div>
+          <div class="chain-step">ex_channel</div>
+        </div>
+        <p style="margin-top:10px;font-size:13px;">ex_campaigns is the hub — it links to both metrics (via campaign_id) and channel (via channel_id).</p>
+      </div>
+      <pre style="font-size:12.5px;">
+<span class="cm">-- Aggregate campaign metrics by campaign + channel name</span>
+<span class="kw">SELECT</span>
+    <span class="tbl">c</span>.<span class="col">campaign_id</span>,
+    <span class="tbl">ch</span>.<span class="col">channel_name</span>,
+    <span class="cm">-- SUM not COUNT — one campaign can have multiple metric rows</span>
+    <span class="fn">SUM</span>(<span class="tbl">cm</span>.<span class="col">impressions</span>)   <span class="kw">AS</span> impressions,
+    <span class="fn">SUM</span>(<span class="tbl">cm</span>.<span class="col">clicks</span>)        <span class="kw">AS</span> clicks,
+    <span class="fn">SUM</span>(<span class="tbl">cm</span>.<span class="col">conversions</span>)   <span class="kw">AS</span> conversions
+<span class="kw">FROM</span> <span class="tbl">ex_campaigns</span> <span class="tbl">c</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_campaign_metrics</span> <span class="tbl">cm</span>
+    <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">campaign_id</span> = <span class="tbl">cm</span>.<span class="col">campaign_id</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_channel</span> <span class="tbl">ch</span>
+    <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">channel_id</span> = <span class="tbl">ch</span>.<span class="col">channel_id</span>
+<span class="kw">GROUP BY</span>
+    <span class="tbl">c</span>.<span class="col">campaign_id</span>,
+    <span class="tbl">ch</span>.<span class="col">channel_name</span>;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Expected Output Format</h4>
+        <table class="t" style="margin-top:6px;">
+          <tr><th>campaign_id</th><th>channel_name</th><th>impressions</th><th>clicks</th><th>conversions</th></tr>
+          <tr><td>CMP001</td><td>Email</td><td>50000</td><td>4200</td><td>320</td></tr>
+          <tr><td>CMP002</td><td>Social Media</td><td>75000</td><td>6800</td><td>540</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:12px;color:#94a3b8;">(Actual values from your database will differ from these sample values)</p>
+      </div>
+      <div class="hl" style="margin-top:14px;">
+        <p><strong style="color:#f59e0b;">Why SUM and not COUNT?</strong><br>
+        One campaign can run multiple times across different dates, products, or regions — each with its own metrics row. We need the total across all those rows, so SUM() is correct. COUNT would just count how many metric rows exist per campaign.</p>
+      </div>
+      <div class="quiz-box" style="margin-top:14px;">
+        <p class="quiz-q">❓ Which column links ex_campaigns to ex_channel? Which links ex_campaigns to ex_campaign_metrics?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>channel_id</strong> links campaigns → channel. <strong>campaign_id</strong> links campaigns → campaign_metrics.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: TASK 3 CHAIN CONCEPT -->
+<div class="slide slide-content">
+  <h3>🔗 Task 3 — No Direct Link Between Campaign and Region</h3>
+  <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">The hardest part of this analysis: connecting campaign to region. There is NO direct foreign key. We must chain through multiple tables.</p>
+  <div class="hl" style="margin-bottom:16px;">
+    <p><strong style="color:#f59e0b;">The chain:</strong></p>
+    <div class="chain-box">
+      <div class="chain-step">ex_campaigns<br><span style="font-size:11px;font-weight:400;">has product_id</span></div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-step">ex_transactions<br><span style="font-size:11px;font-weight:400;">has order_id</span></div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-step">ex_orders<br><span style="font-size:11px;font-weight:400;">has customer_id</span></div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-step">ex_customers<br><span style="font-size:11px;font-weight:400;">has postal_code</span></div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-step">locations_01<br><span style="font-size:11px;font-weight:400;">has region</span></div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <h4>Phase 1: Campaign → Transactions</h4>
+        <p>A campaign promotes a product. Transactions contain that product. So JOIN on product_id to find all orders driven by this campaign.</p>
+        <pre style="font-size:12px;margin-top:8px;">
+<span class="kw">WITH</span> campaign_sales <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">c</span>.<span class="col">campaign_id</span>,
+        <span class="tbl">t</span>.<span class="col">order_id</span>,
+        <span class="tbl">t</span>.<span class="col">sales_amount</span>
+    <span class="kw">FROM</span> <span class="tbl">ex_campaigns</span> <span class="tbl">c</span>
+    <span class="cm">-- campaign promotes product_id
+    -- transaction records sales of that product</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+        <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">product_id</span> = <span class="tbl">t</span>.<span class="col">product_id</span>
+)</pre>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Phase 2: Order → Customer → Region</h4>
+        <p>Now navigate from order to customer to location to find the region. Filter to delivered orders only.</p>
+        <pre style="font-size:12px;margin-top:8px;">
+, campaign_region <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">cs</span>.<span class="col">campaign_id</span>,
+        <span class="tbl">o</span>.<span class="col">customer_id</span>,
+        <span class="tbl">l</span>.<span class="col">region</span>,
+        <span class="tbl">cs</span>.<span class="col">sales_amount</span>
+    <span class="kw">FROM</span> campaign_sales <span class="tbl">cs</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+        <span class="kw">ON</span> <span class="tbl">cs</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+        <span class="cm">-- AND in JOIN ON = filter rows during join</span>
+        <span class="kw">AND</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+        <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">locations_01</span> <span class="tbl">l</span>
+        <span class="kw">ON</span> <span class="tbl">l</span>.<span class="col">postal_code</span> = <span class="tbl">c</span>.<span class="col">postal_code</span>
+)</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: DEMO - TASK 3 FULL -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Task 3: Campaign Impact on Regional Revenue 🗺️</h3>
+  <div class="demo-label">Full 2-CTE solution | 5-table chain | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:12px;line-height:1.8;">
+<span class="cm">-- Full solution: campaign → product → transaction
+--                       → order → customer → region</span>
+<span class="kw">WITH</span> campaign_sales <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">c</span>.<span class="col">campaign_id</span>,
+        <span class="tbl">t</span>.<span class="col">order_id</span>,
+        <span class="tbl">t</span>.<span class="col">sales_amount</span>
+    <span class="kw">FROM</span> <span class="tbl">ex_campaigns</span> <span class="tbl">c</span>
+    <span class="cm">-- Product is the bridge: campaign promotes it,
+    -- transaction records a sale of it</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+        <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">product_id</span> = <span class="tbl">t</span>.<span class="col">product_id</span>
+),
+campaign_region <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">cs</span>.<span class="col">campaign_id</span>,
+        <span class="tbl">o</span>.<span class="col">customer_id</span>,
+        <span class="tbl">l</span>.<span class="col">region</span>,
+        <span class="tbl">cs</span>.<span class="col">sales_amount</span>
+    <span class="kw">FROM</span> campaign_sales <span class="tbl">cs</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+        <span class="kw">ON</span> <span class="tbl">cs</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+        <span class="cm">-- Filter during the JOIN — only delivered orders = real revenue</span>
+        <span class="kw">AND</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+        <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">locations_01</span> <span class="tbl">l</span>
+        <span class="kw">ON</span> <span class="tbl">l</span>.<span class="col">postal_code</span> = <span class="tbl">c</span>.<span class="col">postal_code</span>
+)
+<span class="kw">SELECT</span>
+    <span class="col">region</span>,
+    <span class="col">campaign_id</span>,
+    <span class="cm">-- DISTINCT: count each customer once even if they placed
+    -- multiple orders from this campaign</span>
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="col">customer_id</span>)    <span class="kw">AS</span> customers_acquired,
+    <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="col">sales_amount</span>), <span class="str">2</span>) <span class="kw">AS</span> total_revenue
+<span class="kw">FROM</span> campaign_region
+<span class="kw">GROUP BY</span> <span class="col">region</span>, <span class="col">campaign_id</span>;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Expected Output Format</h4>
+        <table class="t" style="margin-top:6px;font-size:12px;">
+          <tr><th>region</th><th>campaign_id</th><th>customers</th><th>total_revenue</th></tr>
+          <tr><td>East</td><td>CMP001</td><td>120</td><td>15400.75</td></tr>
+          <tr><td>West</td><td>CMP002</td><td>95</td><td>11230.40</td></tr>
+        </table>
+        <p style="margin-top:8px;font-size:12px;color:#94a3b8;">(Sample values — actual figures from your DB may differ)</p>
+      </div>
+      <div class="quiz-box" style="margin-top:14px;">
+        <p class="quiz-q">❓ Why do we use COUNT(DISTINCT customer_id) instead of COUNT(customer_id)?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ One customer can place multiple orders from the same campaign. Without DISTINCT, that customer gets counted multiple times. DISTINCT counts each customer only once — showing how many unique customers the campaign acquired.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: COMMON MISTAKES -->
+<div class="slide slide-content">
+  <h3>🚫 Common Mistakes — Module 6</h3>
+  <table class="t" style="margin-bottom:16px;">
+    <tr><th>Mistake</th><th>What Goes Wrong</th><th>Fix</th></tr>
+    <tr><td>Missing WHERE order_status = 'delivered'</td><td style="color:#f87171;">Includes cancelled, in-transit orders in revenue</td><td>Always filter to 'delivered' only</td></tr>
+    <tr><td>ORDER BY month_name in window function</td><td style="color:#f87171;">Alphabetical sort — August before January!</td><td>ORDER BY order_date (actual date)</td></tr>
+    <tr><td>Same PARTITION BY for MTD and YTD</td><td style="color:#f87171;">Both show same number — YTD doesn't span the year</td><td>MTD: partition by year+month. YTD: partition by year only</td></tr>
+    <tr><td>Forgetting GROUP BY all date components</td><td style="color:#f87171;">SQL error in AggregatedSales CTE</td><td>All non-aggregated columns must be in GROUP BY</td></tr>
+    <tr><td>Missing CAST to DATE on order_purchase_date</td><td style="color:#f87171;">Datetime precision creates one row per millisecond</td><td>CAST(order_purchase_date AS DATE)</td></tr>
+  </table>
+  <div class="hl" style="margin-top:6px;">
+    <p><strong style="color:#f59e0b;">Key insight for Task 3:</strong> When the question asks for "campaign impact by region" and there's no direct FK, always think about what column the two ends share through intermediate tables. Campaign → product → transaction is the hidden bridge.</p>
+  </div>
+</div>
+
+<!-- SLIDE 9: WRAP UP -->
+<div class="slide slide-section" style="text-align:center;align-items:center;">
+  <div class="section-tag">Summary</div>
+  <h2>What We Built 🚀</h2>
+  <div class="three-col" style="margin-top:20px;max-width:900px;text-align:left;">
+    <div class="card">
+      <h4>Task 1 — MTD/YTD</h4>
+      <p>Running <code>SUM() OVER()</code> with ORDER BY. PARTITION BY controls when it resets. Foundation for any time-series trending.</p>
+    </div>
+    <div class="card">
+      <h4>Task 2 — Campaign Metrics</h4>
+      <p>Simple 3-table JOIN with aggregation. ex_campaigns is the hub connecting metrics and channel info.</p>
+    </div>
+    <div class="card">
+      <h4>Task 3 — Regional Revenue</h4>
+      <p>5-table chain to connect campaigns to regions indirectly via product → transaction → order → customer → location.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const total = slides.length;
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  function changeSlide(dir) { showSlide(current + dir); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+  counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>

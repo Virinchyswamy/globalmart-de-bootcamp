@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 1 – Basic SQL Revision | Day 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 600px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 14px; line-height: 1.8; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }   /* keywords */
+  .fn { color: #d2a8ff; }                       /* functions */
+  .str { color: #a5d6ff; }                      /* strings/values */
+  .cm { color: #6e7681; font-style: italic; }   /* comments */
+  .col { color: #79c0ff; }                      /* column names */
+  .tbl { color: #ffa657; }                      /* table names */
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 1 · MODULE 1 — Basic SQL Revision</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 10</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Basic SQL Revision</h1>
+    <p class="subtitle">Refreshing core SQL fundamentals before we dive into advanced data wrangling</p>
+    <div class="badge">Module 1 &nbsp;·&nbsp; Day 1 &nbsp;·&nbsp; Trainer-Led Session</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover today → SELECT · WHERE · Functions · Sorting · Filtering · SQL order of execution
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>What We're Covering Today</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>🔍 Retrieving Data</h4>
+        <ul>
+          <li>SELECT & FROM basics</li>
+          <li>Column aliasing with AS</li>
+          <li>DISTINCT to remove duplicates</li>
+          <li>TOP N to limit rows</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔧 Filtering & Functions</h4>
+        <ul>
+          <li>WHERE clause filtering</li>
+          <li>Text functions (TRIM, UPPER, LOWER)</li>
+          <li>Date functions (DATEDIFF, YEAR)</li>
+          <li>Math functions (ROUND, FLOOR)</li>
+          <li>CASE WHEN conditional logic</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📚 What's Next (Self-Paced)</h4>
+        <ul>
+          <li>Data Wrangling scenarios</li>
+          <li>Practice on GlobalMart data</li>
+          <li>Hands-on SQL challenges</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: GLOBALMART SCHEMA -->
+  <div class="slide slide-content">
+    <h3>The GlobalMart Database — Know Your Tables</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">All demos and self-paced exercises use these tables in the <strong>mskl-masterclass</strong> database.</p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>ex_customers</h4>
+          <p><span style="color:#79c0ff;">customer_id</span>, customer_name, customer_email, segment, postal_code, joining_date</p>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>ex_orders</h4>
+          <p><span style="color:#79c0ff;">order_id</span>, <span style="color:#ffa657;">customer_id</span>, <span style="color:#ffa657;">partner_id</span>, ship_mode, <strong>order_status</strong>, order_purchase_date, order_approved_at, order_dispatched_date, order_delivered_date, order_estimated_delivery_date</p>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>ex_transactions</h4>
+          <p><span style="color:#79c0ff;">transaction_id</span>, <span style="color:#ffa657;">order_id</span>, <span style="color:#ffa657;">product_id</span>, sales_amount, quantity, discount, COGS</p>
+        </div>
+        <div class="card">
+          <h4>ex_returns</h4>
+          <p><span style="color:#ffa657;">order_id</span>, return_reason</p>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>ex_products</h4>
+          <p><span style="color:#79c0ff;">product_id</span>, product_name, category, sub_category, colors, sizes, weight, product_photos_qty, manufacturer, date_added, upc</p>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>locations_01</h4>
+          <p><span style="color:#79c0ff;">postal_code</span>, city, state, region, country</p>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>ex_logistics_partner</h4>
+          <p><span style="color:#79c0ff;">partner_id</span>, partner_name</p>
+        </div>
+        <div class="card">
+          <h4>ex_campaigns / ex_campaign_metrics / ex_channel</h4>
+          <p>Marketing tables — campaigns, channels, daily impressions, clicks, conversions, bounces</p>
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px; display:flex; gap:24px; flex-wrap:wrap;">
+      <p><span style="color:#79c0ff; font-weight:600;">Blue column</span> = Primary Key &nbsp;|&nbsp; <span style="color:#ffa657; font-weight:600;">Orange column</span> = Foreign Key (links to another table) &nbsp;|&nbsp; <strong>order_status = 'delivered'</strong> is the key business filter used throughout all modules</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: SELECT BASICS (was SLIDE 3) -->
+  <div class="slide slide-content">
+    <h3>The Basic SELECT Statement</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">
+          Every SQL query starts with a SELECT. Think of it as telling the database:
+          <em>"Hey, show me this information from this table."</em>
+        </p>
+        <pre>
+<span class="cm">-- Get everything from the customers table</span>
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>;
+
+<span class="cm">-- Get only specific columns (better practice)</span>
+<span class="kw">SELECT</span>
+    <span class="col">customer_id</span>,
+    <span class="col">customer_name</span>,
+    <span class="col">state</span>
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>;
+
+<span class="cm">-- Give a column a friendlier name using AS</span>
+<span class="kw">SELECT</span>
+    <span class="col">customer_name</span> <span class="kw">AS</span> <span class="str">'Customer'</span>,
+    <span class="col">state</span>         <span class="kw">AS</span> <span class="str">'State / Region'</span>
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>;
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Why not always use SELECT *?</h4>
+          <p>SELECT * grabs every column — fine for exploration, but slow on large tables. In production code, always name the columns you actually need.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:16px;">
+          <p><strong style="color:#22c55e;">DISTINCT</strong> — removes duplicate rows from the result.</p>
+          <pre style="margin-top:8px; font-size:13px;">
+<span class="cm">-- How many unique states do our customers live in?</span>
+<span class="kw">SELECT DISTINCT</span> <span class="col">state</span>
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>;
+          </pre>
+        </div>
+        <div class="highlight-box warn" style="margin-top:12px;">
+          <p><strong style="color:#f59e0b;">TOP N</strong> — gives only the first N rows back.</p>
+          <pre style="margin-top:8px; font-size:13px;">
+<span class="cm">-- Just want to peek at 5 rows</span>
+<span class="kw">SELECT TOP</span> <span class="str">5</span> * <span class="kw">FROM</span> <span class="tbl">ex_customers</span>;
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: WHERE CLAUSE -->
+  <div class="slide slide-content">
+    <h3>Filtering with WHERE</h3>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- Orders placed in a specific state</span>
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>
+<span class="kw">WHERE</span> <span class="col">state</span> = <span class="str">'California'</span>;
+
+<span class="cm">-- Multiple conditions with AND</span>
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span> <span class="tbl">ex_orders</span>
+<span class="kw">WHERE</span> <span class="col">order_status</span> = <span class="str">'delivered'</span>
+  <span class="kw">AND</span> <span class="col">ship_mode</span> = <span class="str">'First Class'</span>;
+
+<span class="cm">-- IN clause: instead of many OR conditions</span>
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>
+<span class="kw">WHERE</span> <span class="col">state</span> <span class="kw">IN</span> (<span class="str">'California'</span>, <span class="str">'Texas'</span>, <span class="str">'Arizona'</span>);
+
+<span class="cm">-- LIKE clause: pattern matching</span>
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>
+<span class="kw">WHERE</span> <span class="col">customer_name</span> <span class="kw">LIKE</span> <span class="str">'A%'</span>;
+<span class="cm">-- % means "anything can come here"</span>
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Common WHERE Operators</h4>
+          <table class="sql-table">
+            <tr><th>Operator</th><th>Meaning</th></tr>
+            <tr><td>=</td><td>Exactly equals</td></tr>
+            <tr><td>&lt;&gt; or !=</td><td>Not equal</td></tr>
+            <tr><td>&gt;  &lt;  &gt;= &lt;=</td><td>Comparison</td></tr>
+            <tr><td>BETWEEN a AND b</td><td>Range (inclusive)</td></tr>
+            <tr><td>IN (a, b, c)</td><td>Matches any in list</td></tr>
+            <tr><td>LIKE 'A%'</td><td>Pattern match</td></tr>
+            <tr><td>IS NULL</td><td>Value is missing</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: DEMO - TEXT FUNCTIONS -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — Text Functions</h3>
+    <div class="demo-label">Run these in SSMS · Database: mskl-masterclass</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- Real data often has messy spaces and inconsistent casing</span>
+<span class="cm">-- Let's clean the state column in ex_customers</span>
+
+<span class="cm">-- TRIM removes leading/trailing spaces</span>
+<span class="kw">SELECT</span>
+    <span class="col">customer_name</span>,
+    <span class="col">state</span>                           <span class="kw">AS</span> raw_state,
+    <span class="fn">TRIM</span>(<span class="col">state</span>)                    <span class="kw">AS</span> trimmed_state,
+    <span class="fn">UPPER</span>(<span class="fn">TRIM</span>(<span class="col">state</span>))             <span class="kw">AS</span> clean_upper,
+    <span class="fn">LOWER</span>(<span class="fn">TRIM</span>(<span class="col">state</span>))             <span class="kw">AS</span> clean_lower
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>;
+
+<span class="cm">-- LEN tells us how long a string is</span>
+<span class="kw">SELECT</span>
+    <span class="col">customer_name</span>,
+    <span class="fn">LEN</span>(<span class="col">customer_name</span>) <span class="kw">AS</span> name_length
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>
+<span class="kw">ORDER BY</span> name_length <span class="kw">DESC</span>;
+
+<span class="cm">-- CONCAT joins two strings together</span>
+<span class="kw">SELECT</span>
+    <span class="fn">CONCAT</span>(<span class="col">customer_name</span>, <span class="str">' — '</span>, <span class="col">state</span>) <span class="kw">AS</span> customer_info
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>;
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Why this matters</h4>
+          <p>The self-paced content has a scenario where <code>state</code> has typos and inconsistent casing — 'calfornia' instead of 'California'. <br><br>
+          These functions are the tools Rahul uses to clean it up before any analysis.</p>
+        </div>
+        <div class="highlight-box" style="margin-top:14px;">
+          <p><strong style="color:#38bdf8;">CASE WHEN</strong> — works like an IF / ELSE</p>
+          <pre style="margin-top:8px; font-size:13px;">
+<span class="cm">-- Standardise typos in state names</span>
+<span class="kw">SELECT</span>
+    <span class="col">customer_id</span>,
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> <span class="fn">TRIM</span>(<span class="col">state</span>) = <span class="str">'calfornia'</span>
+            <span class="kw">THEN</span> <span class="str">'California'</span>
+        <span class="kw">WHEN</span> <span class="fn">TRIM</span>(<span class="col">state</span>) = <span class="str">'masachusets'</span>
+            <span class="kw">THEN</span> <span class="str">'Massachusetts'</span>
+        <span class="kw">ELSE</span> <span class="fn">UPPER</span>(<span class="fn">TRIM</span>(<span class="col">state</span>))
+    <span class="kw">END</span> <span class="kw">AS</span> state_clean
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>;
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: DATE FUNCTIONS -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — Date Functions</h3>
+    <div class="demo-label">Run these in SSMS · Database: mskl-masterclass</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- YEAR / MONTH / DAY extract parts of a date</span>
+<span class="kw">SELECT</span>
+    <span class="col">order_id</span>,
+    <span class="col">order_purchase_date</span>,
+    <span class="fn">YEAR</span>(<span class="col">order_purchase_date</span>)  <span class="kw">AS</span> order_year,
+    <span class="fn">MONTH</span>(<span class="col">order_purchase_date</span>) <span class="kw">AS</span> order_month,
+    <span class="fn">DAY</span>(<span class="col">order_purchase_date</span>)   <span class="kw">AS</span> order_day
+<span class="kw">FROM</span> <span class="tbl">ex_orders</span>;
+
+<span class="cm">-- DATEDIFF calculates the gap between two dates</span>
+<span class="cm">-- Syntax: DATEDIFF(unit, start_date, end_date)</span>
+<span class="kw">SELECT</span>
+    <span class="col">order_id</span>,
+    <span class="col">order_purchase_date</span>,
+    <span class="col">order_delivered_customer_date</span>,
+
+    <span class="cm">-- How many days did this delivery take?</span>
+    <span class="fn">DATEDIFF</span>(day,
+        <span class="col">order_purchase_date</span>,
+        <span class="col">order_delivered_customer_date</span>
+    ) <span class="kw">AS</span> delivery_days
+<span class="kw">FROM</span> <span class="tbl">ex_orders</span>
+<span class="kw">WHERE</span> <span class="col">order_status</span> = <span class="str">'delivered'</span>
+<span class="kw">ORDER BY</span> delivery_days;
+
+<span class="cm">-- Filter to only orders from 2017</span>
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span> <span class="tbl">ex_orders</span>
+<span class="kw">WHERE</span> <span class="fn">YEAR</span>(<span class="col">order_purchase_date</span>) = <span class="str">2017</span>;
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>DATEDIFF units you'll use</h4>
+          <table class="sql-table">
+            <tr><th>Unit</th><th>Example result</th></tr>
+            <tr><td>day</td><td>14 days</td></tr>
+            <tr><td>month</td><td>3 months</td></tr>
+            <tr><td>year</td><td>2 years</td></tr>
+          </table>
+        </div>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p>The Loyalty Program scenario (Module 4 today) uses DATEDIFF extensively to calculate <strong>length of stay</strong> and <strong>recency</strong> — so this is a critical building block.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: MATH FUNCTIONS -->
+  <div class="slide slide-content">
+    <h3>Math Functions & Calculations</h3>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- ROUND rounds to N decimal places</span>
+<span class="kw">SELECT</span>
+    <span class="col">product_id</span>,
+    <span class="col">sales_amount</span>,
+    <span class="fn">ROUND</span>(<span class="col">sales_amount</span>, <span class="str">2</span>) <span class="kw">AS</span> rounded_sales
+<span class="kw">FROM</span> <span class="tbl">ex_transactions</span>;
+
+<span class="cm">-- FLOOR always rounds DOWN to nearest integer</span>
+<span class="cm">-- Used later for avg_basket_size in Loyalty Program</span>
+<span class="kw">SELECT</span>
+    <span class="fn">FLOOR</span>(<span class="str">7.9</span>)  <span class="cm">-- returns 7</span>
+    <span class="fn">FLOOR</span>(<span class="str">7.1</span>)  <span class="cm">-- returns 7</span>
+
+<span class="cm">-- Arithmetic in SQL works just like a calculator</span>
+<span class="kw">SELECT</span>
+    <span class="col">order_id</span>,
+    <span class="col">sales_amount</span>,
+    <span class="col">quantity</span>,
+
+    <span class="cm">-- Price per unit (avoid division by zero in real code)</span>
+    <span class="col">sales_amount</span> / <span class="col">quantity</span>         <span class="kw">AS</span> price_per_unit,
+
+    <span class="cm">-- Apply a 10% discount</span>
+    <span class="col">sales_amount</span> * <span class="str">0.90</span>             <span class="kw">AS</span> discounted_price
+<span class="kw">FROM</span> <span class="tbl">ex_transactions</span>;
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Quick Reference</h4>
+          <table class="sql-table">
+            <tr><th>Function</th><th>What it does</th></tr>
+            <tr><td>ROUND(x, n)</td><td>Round to n decimals</td></tr>
+            <tr><td>FLOOR(x)</td><td>Always round down</td></tr>
+            <tr><td>CEILING(x)</td><td>Always round up</td></tr>
+            <tr><td>ABS(x)</td><td>Remove negative sign</td></tr>
+          </table>
+        </div>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">Integer division gotcha:</strong><br>
+          In SQL, <code>7 / 2 = 3</code> (not 3.5) because both numbers are integers. To get a decimal result, cast one to float: <code>1.0 * 7 / 2 = 3.5</code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: SQL ORDER OF EXECUTION -->
+  <div class="slide slide-content">
+    <h3>SQL Order of Execution — The Most Important Concept</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">
+      We <em>write</em> SQL in one order, but SQL <em>executes</em> it in a completely different order.
+    </p>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>How SQL Actually Runs</h4>
+          <ol class="order-list">
+            <li><strong>FROM</strong> — pick the table(s) first</li>
+            <li><strong>JOIN … ON</strong> — combine tables; ON condition is evaluated here to match rows</li>
+            <li><strong>WHERE</strong> — filter out individual rows you don't need</li>
+            <li><strong>GROUP BY</strong> — group remaining rows together</li>
+            <li><strong>HAVING</strong> — filter the groups</li>
+            <li><strong>SELECT</strong> — now choose what columns to show</li>
+            <li><strong>ORDER BY</strong> — sort the final result</li>
+          </ol>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box">
+          <p><strong style="color:#38bdf8;">Why does this matter?</strong></p>
+          <p style="margin-top:8px;">This is why you <strong>cannot</strong> use an alias defined in SELECT inside a WHERE clause — WHERE runs before SELECT!</p>
+          <p style="margin-top:8px;">Also, JOIN runs <strong>before WHERE</strong> — so filters placed on the JOIN's ON condition apply during table merging, while WHERE filters the combined result afterwards.</p>
+        </div>
+        <pre style="margin-top:14px; font-size:13px;">
+<span class="cm">-- This FAILS — alias 'delivery_days' doesn't</span>
+<span class="cm">-- exist yet when WHERE runs</span>
+<span class="kw">SELECT</span>
+    <span class="fn">DATEDIFF</span>(day, <span class="col">order_purchase_date</span>,
+        <span class="col">order_delivered_customer_date</span>) <span class="kw">AS</span> delivery_days
+<span class="kw">FROM</span> <span class="tbl">ex_orders</span>
+<span class="kw">WHERE</span> delivery_days &gt; <span class="str">10</span>;  <span class="cm">-- ❌ ERROR</span>
+
+<span class="cm">-- This WORKS — repeat the expression in WHERE</span>
+<span class="kw">SELECT</span>
+    <span class="fn">DATEDIFF</span>(day, <span class="col">order_purchase_date</span>,
+        <span class="col">order_delivered_customer_date</span>) <span class="kw">AS</span> delivery_days
+<span class="kw">FROM</span> <span class="tbl">ex_orders</span>
+<span class="kw">WHERE</span> <span class="fn">DATEDIFF</span>(day, <span class="col">order_purchase_date</span>,
+        <span class="col">order_delivered_customer_date</span>) &gt; <span class="str">10</span>;  <span class="cm">-- ✅</span>
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: BRIDGE TO SELF-PACED -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">What's Next</div>
+    <h2>You're Ready for the Self-Paced Content</h2>
+    <p style="color:#94a3b8; max-width:560px; margin-top:12px; font-size:15px;">
+      The Data Wrangling PDF walks you through real GlobalMart scenarios applying everything we just covered — messy data, clean-up, filtering, and functions.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:800px;">
+      <div class="card">
+        <h4>📄 Refer To</h4>
+        <p>Data Wrangling.pdf &amp; USE THIS.pdf in this folder</p>
+      </div>
+      <div class="card">
+        <h4>🗄️ Database</h4>
+        <p>mskl-masterclass<br>Server: mentorskool.database.windows.net</p>
+      </div>
+      <div class="card">
+        <h4>➡️ Up Next</h4>
+        <p>Module 2: Joins, CTEs &amp; Subqueries</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

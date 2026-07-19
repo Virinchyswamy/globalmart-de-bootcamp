@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 13 – Understanding ROLLUP, CUBE &amp; GROUPING SETS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; height: 100vh; overflow: hidden; }
+  .deck { width: 100%; height: 100vh; position: relative; }
+  .slide { display: none; position: absolute; inset: 0; padding: 40px 56px; flex-direction: column; justify-content: flex-start; gap: 14px; }
+  .slide.active { display: flex; }
+
+  h1 { font-size: 2rem; color: #38bdf8; line-height: 1.2; }
+  h2 { font-size: 1.45rem; color: #38bdf8; margin-bottom: 5px; }
+  h3 { font-size: 1rem; color: #c9d1d9; margin-bottom: 4px; }
+  p, li { font-size: 0.95rem; color: #c9d1d9; line-height: 1.6; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 5px; }
+
+  .subtitle { font-size: 1rem; color: #8b949e; margin-top: 6px; }
+  .module-badge { font-size: 0.82rem; color: #8b949e; margin-bottom: 6px; }
+
+  pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 13px 18px; font-family: 'Cascadia Code','Consolas',monospace; font-size: 0.86rem; line-height: 1.7; overflow-x: auto; white-space: pre; }
+  .kw  { color: #ff7b72; font-weight: bold; }
+  .fn  { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm  { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 13px 16px; }
+  .card h3 { color: #38bdf8; margin-bottom: 8px; }
+
+  .hl  { background: #38bdf810; border-left: 3px solid #38bdf8; border-radius: 0 6px 6px 0; padding: 10px 14px; }
+  .warn { background: #f59e0b10; border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 10px 14px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  th { background: #161b22; color: #38bdf8; padding: 7px 10px; text-align: left; border-bottom: 2px solid #30363d; }
+  td { padding: 7px 10px; border-bottom: 1px solid #21262d; color: #c9d1d9; }
+  tr:hover td { background: #161b2240; }
+
+  .quiz-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 13px 16px; }
+  .quiz-box p { font-weight: 600; color: #e6edf3; font-size: 0.95rem; }
+  .quiz-options { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .opt { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 6px 12px; font-size: 0.88rem; color: #c9d1d9; }
+  .quiz-answer { display: none; margin-top: 10px; padding: 10px 13px; background: #0a2218; border-left: 3px solid #22c55e; border-radius: 0 6px 6px 0; }
+  .quiz-answer p { color: #86efac; font-weight: 400; font-size: 0.9rem; }
+  .reveal-btn { margin-top: 9px; background: #38bdf815; color: #38bdf8; border: 1px solid #38bdf840; border-radius: 6px; padding: 5px 13px; cursor: pointer; font-size: 0.82rem; }
+  .reveal-btn:hover { background: #38bdf825; }
+
+  .null-val { color: #f59e0b; font-style: italic; }
+  .op-badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 0.82rem; font-weight: bold; margin-right: 4px; }
+  .rollup { background: #38bdf820; color: #38bdf8; }
+  .cube   { background: #a78bfa20; color: #a78bfa; }
+  .gsets  { background: #22c55e20; color: #22c55e; }
+
+  .nav { position: fixed; bottom: 22px; right: 30px; display: flex; gap: 8px; align-items: center; }
+  .nav button { background: #161b22; border: 1px solid #30363d; color: #e6edf3; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
+  .nav button:hover { background: #21262d; }
+  .counter { font-size: 0.82rem; color: #8b949e; min-width: 48px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE + STORY -->
+<div class="slide active">
+  <div>
+    <div class="module-badge">Day 4 · Module 13</div>
+    <h1>Understanding ROLLUP, CUBE<br>&amp; GROUPING SETS</h1>
+    <p class="subtitle">Advanced aggregation for multi-level reporting — Sarah's GlobalMart QBR challenge</p>
+  </div>
+  <div class="two-col" style="margin-top:4px;">
+    <div class="card">
+      <h3>Sarah's Assignment</h3>
+      <p>Sarah, Data Analyst intern at GlobalMart, received her first major assignment from the <strong>VP of Sales</strong> ahead of the Quarterly Business Review (QBR).</p>
+      <p style="margin-top:8px;">Leadership needed one report showing <em>all</em> of:</p>
+      <ul style="margin-top:6px;">
+        <li>Sales per store within each region</li>
+        <li>Region subtotals (all stores combined)</li>
+        <li>Category subtotals across all regions</li>
+        <li>Grand total for the entire company</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Three Operators</h3>
+      <table>
+        <tr><th>Operator</th><th>What It Does</th></tr>
+        <tr><td><span class="op-badge rollup">ROLLUP</span></td><td>Hierarchical subtotals, n+1 levels</td></tr>
+        <tr><td><span class="op-badge cube">CUBE</span></td><td>All possible combinations, 2ⁿ levels</td></tr>
+        <tr><td><span class="op-badge gsets">GROUPING SETS</span></td><td>Precisely the groupings you define</td></tr>
+      </table>
+      <div class="hl" style="margin-top:10px;font-size:0.88rem;">
+        SSMS: <span style="color:#38bdf8;">mentorskool.database.windows.net</span> / mskl-masterclass
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide">
+  <h2>The Problem: The Messy UNION ALL Approach</h2>
+  <p style="margin-bottom:8px;">The analytics team was writing <strong>multiple separate queries</strong> stitched together with UNION ALL — slow, error-prone, and hard to maintain:</p>
+  <pre><span class="cm">-- Query 1: Sales by region and store</span>
+<span class="kw">SELECT</span> <span class="col">region</span>, <span class="col">store</span>, <span class="fn">SUM</span>(<span class="col">sales</span>) <span class="kw">FROM</span> <span class="tbl">sales_data</span> <span class="kw">GROUP BY</span> <span class="col">region</span>, <span class="col">store</span>
+
+<span class="kw">UNION ALL</span>
+
+<span class="cm">-- Query 2: Sales by region only</span>
+<span class="kw">SELECT</span> <span class="col">region</span>, <span class="kw">NULL</span>, <span class="fn">SUM</span>(<span class="col">sales</span>) <span class="kw">FROM</span> <span class="tbl">sales_data</span> <span class="kw">GROUP BY</span> <span class="col">region</span>
+
+<span class="kw">UNION ALL</span>
+
+<span class="cm">-- Query 3: Grand total</span>
+<span class="kw">SELECT</span> <span class="kw">NULL</span>, <span class="kw">NULL</span>, <span class="fn">SUM</span>(<span class="col">sales</span>) <span class="kw">FROM</span> <span class="tbl">sales_data</span>;</pre>
+  <div class="two-col" style="margin-top:4px;">
+    <div class="warn">
+      <strong style="color:#f59e0b;">Problems with this approach:</strong>
+      <ul style="margin-top:6px;font-size:0.9rem;">
+        <li>Must write and maintain N separate queries</li>
+        <li>Manually insert NULL placeholders for alignment</li>
+        <li>One missing query breaks the entire report</li>
+        <li>Performance hit from scanning the table N times</li>
+      </ul>
+    </div>
+    <div class="hl">
+      <strong style="color:#38bdf8;">The SQL solution:</strong>
+      <p style="margin-top:6px;font-size:0.9rem;">ROLLUP, CUBE, and GROUPING SETS are extensions of GROUP BY that generate all these levels <strong>in a single query, in a single table scan</strong>. SQL produces the NULL values automatically — no manual placeholder insertion needed.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: ROLLUP -->
+<div class="slide">
+  <h2><span class="op-badge rollup">ROLLUP</span> — Hierarchical Subtotals</h2>
+  <p style="margin-bottom:8px;">ROLLUP creates a <strong>hierarchy of subtotals</strong> rolling from most detailed → grand total. For n columns → <strong>n+1 grouping levels</strong>.</p>
+  <div class="two-col">
+    <div>
+      <pre><span class="kw">GROUP BY ROLLUP</span>(<span class="col">region</span>, <span class="col">state</span>, <span class="col">city</span>)
+
+<span class="cm">-- 3 columns → 3+1 = 4 levels:</span>
+<span class="cm">-- Level 1: (region, state, city)  ← most detailed</span>
+<span class="cm">-- Level 2: (region, state)        ← state subtotal</span>
+<span class="cm">-- Level 3: (region)               ← region subtotal</span>
+<span class="cm">-- Level 4: ()                     ← grand total</span>
+
+<span class="cm">-- ROLLUP always rolls up right-to-left.</span>
+<span class="cm">-- Column order defines the hierarchy.</span></pre>
+      <div class="hl" style="margin-top:10px;font-size:0.9rem;">
+        <strong style="color:#38bdf8;">Key tip:</strong> NULL in the output = subtotal or grand total. NULL is <em>not</em> missing data — its position tells you the aggregation level.
+      </div>
+    </div>
+    <div>
+      <p style="font-size:0.85rem;color:#8b949e;margin-bottom:6px;">Example output for ROLLUP(region, state, city):</p>
+      <table>
+        <tr><th>region</th><th>state</th><th>city</th><th>total_sales</th></tr>
+        <tr><td>East</td><td>New York</td><td>NYC</td><td>320,000</td></tr>
+        <tr><td>East</td><td>New York</td><td class="null-val">NULL</td><td>450,000 ← state subtotal</td></tr>
+        <tr><td>East</td><td class="null-val">NULL</td><td class="null-val">NULL</td><td>850,000 ← region subtotal</td></tr>
+        <tr><td class="null-val">NULL</td><td class="null-val">NULL</td><td class="null-val">NULL</td><td>2,500,000 ← grand total</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: CUBE -->
+<div class="slide">
+  <h2><span class="op-badge cube">CUBE</span> — All Possible Combinations</h2>
+  <p style="margin-bottom:8px;">CUBE generates <strong>every possible subset</strong> of groupings. For n columns → <strong>2ⁿ grouping combinations</strong>.</p>
+  <div class="two-col">
+    <div>
+      <pre><span class="kw">GROUP BY CUBE</span>(<span class="col">region</span>, <span class="col">state</span>, <span class="col">city</span>)
+
+<span class="cm">-- 3 columns → 2³ = 8 combinations:</span></pre>
+      <table style="margin-top:6px;">
+        <tr><th>#</th><th>Grouping</th><th>Description</th></tr>
+        <tr><td>1</td><td>(region, state, city)</td><td>Full detail</td></tr>
+        <tr><td>2</td><td>(region, state)</td><td>Region + state</td></tr>
+        <tr><td>3</td><td>(region, city)</td><td>Region + city</td></tr>
+        <tr><td>4</td><td>(region)</td><td>Region only</td></tr>
+        <tr><td>5</td><td>(state, city)</td><td>State + city</td></tr>
+        <tr><td>6</td><td>(state)</td><td>State only (cross-region!)</td></tr>
+        <tr><td>7</td><td>(city)</td><td>City only (cross-region!)</td></tr>
+        <tr><td>8</td><td>()</td><td>Grand total</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="warn" style="margin-bottom:10px;">
+        <strong style="color:#f59e0b;">Caution — exponential growth:</strong>
+        <ul style="margin-top:6px;font-size:0.9rem;">
+          <li>3 columns → 8 groupings</li>
+          <li>4 columns → 16 groupings</li>
+          <li>5 columns → 32 groupings</li>
+          <li>Use CUBE judiciously on large datasets</li>
+        </ul>
+      </div>
+      <div class="hl">
+        <strong style="color:#38bdf8;">ROLLUP vs CUBE:</strong>
+        <p style="margin-top:6px;font-size:0.9rem;">ROLLUP produces 4 of the 8 combinations. CUBE adds 4 extra including "state totals across ALL regions" and "city totals across ALL regions" — cross-dimensional views ROLLUP cannot produce.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: GROUPING SETS -->
+<div class="slide">
+  <h2><span class="op-badge gsets">GROUPING SETS</span> — Precisely What You Need</h2>
+  <p style="margin-bottom:8px;">GROUPING SETS lets you define <strong>exactly which combinations</strong> to compute — the most efficient and explicit option.</p>
+  <div class="two-col">
+    <div>
+      <p style="margin-bottom:6px;font-weight:600;">Finance team needs exactly 3 levels (not all of CUBE's 8):</p>
+      <pre><span class="kw">SELECT</span>
+    <span class="col">region</span>,
+    <span class="col">store</span>,
+    <span class="fn">SUM</span>(<span class="col">sales_amount</span>) <span class="kw">AS</span> <span class="col">total_sales</span>
+<span class="kw">FROM</span> <span class="tbl">sales_data</span>
+<span class="kw">GROUP BY GROUPING SETS</span> (
+    (<span class="col">region</span>, <span class="col">store</span>),  <span class="cm">-- ① detailed: region+store</span>
+    (<span class="col">region</span>),          <span class="cm">-- ② regional summary</span>
+    ()                  <span class="cm">-- ③ grand total</span>
+    <span class="cm">-- ✗ no store-only rows (Finance doesn't need)</span>
+)
+<span class="kw">ORDER BY</span> <span class="col">region</span>, <span class="col">store</span>;</pre>
+    </div>
+    <div>
+      <p style="font-size:0.85rem;color:#8b949e;margin-bottom:6px;">Output (no store-across-regions row):</p>
+      <table>
+        <tr><th>region</th><th>store</th><th>total_sales</th></tr>
+        <tr><td>Central</td><td>Chicago</td><td>180,000</td></tr>
+        <tr><td>Central</td><td>Dallas</td><td>200,000</td></tr>
+        <tr><td>Central</td><td class="null-val">NULL</td><td>380,000 ← region total</td></tr>
+        <tr><td>East</td><td>New York</td><td>225,000</td></tr>
+        <tr><td>East</td><td class="null-val">NULL</td><td>350,000 ← region total</td></tr>
+        <tr><td class="null-val">NULL</td><td class="null-val">NULL</td><td>1,250,000 ← grand total</td></tr>
+      </table>
+      <div class="hl" style="margin-top:8px;font-size:0.88rem;">
+        <strong style="color:#38bdf8;">Notice what's missing:</strong> No rows with region=NULL and a store value — Finance didn't ask for store totals across all regions, so GROUPING SETS excludes them.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: LIVE DEMO -->
+<div class="slide">
+  <h2>Live Demo — All Three Operators on GlobalMart Data</h2>
+  <pre><span class="cm">-- Run each block separately and compare row counts</span>
+
+<span class="cm">-- ROLLUP: 4 levels (region+state detail, region subtotal, grand)</span>
+<span class="kw">SELECT</span> <span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>, <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="col">t</span>.<span class="col">sales_amount</span>),2) <span class="kw">AS</span> <span class="col">total_sales</span>
+<span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="col">t</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="col">o</span>     <span class="kw">ON</span> <span class="col">t</span>.<span class="col">order_id</span>   = <span class="col">o</span>.<span class="col">order_id</span>   <span class="kw">AND</span> <span class="col">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="col">c</span> <span class="kw">ON</span> <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_locations</span> <span class="col">l</span> <span class="kw">ON</span> <span class="col">c</span>.<span class="col">postal_code</span> = <span class="col">l</span>.<span class="col">postal_code</span>
+<span class="kw">GROUP BY ROLLUP</span>(<span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>) <span class="kw">ORDER BY</span> <span class="col">l</span>.<span class="col">region</span>, <span class="col">l</span>.<span class="col">state</span>;
+
+<span class="cm">-- CUBE: change just one word → observe extra rows where region=NULL, state=value</span>
+<span class="cm">-- GROUP BY CUBE(l.region, l.state)</span>
+
+<span class="cm">-- GROUPING SETS: custom — only region+state and grand total</span>
+<span class="cm">-- GROUP BY GROUPING SETS ((l.region, l.state), ())</span></pre>
+  <div class="two-col" style="margin-top:4px;">
+    <div class="hl">
+      <strong style="color:#38bdf8;">What to observe:</strong>
+      <ul style="margin-top:6px;font-size:0.9rem;">
+        <li>ROLLUP: rows with state=NULL → region totals. Final NULL,NULL row → grand total</li>
+        <li>CUBE: additional rows with region=NULL, state set → state totals nationally</li>
+        <li>GROUPING SETS: only exactly the rows you specified</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: QUIZ 1 -->
+<div class="slide">
+  <h2>Quiz 1 — Choose the Right Operator</h2>
+  <div class="hl" style="margin-bottom:14px;">
+    <p><strong style="color:#38bdf8;">Scenario:</strong> A retail company needs a hierarchical sales report showing sales by region, then by state within each region, then by city within each state — with subtotals at each level and a grand total.</p>
+  </div>
+  <div class="quiz-box">
+    <p>Which aggregation operator should be used?</p>
+    <div class="quiz-options">
+      <div class="opt">A — GROUPING SETS</div>
+      <div class="opt">B — CUBE</div>
+      <div class="opt">C — UNION ALL</div>
+      <div class="opt">D — ROLLUP</div>
+    </div>
+    <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none';">Reveal Answer</button>
+    <div class="quiz-answer">
+      <p><strong>D — ROLLUP.</strong><br><br>
+      ROLLUP is designed for hierarchical aggregations. <code>ROLLUP(region, state, city)</code> generates exactly 4 levels: (region, state, city) → (region, state) → (region) → () grand total — the standard drill-down hierarchy the report requires.<br><br>
+      CUBE produces 8 combinations including cross-regional totals the report doesn't need. GROUPING SETS requires explicit specification of each level. UNION ALL needs 4 separate queries.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: QUIZ 2 -->
+<div class="slide">
+  <h2>Quiz 2 — True Statements about GROUPING SETS</h2>
+  <div class="quiz-box">
+    <p>Which of the following statements about GROUPING SETS are TRUE? (Select 2)</p>
+    <div class="quiz-options">
+      <div class="opt">A — It is more efficient than CUBE when you need specific groupings</div>
+      <div class="opt">B — It allows you to specify exactly which groupings you need</div>
+      <div class="opt">C — It can only be used with two columns maximum</div>
+      <div class="opt">D — It generates all possible combinations automatically</div>
+    </div>
+    <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none';">Reveal Answer</button>
+    <div class="quiz-answer">
+      <p><strong>A and B are TRUE.</strong><br><br>
+      ✓ <strong>A:</strong> GROUPING SETS computes only the groupings you specify, making it more efficient than CUBE which computes 2ⁿ combinations — many of which you may not need.<br><br>
+      ✓ <strong>B:</strong> You explicitly list each grouping set — precise control over the report output.<br><br>
+      ✗ <strong>C:</strong> False — GROUPING SETS works with any number of columns.<br>
+      ✗ <strong>D:</strong> False — automatic combination generation is CUBE's behavior, not GROUPING SETS.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: QUIZ 3 + SUMMARY -->
+<div class="slide">
+  <h2>Quiz 3 — Reading NULL Values</h2>
+  <div class="quiz-box" style="margin-bottom:14px;">
+    <p>In a ROLLUP output with columns (region, state, city), you see a row where region = 'East', state = NULL, city = NULL. What does this row represent?</p>
+    <div class="quiz-options">
+      <div class="opt">A — Grand total row for all regions</div>
+      <div class="opt">B — The query has an error and should be fixed</div>
+      <div class="opt">C — The state and city data is missing from the database</div>
+      <div class="opt">D — Subtotal for the East region (all states and cities combined)</div>
+    </div>
+    <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none';">Reveal Answer</button>
+    <div class="quiz-answer">
+      <p><strong>D — Subtotal for the East region.</strong><br><br>
+      In ROLLUP output, NULL means "aggregated across all values" — NOT missing data. When region='East', state=NULL, city=NULL → this is the <strong>East region subtotal</strong> (all states + cities within East combined). The grand total would have NULL in <em>all three</em> columns.</p>
+    </div>
+  </div>
+  <table>
+    <tr><th>Feature</th><th><span class="op-badge rollup">ROLLUP</span></th><th><span class="op-badge cube">CUBE</span></th><th><span class="op-badge gsets">GROUPING SETS</span></th></tr>
+    <tr><td>Groupings produced</td><td>n+1 (hierarchical)</td><td>2ⁿ (all subsets)</td><td>Your specification</td></tr>
+    <tr><td>Use case</td><td>Hierarchical drill-down</td><td>Exploratory analysis</td><td>Custom fixed report</td></tr>
+    <tr><td>Performance</td><td>Moderate</td><td>Most expensive</td><td>Most efficient</td></tr>
+    <tr><td>Grand total?</td><td>Always included</td><td>Always included</td><td>Only if you add ()</td></tr>
+  </table>
+</div>
+
+</div><!-- end .deck -->
+<div class="nav">
+  <button onclick="changeSlide(-1)">&#8592;</button>
+  <span class="counter" id="counter">1 / 9</span>
+  <button onclick="changeSlide(1)">&#8594;</button>
+</div>
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  function changeSlide(dir) {
+    slides[current].classList.remove('active');
+    current = (current + dir + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

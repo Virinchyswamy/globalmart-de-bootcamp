@@ -1,0 +1,473 @@
+# Designing a Customer Loyalty Program for Globalmart using SQL
+## Content Type
+Scenario
+
+## Overview
+![Image-ChatGPT-Image-Nov-28,-2025,-08_59_16-AM.png](https://cdn.enqurious.com/images/36efbdd7-f9f8-4576-a2cd-8b2b6f4d2242_ChatGPT-Image-Nov-28,-2025,-08_59_16-AM.webp)**GlobalMart** has plenty of customer data, but it’s scattered across **customers, orders, transactions, and returns**, making it hard to see how each customer really behaves. You will be **wearing the hat of a Data Analyst** and building the **SQL backbone** of a **customer loyalty program** from scratch. 
+You will :
+ - Join multi-table data into a clean **customer-level summary** using **INNER/LEFT JOINs**, **GROUP BY**, **WHERE vs HAVING**, and **CTEs** to manage complex logic. 
+- Compute loyalty-ready metrics like **total orders**, **total returns**, **average basket size**, **average basket value**, **length of stay**, and **purchase frequency**. 
+
+By the end, you’ll have a working **customer profile query** that a marketing team could plug directly into real-world **loyalty campaigns**, **retention initiatives**, and **high-value customer analysis**, exactly the kind of **SQL work** analysts are trusted to deliver on the job.
+
+![Video](https://cdn.enqurious.com/videos/40e71575-7544-4ddf-80a6-37a780507cbe_Intro.mp4)
+
+## Learning Objectives
+- Design customer loyalty segments using real purchase behaviour and returns data.
+- Calculate industry-relevant metrics like basket value, basket size, length of stay, and purchase frequency.
+- Apply production-style SQL patterns (CTEs, filtered joins, DISTINCT counts) to power loyalty program analytics.
+- Segment customers based on their Recency, Frequency, and Monetary (RFM) behaviour to enable targeted loyalty actions.
+- Build a customer-level summary table by joining customers, orders, transactions, and returns using SQL.
+
+## Prerequisites
+- Familiarity with writing basic SQL SELECT statements to query data from a single table.
+- Understanding of what a database, a table, a row, and a column represent in a relational system.
+- Knowledge of common aggregate functions like SUM, COUNT, and MIN/MAX for simple data summarization.
+- Understanding the purpose of the GROUP BY clause for grouping results based on one or more columns.
+- Familiarity with date data types and how to use basic date-time functions in SQL
+
+## Duration of Completion
+60 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- approach (skill)
+- sql (tool)
+
+#### Overview
+![Image-ChatGPT-Image-Nov-28,-2025,-08_59_16-AM.png](https://cdn.enqurious.com/images/36efbdd7-f9f8-4576-a2cd-8b2b6f4d2242_ChatGPT-Image-Nov-28,-2025,-08_59_16-AM.webp)**GlobalMart** has plenty of customer data, but it’s scattered across **customers, orders, transactions, and returns**, making it hard to see how each customer really behaves. You will be **wearing the hat of a Data Analyst** and building the **SQL backbone** of a **customer loyalty program** from scratch. 
+You will :
+ - Join multi-table data into a clean **customer-level summary** using **INNER/LEFT JOINs**, **GROUP BY**, **WHERE vs HAVING**, and **CTEs** to manage complex logic. 
+- Compute loyalty-ready metrics like **total orders**, **total returns**, **average basket size**, **average basket value**, **length of stay**, and **purchase frequency**. 
+
+By the end, you’ll have a working **customer profile query** that a marketing team could plug directly into real-world **loyalty campaigns**, **retention initiatives**, and **high-value customer analysis**, exactly the kind of **SQL work** analysts are trusted to deliver on the job.
+
+![Video](https://cdn.enqurious.com/videos/40e71575-7544-4ddf-80a6-37a780507cbe_Intro.mp4)
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- approach (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+**GlobalMart is scaling fast, but they are facing a critical challenge:** they have thousands of customers, but they don't truly *know* them. To drive sustainable growth, GlobalMart needs to stop treating every customer the same and start rewarding their best buyers.
+
+**The Mission:** You have been brought in as a Data Analyst to build the data foundation for GlobalMart’s first-ever **Customer Loyalty Program**. Your goal is to transform raw, scattered transactional data into a sophisticated scoring engine that categorizes customers into three actionable segments:
+
+- **Promoters:** Your most loyal, high-value advocates.
+- **Potentials:** Occasional buyers with room to grow.
+- **Detractors:** At-risk customers who need immediate attention.
+
+Before you dive into the SQL tables, it is crucial to understand the *business logic* driving this analysis. Watch this short briefing from the Lead Analyst to understand **what Customer Segmentation is** and why a **Loyalty Program** is the key to GlobalMart's future.
+
+**Tags**
+
+
+##### Input 2
+**Type:** Video
+
+**Tags**
+
+
+##### Input 3
+**Type:** Short Answer
+
+**Question:** You have just seen the business case for segmentation and learned the three target groups: **Promoters, Potentials, and Detractors**.
+
+Imagine you are presenting your findings to the GlobalMart Marketing team. They have a limited budget and need specific, actionable recommendations for each segment.
+
+Your task is to outline a marketing strategy for all three groups, ensuring you balance two critical factors: **Customer Sentiment** (making the customer feel valued) and **Company Profit** (maximizing returns and controlling costs).
+
+**Template:**  
+
+**Solution:** 
+| **Customer Segment** | **Core Business Goal** | **Recommended Marketing Tactic** | **Rationale (Why this Tactic works)** |
+| --- | --- | --- | --- |
+| **Promoters** | **Retention & Advocacy** (Keep them loyal; encourage referrals.) | **Exclusive VIP Rewards** or **Early Product Access**. | They are already buying; deep discounts (coupons) erode profit unnecessarily. Rewards of *status* and *exclusivity* make them feel valued without cutting margins, encouraging long-term loyalty and word-of-mouth promotion. |
+| **Potentials** | **Frequency & Growth** (Nudge them to buy more often.) | **Intermediate Cashbacks** or **Targeted Coupons** (e.g., "$10 off your next $50 purchase"). | They are the most receptive to monetary incentives. A targeted coupon or cashback encourages them to make their next purchase sooner, driving up purchase frequency and average annual spend. |
+| **Detractors** | **Recovery & Feedback** (Identify issues; prevent negative reviews.) | **Post-Purchase Feedback Survey** or a **Personalized Service Check-in** (No sales pitch). | Sending coupons to an unhappy or inactive customer wastes money and can feel spammy. The goal is relationship recovery. Asking for feedback shows the company cares and helps identify systemic issues that prevent future churn. |
+
+**Tags**
+
+
+##### Input 4
+**Type:** Text
+
+>[!NOTE] 
+Open SQL Server Management Studio and Connect to the Server using below credentials
+
+**Server name** : mentorskool.database.windows.net
+**Username** : mskllearnlogin
+**Password** : !@#sw2aq1
+
+>[!IMPORTANT] 
+> Keep Authentication to SQL Server Authentication
+
+Once connection is established, select database as **mskl-masterclass** database
+![Image-image.png](https://cdn.enqurious.com/images/c8d55c08-a034-4fcd-8f15-fa41b558548d_image.webp)
+Tables to use:
+**ex_customers, ex_orders, ex_transactions** and **ex_returns.**
+
+>[!IMPORTANT] 
+> To access data dictionary click on the attachments logo on the bottom right corner. 
+
+![Image-image.png](https://cdn.enqurious.com/images/9536f521-e137-4d5e-b624-8acc3eca91aa_image.webp)
+
+**Tags**
+
+
+##### Input 5
+**Type:** Code
+
+**Question:** Your task is to create a summary table at a **customer level** which looks like below:
+
+| customer\_name | tot\_orders | tot\_returns | order\_value | avg\_basket\_size | avg\_basket\_value | length\_of\_stay\_days | order\_purchase\_frequency | recency\_days | recency\_segment | frequency\_segment | monetary\_segment |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Smith Johnson | 120 | 10 | $15000 | 8 | $500 | 280 | 14 | 10 | High | High | High |
+
+> This table is only for representation purpose, these values are not taken from the acutal table
+
+Description:
+
+- **customer_name :** Name of the customer
+    
+- **tot_orders :** Number of orders placed
+    
+- **tot_returns :** Number of orders returned
+    
+- **total_order_value :** Value of orders placed (worth of orders in monetary sense)
+    
+- **avg_basket_size :** Total units across all baskets / Total baskets (Read orders when you read basket). Output rounded off to lower integer
+    
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/c5abdcc2-83a4-4eb4-b721-2fe69d35d39c_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+
+- **avg_basket_value :** (Total value of orders / Total orders placed)
+    
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/4fc09b12-fb23-4de5-8ed8-8a095834c7b5_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+- **length_of_stay_days :** Total time for which the customer is active in the system (In integral days)
+
+- **order_purchase_frequency :** On an average, how many days taken to place a new order? (Rounded off to nearest integral day)
+
+>[!TIP] 
+> We should take only those orders into consideration that are delivered. So think what should be done to keep only those order in our analysis.
+
+- **recency\_days** : Number of days since the customer’s **last delivered order** as of a fixed analysis date.
+
+> For this project, use **2018-09-01** as the fixed reference date for all recency calculations (treat it as “today”).
+
+> [!NOTE]
+> The marketing or analytics team will agree on certain business rules to decide what “High”, “Medium”, or “Low” means for customer behaviour.
+
+For GlobalMart, we will use the following **business parameters (thresholds)** to classify customers on **Recency, Frequency, and Monetary** value.
+
+- **recency\_segment** : Recency band based on `recency_days` using the following thresholds:
+
+    - **High (High / Recent)** → `recency_days <= 18`
+    - **Medium (Medium)** → `19 <= recency_days <= 31`
+    - **Low (Low / Stale)** → `recency_days >= 32`
+
+    Example:  
+If `recency_days = 10`, the segment will be **High** (very recent customer).
+
+* * *
+
+- **frequency\_segment** : Frequency band based on `order_purchase_frequency`.
+
+`order_purchase_frequency` = average days between orders for that customer.  
+- Lower value = buys more frequently.
+
+    Use these thresholds:
+
+    - **High  (High Frequency)** → `order_purchase_frequency <= 30`
+    - **Medium (Medium Frequency)** → `31 <= order_purchase_frequency <= 38`
+    - **Low (Low Frequency)** → `order_purchase_frequency > 38`
+
+    Example:  
+If `order_purchase_frequency = 14`, the segment will be **High** (buys very frequently).
+
+* * *
+
+- **monetary\_segment** : Monetary band based on `order_value` (total spend per customer from delivered orders).
+
+    Use these thresholds:
+
+    - **High  (High Spend)** → `order_value > 6900`
+    - **Medium (Medium Spend)** → `4300 <= order_value <= 6900`
+    - **Low (Low Spend)** → `order_value < 4300`
+
+    Example:  
+If `order_value = 15000`, the segment will be **High** (high-value customer).
+
+Copy paste your SQL code which produced the desired report
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+## Understanding the Problem
+
+GlobalMart wants to launch a loyalty program and must classify customers based on their purchase behavior.  
+To do this, you need to build a **customer-level summary table** that captures key behavioural metrics:
+
+- Total orders
+- Total returns
+- Value of purchases
+- Average basket size
+- Average basket value
+- Length of stay
+- Purchase frequency
+- Recency (days since last purchase)
+- Recency / Frequency / Monetary segments (R, F, M bands)
+
+Multiple tables must be combined:
+
+- `ex_customers`
+- `ex_orders`
+- `ex_transactions`
+- `ex_returns`
+
+The final output should reflect **one row per customer** with all derived metrics and RFM segments that can be directly used for a **loyalty / segmentation engine**.
+
+* * *
+
+### Step 1: Identify the Required Metrics and Their Inputs
+
+| Metric | Input Tables | Logic |
+| --- | --- | --- |
+| `tot_orders` | `ex_orders` | Count distinct orders |
+| `tot_returns` | `ex_returns` | Count returned orders |
+| `order_value` | `ex_transactions` | Sum of `sales_amount` |
+| `avg_basket_size` | `ex_transactions` + orders | Total quantity / total orders |
+| `avg_basket_value` | `ex_transactions` + orders | Total sales / total orders |
+| `length_of_stay_days` | `ex_orders` | Difference between first and last purchase date |
+| `order_purchase_frequency` | derived | `length_of_stay_days / tot_orders` (days/order) |
+| `recency_days` | `ex_orders` | Days since last purchase as of `2018-09-01` |
+| `recency_segment` | derived | Bucket based on `recency_days` |
+| `frequency_segment` | derived | Bucket based on `order_purchase_frequency` |
+| `monetary_segment` | derived | Bucket based on `order_value` |
+
+* * *
+
+### Step 2: Join the Tables Correctly
+
+To compute all metrics:
+
+- Customers join with Orders via `customer_id`.
+- Orders join with Transactions via `order_id`.
+- Orders **LEFT JOIN** with Returns to count returned orders.
+- Filter to only **delivered orders** in the orders join.
+
+This ensures:
+
+- Only valid, delivered orders are considered for all metrics.
+- Returned orders are counted even if some orders have no returns.
+
+* * *
+
+## Logic Behind Each Metric
+
+1. **Total Orders (`tot_orders`)**  
+Count distinct `order_id` from `ex_orders` (only where status = 'delivered').
+2. **Total Returns (`tot_returns`)**  
+Count distinct `order_id` from `ex_returns` (left-joined to orders).
+3. **Total Order Value (`order_value`)**  
+Sum of `sales_amount` from `ex_transactions`.
+4. **Average Basket Size (`avg_basket_size`)**
+
+    - Formula:
+
+> 
+> Total units purchased / total orders
+    - Use `FLOOR()` to round **down** to the nearest lower integer.
+5. **Average Basket Value (`avg_basket_value`)**
+
+    - Formula:
+
+> 
+> Total order value / total orders
+    - Format as currency: `'$ ' + value`.
+6. **Length of Stay (days) – `length_of_stay_days`**
+
+    - Difference between **first** and **last** order dates using:
+
+> 
+> `DATEDIFF(day, MIN(order_purchase_date), MAX(order_purchase_date))`.
+7. **Order Purchase Frequency – `order_purchase_frequency`**
+
+    - Formula:
+
+> 
+> `length_of_stay_days / tot_orders`
+    - Interpreted as **average days between two orders**.
+8. **Recency (days) – `recency_days`**
+
+    - For this project, treat **`2018-09-01`** as the analysis / “today” date.
+    - Recency is defined as:
+
+> 
+> Number of days since the customer’s **last delivered order** as of `2018-09-01`.
+    - Implemented as:
+
+> 
+> `DATEDIFF(day, MAX(order_purchase_date), '2018-09-01')`
+    - Lower `recency_days` = more recent / active customer.
+9. **Recency Segment – `recency_segment`**  
+These are **business parameters** to separate customers into Recency bands based on `recency_days`:
+
+    - **High (High / Recent)** → `recency_days <= 18`
+    - **Medium (Medium)** → `19 <= recency_days <= 31`
+    - **Low (Low / Stale)** → `recency_days >= 32`
+
+    Example: if `recency_days = 10`, the segment is `High`.
+10. **Frequency Segment – `frequency_segment`**  
+Based on `order_purchase_frequency` (average days between orders):
+
+    - **High (High Frequency)** → `order_purchase_frequency <= 30`
+    - **Medium (Medium Frequency)** → `31 <= order_purchase_frequency <= 38`
+    - **Low (Low Frequency)** → `order_purchase_frequency > 38`
+
+    Lower value = more frequent buyer.  
+Example: if `order_purchase_frequency = 14`, the segment is `High`.
+11. **Monetary Segment – `monetary_segment`**  
+Based on total spend `order_value`:
+
+    - **High (High Spend)** → `order_value > 6900`
+    - **Medium (Medium Spend)** → `4300 <= order_value <= 6900`
+    - **Low (Low Spend)** → `order_value < 4300`
+
+    Example: if `order_value = 15000`, the segment is `High`.
+
+* * *
+
+## Final Working Solution (SSMS)
+
+```sql
+WITH customer_base AS (
+    SELECT 
+        c.customer_id,
+        c.customer_name,
+        
+        COUNT(DISTINCT o.order_id) AS tot_orders,
+        COUNT(DISTINCT r.order_id) AS tot_returns,
+        
+        SUM(t.sales_amount) AS order_value,
+        
+        FLOOR(SUM(t.quantity) / COUNT(DISTINCT o.order_id)) AS avg_basket_size,
+        
+        CONCAT('$ ', ROUND(SUM(t.sales_amount) / COUNT(DISTINCT o.order_id), 2)) 
+            AS avg_basket_value,
+        
+        DATEDIFF(day, MIN(o.order_purchase_date), MAX(o.order_purchase_date)) 
+            AS length_of_stay_days,
+
+        DATEDIFF(day, MIN(o.order_purchase_date), MAX(o.order_purchase_date)) 
+            / COUNT(DISTINCT o.order_id) 
+            AS order_purchase_frequency,
+
+        -- Recency: days since last delivered order as of 2018-09-01
+        DATEDIFF(day, MAX(o.order_purchase_date), '2018-09-01') 
+            AS recency_days
+    FROM ex_customers c
+    JOIN ex_orders o 
+        ON o.customer_id = c.customer_id
+       AND o.order_status = 'delivered'     
+    JOIN ex_transactions t 
+        ON t.order_id = o.order_id
+    LEFT JOIN ex_returns r
+        ON r.order_id = o.order_id
+    GROUP BY 
+        c.customer_id, 
+        c.customer_name
+)
+
+SELECT
+    customer_id,
+    customer_name,
+    tot_orders,
+    tot_returns,
+    order_value,
+    avg_basket_size,
+    avg_basket_value,
+    length_of_stay_days,
+    order_purchase_frequency,
+    recency_days,
+
+    -- Recency segment (R)
+    CASE 
+        WHEN recency_days <= 18 THEN 'High'
+        WHEN recency_days BETWEEN 19 AND 31 THEN 'Medium'
+        ELSE 'Low'
+    END AS recency_segment,
+
+    -- Frequency segment (F) - average days between orders
+    CASE 
+        WHEN order_purchase_frequency <= 30 THEN 'High'
+        WHEN order_purchase_frequency BETWEEN 31 AND 38 THEN 'Medium'
+        ELSE 'Low'
+    END AS frequency_segment,
+
+    -- Monetary segment (M) - total spend
+    CASE 
+        WHEN order_value > 6900 THEN 'High'
+        WHEN order_value BETWEEN 4300 AND 6900 THEN 'Medium'
+        ELSE 'Low'
+    END AS monetary_segment
+
+FROM customer_base;
+
+
+```
+
+## Common Mistakes
+
+1. **Not using DISTINCT for counting orders or returns**  
+`ex_transactions` has multiple rows per order, so ignoring `DISTINCT` inflates counts.
+2. **Using `SUM(quantity) / SUM(order_id)`**  
+Incorrect because `order_id` is not numeric and does not represent a count.
+3. **Not using `FLOOR()` for `avg_basket_size`**  
+The requirement clearly states: round down to the lower integer.
+4. **Joining returns with `INNER JOIN`**  
+This removes customers who have **no returns**. Use `LEFT JOIN` instead.
+5. **Using `DATEDIFF` in the wrong order**  
+`DATEDIFF(max, min)` is incorrect. Always:  
+`DATEDIFF(day, min_date, max_date)`.
+6. **Formatting currency incorrectly**  
+The requirement expects `'$ ' + value` format for `avg_basket_value`.
+7. **Calculating `length_of_stay_days` using `COUNT` instead of date difference**  
+Must use `MIN` and `MAX` order dates, not the number of rows.
+8. **Not adding the `order_status = 'delivered'` filter in the orders join**  
+Missing this will include cancelled or invalid orders and distort all metrics.
+9. **Computing Recency using `GETDATE()` instead of the fixed analysis date**  
+For consistent evaluation, recency must use `'2018-09-01'` as the reference date.
+10. **Using thresholds different from the agreed business parameters**  
+R, F, and M segments must use the specified cut-offs so that customer groups are comparable and aligned with the business rules.
+
+**Tags**
+- data-wrangling / group (skill)
+- data-wrangling / text-processing (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / join (skill)
+- data-wrangling / filter (skill)
+- data-wrangling / math-calculations (skill)
+- data-wrangling / derived-column (skill)
+- data-wrangling / date-processing (skill)

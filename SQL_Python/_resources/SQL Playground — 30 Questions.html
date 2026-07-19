@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Playground — 30 Questions · Chennai Batch</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--pk:#f472b6;--pk2:#fbcfe8;--a:#38bdf8;--g:#22c55e;--y:#f59e0b;--p:#a78bfa;--text:#e6edf3;--muted:#8b949e}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{position:sticky;top:0;z-index:100;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.htitle{display:flex;align-items:center;gap:10px}
+.hbadge{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--pk);text-transform:uppercase}
+.htxt{font-size:.85rem;color:var(--muted)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.fb{border:1px solid var(--border);background:var(--bg2);color:var(--muted);padding:5px 14px;border-radius:100px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.5px;transition:all .15s}
+.fb.active,.fb:hover{color:#000}
+.fb[data-f="all"].active,.fb[data-f="all"]:hover{background:var(--pk);border-color:var(--pk);color:#000}
+.fb[data-f="tech"].active,.fb[data-f="tech"]:hover{background:var(--a);border-color:var(--a);color:#000}
+.fb[data-f="riddle"].active,.fb[data-f="riddle"]:hover{background:var(--p);border-color:var(--p);color:#000}
+.fb[data-f="joke"].active,.fb[data-f="joke"]:hover{background:var(--y);border-color:var(--y);color:#000}
+.score-badge{font-size:.78rem;color:var(--muted);border:1px solid var(--border);background:var(--bg2);padding:5px 14px;border-radius:100px;white-space:nowrap}
+.score-badge span{color:var(--pk);font-weight:700}
+main{padding:24px 28px 60px;max-width:1300px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(370px,1fr));gap:16px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s}
+.card:hover{border-color:#30363d}
+.card[data-type="tech"]{border-top:3px solid var(--a)}
+.card[data-type="riddle"]{border-top:3px solid var(--p)}
+.card[data-type="joke"]{border-top:3px solid var(--y)}
+.card.hidden-card{display:none}
+.card-head{padding:13px 15px 10px;display:flex;align-items:center;gap:8px}
+.qnum{font-size:.68rem;font-weight:800;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:100px;padding:2px 9px;letter-spacing:.5px}
+.type-tag{font-size:.65rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;border-radius:100px;padding:2px 9px;border:1px solid}
+.tech-tag{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3);color:var(--a)}
+.riddle-tag{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.3);color:var(--p)}
+.joke-tag{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--y)}
+.card-body{padding:0 15px 15px;flex:1;display:flex;flex-direction:column;gap:10px}
+.q-text{font-size:.85rem;color:#c9d1d9;line-height:1.7}
+.q-text strong{color:var(--text);font-weight:700}
+pre{background:#090d1a;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:.7rem;line-height:1.8;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.76rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a)}
+.kw{color:#ff7b72;font-weight:700}
+.fn{color:#d2a8ff}
+.str{color:#a5d6ff}
+.cm{color:#6e7681;font-style:italic}
+.col{color:#79c0ff}
+.tbl{color:#ffa657}
+.options{display:flex;flex-direction:column;gap:5px}
+.opt{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:all .15s;font-size:.8rem;color:#c9d1d9;background:transparent}
+.opt:hover{background:rgba(255,255,255,.03);border-color:#30363d}
+.opt.correct{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.4);color:var(--g)}
+.opt.wrong{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25);color:#f87171}
+.opt.disabled{pointer-events:none}
+.opt-key{font-weight:700;font-size:.72rem;color:var(--muted);min-width:16px;margin-top:1px}
+.opt.correct .opt-key{color:var(--g)}
+.opt.wrong .opt-key{color:#f87171}
+.reveal-btn{background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.3);color:var(--pk);padding:7px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700;transition:all .15s;width:100%;text-align:center}
+.reveal-btn:hover{background:rgba(244,114,182,.18);border-color:var(--pk)}
+.answer-box{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.25);border-radius:10px;padding:10px 13px;display:none;animation:fadeIn .2s}
+.answer-box.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.ans-label{font-size:.65rem;font-weight:800;letter-spacing:1.5px;color:var(--g);text-transform:uppercase;margin-bottom:4px}
+.ans-text{font-size:.82rem;color:#c9d1d9;line-height:1.7}
+.ans-text strong{color:var(--text)}
+.divider{border:none;border-top:1px solid var(--border);margin:6px 0}
+.note{font-size:.72rem;color:var(--muted);font-style:italic}
+.empty-state{text-align:center;padding:80px 20px;color:var(--muted);font-size:.9rem;display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="htitle">
+    <span class="hbadge">Chennai Batch 2026</span>
+    <span class="htxt">SQL Playground — 30 Questions</span>
+  </div>
+  <div class="filters">
+    <button class="fb active" data-f="all" onclick="filter('all')">All (30)</button>
+    <button class="fb" data-f="tech" onclick="filter('tech')">Technical (15)</button>
+    <button class="fb" data-f="riddle" onclick="filter('riddle')">Riddles (8)</button>
+    <button class="fb" data-f="joke" onclick="filter('joke')">Jokes (7)</button>
+  </div>
+  <div class="score-badge">Score: <span id="score">0</span> / <span id="total">15</span></div>
+</header>
+<main>
+<div class="grid" id="grid">
+
+<!-- ─── Q1 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q1</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Ganadeep</strong> runs this query to find absent students:</p>
+    <pre><span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> <span class="tbl">students</span> <span class="kw">WHERE</span> <span class="col">name</span> = <span class="kw">NULL</span></pre>
+    <p class="q-text">What does he get back?</p>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>An error — NULL isn't allowed in WHERE</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">B</span>All rows where name is NULL</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">C</span>0 — the condition is always false</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>NULL</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text">You can't use <code>= NULL</code>. NULL is not equal to anything — not even itself. Use <code>IS NULL</code>. <code>WHERE name = NULL</code> is always false, so COUNT returns 0. Ganadeep found 0 absences. He's celebrating. He shouldn't.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q2 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q2</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Hritin</strong> writes a date filter. <strong>Prishita</strong> says it's slow. Why?</p>
+    <pre><span class="cm">-- Hritin's query</span>
+<span class="kw">WHERE</span> <span class="fn">YEAR</span>(<span class="col">join_date</span>) = 2026</pre>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>YEAR() doesn't work on date columns</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">B</span>The syntax is wrong — it should be WHERE(join_date) = YEAR(2026)</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">C</span>Wrapping a column in a function prevents the index from being used</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>SQL Server doesn't support YEAR()</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text">When you wrap a column in a function (<code>YEAR(join_date)</code>), SQL must compute it for every single row before filtering. The index on <code>join_date</code> becomes useless. Fix: use a range — <code>WHERE join_date &gt;= '2026-01-01' AND join_date &lt; '2027-01-01'</code>.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q3 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q3</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Raj</strong> writes this query and hits Run. What happens?</p>
+    <pre><span class="kw">SELECT</span>   <span class="col">dept</span>, <span class="fn">COUNT</span>(*)
+<span class="kw">FROM</span>     <span class="tbl">employees</span>
+<span class="kw">WHERE</span>    <span class="fn">COUNT</span>(*) &gt; 5
+<span class="kw">GROUP BY</span> <span class="col">dept</span></pre>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>Works fine — returns departments with more than 5 employees</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">B</span>Error — aggregate functions aren't allowed in WHERE</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">C</span>Returns empty result set</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>Returns all departments</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text">Aggregate functions go in <code>HAVING</code>, not <code>WHERE</code>. <code>WHERE</code> runs before grouping (can't aggregate yet). Fix: replace <code>WHERE COUNT(*) &gt; 5</code> with <code>HAVING COUNT(*) &gt; 5</code>.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q4 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q4</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Harsh</strong> and <strong>Heemansh</strong> both scored 85. <strong>Amardeep</strong> scored 79 (next highest). Using <code>RANK()</code> ordered by score DESC, what rank does Amardeep get?</p>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>3</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">B</span>4</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">C</span>5</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>2</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text"><code>RANK()</code> gives ties the same rank, then skips the next rank(s). Harsh = rank 3, Heemansh = rank 3 — both took rank 4 — so Amardeep lands at rank <strong>5</strong>. Ouch.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q5 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q5</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text">Same tie scenario — <strong>Harsh</strong> and <strong>Heemansh</strong> both at 85, <strong>Amardeep</strong> at 79. Now using <code>DENSE_RANK()</code>. What rank does Amardeep get?</p>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>3</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">B</span>4</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">C</span>5</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>2</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text"><code>DENSE_RANK()</code> never skips. Ties get the same rank, next rank is consecutive. Harsh = 3, Heemansh = 3, Amardeep = <strong>4</strong>. Much kinder than RANK().</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q6 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q6</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Yogesh</strong> wants to see yesterday's chai count alongside today's in the same row. Which window function?</p>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>LEAD()</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">B</span>LAG()</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">C</span>SHIFT()</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>PREV()</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text"><code>LAG()</code> looks <strong>backward</strong> — brings the previous row's value into the current row. <code>LEAD()</code> looks <strong>forward</strong>. SHIFT() and PREV() don't exist in SQL. Yogesh used LAG() and found his Monday count was 3. He's had worse weeks.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q7 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q7</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Sushant</strong> writes this to find students who didn't miss class. The <code>absences</code> table has one row where <code>name IS NULL</code>. What does the query return?</p>
+    <pre><span class="kw">SELECT</span> <span class="col">name</span> <span class="kw">FROM</span> <span class="tbl">students</span>
+<span class="kw">WHERE</span>  <span class="col">name</span> <span class="kw">NOT IN</span> (
+    <span class="kw">SELECT</span> <span class="col">name</span> <span class="kw">FROM</span> <span class="tbl">absences</span>
+)</pre>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>All students not in the absences table</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">B</span>0 rows — the NULL poisons the result</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">C</span>Error — subquery returned NULL</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>1 row</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">The NULL Trap</div>
+      <div class="ans-text"><code>NOT IN</code> with a NULL in the subquery returns <strong>0 rows, always</strong>. Because SQL evaluates <code>name NOT IN (..., NULL)</code> as <code>name != NULL</code> — which is always UNKNOWN (not TRUE). Fix: use <code>NOT EXISTS</code>. Sushant found 0 students who attended. He has a problem.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q8 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q8</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Payal</strong> wants a single query that gives her attendance totals by (group + day), by group only, AND a grand total. Which is most precise?</p>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>Three separate queries joined with UNION ALL</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">B</span>CUBE(group_num, day) — gives every combination</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">C</span>ROLLUP(group_num, day) — gives hierarchy subtotals</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">D</span>GROUPING SETS((group_num, day), (group_num), ())</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text"><code>GROUPING SETS</code> lets you choose exactly which aggregations you want. ROLLUP would also work here (it's a hierarchy), but GROUPING SETS is more explicit and doesn't compute the by-day-only total (which Payal didn't ask for). CUBE computes too many combinations.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q9 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q9</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Amardeep</strong> writes a CTE and tries to use it twice. Will it work?</p>
+    <pre><span class="kw">WITH</span> scores_cte <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">quiz_scores</span>
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> scores_cte;  <span class="cm">-- query 1</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> scores_cte;  <span class="cm">-- query 2</span></pre>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>Yes — CTEs are reusable across queries</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">B</span>No — a CTE only lives for the one statement it belongs to</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">C</span>Error on the WITH clause</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>Second SELECT returns NULL</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text">A CTE exists only for the single statement it's defined in. The second SELECT is a separate statement — it doesn't know about <code>scores_cte</code>. If you want reusability across statements, use a <strong>view</strong> or a <strong>temp table</strong>.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q10 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q10</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Saket</strong> wants a running total of sales per salesperson over time. What goes in the blank?</p>
+    <pre><span class="kw">SELECT</span> <span class="col">salesperson</span>, <span class="col">sale_date</span>, <span class="col">amount</span>,
+    <span class="fn">SUM</span>(<span class="col">amount</span>) <span class="kw">OVER</span> (<span class="cm">___</span>)
+<span class="kw">FROM</span> <span class="tbl">sales</span></pre>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>PARTITION BY sale_date ORDER BY salesperson</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">B</span>ORDER BY sale_date</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">C</span>PARTITION BY salesperson ORDER BY sale_date</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>GROUP BY salesperson</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text"><code>PARTITION BY salesperson</code> resets the running total for each new person. <code>ORDER BY sale_date</code> accumulates day by day within that person. Without PARTITION BY, you'd get a running total across all salespeople merged together — not what Saket wanted.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q11 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q11</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Santosh</strong> writes a recursive CTE that starts at n = 1 and keeps going while n &lt; 5. How many rows does it return?</p>
+    <pre><span class="kw">WITH</span> counter <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> 1 <span class="kw">AS</span> n          <span class="cm">-- base case</span>
+    <span class="kw">UNION ALL</span>
+    <span class="kw">SELECT</span> n + 1
+    <span class="kw">FROM</span>   counter
+    <span class="kw">WHERE</span>  n &lt; 5          <span class="cm">-- terminates here</span>
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> counter</pre>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>4 rows</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">B</span>5 rows</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">C</span>6 rows</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>Infinite loop</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text">Trace it: base case gives n=1. Then n=2, 3, 4, 5. When n=5, the WHERE (n &lt; 5) is FALSE — recursion stops. Result: 1, 2, 3, 4, 5 → <strong>5 rows</strong>. The last row (5) is produced, then the next iteration checks 5 &lt; 5 = false, and stops.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q12 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q12</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Nikshitha</strong> wants all students, including those who haven't placed any orders. Which JOIN?</p>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>INNER JOIN (students JOIN orders)</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">B</span>RIGHT JOIN (students RIGHT JOIN orders)</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">C</span>LEFT JOIN (students LEFT JOIN orders)</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>CROSS JOIN</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text"><code>students LEFT JOIN orders</code> — keep all students (left table), bring in order data where it matches, NULL where there's no order. INNER JOIN would drop students with no orders. RIGHT JOIN (students RIGHT JOIN orders) would keep all orders, not all students.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q13 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q13</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Bysani</strong> asks: what's the real difference between DELETE and TRUNCATE?</p>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>No difference — both remove all rows</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">B</span>DELETE can have WHERE; TRUNCATE removes all rows, is faster, and can't be rolled back in some configs</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">C</span>TRUNCATE is for tables, DELETE is for views</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>DELETE is DDL, TRUNCATE is DML</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text"><code>DELETE</code> is DML — logs each row deletion, can have WHERE, can be rolled back. <code>TRUNCATE</code> is DDL — removes all rows by deallocating pages, faster, resets identity counters, but can't filter rows. Use TRUNCATE to empty a table fast; use DELETE when you need to filter.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q14 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q14</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Shivam</strong> wants to rank students by score within each batch group. What goes inside OVER()?</p>
+    <pre><span class="fn">RANK</span>() <span class="kw">OVER</span> ( <span class="cm">___</span> ) <span class="kw">AS</span> group_rank</pre>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span>ORDER BY score DESC</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">B</span>PARTITION BY group_name</div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">C</span>PARTITION BY group_name ORDER BY score DESC</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>GROUP BY group_name ORDER BY score DESC</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text"><code>PARTITION BY group_name</code> resets the ranking for each group. <code>ORDER BY score DESC</code> determines the rank order within each group. Without PARTITION BY, you'd get a single global ranking — students would be ranked 1 through 25, ignoring groups. GROUP BY is not valid inside OVER().</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q15 TECHNICAL ─── -->
+<div class="card" data-type="tech">
+  <div class="card-head"><span class="qnum">Q15</span><span class="type-tag tech-tag">Technical</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Sukrit</strong> wants to find managers who have at least one direct report. Which is most efficient?</p>
+    <div class="options">
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">A</span><code>WHERE (SELECT COUNT(*) FROM emp WHERE manager_id = m.id) &gt; 0</code></div>
+      <div class="opt" onclick="mcq(this,'correct')"><span class="opt-key">B</span><code>WHERE EXISTS (SELECT 1 FROM emp WHERE manager_id = m.id)</code></div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">C</span>JOIN employees ON manager_id = id</div>
+      <div class="opt" onclick="mcq(this,'wrong')"><span class="opt-key">D</span>WHERE manager_id IS NOT NULL</div>
+    </div>
+    <div class="answer-box show" style="margin-top:4px">
+      <div class="ans-label">Explanation</div>
+      <div class="ans-text"><code>EXISTS</code> stops as soon as it finds <em>one</em> matching row. <code>COUNT(*) &gt; 0</code> counts ALL matching rows, then checks if it's more than 0 — wasteful. EXISTS wins on performance whenever you just need to check if something exists, not how many there are.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q16 RIDDLE ─── -->
+<div class="card" data-type="riddle">
+  <div class="card-head"><span class="qnum">Q16</span><span class="type-tag riddle-tag">Riddle</span></div>
+  <div class="card-body">
+    <p class="q-text">I filter rows. But I only get to act <em>after</em> the groups are already formed. My cousin filters <em>before</em> the groups even exist. We look similar but we run at completely different moments.</p>
+    <p class="q-text" style="margin-top:6px"><strong>Who are we?</strong></p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Answer</button>
+    <div class="answer-box">
+      <div class="ans-label">Answer</div>
+      <div class="ans-text"><strong>HAVING</strong> (runs after GROUP BY — filters groups) and <strong>WHERE</strong> (runs before GROUP BY — filters rows). You can't use an aggregate function in WHERE. That's HAVING's job.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q17 RIDDLE ─── -->
+<div class="card" data-type="riddle">
+  <div class="card-head"><span class="qnum">Q17</span><span class="type-tag riddle-tag">Riddle</span></div>
+  <div class="card-body">
+    <p class="q-text">I look exactly like a table. I have a name. I can be queried with SELECT, WHERE, and JOIN. But the moment my one statement ends, I cease to exist. I leave no trace.</p>
+    <p class="q-text" style="margin-top:6px"><strong>What am I?</strong></p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Answer</button>
+    <div class="answer-box">
+      <div class="ans-label">Answer</div>
+      <div class="ans-text">A <strong>CTE</strong> — Common Table Expression (the <code>WITH</code> clause). It lives only for the duration of the single query it belongs to. Want it to persist? Use a temp table (<code>#table</code>) or a view.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q18 RIDDLE ─── -->
+<div class="card" data-type="riddle">
+  <div class="card-head"><span class="qnum">Q18</span><span class="type-tag riddle-tag">Riddle</span></div>
+  <div class="card-body">
+    <p class="q-text">I bring the value from the row <em>before</em> you into your current row. My twin brings the value from the row <em>after</em> you. Together, analysts use us to spot trends — "did things go up or down from yesterday?"</p>
+    <p class="q-text" style="margin-top:6px"><strong>Who are we?</strong></p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Answer</button>
+    <div class="answer-box">
+      <div class="ans-label">Answer</div>
+      <div class="ans-text"><strong>LAG()</strong> (looks backward — previous row) and <strong>LEAD()</strong> (looks forward — next row). Both are window functions. Both return NULL at the edges (no previous row on the first row, no next row on the last row).</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q19 RIDDLE ─── -->
+<div class="card" data-type="riddle">
+  <div class="card-head"><span class="qnum">Q19</span><span class="type-tag riddle-tag">Riddle</span></div>
+  <div class="card-body">
+    <p class="q-text">I am NULL. <strong>Aman Shankar</strong> wrote <code>WHERE name = NULL</code> to find me. He found nothing. <strong>Aman Thapliyal</strong> wrote <code>WHERE name != NULL</code>. He also found nothing.</p>
+    <p class="q-text" style="margin-top:6px"><strong>How must you treat me?</strong></p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Answer</button>
+    <div class="answer-box">
+      <div class="ans-label">Answer</div>
+      <div class="ans-text">Use <code>IS NULL</code> and <code>IS NOT NULL</code>. NULL is not a value — it's the <em>absence</em> of a value. In SQL, <code>NULL = NULL</code> is UNKNOWN, not TRUE. NULL is not equal to itself. Only <code>IS NULL</code> can detect it.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q20 RIDDLE ─── -->
+<div class="card" data-type="riddle">
+  <div class="card-head"><span class="qnum">Q20</span><span class="type-tag riddle-tag">Riddle</span></div>
+  <div class="card-body">
+    <p class="q-text">I am the part of a Recursive CTE that runs <em>exactly once</em>. I produce the first rows. Without me, the recursion has no starting point — it simply cannot begin.</p>
+    <p class="q-text" style="margin-top:6px"><strong>What am I called?</strong></p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Answer</button>
+    <div class="answer-box">
+      <div class="ans-label">Answer</div>
+      <div class="ans-text">The <strong>Base Case</strong> (also called the Anchor Member). It's the SELECT before the UNION ALL that has no reference to the CTE itself. It runs once and produces the seed rows that the recursive part then builds upon.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q21 RIDDLE ─── -->
+<div class="card" data-type="riddle">
+  <div class="card-head"><span class="qnum">Q21</span><span class="type-tag riddle-tag">Riddle</span></div>
+  <div class="card-body">
+    <p class="q-text">I contain the word "ALL" but I never remove duplicates. My cousin does remove duplicates but costs more to run. We both stack result sets on top of each other.</p>
+    <p class="q-text" style="margin-top:6px"><strong>Who are we?</strong></p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Answer</button>
+    <div class="answer-box">
+      <div class="ans-label">Answer</div>
+      <div class="ans-text"><strong>UNION ALL</strong> (keeps all rows including duplicates — faster) and <strong>UNION</strong> (removes duplicates — slower because it has to sort and deduplicate). In Recursive CTEs, you <em>must</em> use UNION ALL — UNION is not allowed in the recursive part.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q22 RIDDLE ─── -->
+<div class="card" data-type="riddle">
+  <div class="card-head"><span class="qnum">Q22</span><span class="type-tag riddle-tag">Riddle</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Devanand</strong> asked: "What's the thing in a Recursive CTE that stops the loop?" The instructor said: "It's not one thing — it's actually two mechanisms."</p>
+    <p class="q-text" style="margin-top:6px"><strong>What are the two?</strong></p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Answer</button>
+    <div class="answer-box">
+      <div class="ans-label">Answer</div>
+      <div class="ans-text"><strong>1. Natural termination:</strong> when the recursive JOIN produces zero matching rows, the loop stops automatically. <strong>2. Safety guard:</strong> <code>WHERE level &lt; 20</code> (or similar) — prevents infinite loops if your data accidentally has cycles. Always add the safety guard.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q23 RIDDLE ─── -->
+<div class="card" data-type="riddle">
+  <div class="card-head"><span class="qnum">Q23</span><span class="type-tag riddle-tag">Riddle</span></div>
+  <div class="card-body">
+    <p class="q-text">I rotate your data 90 degrees. What were rows become my columns. My twin rotates it back the other way. Analysts love me for dashboards. DBAs tolerate me.</p>
+    <p class="q-text" style="margin-top:6px"><strong>Who are we?</strong></p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Answer</button>
+    <div class="answer-box">
+      <div class="ans-label">Answer</div>
+      <div class="ans-text"><strong>PIVOT</strong> (rows → columns) and <strong>UNPIVOT</strong> (columns → rows). PIVOT needs you to name the columns explicitly — SQL doesn't auto-detect them. For dynamic column names, you'd need dynamic SQL. That's a Day 5 problem.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q24 JOKE ─── -->
+<div class="card" data-type="joke">
+  <div class="card-head"><span class="qnum">Q24</span><span class="type-tag joke-tag">Joke</span></div>
+  <div class="card-body">
+    <p class="q-text">Why did <strong>Ganadeep's</strong> attendance query return 0 rows?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Punchline</button>
+    <div class="answer-box">
+      <div class="ans-label">Punchline</div>
+      <div class="ans-text">He filtered by <code>WHERE status = 'awake'</code>.<br><br>No rows matched.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q25 JOKE ─── -->
+<div class="card" data-type="joke">
+  <div class="card-head"><span class="qnum">Q25</span><span class="type-tag joke-tag">Joke</span></div>
+  <div class="card-body">
+    <p class="q-text">Why does <strong>Yogesh</strong> never use <code>LIMIT</code> or <code>TOP</code>?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Punchline</button>
+    <div class="answer-box">
+      <div class="ans-label">Punchline</div>
+      <div class="ans-text">Because nobody has ever successfully put a limit on 17 cups of chai per week.<br><br>The query returns all rows. Every time.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q26 JOKE ─── -->
+<div class="card" data-type="joke">
+  <div class="card-head"><span class="qnum">Q26</span><span class="type-tag joke-tag">Joke</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Sushant</strong> spent 3 hours debugging. Query returned 0 rows. He checked WHERE. Fine. Checked JOIN. Fine. Checked the table — data was there. What did he miss?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Punchline</button>
+    <div class="answer-box">
+      <div class="ans-label">Punchline</div>
+      <div class="ans-text">He used <code>NOT IN</code> with a subquery that had a NULL in it.<br><br>Classic. It's always the NULL. It's always the last thing you check. The NULL was there the whole time, silently poisoning everything.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q27 JOKE ─── -->
+<div class="card" data-type="joke">
+  <div class="card-head"><span class="qnum">Q27</span><span class="type-tag joke-tag">Joke</span></div>
+  <div class="card-body">
+    <p class="q-text">How many SQL developers does it take to change a lightbulb?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Punchline</button>
+    <div class="answer-box">
+      <div class="ans-label">Punchline</div>
+      <div class="ans-text">None. That's a hardware problem.<br><br>But they will:<br>• Create a <code>dim_bulbs</code> table with an <code>is_broken</code> column<br>• Add an index on <code>brightness_level</code><br>• Write a stored procedure to log the outage<br>• Open a Jira ticket marked "P2 — investigate SELECT * performance on lights table"</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q28 JOKE ─── -->
+<div class="card" data-type="joke">
+  <div class="card-head"><span class="qnum">Q28</span><span class="type-tag joke-tag">Joke</span></div>
+  <div class="card-body">
+    <p class="q-text"><strong>Kumar Pratik</strong> asked 18 questions in one session. Which SQL topic was it about?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Punchline</button>
+    <div class="answer-box">
+      <div class="ans-label">Punchline</div>
+      <div class="ans-text">Recursive CTE.<br><br>He's still asking.<br><br>The recursion has not terminated. There is no <code>WHERE level &lt; 20</code> guard on Kumar Pratik's curiosity.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q29 JOKE ─── -->
+<div class="card" data-type="joke">
+  <div class="card-head"><span class="qnum">Q29</span><span class="type-tag joke-tag">Joke</span></div>
+  <div class="card-body">
+    <p class="q-text">Why did <strong>Raj</strong> put <code>DISTINCT</code> on literally every single query he wrote?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Punchline</button>
+    <div class="answer-box">
+      <div class="ans-label">Punchline</div>
+      <div class="ans-text">Because he was afraid of commitment.<br><br>Also, he had duplicate data. But mostly the commitment thing.<br><br>(Fix your JOINs. DISTINCT on everything is a band-aid on a broken JOIN.)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Q30 JOKE ─── -->
+<div class="card" data-type="joke">
+  <div class="card-head"><span class="qnum">Q30</span><span class="type-tag joke-tag">Joke</span></div>
+  <div class="card-body">
+    <p class="q-text">What do you call a developer who writes <code>SELECT *</code> in every single query in production?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal Punchline</button>
+    <div class="answer-box">
+      <div class="ans-label">Punchline</div>
+      <div class="ans-text">Brave.<br><br>Also: someone who is about to have a very long meeting with the DBA, the on-call engineer who got paged at 3am, and possibly HR.<br><br>Name your columns. Save lives.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end grid -->
+<div class="empty-state" id="empty">No questions match this filter. Try another one.</div>
+</main>
+<script>
+let answered=0, correct=0;
+const techCount=15;
+document.getElementById('total').textContent=techCount;
+
+function mcq(el, verdict){
+  const opts=el.closest('.options').querySelectorAll('.opt');
+  if(el.classList.contains('disabled')) return;
+  opts.forEach(o=>o.classList.add('disabled'));
+  el.classList.add(verdict);
+  opts.forEach(o=>{ if(o!==el && o.onclick.toString().includes("'correct'")) o.classList.add('correct'); });
+  if(verdict==='correct'){
+    correct++;
+    document.getElementById('score').textContent=correct;
+  }
+  answered++;
+}
+
+function rev(btn){
+  const box=btn.nextElementSibling;
+  box.classList.toggle('show');
+  btn.textContent=box.classList.contains('show')?'Hide Answer':'Reveal Answer';
+}
+
+let activeFilter='all';
+function filter(f){
+  activeFilter=f;
+  document.querySelectorAll('.fb').forEach(b=>{
+    b.classList.toggle('active', b.dataset.f===f);
+  });
+  document.querySelectorAll('.card').forEach(c=>{
+    if(f==='all') c.classList.remove('hidden-card');
+    else c.classList.toggle('hidden-card', c.dataset.type!==f);
+  });
+  const visible=document.querySelectorAll('.card:not(.hidden-card)').length;
+  document.getElementById('empty').style.display=visible===0?'block':'none';
+  document.getElementById('total').textContent=f==='all'||f==='tech' ? techCount : '-';
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='1') filter('all');
+  if(e.key==='2') filter('tech');
+  if(e.key==='3') filter('riddle');
+  if(e.key==='4') filter('joke');
+});
+</script>
+</body>
+</html>

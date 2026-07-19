@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 10 – Ranking Top Cities | Day 3</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; }
+  nav .logo { font-weight: 700; font-size: 14px; color: #f59e0b; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #f59e0b; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 40px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1a1000 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 38px; font-weight: 800; color: #f59e0b; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 16px; color: #94a3b8; max-width: 620px; line-height: 1.7; }
+  .slide-cover .badge { margin-top: 16px; background: #1a1000; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  .slide-section { background: #0e0800; }
+  .slide-section h2 { font-size: 28px; font-weight: 700; color: #f59e0b; margin-bottom: 6px; }
+  .section-tag { color: #4b5563; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+  .slide-content h3 { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
+  .slide-demo { background: #060400; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 21px; color: #f59e0b; margin-bottom: 4px; }
+  .demo-label { color: #4b5563; font-size: 13px; margin-bottom: 14px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 18px; }
+  .card h4 { color: #f59e0b; margin-bottom: 8px; font-size: 14px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13px; line-height: 1.7; }
+  .hl { background: #1a1000; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+  .hl.green { background: #0d2d1a; border-color: #22c55e; }
+  .hl.red { background: #2d0f0f; border-color: #ef4444; }
+  .hl.blue { background: #061828; border-color: #38bdf8; }
+  .hl p { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+  pre { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 14px; overflow-x: auto; font-family: 'Cascadia Code','Consolas',monospace; font-size: 12.5px; line-height: 1.8; color: #e6edf3; }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.t th { background: #1a1000; color: #fcd34d; padding: 8px 12px; text-align: left; }
+  table.t td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  table.t tr:nth-child(even) td { background: #0f172a; }
+  .quiz-box { background: #082010; border: 1px solid #22c55e; padding: 14px; border-radius: 10px; margin: 10px 0; }
+  .quiz-q { font-size: 13px; color: #f8fafc; margin-bottom: 8px; }
+  .reveal-btn { background: #f59e0b; color: #0f172a; padding: 7px 18px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; }
+  .quiz-answer { margin-top: 8px; color: #4ade80; font-size: 13px; line-height: 1.6; }
+  .chain-box { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .chain-step { background: #1e293b; border: 1px solid #f59e0b; padding: 8px 12px; border-radius: 8px; font-size: 12px; color: #fcd34d; }
+  .chain-arrow { color: #4b5563; font-size: 16px; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">DAY 3 · MODULE 10 — Ranking Top Cities by Sales</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter"></span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active">
+  <h1>🏙️ Ranking Top Cities by Sales in Each State</h1>
+  <p class="subtitle">Identify top-performing cities within each state — then pivot the ranking into a clean side-by-side leadership report using CASE WHEN.</p>
+  <div class="badge">Module 10 &nbsp;·&nbsp; Day 3 &nbsp;·&nbsp; Intermediate &nbsp;·&nbsp; 30 min self-paced</div>
+  <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">4-table JOIN chain</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">RANK() OVER(PARTITION BY state)</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">MAX(CASE WHEN) pivot</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">3-CTE build</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: 3 TASKS OVERVIEW -->
+<div class="slide slide-section">
+  <div class="section-tag">The Challenge</div>
+  <h2>3 Tasks — Build Progressively 🏗️</h2>
+  <p style="color:#94a3b8;font-size:14px;margin-bottom:20px;">Sales leadership wants to reward Area Sales Managers in the top-performing cities. Build the report in 3 progressive steps.</p>
+  <div class="three-col">
+    <div class="card">
+      <h4>Task 1 — Total Sales per City</h4>
+      <p>Get total sales aggregated by state and city. Basic 4-table join + GROUP BY.</p>
+      <table class="t" style="margin-top:10px;font-size:12px;">
+        <tr><th>state</th><th>city</th><th>total_sales</th></tr>
+        <tr><td>California</td><td>San Diego</td><td>10225.23</td></tr>
+        <tr><td>California</td><td>Los Angeles</td><td>8940.10</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h4>Task 2 — Rank Cities Within State</h4>
+      <p>Add RANK() OVER(PARTITION BY state) so each city gets a rank within its own state. Filter to top 3.</p>
+      <table class="t" style="margin-top:10px;font-size:12px;">
+        <tr><th>state</th><th>city</th><th>total_sales</th><th>rank</th></tr>
+        <tr><td>California</td><td>Los Angeles</td><td>245234</td><td>1</td></tr>
+        <tr><td>California</td><td>San Diego</td><td>156782</td><td>3</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h4>Task 3 — Pivot Ranks as Columns</h4>
+      <p>Flip the ranked rows into a wide format — one row per state, three city columns for ranks 1, 2, 3.</p>
+      <table class="t" style="margin-top:10px;font-size:12px;">
+        <tr><th>State</th><th>Rank 1</th><th>Rank 2</th><th>Rank 3</th></tr>
+        <tr><td>California</td><td>San Francisco</td><td>Los Angeles</td><td>San Diego</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="hl" style="margin-top:16px;">
+    <p><strong style="color:#f59e0b;">Table chain for all 3 tasks:</strong> <code>ex_transactions</code> → <code>ex_orders</code> → <code>ex_customers</code> → <code>ex_locations</code> (note: <code>ex_locations</code> — not <code>locations_01</code> in this module)</p>
+  </div>
+</div>
+
+<!-- SLIDE 3: TASK 1 DEMO -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Task 1: Total Sales per State & City</h3>
+  <div class="demo-label">Tables: ex_transactions, ex_orders, ex_customers, ex_locations | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:12px;line-height:1.8;">
+<span class="cm">-- Join chain: transactions → orders → customers → locations
+-- Each join gets us one level closer to geographic data</span>
+<span class="kw">SELECT</span>
+    <span class="tbl">l</span>.<span class="col">state</span>,
+    <span class="tbl">l</span>.<span class="col">city</span>,
+    <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>) <span class="kw">AS</span> total_sales
+<span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+<span class="cm">-- LEFT JOIN: keep all transactions even if order data missing</span>
+<span class="kw">LEFT JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+<span class="kw">LEFT JOIN</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+    <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+<span class="kw">LEFT JOIN</span> <span class="tbl">ex_locations</span> <span class="tbl">l</span>
+    <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">postal_code</span> = <span class="tbl">l</span>.<span class="col">postal_code</span>
+<span class="cm">-- GROUP BY both: we want one row per state+city combination</span>
+<span class="kw">GROUP BY</span> <span class="tbl">l</span>.<span class="col">state</span>, <span class="tbl">l</span>.<span class="col">city</span>;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Why LEFT JOIN here?</h4>
+        <p>We want ALL transactions — even if there are any data integrity gaps (e.g. a transaction with no matching order due to a system issue). INNER JOIN would silently drop those rows.</p>
+        <p style="margin-top:8px;color:#64748b;font-size:12px;">Note: For ranking purposes, the difference is usually minimal. But LEFT JOIN is the safer, more professional choice.</p>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <h4>The table path (memorise this)</h4>
+        <div class="chain-box">
+          <div class="chain-step">ex_transactions<br><small>sales_amount</small></div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-step">ex_orders<br><small>order_id</small></div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-step">ex_customers<br><small>customer_id</small></div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-step">ex_locations<br><small>state, city</small></div>
+        </div>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ Why can't we just JOIN ex_transactions directly to ex_locations?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ There's no direct FK between transactions and locations. We must navigate: transactions has order_id, orders has customer_id, customers has postal_code, locations has postal_code → state/city.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: TASK 2 DEMO -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Task 2: Rank Cities Within Each State 🏆</h3>
+  <div class="demo-label">2-CTE solution | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:12px;line-height:1.8;">
+<span class="cm">-- CTE 1: Aggregate total sales per city per state</span>
+<span class="kw">WITH</span> city_sales <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">l</span>.<span class="col">state</span>,
+        <span class="tbl">l</span>.<span class="col">city</span>,
+        <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>) <span class="kw">AS</span> total_sales
+    <span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>     <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span> <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_locations</span> <span class="tbl">l</span>  <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">postal_code</span> = <span class="tbl">l</span>.<span class="col">postal_code</span>
+    <span class="kw">GROUP BY</span> <span class="tbl">l</span>.<span class="col">state</span>, <span class="tbl">l</span>.<span class="col">city</span>
+),
+<span class="cm">-- CTE 2: Add rank within each state
+-- PARTITION BY state → rank resets to 1 for each state
+-- ORDER BY total_sales DESC → highest sales = rank 1</span>
+ranked_cities <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="col">state</span>,
+        <span class="col">city</span>,
+        <span class="col">total_sales</span>,
+        <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+            <span class="kw">PARTITION BY</span> <span class="col">state</span>
+            <span class="kw">ORDER BY</span> <span class="col">total_sales</span> <span class="kw">DESC</span>
+        ) <span class="kw">AS</span> city_rank
+    <span class="kw">FROM</span> city_sales
+)
+<span class="cm">-- Keep only top 3 cities per state
+-- city_rank is a plain column here → WHERE works fine</span>
+<span class="kw">SELECT</span>
+    <span class="col">state</span>, <span class="col">city</span>, <span class="col">total_sales</span>,
+    <span class="col">city_rank</span> <span class="kw">AS</span> rank
+<span class="kw">FROM</span> ranked_cities
+<span class="kw">WHERE</span> city_rank &lt;= <span class="str">3</span>;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Expected output format</h4>
+        <table class="t" style="margin-top:6px;font-size:12px;">
+          <tr><th>state</th><th>city</th><th>total_sales</th><th>rank</th></tr>
+          <tr><td>California</td><td>Los Angeles</td><td>245234.50</td><td>1</td></tr>
+          <tr><td>California</td><td>San Francisco</td><td>189123.75</td><td>2</td></tr>
+          <tr><td>California</td><td>San Diego</td><td>156782.20</td><td>3</td></tr>
+          <tr><td>Texas</td><td>Houston</td><td>175634.90</td><td>1</td></tr>
+        </table>
+        <p style="margin-top:6px;font-size:12px;color:#64748b;">(Illustrative values)</p>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ What happens if PARTITION BY state is MISSING from RANK()?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ Rank becomes global — all cities across all states compete in one ranking. California's #1 city gets rank 1, Texas #1 gets rank 2 or 3 etc. This is WRONG — each state should have its own rank 1.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: TASK 3 CONCEPT -->
+<div class="slide slide-content">
+  <h3>Task 3 — Pivoting with MAX(CASE WHEN)</h3>
+  <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">We need to turn three ranked rows per state into one row with three city columns. Instead of the PIVOT keyword, we use a flexible MAX(CASE WHEN) pattern.</p>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <h4>Why MAX(CASE WHEN) instead of PIVOT?</h4>
+        <p>PIVOT requires the pivot values (1, 2, 3) to be known strings or numbers in column headers. CASE WHEN gives us full flexibility — we can rename columns (<code>rank_1</code>, <code>rank_2</code>) and works reliably in T-SQL for any data type.</p>
+        <p style="margin-top:10px;font-size:13px;">The pattern:</p>
+        <pre style="font-size:12px;margin-top:6px;">
+<span class="cm">-- For each state row, CASE returns the city name
+-- when it's rank 1, else NULL.
+-- MAX() picks the non-NULL value (there's only one per state)</span>
+<span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> city_rank = <span class="str">1</span> <span class="kw">THEN</span> city <span class="kw">END</span>) <span class="kw">AS</span> rank_1,
+<span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> city_rank = <span class="str">2</span> <span class="kw">THEN</span> city <span class="kw">END</span>) <span class="kw">AS</span> rank_2,
+<span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> city_rank = <span class="str">3</span> <span class="kw">THEN</span> city <span class="kw">END</span>) <span class="kw">AS</span> rank_3</pre>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Why MAX()? Why not just CASE?</h4>
+        <p>After filtering to top 3 cities, we GROUP BY state. Within each state group, we need to collapse 3 rows into 1. MAX() grabs the only non-NULL value per rank column.</p>
+        <p style="margin-top:10px;">Per state group after filtering:</p>
+        <table class="t" style="margin-top:6px;font-size:12px;">
+          <tr><th>city</th><th>city_rank</th><th>CASE rank=1</th><th>CASE rank=2</th></tr>
+          <tr><td>Los Angeles</td><td>1</td><td style="color:#4ade80;">Los Angeles</td><td>NULL</td></tr>
+          <tr><td>San Francisco</td><td>2</td><td>NULL</td><td style="color:#4ade80;">San Francisco</td></tr>
+          <tr><td>San Diego</td><td>3</td><td>NULL</td><td>NULL</td></tr>
+        </table>
+        <p style="margin-top:8px;font-size:12px;">MAX() per column → Los Angeles, San Francisco. Collapsed into 1 row.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: TASK 3 FULL DEMO -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Task 3: Full 4-CTE Pivot Report</h3>
+  <div class="demo-label">Complete solution | all 4 ex_ tables | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:11.5px;line-height:1.78;">
+<span class="kw">WITH</span> city_sales <span class="kw">AS</span> (
+    <span class="cm">-- Step 1: Aggregate sales by state + city</span>
+    <span class="kw">SELECT</span> <span class="tbl">l</span>.<span class="col">state</span>, <span class="tbl">l</span>.<span class="col">city</span>,
+           <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>) <span class="kw">AS</span> total_sales
+    <span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>     <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span> <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_locations</span> <span class="tbl">l</span>  <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">postal_code</span> = <span class="tbl">l</span>.<span class="col">postal_code</span>
+    <span class="kw">GROUP BY</span> <span class="tbl">l</span>.<span class="col">state</span>, <span class="tbl">l</span>.<span class="col">city</span>
+),
+ranked_cities <span class="kw">AS</span> (
+    <span class="cm">-- Step 2: Rank cities within each state</span>
+    <span class="kw">SELECT</span> <span class="col">state</span>, <span class="col">city</span>, <span class="col">total_sales</span>,
+        <span class="fn">RANK</span>() <span class="kw">OVER</span>(
+            <span class="kw">PARTITION BY</span> <span class="col">state</span>
+            <span class="kw">ORDER BY</span> <span class="col">total_sales</span> <span class="kw">DESC</span>
+        ) <span class="kw">AS</span> city_rank
+    <span class="kw">FROM</span> city_sales
+),
+top_3_cities <span class="kw">AS</span> (
+    <span class="cm">-- Step 3: Keep only top 3 per state
+    -- Critical: filter BEFORE the pivot — otherwise all cities appear</span>
+    <span class="kw">SELECT</span> <span class="col">state</span>, <span class="col">city</span>, <span class="col">city_rank</span>
+    <span class="kw">FROM</span> ranked_cities
+    <span class="kw">WHERE</span> city_rank &lt;= <span class="str">3</span>
+)
+<span class="cm">-- Step 4: Pivot the 3 ranked rows into 3 columns per state
+-- MAX() + CASE WHEN pattern — standard T-SQL pivot technique</span>
+<span class="kw">SELECT</span>
+    <span class="col">state</span>,
+    <span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> city_rank = <span class="str">1</span> <span class="kw">THEN</span> city <span class="kw">END</span>) <span class="kw">AS</span> rank_1,
+    <span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> city_rank = <span class="str">2</span> <span class="kw">THEN</span> city <span class="kw">END</span>) <span class="kw">AS</span> rank_2,
+    <span class="fn">MAX</span>(<span class="kw">CASE WHEN</span> city_rank = <span class="str">3</span> <span class="kw">THEN</span> city <span class="kw">END</span>) <span class="kw">AS</span> rank_3
+<span class="kw">FROM</span> top_3_cities
+<span class="kw">GROUP BY</span> <span class="col">state</span>
+<span class="kw">ORDER BY</span> <span class="col">state</span>;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Expected final output</h4>
+        <table class="t" style="margin-top:6px;font-size:12px;">
+          <tr><th>state</th><th>rank_1</th><th>rank_2</th><th>rank_3</th></tr>
+          <tr><td>California</td><td>San Francisco</td><td>Los Angeles</td><td>San Diego</td></tr>
+          <tr><td>Minnesota</td><td>Minneapolis</td><td>Lakeville</td><td>Roseville</td></tr>
+          <tr><td>Texas</td><td>Houston</td><td>Dallas</td><td>Austin</td></tr>
+        </table>
+        <p style="margin-top:6px;font-size:12px;color:#64748b;">(Illustrative — run query for actual values)</p>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ Why is it essential to filter city_rank &lt;= 3 in top_3_cities BEFORE the final GROUP BY and CASE WHEN?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ If you skip the filter, ALL ranked cities go into the GROUP BY. The CASE WHEN for rank_1/2/3 still works, but you process hundreds of unnecessary rows — and rank 4, 5, 6... cities are included in the join scan. Always filter BEFORE aggregating.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: COMMON MISTAKES -->
+<div class="slide slide-content">
+  <h3>🚫 Common Mistakes — Module 10</h3>
+  <table class="t" style="margin-bottom:16px;">
+    <tr><th>Mistake</th><th>Impact</th><th>Fix</th></tr>
+    <tr><td>Missing PARTITION BY state in RANK()</td><td style="color:#f87171;">Global ranking — all cities compete across all states</td><td>Always PARTITION BY state</td></tr>
+    <tr><td>ORDER BY total_sales ASC</td><td style="color:#f87171;">Rank 1 = lowest sales city</td><td>Use DESC — highest sales first</td></tr>
+    <tr><td>Not filtering top 3 before pivot</td><td style="color:#f87171;">All cities included in final GROUP BY scan</td><td>Add WHERE city_rank &lt;= 3 in top_3_cities CTE</td></tr>
+    <tr><td>Missing GROUP BY state in final SELECT</td><td style="color:#f87171;">SQL error — non-aggregated column not in GROUP BY</td><td>GROUP BY state after the MAX(CASE WHEN) columns</td></tr>
+    <tr><td>Using ROW_NUMBER() for ties</td><td style="color:#f87171;">Cities with identical sales get different ranks — one excluded</td><td>Use RANK() — tied cities share rank</td></tr>
+    <tr><td>Using ex_locations vs locations_01</td><td style="color:#f87171;">Wrong table — state and city columns may not exist in locations_01</td><td>This module uses ex_locations (has city column)</td></tr>
+  </table>
+</div>
+
+<!-- SLIDE 8: WRAP UP -->
+<div class="slide slide-section" style="text-align:center;align-items:center;">
+  <div class="section-tag">Summary</div>
+  <h2>3 Tasks → 1 Leadership Report 🏆</h2>
+  <div class="three-col" style="max-width:900px;margin-top:20px;text-align:left;">
+    <div class="card">
+      <h4>Task 1</h4>
+      <p>4-table JOIN chain → SUM(sales_amount) GROUP BY state, city. Basic but foundational — get the numbers right first.</p>
+    </div>
+    <div class="card">
+      <h4>Task 2</h4>
+      <p>Wrap Task 1 in a CTE → add RANK() OVER(PARTITION BY state ORDER BY total_sales DESC) → filter WHERE city_rank &lt;= 3.</p>
+    </div>
+    <div class="card">
+      <h4>Task 3</h4>
+      <p>Add top_3_cities CTE → final SELECT with MAX(CASE WHEN city_rank = 1/2/3 THEN city END) → GROUP BY state ORDER BY state.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const total = slides.length;
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  function changeSlide(dir) { showSlide(current + dir); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+  counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>

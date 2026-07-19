@@ -1,0 +1,659 @@
+# Ranking Top Cities by Sales in Each State for GlobalMart using SQL
+## Content Type
+Scenario
+
+## Overview
+<p style="text-align: justify;">
+GlobalMart, a leading e-commerce company, seeks to understand its sales performance across various cities within each state. To achieve this, the management has tasked you with preparing a report that ranks the top three cities by sales for each state. This report will help the company identify high-performing regions, optimize marketing strategies, and allocate resources more effectively. 
+</p>
+
+## Learning Objectives
+- Extract and manipulate relevant data to generate reports
+- Ability to use Joins and Aggregation functions to calculate metrics
+- Practice advanced SQL concepts like CTEs and Window functions for problem solving
+- Enhance report generation using pivoting operation in SQL
+- Present data in a clear and easy-to-understand tabular format
+
+## Prerequisites
+- Understanding of basic SQL queries, joins, and aggregate functions.
+- Ability to perform CTEs and Window operations
+- Familiarity with pivoting operation in SQL
+
+## Duration of Completion
+30 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+<p style="text-align: justify;">
+GlobalMart, a leading e-commerce company, seeks to understand its sales performance across various cities within each state. To achieve this, the management has tasked you with preparing a report that ranks the top three cities by sales for each state. This report will help the company identify high-performing regions, optimize marketing strategies, and allocate resources more effectively. 
+</p>
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+**GlobalMart** is a fast-growing retail company that sells products across major categories like **Technology**, **Furniture**, and **Office Supplies**. Its footprint spans hundreds of cities across various states in North America.
+
+With increasing focus on **localized performance**, GlobalMart’s leadership team wants to identify **top-performing cities within each state** — to recognize the efforts of regional teams and fine-tune their marketing and resource allocation strategies.
+
+The company believes that understanding **which cities lead in sales** can uncover pockets of excellence and help replicate those success stories elsewhere.
+
+As a **Data Analyst** at GlobalMart, you have been asked to create a **state-wise report of top 3 cities by sales**, which will be used by the **Sales Leadership** to identify high-performing territories and reward **Area Sales Managers** accordingly.
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+>[!NOTE]
+- Server name : mentorskool.database.windows.net
+  Username : mskllearnlogin
+  Password : !@#sw2aq1
+- The data dictionary and the ER-diagram is shown below:
+
+![Image-ER-diagram.png](https://cdn.enqurious.com/images/f396621c-11f5-4c80-abc6-ff126b6ac0b6_ER-diagram.webp)
+- Use the **mskl-masterclass** database
+- [Here](https://cdn.enqurious.com/others/f28f3a6c-f983-41d7-8715-1eda88d34af1_datadictionaryex.xlsx) is the data dictionary and ER diagram for the tables you'll be working with.
+
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+### Task Details :
+
+####  **Key Business Questions:**
+
+- Which cities generate the highest sales within each state?
+    
+- Can we rank cities fairly within their own states based on total sales?
+    
+- How can this ranking be visualized clearly for leadership review?
+    
+
+#### **Objective:**
+
+Prepare a structured SQL-based report that:
+
+- Identifies the **top 3 cities by total sales** within each state.
+    
+- Ranks the cities in descending order of sales.
+    
+- Presents the results in a clear tabular format with each row representing a state and columns for **Rank 1**, **Rank 2**, and **Rank 3** cities.
+
+**Report Format :**
+
+| State      | Rank 1        | Rank 2       | Rank 3     |
+|------------|---------------|--------------|------------|
+| Minnesota  | Minneapolis   | Lakeville    | Roseville  |
+| California | San Francisco | Los Angeles  | San Diego  |
+    
+
+**Tags**
+
+
+##### Input 4
+**Type:** Code
+
+**Question:** ### Task 1
+
+Write an SQL query to prepare a report as per the below format (The data shown is only for illustrative purposes) :
+
+| state      | city          | total_sales |
+|------------|---------------|-------------|
+| California | San Diego | 10225.23|
+
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+## **Understanding the Problem**
+
+<BR>
+
+Before we write any code, let's think like a data analyst. We need to create a report showing **Total Sales by State and City**. 
+
+**Step 1: What data do we need?**
+- **State** and **City** (geographic information)
+- **Sales Amount** (to sum up for totals)
+
+**Step 2: Where is this data located?**
+- Sales amounts → `ex_transactions` table (`sales_amount` column)
+- Geographic info → `ex_locations` table (`state`, `city` columns)
+
+**Step 3: How do we connect these tables?**
+This is where students often get stuck! Let's trace the relationship path:
+```
+ex_transactions → ex_orders → ex_customers → ex_locations
+     (via order_id)    (via customer_id)    (via postal_code)
+```
+
+---
+
+## **Building the Solution Step-by-Step**
+
+### **Phase 1: Start with the Core Data**
+```sql
+SELECT sales_amount 
+FROM ex_transactions
+```
+*We start with transactions because that's where our sales amounts live.*
+
+### **Phase 2: Connect to Orders**
+```sql
+SELECT t.sales_amount, o.customer_id
+FROM ex_transactions t
+LEFT JOIN ex_orders o ON t.order_id = o.order_id
+```
+
+**Teaching Point:** Why LEFT JOIN? 
+- We want ALL transactions, even if there's a data integrity issue
+- INNER JOIN would exclude transactions without matching orders
+
+### **Phase 3: Connect to Customers**
+```sql
+SELECT t.sales_amount, c.postal_code
+FROM ex_transactions t
+LEFT JOIN ex_orders o ON t.order_id = o.order_id
+LEFT JOIN ex_customers c ON o.customer_id = c.customer_id
+```
+
+### **Phase 4: Connect to Location Data**
+```sql
+SELECT t.sales_amount, l.state, l.city
+FROM ex_transactions t
+LEFT JOIN ex_orders o ON t.order_id = o.order_id
+LEFT JOIN ex_customers c ON o.customer_id = c.customer_id
+LEFT JOIN ex_locations l ON c.postal_code = l.postal_code
+```
+
+### **Phase 5: Add Aggregation**
+```sql
+SELECT l.state, l.city, SUM(t.sales_amount) AS total_sales
+FROM ex_transactions t
+LEFT JOIN ex_orders o ON t.order_id = o.order_id
+LEFT JOIN ex_customers c ON o.customer_id = c.customer_id
+LEFT JOIN ex_locations l ON c.postal_code = l.postal_code
+GROUP BY l.state, l.city
+```
+
+---
+
+## ✅ **Final Working Solution**
+```sql
+SELECT state, city, SUM(sales_amount) AS total_sales 
+FROM ex_transactions t 
+LEFT JOIN ex_orders o ON t.order_id = o.order_id 
+LEFT JOIN ex_customers c ON o.customer_id = c.customer_id 
+LEFT JOIN ex_locations l ON c.postal_code = l.postal_code 
+GROUP BY state, city
+```
+
+---
+
+##  **Common Student Mistakes & Point Deductions**
+
+1. **Missing GROUP BY:**
+   ```sql
+   SELECT state, city, SUM(sales_amount)  -- ERROR!
+   FROM ... 
+   -- Missing: GROUP BY state, city
+   ```
+   **Points to be deducted?** - Yes
+
+2. **Incorrect Aggregate Function:**
+   ```sql
+   SELECT state, city, sales_amount  -- Shows individual records, not totals
+   FROM ...
+   GROUP BY state, city
+   ```
+   **Points to be deducted?** - Yes
+
+3. **Using INNER JOIN vs LEFT JOIN:**
+   ```sql
+   -- Could lose data if there are integrity issues
+   INNER JOIN ex_orders o ON t.order_id = o.order_id
+   ```
+   **Points to be deducted?** - No
+
+4. **Column Name Issues:**
+   ```sql
+   SUM("Sales_Amount")  -- Inconsistent casing/quoting
+   -- Better: SUM(sales_amount)
+   ```
+   **Points to be deducted?** - Yes
+
+5. **Missing Table Aliases in SELECT:**
+   ```sql
+   SELECT state, city, SUM(sales_amount)
+   -- Better: SELECT l.state, l.city, SUM(t.sales_amount)
+   ```
+   **Points to be deducted?** - A few
+
+6. **No Meaningful Alias:**
+   ```sql
+   SUM(sales_amount)  -- Generic name
+   -- Better: SUM(sales_amount) AS total_sales
+   ```
+   **Points to be deducted?** - No
+
+7. **Poor Formatting/Readability**
+
+
+```
+
+**Tags**
+- data-wrangling / join (skill)
+- data-wrangling / group (skill)
+- sql (tool)
+- data-wrangling / aggregate (skill)
+
+##### Input 5
+**Type:** Code
+
+**Question:** ### Task 2
+
+Your client would like to rank each city within a state by the sales done by it.
+Write an SQL query to prepare a report as per the below format (The data shown is only for illustrative purposes) :
+
+
+| State      | City          | Total Sales | Rank |
+|------------|---------------|-------------|------|
+| California | Los Angeles   | 245234.50   | 1    |
+| California | San Francisco | 189123.75   | 2    |
+| California | San Diego     | 156782.20   | 3    |
+| Texas      | Houston       | 175634.90   | 1    |
+| Texas      | Dallas        | 162543.25   | 2    |
+| Texas      | Austin        | 134567.40   | 3    |
+
+*(Please note that the above data is for representational purposes only)*
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+###  Understanding the Problem
+
+<BR>
+
+Before we write any code, let's think like a data analyst. 
+In Task 1, we calculated total sales for each city within each state.
+
+Now in Task 2, we need to:
+
+- Rank those cities within their respective states
+    
+- Assign Rank 1 to the highest-selling city in each state
+    
+- Show the top 3 cities per state with their total sales and rank
+    
+
+---
+
+###  Step 1: What data do we need?
+
+- Total Sales per City per State (from Task 1)
+    
+- Rank of the city within the state
+    
+
+---
+
+###  Step 2: How do we calculate rank?
+
+Use the `RANK()` window function with:
+
+- `PARTITION BY state` to restart ranking for each state
+    
+- `ORDER BY total_sales DESC` to assign higher rank to higher sales
+    
+
+---
+
+###  Building the Solution Step-by-Step
+
+<BR>
+
+#### Phase 1: CTE to calculate total sales per city per state
+
+```sql
+WITH city_sales AS (
+    SELECT 
+        l.state,                                
+        l.city,                                 
+        SUM(t.sales_amount) AS total_sales    
+    FROM 
+        ex_transactions t                       
+    JOIN 
+        ex_orders o ON t.order_id = o.order_id         
+    JOIN 
+        ex_customers c ON o.customer_id = c.customer_id  
+    JOIN 
+        ex_locations l ON c.postal_code = l.postal_code  
+    GROUP BY 
+        l.state, 
+        l.city                                  
+),
+```
+
+#### Phase 2: CTE to assign rank to cities within each state
+
+```sql
+ranked_cities AS (
+    SELECT 
+        state,
+        city,
+        total_sales,
+        RANK() OVER (
+            PARTITION BY state                  
+            ORDER BY total_sales DESC           
+        ) AS city_rank
+    FROM 
+        city_sales
+)
+```
+
+
+#### Phase 3: Final query to select only the top 3 cities per state based on rank
+
+```sql
+SELECT
+    state,
+    city,
+    total_sales,
+    city_rank AS rank                           
+FROM 
+    ranked_cities
+WHERE 
+    city_rank <= 3;
+```
+
+
+---
+
+###  Final Working Solution
+
+```sql
+WITH city_sales AS (
+    SELECT 
+        l.state,
+        l.city,
+        SUM(t.sales_amount) AS total_sales
+    FROM 
+        ex_transactions t
+    JOIN 
+        ex_orders o ON t.order_id = o.order_id
+    JOIN 
+        ex_customers c ON o.customer_id = c.customer_id
+    JOIN 
+        ex_locations l ON c.postal_code = l.postal_code
+    GROUP BY 
+        l.state, l.city
+),
+ranked_cities AS (
+    SELECT 
+        state,
+        city,
+        total_sales,
+        RANK() OVER (
+            PARTITION BY state
+            ORDER BY total_sales DESC
+        ) AS city_rank
+    FROM 
+        city_sales
+)
+SELECT
+    state,
+    city,
+    total_sales,
+    city_rank AS rank
+FROM 
+    ranked_cities
+WHERE 
+    city_rank <= 3;
+```
+
+
+---
+
+### ✅ Common Student Mistakes & Point Deductions
+
+|Mistake|Why It’s a Problem|Points to be Deducted?|
+|---|---|---|
+|Missing `PARTITION BY state` in RANK()|Ranks will be global, not state-wise|Yes|
+|Using `ORDER BY total_sales ASC`|Will assign rank 1 to city with least sales|Yes|
+|Not filtering top 3|Output will include all cities|Yes|
+|Using `ROW_NUMBER()` instead of `RANK()`|Breaks ties (may or may not be acceptable depending on use case)|No|
+|Not aliasing final rank column as `rank`|Output column name will be `city_rank` instead of `rank`|No|
+|Poor formatting or inconsistent casing|Reduces readability|A few|
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / join (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / group (skill)
+
+##### Input 6
+**Type:** Code
+
+**Question:** ### Task 3
+
+Your client would now like to see the top 3 cities arranged vertically next to each other by their ranks for each state. This is visually better to perceive the results. 
+
+Write an SQL query to prepare a report as per the below format (The data shown is only for illustrative purposes) :
+
+**Report Format :**
+
+| State      | Rank 1        | Rank 2       | Rank 3     |
+|------------|---------------|--------------|------------|
+| Minnesota  | Minneapolis   | Lakeville    | Roseville  |
+| California | San Francisco | Los Angeles  | San Diego  |
+
+*(Please note that the above data is for representational purposes only)*
+    
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+## Understanding the Problem
+
+
+Before writing code, let’s think analytically.
+
+We need to prepare a report that shows **top 3 cities (Rank 1, 2, 3) by sales within each state**.
+
+---
+
+## Step 1: What data do we need?
+
+- **State**
+    
+- **Top 3 cities** within that state, ranked by sales.
+    
+
+---
+
+## Step 2: What do we already have?
+
+
+From previous work:
+
+- **Total sales per city** (from transactions data).
+    
+- **City rankings within each state** (using a window function).
+    
+
+---
+
+## Step 3: What transformation is new?
+
+
+We must **pivot the ranked city rows into columns** → `rank_1`, `rank_2`, `rank_3`.
+
+---
+
+## Building the Solution Step-by-Step
+
+
+### Phase 1 — Get total sales per city per state
+
+
+```sql
+WITH city_sales AS 
+(     
+SELECT          
+   l.state,         
+   l.city,         
+   SUM(t.sales_amount) AS total_sales     
+FROM ex_transactions t     
+JOIN ex_orders o          
+   ON t.order_id = o.order_id     
+JOIN ex_customers c          
+   ON o.customer_id = c.customer_id     
+JOIN ex_locations l          
+   ON c.postal_code = l.postal_code     
+GROUP BY l.state, l.city ),
+```
+---
+
+### Phase 2 — Rank cities within each state
+
+```sql
+ranked_cities AS 
+(     
+SELECT          
+   state,         
+   city,         
+   total_sales,         
+   RANK() OVER (  PARTITION BY state  ORDER BY total_sales DESC  ) AS city_rank     
+FROM city_sales ),
+```
+
+---
+
+### Phase 3 — Keep only the top 3 cities
+
+```sql
+top_3_cities AS 
+(  
+SELECT          
+   state,         
+   city,         
+   city_rank     
+FROM ranked_cities     
+WHERE city_rank <= 3 
+)
+```
+
+---
+
+### Phase 4 — Pivot ranks into columns (SSMS uses `CASE` inside aggregates)
+
+```sql
+SELECT      
+   state,     
+   MAX(CASE WHEN city_rank = 1 THEN city END) AS rank_1,     
+   MAX(CASE WHEN city_rank = 2 THEN city END) AS rank_2,     
+   MAX(CASE WHEN city_rank = 3 THEN city END) AS rank_3 
+FROM top_3_cities 
+GROUP BY state 
+ORDER BY state;
+```
+
+---
+
+## ✅ Final Working Solution 
+
+```sql
+WITH city_sales AS 
+(     
+SELECT          
+   l.state,         
+   l.city,         
+   SUM(t.sales_amount) AS total_sales     
+FROM ex_transactions t     
+JOIN ex_orders o          
+   ON t.order_id = o.order_id     
+JOIN ex_customers c          
+   ON o.customer_id = c.customer_id     
+JOIN ex_locations l          
+   ON c.postal_code = l.postal_code     
+GROUP BY l.state, l.city 
+),  
+ranked_cities AS 
+(     
+SELECT          
+   state,         
+   city,         
+   total_sales,         
+   RANK() OVER (  PARTITION BY state  ORDER BY total_sales DESC ) AS city_rank     
+FROM city_sales 
+),  
+top_3_cities AS 
+(     
+SELECT          
+   state,         
+   city,         
+   city_rank     
+FROM ranked_cities     
+WHERE city_rank <= 3 
+)  
+SELECT      
+   state,     
+   MAX(CASE WHEN city_rank = 1 THEN city END) AS rank_1,     
+   MAX(CASE WHEN city_rank = 2 THEN city END) AS rank_2,     
+   MAX(CASE WHEN city_rank = 3 THEN city END) AS rank_3 
+FROM top_3_cities 
+GROUP BY state 
+ORDER BY state;
+```
+
+---
+
+## Common Student Mistakes & Point Deductions
+
+1. **Forgetting to filter by `city_rank <= 3` before pivoting** → Will return all cities instead of just top 3. (**Major**)
+    
+2. **Using `ROW_NUMBER()` instead of `RANK()`** → Skips cities if ties exist (e.g., two cities with same sales). (**Partial, depends on business logic**)
+    
+3. **Missing `GROUP BY state`** after pivot → Causes error in SSMS. (**Major**)
+    
+4. **Incorrect CASE syntax in pivot** → Must use `CASE WHEN ... THEN city END`. (**Major**)
+    
+5. **Not ordering by `total_sales DESC`** in ranking → Will return smallest cities instead of top ones. (**Major**)
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / pivot (skill)
+- data-wrangling / join (skill)
+- data-wrangling / group (skill)
+- sql (tool)
+- data-wrangling / aggregate (skill)

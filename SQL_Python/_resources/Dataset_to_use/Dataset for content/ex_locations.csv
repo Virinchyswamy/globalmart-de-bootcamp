@@ -1,0 +1,183 @@
+postal_code,city,state,region,country
+1841,Lawrence,Massachusetts,East,United States
+2038,Franklin,Massachusetts,East,United States
+2886,Warwick,Rhode Island,East,United States
+6040,Manchester,Connecticut,East,United States
+6360,Norwich,Connecticut,East,United States
+6824,Fairfield,Connecticut,East,United States
+7090,Westfield,New Jersey,East,United States
+7109,Belleville,New Jersey,East,United States
+7601,Hackensack,New Jersey,East,United States
+8701,Lakewood,New Jersey,East,United States
+8901,New Brunswick,New Jersey,East,United States
+10009,New York City,New York,East,United States
+10011,New York City,New York,East,United States
+10024,New York City,New York,East,United States
+10035,New York City,New York,East,United States
+10550,Mount Vernon,New York,East,United States
+10801,New Rochelle,New York,East,United States
+11572,Oceanside,New York,East,United States
+12180,Troy,New York,East,United States
+13021,Auburn,New York,East,United States
+14609,Rochester,New York,East,United States
+17602,Lancaster,Pennsylvania,East,United States
+19013,Chester,Pennsylvania,East,United States
+19120,Philadelphia,Pennsylvania,East,United States
+19134,Philadelphia,Pennsylvania,East,United States
+19140,Philadelphia,Pennsylvania,East,United States
+19143,Philadelphia,Pennsylvania,East,United States
+19805,Wilmington,Delaware,East,United States
+19901,Dover,Delaware,East,United States
+21044,Columbia,Maryland,East,United States
+22153,Springfield,Virginia,South,United States
+22204,Arlington,Virginia,South,United States
+22980,Waynesboro,Virginia,South,United States
+27217,Burlington,North Carolina,South,United States
+27511,Cary,North Carolina,South,United States
+27514,Chapel Hill,North Carolina,South,United States
+28027,Concord,North Carolina,South,United States
+28052,Gastonia,North Carolina,South,United States
+28205,Charlotte,North Carolina,South,United States
+28403,Wilmington,North Carolina,South,United States
+28806,Asheville,North Carolina,South,United States
+30318,Atlanta,Georgia,South,United States
+31088,Warner Robins,Georgia,South,United States
+31907,Columbus,Georgia,South,United States
+32137,Palm Coast,Florida,South,United States
+32216,Jacksonville,Florida,South,United States
+33012,Hialeah,Florida,South,United States
+33024,Pembroke Pines,Florida,South,United States
+33180,Miami,Florida,South,United States
+33311,Fort Lauderdale,Florida,South,United States
+33319,Tamarac,Florida,South,United States
+33614,Tampa,Florida,South,United States
+33710,Saint Petersburg,Florida,South,United States
+33801,Lakeland,Florida,South,United States
+35601,Decatur,Alabama,South,United States
+36116,Montgomery,Alabama,South,United States
+37130,Murfreesboro,Tennessee,South,United States
+37620,Bristol,Tennessee,South,United States
+38109,Memphis,Tennessee,South,United States
+38401,Columbia,Tennessee,South,United States
+39212,Jackson,Mississippi,South,United States
+40214,Louisville,Kentucky,South,United States
+40475,Richmond,Kentucky,South,United States
+42420,Henderson,Kentucky,South,United States
+43017,Dublin,Ohio,East,United States
+43055,Newark,Ohio,East,United States
+43123,Grove City,Ohio,East,United States
+43229,Columbus,Ohio,East,United States
+44105,Cleveland,Ohio,East,United States
+44256,Medina,Ohio,East,United States
+44312,Akron,Ohio,East,United States
+45011,Hamilton,Ohio,East,United States
+45231,Cincinnati,Ohio,East,United States
+45503,Springfield,Ohio,East,United States
+47150,New Albany,Indiana,Central,United States
+47201,Columbus,Indiana,Central,United States
+48126,Dearborn,Michigan,Central,United States
+48180,Taylor,Michigan,Central,United States
+48183,Trenton,Michigan,Central,United States
+48185,Westland,Michigan,Central,United States
+48187,Canton,Michigan,Central,United States
+48227,Detroit,Michigan,Central,United States
+48234,Detroit,Michigan,Central,United States
+48307,Rochester Hills,Michigan,Central,United States
+48601,Saginaw,Michigan,Central,United States
+49201,Jackson,Michigan,Central,United States
+50315,Des Moines,Iowa,Central,United States
+53132,Franklin,Wisconsin,Central,United States
+53209,Milwaukee,Wisconsin,Central,United States
+54302,Green Bay,Wisconsin,Central,United States
+55016,Cottage Grove,Minnesota,Central,United States
+55044,Lakeville,Minnesota,Central,United States
+55106,Saint Paul,Minnesota,Central,United States
+55122,Eagan,Minnesota,Central,United States
+55407,Minneapolis,Minnesota,Central,United States
+55901,Rochester,Minnesota,Central,United States
+59405,Great Falls,Montana,West,United States
+60068,Park Ridge,Illinois,Central,United States
+60201,Evanston,Illinois,Central,United States
+60462,Orland Park,Illinois,Central,United States
+60505,Aurora,Illinois,Central,United States
+60540,Naperville,Illinois,Central,United States
+60610,Chicago,Illinois,Central,United States
+60623,Chicago,Illinois,Central,United States
+60653,Chicago,Illinois,Central,United States
+61604,Peoria,Illinois,Central,United States
+61701,Bloomington,Illinois,Central,United States
+62301,Quincy,Illinois,Central,United States
+62521,Decatur,Illinois,Central,United States
+64055,Independence,Missouri,Central,United States
+64118,Gladstone,Missouri,Central,United States
+68025,Fremont,Nebraska,Central,United States
+71111,Bossier City,Louisiana,South,United States
+71203,Monroe,Louisiana,South,United States
+72701,Fayetteville,Arkansas,South,United States
+73034,Edmond,Oklahoma,Central,United States
+73071,Norman,Oklahoma,Central,United States
+75051,Grand Prairie,Texas,Central,United States
+75080,Richardson,Texas,Central,United States
+75081,Dallas,Texas,Central,United States
+75220,Dallas,Texas,Central,United States
+75701,Tyler,Texas,Central,United States
+77036,Houston,Texas,Central,United States
+77041,Houston,Texas,Central,United States
+77070,Houston,Texas,Central,United States
+77095,Houston,Texas,Central,United States
+77340,Huntsville,Texas,Central,United States
+78207,San Antonio,Texas,Central,United States
+78550,Harlingen,Texas,Central,United States
+78745,Austin,Texas,Central,United States
+80004,Arvada,Colorado,West,United States
+80013,Aurora,Colorado,West,United States
+80027,Louisville,Colorado,West,United States
+80134,Parker,Colorado,West,United States
+80219,Denver,Colorado,West,United States
+80906,Colorado Springs,Colorado,West,United States
+84057,Orem,Utah,West,United States
+85023,Phoenix,Arizona,West,United States
+85204,Mesa,Arizona,West,United States
+85234,Gilbert,Arizona,West,United States
+85254,Scottsdale,Arizona,West,United States
+85635,Sierra Vista,Arizona,West,United States
+85705,Tucson,Arizona,West,United States
+88220,Carlsbad,New Mexico,West,United States
+89115,Las Vegas,Nevada,West,United States
+90004,Los Angeles,California,West,United States
+90008,Los Angeles,California,West,United States
+90032,Los Angeles,California,West,United States
+90036,Los Angeles,California,West,United States
+90045,Los Angeles,Pennsylvania,West,United States
+90049,Los Angeles,North Carolina,West,United States
+90604,Whittier,California,West,United States
+90805,Long Beach,Arizona,West,United States
+91104,Pasadena,California,West,United States
+92024,San Diego,California,West,United States
+92037,San Diego,Michigan,West,United States
+92105,San Diego,California,West,United States
+92345,Hesperia,Texas,West,United States
+92374,Redlands,California,West,United States
+92530,Lake Elsinore,California,West,United States
+92646,Huntington Beach,Kentucky,West,United States
+92691,Mission Viejo,California,West,United States
+92704,Santa Ana,California,West,United States
+92804,Anaheim,California,West,United States
+93534,Lancaster,California,West,United States
+93905,Salinas,California,West,United States
+94109,San Francisco,Florida,West,United States
+94110,San Francisco,California,West,United States
+94122,San Francisco,California,West,United States
+94513,Brentwood,Florida,West,United States
+94521,Concord,Connecticut,West,United States
+94591,Vallejo,California,West,United States
+95051,Santa Clara,Illinois,West,United States
+95123,San Jose,California,West,United States
+95661,Roseville,California,West,United States
+97206,Portland,Oregon,West,United States
+97301,Salem,Oregon,West,United States
+98105,Seattle,Washington,West,United States
+98115,Seattle,Washington,West,United States
+98198,Des Moines,Washington,West,United States
+98270,Marysville,Washington,West,United States
+98661,Vancouver,Washington,West,United States

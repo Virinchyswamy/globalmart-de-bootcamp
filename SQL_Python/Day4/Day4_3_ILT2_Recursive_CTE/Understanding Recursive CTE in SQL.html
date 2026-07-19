@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 17 – Recursive CTE in SQL</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#38bdf8;--a2:#7dd3fc;--text:#e6edf3;--muted:#8b949e;--g:#22c55e;--p:#a78bfa;--y:#f59e0b}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100}
+.ntitle{font-size:.82rem;color:var(--muted)}
+.nbadge{font-size:.7rem;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
+.nnav{display:flex;align-items:center;gap:6px}
+.nb{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nb:hover{background:var(--a);color:#000;border-color:var(--a)}
+.nc{font-size:12px;color:var(--muted);min-width:80px;text-align:center}
+.deck{padding-top:52px;height:100vh;overflow-y:auto}
+.slide{display:none;min-height:calc(100vh - 52px);padding:24px 52px 32px;flex-direction:column;gap:14px;animation:fi .2s ease}
+.slide.active{display:flex}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Type */
+.badge{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+h1{font-size:2rem;font-weight:900;line-height:1.15;color:var(--a)}
+h2{font-size:1.4rem;font-weight:800;color:var(--a);margin-bottom:2px}
+.bigidea{font-size:1.1rem;font-weight:700;color:var(--text)}
+.sub{font-size:.9rem;color:var(--muted);margin-top:4px}
+p{font-size:.87rem;color:#c9d1d9;line-height:1.7}
+
+/* Layout */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.card h3{font-size:.85rem;font-weight:700;color:var(--a);margin-bottom:7px}
+
+/* Callout boxes */
+.blue{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.3);border-radius:10px;padding:12px 16px}
+.green{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:12px 16px}
+.purple{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px 16px}
+.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px}
+.red{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px}
+.hl{background:rgba(56,189,248,.05);border-left:3px solid var(--a);padding:10px 14px;border-radius:0 8px 8px 0}
+
+/* Code */
+pre{background:#090d1a;border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.9;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.8rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
+.kw{color:#ff7b72;font-weight:700}
+.fn{color:#d2a8ff}
+.str{color:#a5d6ff}
+.cm{color:#6e7681;font-style:italic}
+.col{color:#79c0ff}
+.tbl{color:#ffa657}
+.hl-b{background:rgba(56,189,248,.25);border-radius:3px;padding:0 3px}
+.hl-p{background:rgba(167,139,250,.25);border-radius:3px;padding:0 3px}
+.hl-g{background:rgba(34,197,94,.2);border-radius:3px;padding:0 3px}
+.hl-y{background:rgba(245,158,11,.2);border-radius:3px;padding:0 3px}
+
+/* Tables */
+table{width:100%;border-collapse:collapse}
+th{background:rgba(56,189,248,.08);color:var(--a2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;font-weight:700}
+td{padding:6px 10px;border-bottom:1px solid var(--border);font-size:.8rem;color:#c9d1d9}
+
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;gap:12px;align-items:flex-start}
+.snum{background:var(--a);color:#000;font-weight:900;font-size:.75rem;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.stxt{font-size:.85rem;color:#c9d1d9;line-height:1.65}
+.stxt strong{color:var(--text)}
+
+/* Part badges */
+.bp{display:inline-block;padding:2px 10px;border-radius:100px;font-size:.7rem;font-weight:800}
+.base-b{background:rgba(56,189,248,.15);color:var(--a);border:1px solid rgba(56,189,248,.3)}
+.rec-b{background:rgba(167,139,250,.15);color:var(--p);border:1px solid rgba(167,139,250,.3)}
+
+/* Path boxes */
+.path-box{background:#0a1628;border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-family:'JetBrains Mono',monospace;font-size:.79rem;color:var(--a2);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.path-box.longest{border-color:var(--a);box-shadow:0 0 8px rgba(56,189,248,.2);color:#fff}
+.pa{color:var(--a);margin:0 3px;font-weight:700}
+.hop-badge{margin-left:auto;font-size:.65rem;font-weight:800;padding:1px 8px;border-radius:100px}
+.h1b{background:rgba(56,189,248,.1);color:var(--a)}
+.h2b{background:rgba(167,139,250,.1);color:var(--p)}
+.h3b{background:rgba(34,197,94,.1);color:var(--g)}
+
+/* Iteration rows */
+.iter{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:6px}
+.iter-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.iter-title{font-weight:800;font-size:.85rem}
+.iter-paths{font-size:.79rem;color:#c9d1d9;line-height:1.9;font-family:'JetBrains Mono',monospace;margin-left:6px}
+
+/* Quiz */
+.qbox{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px}
+.qbox p{font-weight:700;color:var(--text);font-size:.9rem;margin-bottom:10px}
+.qbtn{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);color:var(--a);padding:5px 14px;border-radius:7px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700}
+.qans{display:none;margin-top:8px;background:rgba(56,189,248,.05);border-left:3px solid var(--a);padding:9px 13px;border-radius:0 7px 7px 0;font-size:.83rem;color:var(--a2);line-height:1.65}
+</style>
+</head>
+<body>
+<nav>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="nbadge">Day 4 · Module 17</span>
+    <span class="ntitle">Recursive CTE in SQL</span>
+  </div>
+  <div class="nnav">
+    <button class="nb" onclick="go(-1)">← Prev</button>
+    <span class="nc" id="ctr">1 / 12</span>
+    <button class="nb" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE + STORY -->
+<div class="slide active">
+  <div>
+    <div class="badge">Module 17 · Recursive CTE</div>
+    <h1>Understanding Recursive CTE in SQL</h1>
+    <p class="sub">How to build connected chains when you don't know in advance how long they are</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>Sarah's Problem</h3>
+      <p>Sarah works at <strong>Regional Health Network</strong>. The Care Coordination Office asked her:</p>
+      <div class="blue" style="margin-top:10px;padding:14px">
+        <p style="font-style:italic;font-size:.88rem;color:var(--a2)">"Patient P001 went to Emergency, then Radiology, then Cardiology, then ICU — all on the same day. What is the longest connected pathway for each patient?"</p>
+      </div>
+      <p style="margin-top:10px;font-size:.83rem">The catch: Sarah doesn't know in advance how many departments a patient visits. It could be 2, 3, or 10.</p>
+    </div>
+    <div class="card">
+      <h3>The PatientVisits Table</h3>
+      <table>
+        <tr><th>Column</th><th>Meaning</th></tr>
+        <tr><td><code>date</code></td><td>Visit date</td></tr>
+        <tr><td><code>patient_id</code></td><td>Which patient</td></tr>
+        <tr><td><code>from_department</code></td><td>Left this department</td></tr>
+        <tr><td><code>to_department</code></td><td>Arrived at this department</td></tr>
+      </table>
+      <div class="hl" style="margin-top:10px;font-size:.82rem">
+        <strong style="color:var(--a)">Connection rule:</strong> Visit A connects to Visit B when <code>A.to_department = B.from_department</code> for the same patient on the same day.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: WHY CAN'T STANDARD SQL DO THIS? -->
+<div class="slide">
+  <h2>What Standard SQL Cannot Do</h2>
+  <div class="two">
+    <div>
+      <p style="margin-bottom:10px">Here is the data for Patient P001 on 2025-01-15:</p>
+      <table>
+        <tr><th>from_department</th><th>to_department</th></tr>
+        <tr><td>Emergency</td><td>Radiology</td></tr>
+        <tr><td>Radiology</td><td>Cardiology</td></tr>
+        <tr><td>Cardiology</td><td>ICU</td></tr>
+        <tr><td>Pediatrics</td><td>Dermatology</td></tr>
+      </table>
+      <div class="blue" style="margin-top:10px">
+        <p style="font-size:.82rem">The chain is: <code>Emergency → Radiology → Cardiology → ICU</code></p>
+        <p style="font-size:.82rem;margin-top:4px">And there's a shorter separate chain: <code>Pediatrics → Dermatology</code></p>
+      </div>
+    </div>
+    <div>
+      <p style="font-weight:700;margin-bottom:8px">Standard SQL problem:</p>
+      <pre style="font-size:.77rem"><span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">PatientVisits</span>
+<span class="kw">WHERE</span> <span class="col">patient_id</span> = <span class="str">'P001'</span>
+<span class="cm">-- Shows 4 separate rows.
+-- Cannot chain them!</span></pre>
+      <div class="red" style="margin-top:10px">
+        <p style="font-weight:700;color:#f87171;margin-bottom:6px">What normal SQL CANNOT do:</p>
+        <ul style="font-size:.82rem;color:#fca5a5;padding-left:16px;line-height:2">
+          <li>Connect rows where <em>one's destination = next one's source</em></li>
+          <li>Build the path string: <code>Emergency → Radiology → Cardiology → ICU</code></li>
+          <li>Count how many hops are in each chain</li>
+          <li>Handle chains of unknown length</li>
+        </ul>
+      </div>
+      <div class="blue" style="margin-top:10px">
+        <p style="font-size:.83rem"><strong style="color:var(--a)">Solution:</strong> Recursive CTE. It keeps extending the chain, one hop at a time, until there's nothing left to connect.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: THE ANALOGY -->
+<div class="slide">
+  <h2>The Relay Race Analogy</h2>
+  <div class="blue" style="text-align:center;padding:20px;margin-bottom:14px">
+    <p style="font-size:1.1rem;font-weight:700;color:var(--a2)">A Recursive CTE works like a relay race.</p>
+    <p style="margin-top:8px;font-size:.9rem;line-height:1.8">Runner 1 starts at the beginning and runs their leg.<br>They hand the baton to Runner 2. Runner 2 runs and hands it to Runner 3.<br>This keeps going <strong>until nobody is left to receive the baton.</strong></p>
+  </div>
+  <div class="three">
+    <div class="card" style="border-color:rgba(56,189,248,.4);text-align:center">
+      <div style="font-size:2rem;margin-bottom:8px">🏁</div>
+      <h3 style="text-align:center;font-size:.9rem">Base Case (Anchor)</h3>
+      <p style="font-size:.8rem;margin-top:4px">Runner 1 starts the race. This is the <strong>starting point</strong>. Every chain begins here.</p>
+      <div style="margin-top:8px"><span class="bp base-b">DOES NOT reference the CTE itself</span></div>
+    </div>
+    <div class="card" style="border-color:rgba(167,139,250,.4);text-align:center">
+      <div style="font-size:2rem;margin-bottom:8px">🏃</div>
+      <h3 style="text-align:center;font-size:.9rem">Recursive Case</h3>
+      <p style="font-size:.8rem;margin-top:4px">Runner 2, 3, 4 … each takes the baton from the previous runner and extends the chain by one hop.</p>
+      <div style="margin-top:8px"><span class="bp rec-b">REFERENCES the CTE itself</span></div>
+    </div>
+    <div class="card" style="border-color:rgba(245,158,11,.4);text-align:center">
+      <div style="font-size:2rem;margin-bottom:8px">🛑</div>
+      <h3 style="text-align:center;font-size:.9rem">Termination</h3>
+      <p style="font-size:.8rem;margin-top:4px">The race ends when no new runner can be found. The recursive case returns zero rows → SQL stops.</p>
+      <div style="margin-top:8px"><span class="bp" style="background:rgba(245,158,11,.15);color:var(--y);border:1px solid rgba(245,158,11,.3)">Stops automatically</span></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:4px">
+    <h3>Applied to P001's pathway:</h3>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+      <div style="background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);border-radius:8px;padding:7px 14px;font-size:.82rem;color:var(--a2)">🏁 Emergency → Radiology<br><span style="font-size:.7rem;color:var(--muted)">Base Case: row 1</span></div>
+      <div style="color:var(--muted);font-size:1.2rem">→</div>
+      <div style="background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:7px 14px;font-size:.82rem;color:var(--p)">🏃 + Cardiology<br><span style="font-size:.7rem;color:var(--muted)">Round 1 extension</span></div>
+      <div style="color:var(--muted);font-size:1.2rem">→</div>
+      <div style="background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:7px 14px;font-size:.82rem;color:var(--p)">🏃 + ICU<br><span style="font-size:.7rem;color:var(--muted)">Round 2 extension</span></div>
+      <div style="color:var(--muted);font-size:1.2rem">→</div>
+      <div style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:7px 14px;font-size:.82rem;color:var(--y)">🛑 No next hop<br><span style="font-size:.7rem;color:var(--muted)">ICU goes nowhere</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: ANATOMY OF RECURSIVE CTE -->
+<div class="slide">
+  <h2>The Structure — Two Mandatory Parts</h2>
+  <p style="margin-bottom:8px">A Recursive CTE always has exactly this shape. Memorise the template:</p>
+  <pre><span class="kw">WITH</span> <span class="fn">cte_name</span> <span class="kw">AS</span> (
+
+    <span class="hl-b"><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    PART 1 — BASE CASE (Anchor Member)
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    • Does NOT reference the CTE itself
+    • Runs once
+    • Produces the STARTING rows (hop 1)</span></span>
+    <span class="kw">SELECT</span> ... <span class="kw">FROM</span> <span class="tbl">source_table</span> <span class="kw">WHERE</span> [starting condition]
+
+    <span class="hl-g"><span class="kw">UNION ALL</span>     <span class="cm">← mandatory connector between the two parts</span></span>
+
+    <span class="hl-p"><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    PART 2 — RECURSIVE CASE (Recursive Member)
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    • REFERENCES the CTE (joins against previous iteration's results)
+    • Runs repeatedly — each time extending the chain by one hop
+    • Stops when it finds zero new rows</span></span>
+    <span class="kw">SELECT</span> ... <span class="kw">FROM</span> <span class="tbl">source_table</span>
+    <span class="kw">JOIN</span> <span class="fn">cte_name</span> <span class="kw">ON</span> [connection logic]
+    <span class="kw">WHERE</span> [termination guard]
+)
+<span class="kw">SELECT</span> ... <span class="kw">FROM</span> <span class="fn">cte_name</span>    <span class="cm">-- use the CTE like any normal table</span></pre>
+  <div class="two" style="margin-top:4px">
+    <div class="blue"><p style="font-size:.82rem"><strong style="color:var(--a)">UNION ALL</strong> — why not UNION? Because UNION removes duplicates. In recursive CTEs, we want ALL rows from ALL iterations accumulated together. UNION ALL keeps everything.</p></div>
+    <div class="purple"><p style="font-size:.82rem"><strong style="color:var(--p)">The JOIN in Part 2</strong> — it joins the source table against the CTE's PREVIOUS iteration. That's how the chain grows: previous result + one more hop = new result.</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 5: BASE CASE EXPLAINED -->
+<div class="slide">
+  <h2>Part 1 — The Base Case (Starting Rows)</h2>
+  <div class="blue" style="margin-bottom:10px">
+    <p><strong style="color:var(--a)">Job of the Base Case:</strong> Produce all the starting seeds. In our problem — every individual visit in the table becomes a starting seed (hop 1 path).</p>
+  </div>
+  <pre><span class="kw">WITH</span> <span class="fn">patient_pathway</span> <span class="kw">AS</span> (
+
+    <span class="cm">-- BASE CASE: every single visit row is a "path of length 1"</span>
+    <span class="kw">SELECT</span>
+        <span class="col">v</span>.<span class="col">date</span>,
+        <span class="col">v</span>.<span class="col">patient_id</span>,
+        <span class="col">v</span>.<span class="col">from_department</span>,    <span class="cm">-- where this path started</span>
+        <span class="col">v</span>.<span class="col">to_department</span>,      <span class="cm">-- where this path currently ends</span>
+        <span class="fn">CAST</span>(<span class="col">v</span>.<span class="col">from_department</span> + <span class="str">' &gt; '</span> + <span class="col">v</span>.<span class="col">to_department</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">pathway</span>,
+        <span class="hl-b">1 <span class="kw">AS</span> <span class="col">transfer_count</span></span>   <span class="cm">-- ← each starting row has 1 hop</span>
+    <span class="kw">FROM</span> <span class="tbl">PatientVisits</span> <span class="col">v</span>
+    <span class="cm">-- NOTE: no WHERE here — every row is a valid starting seed</span></pre>
+  <div class="two">
+    <div>
+      <p style="font-weight:700;font-size:.85rem;margin-bottom:8px">What the Base Case produces for P001:</p>
+      <table>
+        <tr><th>pathway</th><th>transfer_count</th></tr>
+        <tr><td>Emergency &gt; Radiology</td><td style="color:var(--a);font-weight:700">1</td></tr>
+        <tr><td>Radiology &gt; Cardiology</td><td style="color:var(--a);font-weight:700">1</td></tr>
+        <tr><td>Cardiology &gt; ICU</td><td style="color:var(--a);font-weight:700">1</td></tr>
+        <tr><td>Pediatrics &gt; Dermatology</td><td style="color:var(--a);font-weight:700">1</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>What CAST does:</h3>
+      <p style="font-size:.82rem;line-height:1.7"><code>CAST(... AS VARCHAR(MAX))</code> — SQL needs to know the data type upfront. Since the pathway string will grow (we keep adding <code>' &gt; department'</code> to it), we cast it to <code>VARCHAR(MAX)</code> so it can hold any length.</p>
+      <div class="blue" style="margin-top:8px">
+        <p style="font-size:.8rem">The <code>from_department</code> column in the Base Case is also remembered because the Recursive Case will KEEP it — it always stores "where the entire path originally started."</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: RECURSIVE CASE EXPLAINED -->
+<div class="slide">
+  <h2>Part 2 — The Recursive Case (Extending the Chain)</h2>
+  <div class="purple" style="margin-bottom:10px">
+    <p><strong style="color:var(--p)">Job of the Recursive Case:</strong> Take each path from the previous iteration, find the next connected visit, and produce an extended path.</p>
+  </div>
+  <pre>    <span class="kw">UNION ALL</span>
+
+    <span class="cm">-- RECURSIVE CASE: extend each path by one more hop</span>
+    <span class="kw">SELECT</span>
+        <span class="col">v</span>.<span class="col">date</span>,
+        <span class="col">v</span>.<span class="col">patient_id</span>,
+        <span class="col">pp</span>.<span class="col">from_department</span>,    <span class="cm">-- KEEP original starting dept (from previous iteration)</span>
+        <span class="col">v</span>.<span class="col">to_department</span>,       <span class="cm">-- NEW destination (from this new visit)</span>
+        <span class="fn">CAST</span>(<span class="hl-p"><span class="col">pp</span>.<span class="col">pathway</span></span> + <span class="str">' &gt; '</span> + <span class="col">v</span>.<span class="col">to_department</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">pathway</span>,
+        <span class="hl-p"><span class="col">pp</span>.<span class="col">transfer_count</span></span> + 1 <span class="kw">AS</span> <span class="col">transfer_count</span>   <span class="cm">-- increment hop counter</span>
+    <span class="kw">FROM</span> <span class="tbl">PatientVisits</span> <span class="col">v</span>
+    <span class="kw">JOIN</span> <span class="hl-p"><span class="fn">patient_pathway</span> <span class="col">pp</span></span>    <span class="cm">-- ← JOIN against the CTE (previous iteration)</span>
+        <span class="kw">ON</span>  <span class="hl-g"><span class="col">v</span>.<span class="col">from_department</span> = <span class="col">pp</span>.<span class="col">to_department</span></span>   <span class="cm">-- new start = previous end</span>
+        <span class="kw">AND</span> <span class="col">v</span>.<span class="col">patient_id</span>     = <span class="col">pp</span>.<span class="col">patient_id</span>       <span class="cm">-- same patient</span>
+        <span class="kw">AND</span> <span class="col">v</span>.<span class="col">date</span>           = <span class="col">pp</span>.<span class="col">date</span>             <span class="cm">-- same day</span>
+    <span class="kw">WHERE</span> <span class="hl-y"><span class="col">pp</span>.<span class="col">transfer_count</span> &lt; 20</span>    <span class="cm">-- ← termination guard (prevent infinite loop)</span>
+)</pre>
+  <div class="two">
+    <div class="green">
+      <p style="font-weight:700;color:var(--g);margin-bottom:6px">The connection logic — key line:</p>
+      <p style="font-size:.83rem;font-family:'JetBrains Mono',monospace;color:#a5d6ff">v.from_department = pp.to_department</p>
+      <p style="font-size:.82rem;margin-top:8px;line-height:1.7">Translation: "The NEW visit's starting point must be the SAME as where the PREVIOUS path ended." This is how we chain visits together.</p>
+    </div>
+    <div class="purple">
+      <p style="font-weight:700;color:var(--p);margin-bottom:6px">What pp.pathway + new dept does:</p>
+      <p style="font-size:.82rem;line-height:1.75">Previous pathway: <code>Emergency &gt; Radiology</code><br>New destination: <code>Cardiology</code><br>Result: <code>Emergency &gt; Radiology &gt; Cardiology</code></p>
+      <p style="font-size:.82rem;margin-top:8px">The path string GROWS each iteration — we never lose track of where the chain started.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: ITERATION WALKTHROUGH -->
+<div class="slide">
+  <h2>Step-by-Step: How Iteration Works for P001</h2>
+  <p style="margin-bottom:10px">SQL runs the recursive case in rounds. Each round produces new paths. UNION ALL collects all paths from all rounds.</p>
+
+  <div class="iter">
+    <div class="iter-head">
+      <span class="bp base-b">BASE CASE</span>
+      <span class="iter-title">Starting paths (hop 1 — every visit is a seed)</span>
+    </div>
+    <div class="iter-paths">
+      Emergency → Radiology &nbsp;<span class="hop-badge h1b">hop 1</span><br>
+      Radiology → Cardiology &nbsp;<span class="hop-badge h1b">hop 1</span><br>
+      Cardiology → ICU &nbsp;<span class="hop-badge h1b">hop 1</span><br>
+      Pediatrics → Dermatology &nbsp;<span class="hop-badge h1b">hop 1</span>
+    </div>
+  </div>
+
+  <div class="iter">
+    <div class="iter-head">
+      <span class="bp rec-b">ROUND 1</span>
+      <span class="iter-title">Extend paths where "base end = new start" (hop 2)</span>
+    </div>
+    <div class="iter-paths">
+      Emergency → Radiology → Cardiology &nbsp;<span class="hop-badge h2b">hop 2</span> &nbsp;<span style="font-size:.7rem;color:var(--muted)">(Radiology→Cardiology connected to Emergency→Radiology)</span><br>
+      Radiology → Cardiology → ICU &nbsp;<span class="hop-badge h2b">hop 2</span> &nbsp;<span style="font-size:.7rem;color:var(--muted)">(Cardiology→ICU connected to Radiology→Cardiology)</span>
+    </div>
+  </div>
+
+  <div class="iter">
+    <div class="iter-head">
+      <span class="bp rec-b">ROUND 2</span>
+      <span class="iter-title">Extend paths where "round 1 end = new start" (hop 3)</span>
+    </div>
+    <div class="iter-paths">
+      Emergency → Radiology → Cardiology → ICU &nbsp;<span class="hop-badge h3b">hop 3</span> &nbsp;<span style="font-size:.7rem;color:var(--muted)">(Cardiology→ICU connected to E→R→C)</span>
+    </div>
+  </div>
+
+  <div class="iter" style="border-color:rgba(245,158,11,.3)">
+    <div class="iter-head">
+      <span class="bp" style="background:rgba(245,158,11,.15);color:var(--y);border:1px solid rgba(245,158,11,.3)">ROUND 3</span>
+      <span class="iter-title" style="color:var(--y)">ICU has no outgoing visits → recursive case finds zero rows → STOP</span>
+    </div>
+  </div>
+
+  <div class="blue" style="font-size:.82rem">
+    <strong style="color:var(--a)">Total rows in CTE for P001 = 4 + 2 + 1 = 7 rows.</strong> UNION ALL has collected paths from all rounds. The outer query will then pick the longest one.
+  </div>
+</div>
+
+<!-- SLIDE 8: ALL PATHS COLLECTED -->
+<div class="slide">
+  <h2>All Paths Collected — What the CTE Contains</h2>
+  <p style="margin-bottom:10px">After UNION ALL, the CTE for P001 holds all 7 rows from all iterations. The longest path per patient is what we want.</p>
+  <div class="two">
+    <div>
+      <p style="font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:1px">ALL 7 ROWS IN THE CTE FOR P001:</p>
+      <div class="path-box">Emergency <span class="pa">→</span> Radiology <span class="hop-badge h1b" style="margin-left:auto">hop 1</span></div>
+      <div class="path-box">Radiology <span class="pa">→</span> Cardiology <span class="hop-badge h1b" style="margin-left:auto">hop 1</span></div>
+      <div class="path-box">Cardiology <span class="pa">→</span> ICU <span class="hop-badge h1b" style="margin-left:auto">hop 1</span></div>
+      <div class="path-box">Pediatrics <span class="pa">→</span> Dermatology <span class="hop-badge h1b" style="margin-left:auto">hop 1</span></div>
+      <div class="path-box">Emergency <span class="pa">→</span> Radiology <span class="pa">→</span> Cardiology <span class="hop-badge h2b" style="margin-left:auto">hop 2</span></div>
+      <div class="path-box">Radiology <span class="pa">→</span> Cardiology <span class="pa">→</span> ICU <span class="hop-badge h2b" style="margin-left:auto">hop 2</span></div>
+      <div class="path-box longest">Emergency <span class="pa">→</span> Radiology <span class="pa">→</span> Cardiology <span class="pa">→</span> ICU <span class="hop-badge h3b" style="margin-left:auto">hop 3 ← LONGEST</span></div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>Why does UNION ALL keep duplicates?</h3>
+        <p style="font-size:.82rem;line-height:1.7">Notice <code>Emergency → Radiology</code> appears in hop 1 AND is embedded in the hop-2 and hop-3 paths. These are different rows (different transfer_count). We need ALL of them — the outer query will rank by length and pick only the longest.</p>
+      </div>
+      <div class="blue" style="margin-top:10px">
+        <p style="font-size:.83rem;font-weight:700;color:var(--a);margin-bottom:4px">Pattern for all 3 patients:</p>
+        <table>
+          <tr><th>Patient</th><th>Longest Pathway</th><th>Hops</th></tr>
+          <tr><td>P001</td><td>Emergency → … → ICU</td><td>3</td></tr>
+          <tr><td>P002</td><td>Pediatrics → … → Discharge</td><td>3</td></tr>
+          <tr><td>P003</td><td>Oncology → … → Recovery</td><td>3</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: FULL QUERY + OUTER QUERY -->
+<div class="slide">
+  <h2>Full Query — Finding the Longest Path Per Patient</h2>
+  <p style="margin-bottom:8px">The CTE builds all paths. The outer query picks the longest one per patient using <code>ROW_NUMBER()</code>.</p>
+  <pre><span class="kw">WITH</span> <span class="fn">patient_pathway</span> <span class="kw">AS</span> (
+    <span class="cm">-- Base Case: every visit = hop 1</span>
+    <span class="kw">SELECT</span> <span class="col">date</span>, <span class="col">patient_id</span>, <span class="col">from_department</span>, <span class="col">to_department</span>,
+           <span class="fn">CAST</span>(<span class="col">from_department</span> + <span class="str">' &gt; '</span> + <span class="col">to_department</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">pathway</span>,
+           1 <span class="kw">AS</span> <span class="col">transfer_count</span>
+    <span class="kw">FROM</span> <span class="tbl">PatientVisits</span>
+    <span class="kw">UNION ALL</span>
+    <span class="cm">-- Recursive Case: extend by one hop</span>
+    <span class="kw">SELECT</span> <span class="col">v</span>.<span class="col">date</span>, <span class="col">v</span>.<span class="col">patient_id</span>, <span class="col">pp</span>.<span class="col">from_department</span>, <span class="col">v</span>.<span class="col">to_department</span>,
+           <span class="fn">CAST</span>(<span class="col">pp</span>.<span class="col">pathway</span> + <span class="str">' &gt; '</span> + <span class="col">v</span>.<span class="col">to_department</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)),
+           <span class="col">pp</span>.<span class="col">transfer_count</span> + 1
+    <span class="kw">FROM</span> <span class="tbl">PatientVisits</span> <span class="col">v</span>
+    <span class="kw">JOIN</span> <span class="fn">patient_pathway</span> <span class="col">pp</span>
+        <span class="kw">ON</span> <span class="col">v</span>.<span class="col">from_department</span>=<span class="col">pp</span>.<span class="col">to_department</span> <span class="kw">AND</span> <span class="col">v</span>.<span class="col">patient_id</span>=<span class="col">pp</span>.<span class="col">patient_id</span> <span class="kw">AND</span> <span class="col">v</span>.<span class="col">date</span>=<span class="col">pp</span>.<span class="col">date</span>
+    <span class="kw">WHERE</span> <span class="col">pp</span>.<span class="col">transfer_count</span> &lt; 20
+)
+<span class="cm">-- Outer query: pick LONGEST path per patient using ROW_NUMBER</span>
+<span class="kw">SELECT</span> <span class="col">date</span>, <span class="col">patient_id</span>, <span class="col">pathway</span> <span class="kw">AS</span> <span class="col">longest_day_pathway</span>
+<span class="kw">FROM</span> (
+    <span class="kw">SELECT</span> <span class="col">date</span>, <span class="col">patient_id</span>, <span class="col">pathway</span>,
+           <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span>(
+               <span class="kw">PARTITION BY</span> <span class="col">date</span>, <span class="col">patient_id</span>
+               <span class="kw">ORDER BY</span> <span class="col">transfer_count</span> <span class="kw">DESC</span>   <span class="cm">-- longest path gets rn = 1</span>
+           ) <span class="kw">AS</span> <span class="col">rn</span>
+    <span class="kw">FROM</span> <span class="fn">patient_pathway</span>
+) <span class="col">ranked</span>
+<span class="kw">WHERE</span> <span class="col">rn</span> = 1
+<span class="kw">ORDER BY</span> <span class="col">patient_id</span></pre>
+  <div class="blue" style="font-size:.82rem">
+    <strong style="color:var(--a)">Expected output:</strong> &nbsp;P001 → Emergency &gt; Radiology &gt; Cardiology &gt; ICU &nbsp;|&nbsp; P002 → Pediatrics &gt; Dermatology &gt; Pharmacy &gt; Discharge &nbsp;|&nbsp; P003 → Oncology &gt; Laboratory &gt; Surgery &gt; Recovery
+  </div>
+</div>
+
+<!-- SLIDE 10: PREVENTING INFINITE LOOPS -->
+<div class="slide">
+  <h2>Preventing Infinite Recursion</h2>
+  <div class="warn" style="margin-bottom:10px">
+    <p style="font-weight:700;color:var(--y);margin-bottom:6px">When does infinite recursion happen?</p>
+    <p style="font-size:.83rem;line-height:1.7">If your data has a cycle — e.g., Department A sends to B, B sends back to A — then the recursive case <strong>never finds zero rows</strong>. It keeps extending forever: A→B→A→B→A→B…</p>
+  </div>
+  <div class="two">
+    <div>
+      <p style="font-weight:700;margin-bottom:8px;color:var(--a)">Strategy 1 — Level / Hop Limit (most common)</p>
+      <pre style="font-size:.78rem"><span class="cm">-- Add this to the recursive case:</span>
+<span class="kw">WHERE</span> <span class="hl-y"><span class="col">pp</span>.<span class="col">transfer_count</span> &lt; 20</span>
+
+<span class="cm">-- Or use SQL Server's built-in option:</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="fn">patient_pathway</span>
+<span class="kw">OPTION</span> (<span class="fn">MAXRECURSION</span> 50)
+
+<span class="cm">-- Default if you omit: MAXRECURSION 100
+-- Unlimited (dangerous!): MAXRECURSION 0</span></pre>
+      <div class="green" style="margin-top:8px">
+        <p style="font-size:.82rem">Use when you know the maximum depth. Patient pathways, org charts, flight routes — rarely more than 10-15 levels.</p>
+      </div>
+    </div>
+    <div>
+      <p style="font-weight:700;margin-bottom:8px;color:var(--a)">Strategy 2 — Track Visited Nodes</p>
+      <pre style="font-size:.78rem"><span class="cm">-- Base Case: start tracking</span>
+<span class="kw">SELECT</span> ..., <span class="col">to_department</span> <span class="kw">AS</span> <span class="col">visited</span>
+<span class="kw">FROM</span> <span class="tbl">PatientVisits</span>
+
+<span class="kw">UNION ALL</span>
+
+<span class="cm">-- Recursive: extend tracking</span>
+<span class="kw">SELECT</span> ..., <span class="col">pp</span>.<span class="col">visited</span> + <span class="str">','</span> + <span class="col">v</span>.<span class="col">to_department</span>
+<span class="kw">FROM</span> <span class="tbl">PatientVisits</span> <span class="col">v</span>
+<span class="kw">JOIN</span> <span class="fn">patient_pathway</span> <span class="col">pp</span> ...
+<span class="kw">WHERE</span> <span class="col">pp</span>.<span class="col">visited</span> <span class="kw">NOT LIKE</span>
+      <span class="str">'%,'</span> + <span class="col">v</span>.<span class="col">to_department</span> + <span class="str">','</span> + <span class="str">'%'</span></pre>
+      <div class="warn" style="margin-top:8px">
+        <p style="font-size:.82rem">Use when data might have cycles — social networks, supply chains, systems where A can reference B and B can reference A.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: ORG CHART BONUS -->
+<div class="slide">
+  <h2>Bonus: Org Chart Hierarchy — Same Pattern</h2>
+  <p style="margin-bottom:10px">Recursive CTE is perfect for any parent-child hierarchy. Example: find all employees under VP Bob.</p>
+  <div class="two">
+    <div>
+      <pre style="font-size:.77rem"><span class="cm">-- Employees table:</span>
+<span class="cm">-- employee_id | name      | manager_id</span>
+<span class="cm">-- 1           | CEO Alice | NULL</span>
+<span class="cm">-- 2           | VP Bob    | 1</span>
+<span class="cm">-- 4           | Dir. Dave | 2</span>
+<span class="cm">-- 7           | Mgr Grace | 4</span>
+<span class="cm">-- 10          | Jack      | 7</span>
+
+<span class="kw">WITH</span> <span class="fn">org_chart</span> <span class="kw">AS</span> (
+    <span class="cm">-- Base: start at VP Bob (id=2)</span>
+    <span class="kw">SELECT</span> <span class="col">employee_id</span>, <span class="col">name</span>,
+           <span class="col">manager_id</span>, <span class="hl-b">1 <span class="kw">AS</span> <span class="col">level</span></span>
+    <span class="kw">FROM</span> <span class="tbl">Employees</span>
+    <span class="kw">WHERE</span> <span class="col">employee_id</span> = 2
+
+    <span class="kw">UNION ALL</span>
+
+    <span class="cm">-- Recursive: find each person's direct reports</span>
+    <span class="kw">SELECT</span> <span class="col">e</span>.<span class="col">employee_id</span>, <span class="col">e</span>.<span class="col">name</span>,
+           <span class="col">e</span>.<span class="col">manager_id</span>, <span class="hl-p"><span class="col">oc</span>.<span class="col">level</span> + 1</span>
+    <span class="kw">FROM</span> <span class="tbl">Employees</span> <span class="col">e</span>
+    <span class="kw">JOIN</span> <span class="fn">org_chart</span> <span class="col">oc</span>
+        <span class="kw">ON</span> <span class="hl-g"><span class="col">e</span>.<span class="col">manager_id</span> = <span class="col">oc</span>.<span class="col">employee_id</span></span>
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="fn">org_chart</span> <span class="kw">ORDER BY</span> <span class="col">level</span></pre>
+    </div>
+    <div>
+      <p style="font-weight:700;margin-bottom:8px">Output — all reports under VP Bob:</p>
+      <table>
+        <tr><th>name</th><th>level</th><th>What this means</th></tr>
+        <tr><td>VP Bob</td><td style="color:var(--a)">1</td><td>Starting manager</td></tr>
+        <tr><td>Director Dave</td><td style="color:var(--a)">2</td><td>Direct report of Bob</td></tr>
+        <tr><td>Director Eve</td><td style="color:var(--a)">2</td><td>Direct report of Bob</td></tr>
+        <tr><td>Manager Grace</td><td style="color:var(--p)">3</td><td>Report of Dave</td></tr>
+        <tr><td>Manager Henry</td><td style="color:var(--p)">3</td><td>Report of Eve</td></tr>
+        <tr><td>Analyst Jack</td><td style="color:var(--g)">4</td><td>Report of Grace</td></tr>
+      </table>
+      <div class="hl" style="margin-top:10px">
+        <p style="font-size:.82rem"><strong style="color:var(--a)">Connection logic:</strong> <code>e.manager_id = oc.employee_id</code> — "this employee's manager = someone already in the CTE." That's how you go one level deeper each iteration.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: SUMMARY + QUIZ -->
+<div class="slide">
+  <h2>Summary — When to Use Recursive CTE</h2>
+  <div class="two" style="margin-bottom:10px">
+    <table>
+      <tr><th>Scenario</th><th>Recursive CTE?</th></tr>
+      <tr><td>Patient care pathway chaining</td><td style="color:var(--g);font-weight:700">✓ Yes</td></tr>
+      <tr><td>Organisational hierarchies</td><td style="color:var(--g);font-weight:700">✓ Yes</td></tr>
+      <tr><td>Flight / transport route chaining</td><td style="color:var(--g);font-weight:700">✓ Yes</td></tr>
+      <tr><td>Bill of materials (parts inside parts)</td><td style="color:var(--g);font-weight:700">✓ Yes</td></tr>
+      <tr><td>Category trees (parent → child)</td><td style="color:var(--g);font-weight:700">✓ Yes</td></tr>
+      <tr><td>Simple SUM, COUNT, GROUP BY</td><td style="color:#f87171;font-weight:700">✗ Use GROUP BY</td></tr>
+      <tr><td>Multi-level aggregation</td><td style="color:#f87171;font-weight:700">✗ Use ROLLUP / CUBE</td></tr>
+    </table>
+    <div>
+      <div class="blue" style="margin-bottom:8px">
+        <p style="font-weight:700;color:var(--a);margin-bottom:6px">Recursive CTE checklist:</p>
+        <div class="steps">
+          <div class="step"><div class="snum">1</div><div class="stxt"><strong>Base Case</strong> — the starting rows (anchor). Does NOT reference the CTE.</div></div>
+          <div class="step"><div class="snum">2</div><div class="stxt"><strong>UNION ALL</strong> — connects both parts.</div></div>
+          <div class="step"><div class="snum">3</div><div class="stxt"><strong>Recursive Case</strong> — JOINs against the CTE to extend paths.</div></div>
+          <div class="step"><div class="snum">4</div><div class="stxt"><strong>Connection logic</strong> — links rows (from = previous to).</div></div>
+          <div class="step"><div class="snum">5</div><div class="stxt"><strong>Termination guard</strong> — prevents infinite loops.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="qbox">
+    <p>Quiz — In the patient pathway CTE, what would happen if you forgot <code>AND v.patient_id = pp.patient_id</code> in the recursive JOIN?</p>
+    <button class="qbtn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+    <div class="qans">The query would <strong>cross-connect patients</strong>. P001's visit to Radiology would connect to P002's visit FROM Radiology — even though they are different patients. Without the patient_id guard, the recursive case chains visits across all patients. Same logic applies to <code>AND v.date = pp.date</code> — omitting it would cross dates too. Both guards are essential to keep chains within the same patient on the same day.</div>
+  </div>
+</div>
+
+</div>
+<script>
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const N=slides.length;
+const ctr=document.getElementById('ctr');
+function show(n){slides[cur].classList.remove('active');cur=(n+N)%N;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+N;document.querySelector('.deck').scrollTop=0;}
+function go(d){show(cur+d);}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+</script>
+</body>
+</html>

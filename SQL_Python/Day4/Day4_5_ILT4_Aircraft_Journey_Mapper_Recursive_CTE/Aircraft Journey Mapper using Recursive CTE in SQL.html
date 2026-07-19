@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 15 – Aircraft Journey Mapper using Recursive CTE</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; height: 100vh; overflow: hidden; }
+  .deck { width: 100%; height: 100vh; position: relative; }
+  .slide { display: none; position: absolute; inset: 0; padding: 40px 56px; flex-direction: column; justify-content: flex-start; gap: 14px; }
+  .slide.active { display: flex; }
+
+  h1 { font-size: 1.95rem; color: #a78bfa; line-height: 1.2; }
+  h2 { font-size: 1.45rem; color: #a78bfa; margin-bottom: 5px; }
+  h3 { font-size: 1rem; color: #c9d1d9; margin-bottom: 4px; }
+  p, li { font-size: 0.95rem; color: #c9d1d9; line-height: 1.6; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 5px; }
+
+  .subtitle { font-size: 1rem; color: #8b949e; margin-top: 6px; }
+  .module-badge { font-size: 0.82rem; color: #8b949e; margin-bottom: 6px; }
+
+  pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 13px 18px; font-family: 'Cascadia Code','Consolas',monospace; font-size: 0.84rem; line-height: 1.7; overflow-x: auto; white-space: pre; }
+  .kw  { color: #ff7b72; font-weight: bold; }
+  .fn  { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm  { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 13px 15px; }
+  .card h3 { color: #a78bfa; margin-bottom: 8px; }
+
+  .hl  { background: #a78bfa10; border-left: 3px solid #a78bfa; border-radius: 0 6px 6px 0; padding: 10px 14px; }
+  .hl2 { background: #f59e0b10; border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 10px 14px; }
+  .hl3 { background: #22c55e10; border-left: 3px solid #22c55e; border-radius: 0 6px 6px 0; padding: 10px 14px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+  th { background: #161b22; color: #a78bfa; padding: 7px 10px; text-align: left; border-bottom: 2px solid #30363d; }
+  td { padding: 7px 10px; border-bottom: 1px solid #21262d; color: #c9d1d9; }
+  tr:hover td { background: #161b2240; }
+
+  .quiz-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 13px 16px; }
+  .quiz-box p { font-weight: 600; color: #e6edf3; font-size: 0.95rem; }
+  .quiz-options { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .opt { display: flex; align-items: center; gap: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 6px 12px; font-size: 0.9rem; color: #c9d1d9; }
+  .opt-label { display: inline-block; background: #a78bfa20; color: #a78bfa; border-radius: 4px; width: 24px; height: 24px; text-align: center; line-height: 24px; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; }
+  .quiz-answer { display: none; margin-top: 10px; padding: 10px 13px; background: #0a2218; border-left: 3px solid #22c55e; border-radius: 0 6px 6px 0; }
+  .quiz-answer p { color: #86efac; font-weight: 400; font-size: 0.9rem; }
+  .reveal-btn { margin-top: 9px; background: #a78bfa15; color: #a78bfa; border: 1px solid #a78bfa40; border-radius: 6px; padding: 5px 13px; cursor: pointer; font-size: 0.82rem; }
+  .reveal-btn:hover { background: #a78bfa25; }
+
+  .path-arrow { color: #a78bfa; font-weight: bold; margin: 0 4px; }
+
+  .nav { position: fixed; bottom: 22px; right: 30px; display: flex; gap: 8px; align-items: center; }
+  .nav button { background: #161b22; border: 1px solid #30363d; color: #e6edf3; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
+  .nav button:hover { background: #21262d; }
+  .counter { font-size: 0.82rem; color: #8b949e; min-width: 48px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <div class="module-badge">Day 4 · Module 15</div>
+    <h1>Aircraft Journey Mapper<br>using Recursive CTE in SQL</h1>
+    <p class="subtitle">SkyConnect Airways — tracing multi-hop flight paths with recursive queries</p>
+  </div>
+  <div class="two-col" style="margin-top:4px;">
+    <div class="card">
+      <h3>Business Problem</h3>
+      <p><strong>SkyConnect Airways</strong> operates multiple aircraft across different routes daily. Each aircraft makes several <strong>hops</strong> — stopping at airports before reaching its final destination.</p>
+      <p style="margin-top:8px;">The Operations Control Center needs to <strong>find the longest connected flight path</strong> for any aircraft on any given date.</p>
+      <p style="margin-top:8px;font-size:0.88rem;color:#8b949e;">Use cases: maintenance scheduling, fuel planning, crew assignments, passenger routing.</p>
+    </div>
+    <div class="card">
+      <h3>What Makes This Hard for Standard SQL</h3>
+      <ul>
+        <li>Each hop is a separate row in the table</li>
+        <li>Need to <strong>chain rows</strong> where destination of hop N = source of hop N+1</li>
+        <li>We don't know the chain depth in advance</li>
+        <li>Standard SQL can retrieve one level at a time — it cannot iterate</li>
+      </ul>
+      <div class="hl" style="margin-top:10px;font-size:0.88rem;">
+        <strong style="color:#a78bfa;">Solution:</strong> Recursive CTE — a query that references itself to build chains iteratively.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE FLIGHTTRIPS TABLE -->
+<div class="slide">
+  <h2>The FlightTrips Table</h2>
+  <div class="two-col">
+    <div>
+      <p style="margin-bottom:8px;font-weight:600;">Table schema:</p>
+      <pre><span class="cm">-- FlightTrips: one row = one flight segment</span>
+<span class="kw">SELECT</span> <span class="kw">TOP</span> 10 * <span class="kw">FROM</span> <span class="tbl">FlightTrips</span>;</pre>
+      <table style="margin-top:10px;">
+        <tr><th>Column</th><th>Type</th><th>Meaning</th></tr>
+        <tr><td><code class="col">date</code></td><td>DATE</td><td>Date of the flight</td></tr>
+        <tr><td><code class="col">aircraftcode</code></td><td>VARCHAR</td><td>Aircraft identifier (B737, A320…)</td></tr>
+        <tr><td><code class="col">source_airport</code></td><td>VARCHAR</td><td>Departure airport code</td></tr>
+        <tr><td><code class="col">destination_airport</code></td><td>VARCHAR</td><td>Arrival airport code</td></tr>
+      </table>
+    </div>
+    <div>
+      <p style="margin-bottom:8px;font-weight:600;">Sample data:</p>
+      <table>
+        <tr><th>date</th><th>aircraft</th><th>source</th><th>dest</th></tr>
+        <tr><td>2025-01-16</td><td>B737</td><td>ORD</td><td>JFK</td></tr>
+        <tr><td>2025-01-16</td><td>B737</td><td>JFK</td><td>BOS</td></tr>
+        <tr><td>2025-01-16</td><td>B737</td><td>BOS</td><td>LGA</td></tr>
+        <tr><td>2025-01-16</td><td>A320</td><td>LAX</td><td>DEN</td></tr>
+        <tr><td>2025-01-16</td><td>A320</td><td>DEN</td><td>ORD</td></tr>
+      </table>
+      <div class="hl2" style="margin-top:10px;font-size:0.9rem;">
+        <strong style="color:#f59e0b;">Connection rule:</strong> Two hops are connected if <code>hop1.destination = hop2.source</code> for the same aircraft on the same day. B737 on Jan 16: <strong>ORD → JFK → BOS → LGA</strong> (3 hops).
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: RECURSIVE CTE ANATOMY -->
+<div class="slide">
+  <h2>Recursive CTE Anatomy</h2>
+  <p style="margin-bottom:10px;">A Recursive CTE has <strong>two mandatory parts</strong> connected by UNION ALL:</p>
+  <pre><span class="kw">WITH</span> <span class="fn">cte_name</span> <span class="kw">AS</span> (
+
+    <span class="cm">-- PART 1: BASE CASE (Anchor Member)</span>
+    <span class="cm">-- Does NOT reference the CTE itself</span>
+    <span class="cm">-- Produces the initial rows recursion builds upon</span>
+    <span class="kw">SELECT</span> <span class="col">starting_columns</span>, 1 <span class="kw">AS</span> <span class="col">hop_count</span>
+    <span class="kw">FROM</span> <span class="tbl">FlightTrips</span>
+    <span class="kw">WHERE</span> <span class="col">date</span> = <span class="str">'2025-01-16'</span>
+
+    <span class="kw">UNION ALL</span>     <span class="cm">-- combines base and recursive results</span>
+
+    <span class="cm">-- PART 2: RECURSIVE CASE (Recursive Member)</span>
+    <span class="cm">-- References the CTE from the PREVIOUS iteration</span>
+    <span class="cm">-- Extends existing paths by connecting next hops</span>
+    <span class="kw">SELECT</span> <span class="col">extended_columns</span>, <span class="fn">cte</span>.<span class="col">hop_count</span> + 1
+    <span class="kw">FROM</span> <span class="tbl">FlightTrips</span> <span class="col">f</span>
+    <span class="kw">JOIN</span> <span class="fn">cte_name</span> <span class="col">cte</span>
+        <span class="kw">ON</span> <span class="col">f</span>.<span class="col">source_airport</span> = <span class="col">cte</span>.<span class="col">destination_airport</span> <span class="cm">-- connection: next starts where last ended</span>
+        <span class="kw">AND</span> <span class="col">f</span>.<span class="col">aircraftcode</span>  = <span class="col">cte</span>.<span class="col">aircraftcode</span>         <span class="cm">-- same aircraft</span>
+        <span class="kw">AND</span> <span class="col">f</span>.<span class="col">date</span>          = <span class="col">cte</span>.<span class="col">date</span>                   <span class="cm">-- same day</span>
+    <span class="kw">WHERE</span> <span class="col">cte</span>.<span class="col">hop_count</span> &lt; 100                               <span class="cm">-- termination: prevent infinite loop</span>
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="fn">cte_name</span>;</pre>
+</div>
+
+<!-- SLIDE 4: LIVE DEMO - BASE CASE -->
+<div class="slide">
+  <h2>Live Demo — Start with the Base Case</h2>
+  <p style="margin-bottom:8px;">Build the recursive CTE step by step. Start with the base case only:</p>
+  <pre><span class="cm">-- Base Case: Each individual flight on 2025-01-16</span>
+<span class="cm">-- Initialize path as "SRC &gt; DEST", track the last airport, count hops</span>
+<span class="kw">WITH</span> <span class="fn">flightpath</span> <span class="kw">AS</span> (
+
+    <span class="kw">SELECT</span>
+        <span class="col">date</span>,
+        <span class="col">aircraftcode</span>,
+        <span class="col">source_airport</span>,                                        <span class="cm">-- original departure</span>
+        <span class="col">destination_airport</span>,                                    <span class="cm">-- current leg destination</span>
+        <span class="fn">CAST</span>(<span class="col">source_airport</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) + <span class="str">' &gt; '</span> +
+        <span class="fn">CAST</span>(<span class="col">destination_airport</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>))       <span class="kw">AS</span> <span class="col">path</span>, <span class="cm">-- "ORD &gt; JFK"</span>
+        <span class="col">destination_airport</span>                                 <span class="kw">AS</span> <span class="col">last_airport</span>, <span class="cm">-- track tail</span>
+        1                                                    <span class="kw">AS</span> <span class="col">hop_count</span>
+    <span class="kw">FROM</span> <span class="tbl">FlightTrips</span>
+    <span class="kw">WHERE</span> <span class="col">date</span> = <span class="str">'2025-01-16'</span>
+
+    <span class="cm">-- (UNION ALL + recursive case goes here)</span>
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="fn">flightpath</span>;</pre>
+  <div class="two-col" style="margin-top:4px;">
+    <div class="hl">
+      <strong style="color:#a78bfa;">Base case output for B737:</strong>
+      <p style="margin-top:6px;font-size:0.9rem;">path = "ORD &gt; JFK" (hop 1)<br>path = "JFK &gt; BOS" (hop 1)<br>path = "BOS &gt; LGA" (hop 1)</p>
+      <p style="margin-top:6px;font-size:0.88rem;color:#8b949e;">These are the starting seeds. The recursive case will chain them together.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: LIVE DEMO - FULL RECURSIVE CTE -->
+<div class="slide">
+  <h2>Live Demo — Full Recursive CTE</h2>
+  <pre><span class="kw">WITH</span> <span class="fn">flightpath</span> <span class="kw">AS</span> (
+    <span class="cm">-- Base Case</span>
+    <span class="kw">SELECT</span>
+        <span class="col">date</span>, <span class="col">aircraftcode</span>, <span class="col">source_airport</span>, <span class="col">destination_airport</span>,
+        <span class="fn">CAST</span>(<span class="col">source_airport</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) + <span class="str">' &gt; '</span> + <span class="fn">CAST</span>(<span class="col">destination_airport</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">path</span>,
+        <span class="col">destination_airport</span> <span class="kw">AS</span> <span class="col">last_airport</span>,
+        1 <span class="kw">AS</span> <span class="col">hop_count</span>
+    <span class="kw">FROM</span> <span class="tbl">FlightTrips</span>
+    <span class="kw">WHERE</span> <span class="col">date</span> = <span class="str">'2025-01-16'</span>
+
+    <span class="kw">UNION ALL</span>
+
+    <span class="cm">-- Recursive Case: extend each path by one more connected hop</span>
+    <span class="kw">SELECT</span>
+        <span class="col">f</span>.<span class="col">date</span>, <span class="col">f</span>.<span class="col">aircraftcode</span>,
+        <span class="col">fp</span>.<span class="col">source_airport</span>,                    <span class="cm">-- keep original source</span>
+        <span class="col">f</span>.<span class="col">destination_airport</span>,               <span class="cm">-- new end airport</span>
+        <span class="col">fp</span>.<span class="col">path</span> + <span class="str">' &gt; '</span> + <span class="fn">CAST</span>(<span class="col">f</span>.<span class="col">destination_airport</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">path</span>,
+        <span class="col">f</span>.<span class="col">destination_airport</span> <span class="kw">AS</span> <span class="col">last_airport</span>,
+        <span class="col">fp</span>.<span class="col">hop_count</span> + 1 <span class="kw">AS</span> <span class="col">hop_count</span>
+    <span class="kw">FROM</span> <span class="tbl">FlightTrips</span> <span class="col">f</span>
+    <span class="kw">INNER JOIN</span> <span class="fn">flightpath</span> <span class="col">fp</span>
+        <span class="kw">ON</span>  <span class="col">f</span>.<span class="col">source_airport</span> = <span class="col">fp</span>.<span class="col">destination_airport</span>  <span class="cm">-- new starts where last ended</span>
+        <span class="kw">AND</span> <span class="col">f</span>.<span class="col">aircraftcode</span>  = <span class="col">fp</span>.<span class="col">aircraftcode</span>
+        <span class="kw">AND</span> <span class="col">f</span>.<span class="col">date</span>          = <span class="col">fp</span>.<span class="col">date</span>
+    <span class="kw">WHERE</span> <span class="col">fp</span>.<span class="col">hop_count</span> &lt; 100                           <span class="cm">-- termination guard</span>
+)
+<span class="cm">-- Get the longest path per aircraft</span>
+<span class="kw">SELECT</span> <span class="col">aircraftcode</span>, <span class="col">path</span> <span class="kw">AS</span> <span class="col">longest_day_path</span>
+<span class="kw">FROM</span> (
+    <span class="kw">SELECT</span> <span class="col">aircraftcode</span>, <span class="col">path</span>,
+           <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> <span class="col">aircraftcode</span> <span class="kw">ORDER BY</span> <span class="col">hop_count</span> <span class="kw">DESC</span>) <span class="kw">AS</span> <span class="col">rn</span>
+    <span class="kw">FROM</span> <span class="fn">flightpath</span>
+    <span class="kw">WHERE</span> <span class="col">date</span> = <span class="str">'2025-01-16'</span>
+) <span class="col">ranked</span>
+<span class="kw">WHERE</span> <span class="col">rn</span> = 1;</pre>
+</div>
+
+<!-- SLIDE 6: HOW ITERATION WORKS -->
+<div class="slide">
+  <h2>How Iteration Works: B737 on 2025-01-16</h2>
+  <div class="two-col">
+    <div>
+      <table>
+        <tr><th>Iteration</th><th>Action</th><th>Paths built</th></tr>
+        <tr><td style="color:#a78bfa;font-weight:bold;">Base</td><td>Read all flights for this date</td><td>ORD&gt;JFK, JFK&gt;BOS, BOS&gt;LGA (hop=1)</td></tr>
+        <tr><td style="color:#a78bfa;font-weight:bold;">Round 1</td><td>Connect: source matches previous destination</td><td>ORD&gt;JFK&gt;BOS, JFK&gt;BOS&gt;LGA (hop=2)</td></tr>
+        <tr><td style="color:#a78bfa;font-weight:bold;">Round 2</td><td>Continue extending</td><td>ORD&gt;JFK&gt;BOS&gt;LGA (hop=3)</td></tr>
+        <tr><td style="color:#a78bfa;font-weight:bold;">Round 3</td><td>No more connected flights</td><td>0 rows → <strong>STOP</strong></td></tr>
+      </table>
+      <div class="hl" style="margin-top:10px;">
+        <p style="font-size:0.9rem;"><strong style="color:#a78bfa;">Final result for B737:</strong><br>
+        <code style="font-size:0.88rem;">ORD <span class="path-arrow">&gt;</span> JFK <span class="path-arrow">&gt;</span> BOS <span class="path-arrow">&gt;</span> LGA</code><br>
+        <span style="font-size:0.85rem;color:#8b949e;">ROW_NUMBER() PARTITION BY aircraft ORDER BY hop_count DESC picks the longest path (hop=3, rn=1)</span></p>
+      </div>
+    </div>
+    <div>
+      <div class="hl2" style="margin-bottom:12px;">
+        <strong style="color:#f59e0b;">Two termination mechanisms:</strong>
+        <ul style="margin-top:6px;font-size:0.9rem;">
+          <li><strong>Natural:</strong> When no more connected flights exist, recursive case returns 0 rows → stops automatically</li>
+          <li><strong>Guard:</strong> <code>WHERE hop_count &lt; 100</code> prevents infinite loops if data has cycles</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: QUIZ 1 -->
+<div class="slide">
+  <h2>Quiz 1 — Predict the Output</h2>
+  <p style="margin-bottom:6px;">Run this query and predict the result:</p>
+  <pre><span class="kw">WITH</span> <span class="fn">flightpath</span> <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="col">date</span>, <span class="col">aircraftcode</span>, <span class="col">source_airport</span>, <span class="col">destination_airport</span>,
+        <span class="fn">CAST</span>(<span class="col">source_airport</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) + <span class="str">' &gt; '</span> + <span class="fn">CAST</span>(<span class="col">destination_airport</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> <span class="col">path</span>,
+        <span class="col">destination_airport</span> <span class="kw">AS</span> <span class="col">last_airport</span>,  1 <span class="kw">AS</span> <span class="col">hop_count</span>
+    <span class="kw">FROM</span> <span class="tbl">FlightTrips</span> <span class="kw">WHERE</span> <span class="col">date</span> = <span class="str">'2025-01-16'</span>
+    <span class="kw">UNION ALL</span>
+    <span class="kw">SELECT</span> <span class="col">f</span>.<span class="col">date</span>, <span class="col">f</span>.<span class="col">aircraftcode</span>, <span class="col">fp</span>.<span class="col">source_airport</span>, <span class="col">f</span>.<span class="col">destination_airport</span>,
+           <span class="col">fp</span>.<span class="col">path</span> + <span class="str">' &gt; '</span> + <span class="fn">CAST</span>(<span class="col">f</span>.<span class="col">destination_airport</span> <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)), <span class="col">f</span>.<span class="col">destination_airport</span>, <span class="col">fp</span>.<span class="col">hop_count</span> + 1
+    <span class="kw">FROM</span> <span class="tbl">FlightTrips</span> <span class="col">f</span> <span class="kw">INNER JOIN</span> <span class="fn">flightpath</span> <span class="col">fp</span>
+        <span class="kw">ON</span> <span class="col">f</span>.<span class="col">source_airport</span>=<span class="col">fp</span>.<span class="col">destination_airport</span> <span class="kw">AND</span> <span class="col">f</span>.<span class="col">aircraftcode</span>=<span class="col">fp</span>.<span class="col">aircraftcode</span> <span class="kw">AND</span> <span class="col">f</span>.<span class="col">date</span>=<span class="col">fp</span>.<span class="col">date</span>
+    <span class="kw">WHERE</span> <span class="col">fp</span>.<span class="col">hop_count</span> &lt; 100
+)
+<span class="kw">SELECT</span> <span class="col">aircraftcode</span>, <span class="col">path</span> <span class="kw">AS</span> <span class="col">longest_day_path</span>
+<span class="kw">FROM</span> (<span class="kw">SELECT</span> <span class="col">aircraftcode</span>, <span class="col">path</span>,
+             <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> <span class="col">aircraftcode</span> <span class="kw">ORDER BY</span> <span class="col">hop_count</span> <span class="kw">DESC</span>) <span class="kw">AS</span> <span class="col">rn</span>
+      <span class="kw">FROM</span> <span class="fn">flightpath</span> <span class="kw">WHERE</span> <span class="col">date</span>=<span class="str">'2025-01-16'</span> <span class="kw">AND</span> <span class="col">last_airport</span>=<span class="str">'LGA'</span>) <span class="col">r</span>
+<span class="kw">WHERE</span> <span class="col">rn</span> = 1;</pre>
+  <div class="quiz-box">
+    <p>On 2025-01-16, which aircraft's longest connected flight path ended at LGA?</p>
+    <div class="quiz-options">
+      <div class="opt"><span class="opt-label">A</span> CRJ700</div>
+      <div class="opt"><span class="opt-label">B</span> B757</div>
+      <div class="opt"><span class="opt-label">C</span> B737</div>
+      <div class="opt"><span class="opt-label">D</span> A380</div>
+    </div>
+    <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none';">Reveal Answer</button>
+    <div class="quiz-answer">
+      <p><strong>C — B737</strong>. Its longest connected path on 2025-01-16 ending at LGA is: <strong>ORD &gt; JFK &gt; BOS &gt; LGA</strong> (3 hops).</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: QUIZ 2 -->
+<div class="slide">
+  <h2>Quiz 2 — Predict the Output</h2>
+  <p style="margin-bottom:8px;">Modified query — same recursive CTE, different date and filter:</p>
+  <pre><span class="cm">-- Same recursive CTE with flightpath as above, then:</span>
+
+<span class="kw">SELECT</span>
+    <span class="col">date</span>,
+    <span class="col">aircraftcode</span>,
+    <span class="col">longest_day_path</span>
+<span class="kw">FROM</span> (
+    <span class="kw">SELECT</span>
+        <span class="col">date</span>,
+        <span class="col">aircraftcode</span>,
+        <span class="col">path</span> <span class="kw">AS</span> <span class="col">longest_day_path</span>,
+        <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (
+            <span class="kw">PARTITION BY</span> <span class="col">date</span>, <span class="col">aircraftcode</span>
+            <span class="kw">ORDER BY</span> <span class="col">hop_count</span> <span class="kw">DESC</span>
+        ) <span class="kw">AS</span> <span class="col">rn</span>
+    <span class="kw">FROM</span> <span class="fn">flightpath</span>
+    <span class="kw">WHERE</span> <span class="col">date</span> = <span class="str">'2025-01-15'</span>
+      <span class="kw">AND</span> <span class="col">source_airport</span> = <span class="str">'PHX'</span>     <span class="cm">-- filter: paths that START from PHX</span>
+) <span class="col">ranked</span>
+<span class="kw">WHERE</span> <span class="col">rn</span> = 1;</pre>
+  <div class="quiz-box">
+    <p>On 2025-01-15, which aircraft had the longest flight path starting from PHX?</p>
+    <div class="quiz-options">
+      <div class="opt"><span class="opt-label">A</span> A320</div>
+      <div class="opt"><span class="opt-label">B</span> CRJ700</div>
+      <div class="opt"><span class="opt-label">C</span> B757</div>
+      <div class="opt"><span class="opt-label">D</span> B737</div>
+    </div>
+    <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none';">Reveal Answer</button>
+    <div class="quiz-answer">
+      <p><strong>A — A320</strong>. On 2025-01-15, the A320 operated the longest connected path beginning at PHX. The path traces from PHX through multiple hops.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .deck -->
+<div class="nav">
+  <button onclick="changeSlide(-1)">&#8592;</button>
+  <span class="counter" id="counter">1 / 8</span>
+  <button onclick="changeSlide(1)">&#8594;</button>
+</div>
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  function changeSlide(dir) {
+    slides[current].classList.remove('active');
+    current = (current + dir + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

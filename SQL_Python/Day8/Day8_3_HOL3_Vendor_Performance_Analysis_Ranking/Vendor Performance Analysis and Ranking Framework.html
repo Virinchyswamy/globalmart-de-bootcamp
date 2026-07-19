@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Vendor Performance Analysis and Ranking Framework</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
+  --green:#3fb950;--yellow:#d29922;--red:#f85149;--purple:#bc8cff;
+  --kw:#ff7b72;--fn:#d2a8ff;--st:#a5d6ff;--cm:#8b949e;--nm:#79c0ff;
+  --var:#ffa657;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+  height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.deck{flex:1;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;padding:2.5rem 3rem;
+  display:flex;flex-direction:column;gap:1.2rem;
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.slide.active{opacity:1;pointer-events:all}
+h1{font-size:2rem;font-weight:700;color:var(--accent)}
+h2{font-size:1.4rem;font-weight:600;color:var(--accent);margin-bottom:.4rem}
+h3{font-size:1.05rem;font-weight:600;color:var(--yellow);margin-bottom:.3rem}
+p,li{font-size:.95rem;line-height:1.6;color:var(--text)}
+ul{padding-left:1.2rem}
+li{margin-bottom:.3rem}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.8rem;
+  font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag.mod{background:#1f3a5f;color:var(--accent)}
+.tag.py{background:#1e3a2f;color:var(--green)}
+.tag.sql{background:#3a1f4a;color:var(--purple)}
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:12px;font-size:.78rem;
+  font-weight:600;margin-right:.4rem}
+.badge.new{background:#1e3a2f;color:var(--green)}
+pre{background:#010409;border:1px solid var(--border);border-radius:8px;
+  padding:1rem 1.2rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;
+  line-height:1.7;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.85rem}
+.kw{color:var(--kw)}
+.fn{color:var(--fn)}
+.st{color:var(--st)}
+.cm{color:var(--cm);font-style:italic}
+.nm{color:var(--nm)}
+.var{color:var(--var)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:1rem 1.2rem}
+.card h3{margin-bottom:.5rem}
+.callout{background:#1a2332;border-left:3px solid var(--accent);
+  border-radius:0 6px 6px 0;padding:.7rem 1rem;font-size:.88rem}
+.callout.green{background:#0d2318;border-color:var(--green)}
+.callout.yellow{background:#2a1f0d;border-color:var(--yellow)}
+.callout.purple{background:#1e1030;border-color:var(--purple)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#1f2937;color:var(--accent);padding:.5rem .8rem;text-align:left;
+  border:1px solid var(--border)}
+td{padding:.45rem .8rem;border:1px solid var(--border);vertical-align:top;text-align:center}
+td:first-child{text-align:left}
+tr:nth-child(even) td{background:#0f1117}
+td code{font-size:.8rem}
+.rank-1{color:var(--green);font-weight:700}
+.rank-4{color:var(--red);font-weight:700}
+.nav{display:flex;align-items:center;gap:1rem;padding:.6rem 3rem;
+  background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.nav button{background:none;border:1px solid var(--border);color:var(--text);
+  padding:.35rem .9rem;border-radius:6px;cursor:pointer;font-size:.85rem}
+.nav button:hover{background:var(--border)}
+#counter{margin-left:auto;color:var(--muted);font-size:.85rem;
+  font-family:'JetBrains Mono',monospace}
+.subtitle{color:var(--muted);font-size:1rem;margin-top:.3rem}
+.step-num{display:inline-block;width:22px;height:22px;border-radius:50%;
+  background:var(--accent);color:#000;font-size:.72rem;font-weight:700;
+  text-align:center;line-height:22px;margin-right:.4rem;flex-shrink:0}
+.step-row{display:flex;align-items:flex-start;gap:.3rem;margin-bottom:.45rem}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <span class="tag mod">Day 8 · Module 3</span>
+    <h1 style="margin-top:.5rem">Vendor Performance Analysis and Ranking Framework</h1>
+    <p class="subtitle">Build a two-table framework: one summarizing delivery metrics, one ranking vendors across 3 dimensions using <code>.rank(method='dense')</code>.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>Input DataFrames</h3>
+      <table>
+        <tr><th>Table</th><th>Key columns</th></tr>
+        <tr><td><code>vendor_performance</code></td><td>vendor_id, vendor_name, total_orders_delivered, total_orders_delivered_late, total_orders_returned, total_order_value</td></tr>
+        <tr><td><code>orders</code></td><td>order_id, ship_mode, vendor_id, delivery_duration, delay_duration</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>What you'll build</h3>
+      <div class="step-row"><span class="step-num">1</span>
+        <p><strong>delivery_performance</strong> — merged table with<br/>
+        <code>return%</code>, <code>delayed_delivery%</code>, <code>avg_delivery_delay</code></p>
+      </div>
+      <div class="step-row"><span class="step-num">2</span>
+        <p><strong>vendor_rank</strong> — rank each vendor on 3 metrics +<br/>
+        <code>average_rank</code> as final score (lower = better)</p>
+      </div>
+      <div class="callout green" style="margin-top:.4rem">
+        <span class="badge new">New</span> <code>df['col'].apply(func)</code>, <code>.rank(method='dense')</code>, <code>.mean(axis=1)</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: SQL MENTAL MODEL -->
+<div class="slide">
+  <div>
+    <span class="tag sql">SQL Mental Model</span>
+    <h1 style="margin-top:.5rem">Vendor Ranking in SQL vs Python</h1>
+    <p class="subtitle">SQL's window function <code>DENSE_RANK()</code> does exactly what pandas <code>.rank(method='dense')</code> does — rank without gaps.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>SQL pipeline</h3>
+      <pre><span class="cm">-- Step 1: Zero out negative delays
+-- (on-time delivery → delay = 0, not negative)</span>
+<span class="kw">SELECT</span> *,
+  <span class="kw">CASE</span> <span class="kw">WHEN</span> delay_duration &lt;= <span class="nm">0</span>
+       <span class="kw">THEN</span> <span class="nm">0</span>
+       <span class="kw">ELSE</span> delay_duration
+  <span class="kw">END</span> <span class="kw">AS</span> delay_duration
+<span class="kw">FROM</span> orders;
+
+<span class="cm">-- Step 2: Aggregate per vendor + compute rates</span>
+<span class="kw">SELECT</span> vendor_id,
+  <span class="fn">AVG</span>(delay_duration) <span class="kw">AS</span> avg_delivery_delay,
+  <span class="nm">100.0</span> * <span class="fn">SUM</span>(orders_returned) / <span class="fn">SUM</span>(orders_delivered)
+    <span class="kw">AS</span> return_pct,
+  <span class="nm">100.0</span> * <span class="fn">SUM</span>(orders_late)    / <span class="fn">SUM</span>(orders_delivered)
+    <span class="kw">AS</span> delayed_delivery_pct
+<span class="kw">FROM</span> orders <span class="kw">JOIN</span> vendor_performance <span class="kw">USING</span>(vendor_id)
+<span class="kw">GROUP BY</span> vendor_id;
+
+<span class="cm">-- Step 3: Rank on each metric (lower = better)</span>
+<span class="kw">SELECT</span> vendor_id,
+  <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span>
+    (<span class="kw">ORDER BY</span> return_pct <span class="kw">ASC</span>)  <span class="kw">AS</span> rank_return,
+  <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span>
+    (<span class="kw">ORDER BY</span> delayed_pct <span class="kw">ASC</span>) <span class="kw">AS</span> rank_delayed,
+  <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span>
+    (<span class="kw">ORDER BY</span> avg_delay <span class="kw">ASC</span>)   <span class="kw">AS</span> rank_delay
+<span class="kw">FROM</span> vendor_summary;</pre>
+    </div>
+    <div>
+      <h3>Python equivalent</h3>
+      <pre><span class="cm"># Step 1: Custom function + .apply()
+# CASE WHEN value &lt;= 0 THEN 0 ELSE value END</span>
+<span class="kw">def</span> <span class="fn">calculate_delay</span>(value):
+    <span class="kw">return</span> <span class="nm">0</span> <span class="kw">if</span> value &lt;= <span class="nm">0</span> <span class="kw">else</span> value
+
+orders[<span class="st">'delay_duration'</span>] = (
+    orders[<span class="st">'delay_duration'</span>].<span class="fn">apply</span>(calculate_delay)
+)
+
+<span class="cm"># Step 2: groupby().agg() + merge + rate calculation</span>
+delivery_summary = orders.<span class="fn">groupby</span>(<span class="st">'vendor_id'</span>).<span class="fn">agg</span>(
+    avg_delivery_delay=(<span class="st">'delay_duration'</span>, <span class="st">'mean'</span>)
+).<span class="fn">reset_index</span>()
+
+<span class="cm"># Step 3: .rank(method='dense', ascending=True)
+# → lowest value gets rank 1 (best performance)</span>
+vendor_rank[<span class="st">'rank_by_return%'</span>] = (
+    vendor_rank[<span class="st">'return%'</span>]
+    .<span class="fn">rank</span>(method=<span class="st">'dense'</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
+)
+
+<span class="cm"># Average rank = mean across 3 rank columns</span>
+vendor_rank[<span class="st">'average_rank'</span>] = vendor_rank[[
+    <span class="st">'rank_by_return%'</span>,
+    <span class="st">'rank_by_delayed_delivery%'</span>,
+    <span class="st">'rank_by_average_delivery_delay'</span>
+]].<span class="fn">mean</span>(axis=<span class="nm">1</span>)</pre>
+    </div>
+  </div>
+  <div class="callout purple">
+    <strong>DENSE_RANK vs RANK:</strong>
+    If two vendors tie at rank 2, <code>DENSE_RANK</code> gives both rank 2 and the next gets rank 3.
+    Regular <code>RANK</code> skips — next gets rank 4. pandas <code>method='dense'</code> = SQL <code>DENSE_RANK()</code>.
+  </div>
+</div>
+
+<!-- SLIDE 3: TASK 1 — delivery_performance -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 1</span>
+    <h1 style="margin-top:.5rem">Build delivery_performance Table</h1>
+    <p class="subtitle">Apply a custom delay function, aggregate, merge, and compute percentage rates — 5 operations to one clean table.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>Step-by-step</h3>
+      <pre><span class="cm"># ① Define delay function (CASE WHEN in SQL)
+# On-time/early orders have negative delay_duration
+# Clamp negatives to 0 — no "negative delay"</span>
+<span class="kw">def</span> <span class="fn">calculate_delay</span>(value):
+    <span class="kw">if</span> value &lt;= <span class="nm">0</span>:
+        <span class="kw">return</span> <span class="nm">0</span>
+    <span class="kw">else</span>:
+        <span class="kw">return</span> value
+
+<span class="cm"># ② Apply to every row in delay_duration column</span>
+orders[<span class="st">'delay_duration'</span>] = (
+    orders[<span class="st">'delay_duration'</span>].<span class="fn">apply</span>(calculate_delay)
+)
+
+<span class="cm"># ③ Aggregate per vendor, round to 1 decimal</span>
+delivery_summary = (
+    orders.<span class="fn">groupby</span>(<span class="st">'vendor_id'</span>)
+    .<span class="fn">agg</span>(
+        avg_delivery_duration=(<span class="st">'delivery_duration'</span>, <span class="st">'mean'</span>),
+        avg_delivery_delay   =(<span class="st">'delay_duration'</span>,    <span class="st">'mean'</span>)
+    ).<span class="fn">reset_index</span>()
+)
+delivery_summary[<span class="st">'avg_delivery_duration'</span>] = (
+    delivery_summary[<span class="st">'avg_delivery_duration'</span>].<span class="fn">round</span>(<span class="nm">1</span>)
+)
+delivery_summary[<span class="st">'avg_delivery_delay'</span>] = (
+    delivery_summary[<span class="st">'avg_delivery_delay'</span>].<span class="fn">round</span>(<span class="nm">1</span>)
+)</pre>
+    </div>
+    <div>
+      <h3>Merge + rate calculation</h3>
+      <pre><span class="cm"># ④ Merge vendor_performance + delivery_summary
+# on='vendor_id', how='inner' → only matching vendors</span>
+delivery_performance = pd.<span class="fn">merge</span>(
+    vendor_performance,
+    delivery_summary,
+    on=<span class="st">'vendor_id'</span>,
+    how=<span class="st">'inner'</span>
+)
+
+<span class="cm"># ⑤ Compute percentage rates
+# return% = returned orders / delivered orders × 100
+# .round(1) → keep one decimal place</span>
+delivery_performance[<span class="st">'return%'</span>] = (
+    <span class="nm">100</span> * delivery_performance[<span class="st">'total_orders_returned'</span>]
+        / delivery_performance[<span class="st">'total_orders_delivered'</span>]
+).<span class="fn">round</span>(<span class="nm">1</span>)
+
+delivery_performance[<span class="st">'delayed_delivery%'</span>] = (
+    <span class="nm">100</span> * delivery_performance[<span class="st">'total_orders_delivered_late'</span>]
+        / delivery_performance[<span class="st">'total_orders_delivered'</span>]
+).<span class="fn">round</span>(<span class="nm">1</span>)
+
+<span class="cm"># ⑥ Keep only the 6 required columns</span>
+delivery_performance = delivery_performance[[
+    <span class="st">'vendor_id'</span>, <span class="st">'vendor_name'</span>, <span class="st">'return%'</span>,
+    <span class="st">'delayed_delivery%'</span>, <span class="st">'avg_delivery_duration'</span>,
+    <span class="st">'avg_delivery_delay'</span>
+]]</pre>
+      <div class="callout green" style="margin-top:.6rem;font-size:.83rem">
+        <strong>Result:</strong> 4 vendors × 6 columns. VEN04 stands out with <code>avg_delivery_delay = 14.1</code> vs ~4.8 for the others.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: TASK 2 — ranking -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 2</span>
+    <h1 style="margin-top:.5rem">Rank Vendors Across 3 Metrics</h1>
+    <p class="subtitle"><code>.rank(method='dense', ascending=True)</code> gives rank 1 to the best (lowest) value. Average all 3 ranks for a composite score.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>Ranking logic</h3>
+      <pre><span class="cm"># Drop avg_delivery_duration — not needed for ranking</span>
+vendor_rank = delivery_performance.<span class="fn">drop</span>(
+    <span class="st">'avg_delivery_duration'</span>, axis=<span class="nm">1</span>
+)
+
+<span class="cm"># .rank(method='dense') — like DENSE_RANK() in SQL
+# ascending=True → lowest value = rank 1 (best)
+# .astype(int) → convert float ranks to integers</span>
+vendor_rank[<span class="st">'rank_by_return%'</span>] = (
+    vendor_rank[<span class="st">'return%'</span>]
+    .<span class="fn">rank</span>(method=<span class="st">'dense'</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
+)
+
+vendor_rank[<span class="st">'rank_by_delayed_delivery%'</span>] = (
+    vendor_rank[<span class="st">'delayed_delivery%'</span>]
+    .<span class="fn">rank</span>(method=<span class="st">'dense'</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
+)
+
+vendor_rank[<span class="st">'rank_by_average_delivery_delay'</span>] = (
+    vendor_rank[<span class="st">'avg_delivery_delay'</span>]
+    .<span class="fn">rank</span>(method=<span class="st">'dense'</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
+)
+
+<span class="cm"># Average rank across all 3 dimensions
+# axis=1 → compute mean across COLUMNS (per row)
+# axis=0 would compute mean across ROWS (per column)</span>
+vendor_rank[<span class="st">'average_rank'</span>] = vendor_rank[[
+    <span class="st">'rank_by_return%'</span>,
+    <span class="st">'rank_by_delayed_delivery%'</span>,
+    <span class="st">'rank_by_average_delivery_delay'</span>
+]].<span class="fn">mean</span>(axis=<span class="nm">1</span>)</pre>
+    </div>
+    <div>
+      <h3>Result — vendor_rank DataFrame</h3>
+      <table style="font-size:.8rem">
+        <tr><th>Vendor</th><th>return%</th><th>delayed%</th><th>avg delay</th><th>R1</th><th>R2</th><th>R3</th><th>avg rank</th></tr>
+        <tr>
+          <td>VEN01<br/><span style="color:var(--muted);font-size:.72rem">Velocity</span></td>
+          <td>5.8</td><td>5.7</td><td>4.8</td>
+          <td>2</td><td class="rank-1">1</td><td>2</td><td>1.67</td>
+        </tr>
+        <tr>
+          <td>VEN02<br/><span style="color:var(--muted);font-size:.72rem">Seaborne</span></td>
+          <td>6.1</td><td>6.6</td><td>4.7</td>
+          <td>3</td><td>4</td><td class="rank-1">1</td><td>2.67</td>
+        </tr>
+        <tr>
+          <td>VEN03<br/><span style="color:var(--muted);font-size:.72rem">Voyage</span></td>
+          <td>4.8</td><td>5.8</td><td>4.8</td>
+          <td class="rank-1">1</td><td>2</td><td>2</td><td class="rank-1">1.67</td>
+        </tr>
+        <tr>
+          <td>VEN04<br/><span style="color:var(--muted);font-size:.72rem">Johnsons</span></td>
+          <td>8.7</td><td>6.3</td><td>14.1</td>
+          <td class="rank-4">4</td><td>3</td><td class="rank-4">3</td><td class="rank-4">3.33</td>
+        </tr>
+      </table>
+      <div class="callout yellow" style="margin-top:.6rem;font-size:.83rem">
+        <strong>axis=1 vs axis=0:</strong>
+        <code>.mean(axis=1)</code> = average across columns (one number per row).
+        <code>.mean(axis=0)</code> = average across rows (one number per column).
+        For a per-vendor score, we want <code>axis=1</code>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: FULL CODE -->
+<div class="slide">
+  <div>
+    <span class="tag py">Full Code</span>
+    <h1 style="margin-top:.5rem">Complete Vendor Ranking Pipeline</h1>
+  </div>
+  <div class="two" style="flex:1;min-height:0">
+    <pre style="overflow-y:auto;font-size:.76rem"><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="cm"># ── Load data ───────────────────────────────────────────</span>
+vendor_performance = pd.<span class="fn">read_csv</span>(<span class="st">"vendor_summary.csv"</span>)
+orders             = pd.<span class="fn">read_csv</span>(<span class="st">"order_summary.csv"</span>)
+
+<span class="cm"># ── Task 1: Build delivery_performance ─────────────────</span>
+<span class="kw">def</span> <span class="fn">calculate_delay</span>(value):
+    <span class="kw">return</span> <span class="nm">0</span> <span class="kw">if</span> value &lt;= <span class="nm">0</span> <span class="kw">else</span> value  <span class="cm"># clamp negatives to 0</span>
+
+orders[<span class="st">'delay_duration'</span>] = orders[<span class="st">'delay_duration'</span>].<span class="fn">apply</span>(calculate_delay)
+
+delivery_summary = (
+    orders.<span class="fn">groupby</span>(<span class="st">'vendor_id'</span>).<span class="fn">agg</span>(
+        avg_delivery_duration=(<span class="st">'delivery_duration'</span>, <span class="st">'mean'</span>),
+        avg_delivery_delay   =(<span class="st">'delay_duration'</span>,    <span class="st">'mean'</span>)
+    ).<span class="fn">reset_index</span>()
+)
+delivery_summary[<span class="st">'avg_delivery_duration'</span>] = delivery_summary[<span class="st">'avg_delivery_duration'</span>].<span class="fn">round</span>(<span class="nm">1</span>)
+delivery_summary[<span class="st">'avg_delivery_delay'</span>]    = delivery_summary[<span class="st">'avg_delivery_delay'</span>].<span class="fn">round</span>(<span class="nm">1</span>)
+
+delivery_performance = pd.<span class="fn">merge</span>(vendor_performance, delivery_summary,
+                                 on=<span class="st">'vendor_id'</span>, how=<span class="st">'inner'</span>)
+delivery_performance[<span class="st">'return%'</span>] = (
+    <span class="nm">100</span> * delivery_performance[<span class="st">'total_orders_returned'</span>]
+        / delivery_performance[<span class="st">'total_orders_delivered'</span>]
+).<span class="fn">round</span>(<span class="nm">1</span>)
+delivery_performance[<span class="st">'delayed_delivery%'</span>] = (
+    <span class="nm">100</span> * delivery_performance[<span class="st">'total_orders_delivered_late'</span>]
+        / delivery_performance[<span class="st">'total_orders_delivered'</span>]
+).<span class="fn">round</span>(<span class="nm">1</span>)
+delivery_performance = delivery_performance[[
+    <span class="st">'vendor_id'</span>, <span class="st">'vendor_name'</span>, <span class="st">'return%'</span>,
+    <span class="st">'delayed_delivery%'</span>, <span class="st">'avg_delivery_duration'</span>, <span class="st">'avg_delivery_delay'</span>
+]]
+
+<span class="cm"># ── Task 2: Rank vendors ────────────────────────────────</span>
+vendor_rank = delivery_performance.<span class="fn">drop</span>(<span class="st">'avg_delivery_duration'</span>, axis=<span class="nm">1</span>)
+
+<span class="cm"># dense rank ascending: lowest metric = best = rank 1</span>
+vendor_rank[<span class="st">'rank_by_return%'</span>] = (
+    vendor_rank[<span class="st">'return%'</span>].<span class="fn">rank</span>(method=<span class="st">'dense'</span>).<span class="fn">astype</span>(<span class="fn">int</span>))
+vendor_rank[<span class="st">'rank_by_delayed_delivery%'</span>] = (
+    vendor_rank[<span class="st">'delayed_delivery%'</span>].<span class="fn">rank</span>(method=<span class="st">'dense'</span>).<span class="fn">astype</span>(<span class="fn">int</span>))
+vendor_rank[<span class="st">'rank_by_average_delivery_delay'</span>] = (
+    vendor_rank[<span class="st">'avg_delivery_delay'</span>].<span class="fn">rank</span>(method=<span class="st">'dense'</span>).<span class="fn">astype</span>(<span class="fn">int</span>))
+
+<span class="cm"># axis=1: average across 3 rank columns per row</span>
+vendor_rank[<span class="st">'average_rank'</span>] = vendor_rank[[
+    <span class="st">'rank_by_return%'</span>, <span class="st">'rank_by_delayed_delivery%'</span>,
+    <span class="st">'rank_by_average_delivery_delay'</span>
+]].<span class="fn">mean</span>(axis=<span class="nm">1</span>)</pre>
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      <h3>SQL ↔ Python comparison</h3>
+      <table style="font-size:.78rem">
+        <tr><th>Concept</th><th>SQL</th><th>Python</th></tr>
+        <tr><td>Clamp negatives</td><td><code>CASE WHEN val &lt;= 0 THEN 0 ELSE val END</code></td><td><code>def f(v): return 0 if v&lt;=0 else v</code><br/><code>col.apply(f)</code></td></tr>
+        <tr><td>Aggregate per vendor</td><td><code>GROUP BY vendor_id + AVG()</code></td><td><code>.groupby('vendor_id').agg(...)</code></td></tr>
+        <tr><td>Join tables</td><td><code>JOIN vendor_performance USING(vendor_id)</code></td><td><code>pd.merge(..., on='vendor_id', how='inner')</code></td></tr>
+        <tr><td>Dense rank ascending</td><td><code>DENSE_RANK() OVER (ORDER BY metric ASC)</code></td><td><code>.rank(method='dense').astype(int)</code></td></tr>
+        <tr><td>Average of 3 columns</td><td><code>(r1 + r2 + r3) / 3</code></td><td><code>df[cols].mean(axis=1)</code></td></tr>
+      </table>
+      <div class="callout green" style="font-size:.83rem">
+        <strong>Final verdict:</strong> VEN03 (Voyage Enterprises) and VEN01 (Velocity Logistics) tie at avg_rank 1.67.
+        VEN04 (Johnsons Logistics) ranks last at 3.33 — driven by its 14.1 avg delay vs ~4.8 for others.
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end deck -->
+
+<div class="nav">
+  <button onclick="go(-1)">← Prev</button>
+  <button onclick="go(1)">Next →</button>
+  <span id="counter"></span>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+function show(n){
+  slides[cur].classList.remove('active');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  document.getElementById('counter').textContent = (cur+1)+' / '+slides.length;
+}
+function go(d){ show(cur+d); }
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') go(-1);
+});
+show(0);
+</script>
+</body>
+</html>

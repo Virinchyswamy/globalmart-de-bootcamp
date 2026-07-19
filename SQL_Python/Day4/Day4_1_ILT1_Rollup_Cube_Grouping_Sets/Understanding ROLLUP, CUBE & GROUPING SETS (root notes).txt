@@ -1,0 +1,500 @@
+# Understanding ROLLUP, CUBE & GROUPING SETS
+## Content Type
+Scenario
+
+## Overview
+In this Scenario you will learn advanced SQL aggregation operators for multi-level reporting through a real-world retail analytics scenario. Master ROLLUP for hierarchical subtotals, CUBE for all combinations, and GROUPING SETS for custom groupings.
+
+## Learning Objectives
+- Use ROLLUP to create hierarchical aggregation reports with subtotals
+- Use CUBE to generate all possible grouping combinations
+- Use GROUPING SETS to define custom grouping specifications
+- Interpret NULL values in subtotal and grand total rows
+- Choose the right operator based on business requirements
+
+## Prerequisites
+- Basic SQL syntax like SELECT, FROM, WHERE, ORDER BY
+- Aggregate functions like SUM, COUNT, AVG
+- GROUP BY clause fundamentals
+
+## Duration of Completion
+60 minutes
+
+## Level
+Intermediate
+
+## Industries
+- general
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+In this Scenario you will learn advanced SQL aggregation operators for multi-level reporting through a real-world retail analytics scenario. Master ROLLUP for hierarchical subtotals, CUBE for all combinations, and GROUPING SETS for custom groupings.
+
+#### Level
+intermediate
+
+#### Industries
+- general
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## The Business Challenge: GlobalMart Quarterly Sales Report
+
+Sarah, a Data Analyst intern at GlobalMart, received her first major assignment from the VP of Sales. The company was preparing for its **Quarterly Business Review (QBR)**, and leadership needed comprehensive sales reports to make strategic decisions about inventory, marketing budgets, and new store locations.
+
+GlobalMart operates 500+ stores across multiple regions, and the CFO needed a report showing:
+
+- Sales for each individual store within each region
+- Subtotals for each region (all stores combined)
+- Subtotals for each product category across all regions
+- A grand total for the entire company
+
+---
+
+### The Current Problem
+
+The analytics team was currently writing **multiple separate queries** combined with UNION ALL:
+
+```sql
+-- Query 1: Sales by region and store
+SELECT region, store, SUM(sales) FROM sales_data GROUP BY region, store
+
+UNION ALL
+
+-- Query 2: Sales by region only
+SELECT region, NULL, SUM(sales) FROM sales_data GROUP BY region
+
+UNION ALL
+
+-- Query 3: Grand total
+SELECT NULL, NULL, SUM(sales) FROM sales_data;
+```
+
+This approach was **slow, error-prone, and hard to maintain**. Sarah's manager mentioned there were better ways using SQL's advanced aggregation operators.
+
+---
+
+### Sarah's Task
+
+Sarah needed to learn three powerful SQL operators that could generate all these summaries in a **single, efficient query**:
+
+| Operator | What It Does |
+|----------|--------------|
+| **ROLLUP** | Creates hierarchical subtotals that roll up from detailed to grand total |
+| **CUBE** | Generates all possible combinations of groupings for exploratory analysis |
+| **GROUPING SETS** | Gives you precise control to define exactly which groupings you need |
+
+By the end of this masterclass, Sarah (and you) will be able to choose the right operator for each business scenario and write professional-grade analytical reports.
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Concept 1: ROLLUP — Hierarchical Subtotals
+
+### What Is ROLLUP?
+
+`ROLLUP` creates a **hierarchy of subtotals** that roll up from the most detailed level to the grand total. Think of it as drilling up in a pivot table: from cities to states to regions to total.
+
+### Syntax
+
+```sql
+SELECT 
+    region, 
+    state, 
+    city,
+    SUM(sales_amount) AS total_sales
+FROM sales_data
+GROUP BY ROLLUP(region, state, city);
+```
+
+### How ROLLUP Works
+
+For `ROLLUP(region, state, city)`, SQL generates these grouping levels:
+
+| Level | Grouping | Description |
+|-------|----------|-------------|
+| 1 | (region, state, city) | Most detailed — all columns |
+| 2 | (region, state) | Subtotal for region and state |
+| 3 | (region) | Subtotal for region only |
+| 4 | () | Grand total — all rows aggregated |
+
+**Total groupings = n + 1** (where n is the number of columns)
+
+### Example Output
+
+| region | state | city | total_sales |
+|--------|-------|------|-------------|
+| East | New York | New York City | 320000.00 |
+| East | New York | NULL | 450000.00 |
+| East | NULL | NULL | 850000.00 |
+| NULL | NULL | NULL | 2500000.00 |
+
+### Reading the Output
+
+| Row Pattern | Meaning |
+|-------------|---------|
+| `region = 'East', state = 'New York', city = 'New York City'` | Sales for New York City only |
+| `region = 'East', state = 'New York', city = NULL` | **Subtotal**: All cities in New York state combined |
+| `region = 'East', state = NULL, city = NULL` | **Subtotal**: All states in East region combined |
+| `region = NULL, state = NULL, city = NULL` | **Grand Total**: All sales across all regions |
+
+---
+
+### Key Tips for ROLLUP
+
+>[!TIP] 
+> `ROLLUP(region, state, city)` creates region → state → city hierarchy. Reversing the order changes the roll-up direction.
+
+>[!TIP] 
+> NULL values in the output indicate subtotal or grand total rows, NOT missing data. The position of NULL tells you which level of aggregation you're looking at.
+
+### When to Use ROLLUP
+
+| Scenario | Use ROLLUP |
+|----------|------------|
+| Standard organizational hierarchy (Region → State → City) |  Yes |
+| Drill-down reports following a natural hierarchy |  Yes |
+| Exploratory analysis with all combinations | ❌ Use CUBE |
+| Custom specific groupings | ❌ Use GROUPING SETS |
+
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+## Concept 2: CUBE — All Possible Combinations
+
+### What Is CUBE?
+
+`CUBE` generates **all possible combinations** of groupings for the specified columns. Unlike ROLLUP which follows a hierarchy, CUBE explores every possible aggregation angle.
+
+### Syntax
+
+```sql
+SELECT 
+    region, 
+    state, 
+    city,
+    SUM(sales_amount) AS total_sales
+FROM sales_data
+GROUP BY CUBE(region, state, city);
+```
+
+### How CUBE Works
+
+For `CUBE(region, state, city)`, SQL generates **2^n = 8** grouping combinations:
+
+| Combination | Grouping | Description |
+|-------------|----------|-------------|
+| 1 | (region, state, city) | All three columns |
+| 2 | (region, state) | Region and state only |
+| 3 | (region, city) | Region and city only |
+| 4 | (region) | Region only |
+| 5 | (state, city) | State and city only |
+| 6 | (state) | State only |
+| 7 | (city) | City only |
+| 8 | () | Grand total |
+
+**Total groupings = 2^n** (exponential growth!)
+
+### Example Output (Partial)
+
+| region | state | city | total_sales |
+|--------|-------|------|-------------|
+| East | New York | New York City | 320000.00 |
+| East | New York | NULL | 450000.00 |
+| East | NULL | New York City | 380000.00 |
+| NULL | New York | NULL | 520000.00 |
+| NULL | NULL | New York City | 450000.00 |
+| NULL | NULL | NULL | 2500000.00 |
+
+### Reading the Output
+
+| Row Pattern | Meaning |
+|-------------|---------|
+| `region = 'East', state = 'New York', city = 'New York City'` | Sales for New York City |
+| `region = 'East', state = 'New York', city = NULL` | Subtotal: All cities in New York state within East region |
+| `region = 'East', state = NULL, city = 'New York City'` | **Cross-tab**: New York City sales across ALL states in East region |
+| `region = NULL, state = 'New York', city = NULL` | **Cross-tab**: All sales in New York state across ALL regions |
+| `region = NULL, state = NULL, city = NULL` | Grand Total |
+
+---
+
+### ROLLUP vs CUBE Comparison
+
+| Feature | ROLLUP(region, state, city) | CUBE(region, state, city) |
+|---------|-----------------------------|---------------------------|
+| **Groupings** | 4 (n+1) | 8 (2^n) |
+| **Includes** | (region,state,city), (region,state), (region), () | All 8 combinations |
+| **Missing from ROLLUP** | — | (state,city), (state), (city), (region,city) |
+| **Use Case** | Hierarchical reports | Exploratory analysis |
+
+
+>[!IMPORTANT] 
+> CUBE can produce exponentially more rows. With 5 columns, you get 2^5 = 32 groupings. Use CUBE judiciously on large datasets.
+
+### When to Use CUBE
+
+| Scenario | Use CUBE |
+|----------|----------|
+| Exploratory analysis where you want to see all possible combinations | ✅ Yes |
+| Finding hidden patterns across dimensions | ✅ Yes |
+| Standard organizational hierarchy | ❌ Use ROLLUP |
+| Custom specific groupings | ❌ Use GROUPING SETS |
+
+---
+
+**Tags**
+
+
+##### Input 4
+**Type:** Text
+
+## Concept 3: GROUPING SETS — Custom Groupings
+
+### What Is GROUPING SETS?
+
+`GROUPING SETS` gives you **precise control** over which grouping combinations to include. You define exactly the groupings you need — no more, no less.
+
+### Syntax
+
+```sql
+SELECT 
+    region, 
+    store,
+    SUM(sales_amount) AS total_sales
+FROM sales_data
+GROUP BY GROUPING SETS (
+    (region, store),
+    (region),
+    (store),
+    ()
+);
+```
+
+### How GROUPING SETS Works
+
+You explicitly list each grouping combination you want:
+
+```sql
+GROUP BY GROUPING SETS (
+    (region, store),    -- Group by both
+    (region),           -- Group by region only
+    (store),            -- Group by store only
+    ()                  -- Grand total
+)
+```
+
+**Total groupings = Exactly what you specify**
+
+### Example: Finance Team Report
+
+The Finance team doesn't need all combinations from CUBE. They want:
+1. Sales by region and store (detailed)
+2. Sales by region only (regional summary)
+3. Grand total (company-wide)
+
+They **don't need** store totals across all regions.
+
+```sql
+SELECT 
+    region,
+    store,
+    SUM(sales_amount) AS total_sales
+FROM sales_data
+GROUP BY GROUPING SETS (
+    (region, store),
+    (region),
+    ()
+)
+ORDER BY region, store;
+```
+
+### Example Output
+
+| region | store | total_sales |
+|--------|-------|-------------|
+| Central | Chicago | 180000.00 |
+| Central | Dallas | 200000.00 |
+| Central | NULL | 380000.00 |
+| East | Boston | 125000.00 |
+| East | New York | 225000.00 |
+| East | NULL | 350000.00 |
+| NULL | NULL | 1250000.00 |
+| West | Los Angeles | 280000.00 |
+| West | Seattle | 240000.00 |
+| West | NULL | 520000.00 |
+
+### Notice What's Missing
+
+Compare with CUBE output — GROUPING SETS **excludes** store totals across all regions (where region = NULL, store has a value). This is exactly what Finance requested.
+
+>[!TIP] 
+> Use empty parentheses `()` to include a grand total. Without it, you won't get the overall total row.
+
+---
+
+### Comparison: All Three Operators
+
+| Operator | Groupings for (region, store) | When to Use |
+|----------|-------------------------------|-------------|
+| `ROLLUP(region, store)` | (region,store), (region), () | Standard hierarchy |
+| `CUBE(region, store)` | (region,store), (region), (store), () | Exploratory analysis |
+| `GROUPING SETS(...)` | Exactly what you specify | Custom requirements |
+
+### Performance Comparison
+
+| Operator | Performance | Why |
+|----------|-------------|-----|
+| **GROUPING SETS** | Most efficient | Computes only specified groupings |
+| **ROLLUP** | Moderate | Computes n+1 groupings |
+| **CUBE** | Most expensive | Computes 2^n groupings |
+
+### When to Use GROUPING SETS
+
+| Scenario | Use GROUPING SETS |
+|----------|-------------------|
+| Specific groupings for a custom report | ✅ Yes |
+| Best performance for specific needs | ✅ Yes |
+| Standard hierarchy | ❌ Use ROLLUP |
+| Exploratory analysis | ❌ Use CUBE |
+---
+
+**Tags**
+
+
+##### Input 5
+**Type:** Choice
+
+**Question:** A retail company needs a hierarchical sales report showing sales by region, then by state within each region, then by city within each state, with subtotals at each level and a grand total. Which aggregation operator should be used?
+
+**Options:** 
+- GROUPING SETS
+
+- CUBE
+
+- UNION ALL
+
+- ROLLUP
+
+**Correct Options:** 
+- ROLLUP
+
+**Solution:** 
+- **ROLLUP** is designed for hierarchical aggregations where you need subtotals that roll up from detailed to grand total. For `ROLLUP(region, state, city)`, SQL generates: (region, state, city) → (region, state) → (region) → () grand total.
+- **CUBE** would produce all combinations (unnecessary for a standard hierarchy).
+- **GROUPING SETS** requires explicit specification of each grouping.
+- **UNION ALL** would need multiple separate queries, which is inefficient.
+
+**Tags**
+- data-wrangling / rollup (skill)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** Which of the following statements about GROUPING SETS are TRUE? (Select 2)
+
+**Options:** 
+- It is more efficient than CUBE when you need specific groupings
+
+- It allows you to specify exactly which groupings you need
+
+- It can only be used with two columns maximum
+
+- It generates all possible combinations automatically
+
+**Correct Options:** 
+- It is more efficient than CUBE when you need specific groupings
+
+- It allows you to specify exactly which groupings you need
+
+**Solution:** 
+- **GROUPING SETS** gives you precise control to define exactly which grouping combinations to include — no more, no less. This makes it more efficient than CUBE when you don't need all combinations.
+- It does NOT generate combinations automatically (you specify them).
+- It works with any number of columns, not just two.
+
+**Tags**
+- data-wrangling / grouping-sets (skill)
+
+##### Input 7
+**Type:** Choice
+
+**Question:** In a ROLLUP output with columns (region, state, city), if you see a row where region = 'East', state = NULL, and city = NULL, what does this row represent?
+
+**Options:** 
+- This is the grand total row for all regions
+
+- The query has an error and should be fixed
+
+- The state and city data is missing from the database
+
+- This is a subtotal row for the East region (all states and cities combined)
+
+**Correct Options:** 
+- This is a subtotal row for the East region (all states and cities combined)
+
+**Solution:** 
+- In ROLLUP output, **NULL values indicate subtotal or grand total rows**, not missing data.
+- When `region = 'East'`, `state = NULL`, and `city = NULL`, this represents the subtotal for the East region (all states and cities within East combined).
+- The grand total would have NULL in all three columns (region, state, and city).
+
+**Tags**
+- data-wrangling / rollup (skill)
+
+##### Input 8
+**Type:** Text
+
+## Summary: Key Takeaways
+
+### Quick Comparison Table
+
+| Feature | ROLLUP | CUBE | GROUPING SETS |
+|---------|--------|------|---------------|
+| **Groupings** | n+1 | 2^n | Your specification |
+| **Syntax** | `ROLLUP(a, b, c)` | `CUBE(a, b, c)` | `GROUPING SETS ((a,b,c), (a,b), (a), ())` |
+| **Use Case** | Hierarchical reports | Exploratory analysis | Custom requirements |
+| **Performance** | Moderate | Most expensive | Most efficient |
+
+### Decision Guide
+
+| Business Requirement | Use This |
+|---------------------|----------|
+| Standard org hierarchy (Region → State → City) | ROLLUP |
+| Explore all possible combinations | CUBE |
+| Specific groupings for a custom report | GROUPING SETS |
+| Best performance for specific needs | GROUPING SETS |
+| Quick drill-down report | ROLLUP |
+
+### NULL Value Interpretation
+
+| Pattern | Meaning |
+|---------|---------|
+| All columns have values | Detailed row |
+| Some columns are NULL | Subtotal at that level |
+| All columns are NULL | Grand total |
+
+
+You've now learned the three advanced aggregation operators. Practice identifying which operator fits different business scenarios, and you'll be able to write efficient, professional-grade analytical reports.
+
+---
+
+**Tags**
+

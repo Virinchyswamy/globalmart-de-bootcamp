@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlobalMart SQL Challenge — Day 1</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#030712;--card:rgba(255,255,255,.03);--border:rgba(255,255,255,.08);
+  --blue:#3b82f6;--cyan:#06b6d4;--green:#10b981;--yellow:#f59e0b;
+  --purple:#8b5cf6;--pink:#ec4899;--red:#ef4444;
+  --text:#f1f5f9;--muted:#64748b;--code:#0f172a;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.mesh{position:fixed;inset:0;z-index:0;background:
+  radial-gradient(ellipse at 15% 15%,rgba(59,130,246,.08) 0%,transparent 55%),
+  radial-gradient(ellipse at 85% 85%,rgba(139,92,246,.08) 0%,transparent 55%),
+  radial-gradient(ellipse at 50% 50%,rgba(16,185,129,.04) 0%,transparent 65%)}
+
+/* SCREENS */
+.scr{display:none;position:relative;z-index:1;min-height:100vh}
+.scr.on{display:flex}
+
+/* TITLE */
+#s-title{flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px}
+.t-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:100px;padding:6px 18px;font-size:11px;color:#93c5fd;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;animation:up .5s .1s both}
+.t-title{font-size:clamp(44px,9vw,96px);font-weight:900;line-height:1;margin-bottom:14px;animation:up .5s .3s both}
+.grad{background:linear-gradient(135deg,#3b82f6,#8b5cf6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.t-sub{font-size:15px;color:var(--muted);max-width:480px;line-height:1.75;margin-bottom:32px;animation:up .5s .5s both}
+.cpills{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-bottom:36px;animation:up .5s .7s both}
+.cpill{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 16px;font-size:12px;font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%}
+.go-btn{padding:18px 60px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border:none;border-radius:100px;color:#fff;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;cursor:pointer;animation:up .5s .9s both;box-shadow:0 0 40px rgba(139,92,246,.4);transition:all .2s;letter-spacing:.5px}
+.go-btn:hover{transform:scale(1.05) translateY(-2px);box-shadow:0 0 60px rgba(139,92,246,.6)}
+
+/* TOPBAR */
+#topbar{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(3,7,18,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(16px);display:none;align-items:center;justify-content:space-between;padding:0 24px;z-index:999}
+#topbar.on{display:flex}
+.tb-ch{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--yellow);text-transform:uppercase}
+.tb-sc{font-size:14px;font-weight:700}
+.tb-sc span{color:var(--green);font-size:18px}
+.progbar{height:2px;background:var(--border);position:fixed;top:52px;left:0;right:0;z-index:998;display:none}
+.progbar.on{display:block}
+.progfill{height:100%;background:linear-gradient(90deg,#3b82f6,#8b5cf6,#ec4899);width:0%;transition:width .6s ease}
+
+/* GAME */
+#s-game{display:none;padding:80px 16px 80px}
+#s-game.on{display:block}
+.gi{max-width:680px;margin:0 auto}
+
+/* CHAPTER SPLASH */
+.ch-sp{text-align:center;padding:48px 24px}
+.ch-num{font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+.ch-ico{width:80px;height:80px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 18px;border:1px solid var(--border)}
+.ch-ttl{font-size:clamp(28px,5vw,46px);font-weight:900;margin-bottom:10px;line-height:1.1}
+.ch-tag{font-size:14px;color:var(--muted);margin-bottom:32px}
+
+/* SCENE */
+.scene{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:18px}
+.scene-hd{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.scene-bd{padding:20px}
+.speech{background:var(--code);border-left:3px solid var(--yellow);border-radius:0 12px 12px 0;padding:16px 18px;font-size:14px;line-height:1.8;color:#cbd5e1;font-style:italic}
+.speaker{font-style:normal;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;display:block;color:var(--yellow)}
+
+/* INFO CARD */
+.ic{border-radius:16px;padding:16px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start;border:1px solid}
+.ic.bl{background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2)}
+.ic.gr{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.2)}
+.ic.ye{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2)}
+.ic.pu{background:rgba(139,92,246,.06);border-color:rgba(139,92,246,.2)}
+.ic-ico{font-size:22px;flex-shrink:0;margin-top:2px}
+.ic-ttl{font-weight:700;font-size:13px;margin-bottom:5px}
+.ic-bod{font-size:12px;color:#94a3b8;line-height:1.85}
+.ic-bod code{background:rgba(255,255,255,.08);border-radius:4px;padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7dd3fc}
+
+/* QUIZ CARD */
+.qcard{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:14px;position:relative;overflow:hidden}
+.qcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#3b82f6,#8b5cf6,#ec4899);opacity:.5}
+.qtag{display:inline-block;padding:3px 12px;border-radius:100px;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.qtag.qz{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.qtag.dr{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+.qtag.bd{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+.qtag.bs{background:rgba(236,72,153,.12);color:#f472b6;border:1px solid rgba(236,72,153,.3)}
+.qtag.dg{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.qpts{font-size:12px;color:var(--muted);margin-bottom:14px}
+.qstr{display:flex;align-items:center;gap:5px;margin-bottom:14px}
+.sd{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s}
+.sd.lit{background:var(--yellow);box-shadow:0 0 8px rgba(245,158,11,.6)}
+.slbl{font-size:10px;color:var(--muted);margin-left:4px}
+.qtxt{font-size:15px;font-weight:600;margin-bottom:18px;line-height:1.65;color:#f1f5f9}
+.qtxt code{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;color:#7dd3fc}
+
+/* OPTIONS */
+.opts{display:grid;gap:9px}
+.opt{background:rgba(255,255,255,.02);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);text-align:left;width:100%;transition:all .15s}
+.opt:hover:not(:disabled){border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.06);transform:translateX(4px)}
+.opt.ok{border-color:#10b981!important;background:rgba(16,185,129,.1)!important;color:#6ee7b7!important}
+.opt.no{border-color:#ef4444!important;background:rgba(239,68,68,.1)!important;color:#fca5a5!important}
+.opt:disabled{cursor:default;transform:none!important}
+.oltr{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+
+/* FEEDBACK & NEXT */
+.fb{display:none;margin-top:14px;padding:14px 16px;border-radius:12px;font-size:13px;line-height:1.7}
+.fb.ok{display:block;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);color:#86efac}
+.fb.no{display:block;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+.nxt{display:none;margin-top:14px;padding:14px 24px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border:none;border-radius:12px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:all .2s}
+.nxt:hover{opacity:.9;transform:translateY(-1px)}
+.nxt.on{display:block}
+
+/* DRAG DROP */
+.tbank{display:flex;flex-wrap:wrap;gap:8px;padding:14px;background:rgba(255,255,255,.02);border:1px dashed var(--border);border-radius:12px;margin-bottom:14px}
+.tok{padding:8px 16px;background:rgba(59,130,246,.1);border:1.5px solid rgba(59,130,246,.3);border-radius:8px;font-size:12px;font-weight:700;color:#93c5fd;cursor:grab;user-select:none;transition:all .2s}
+.tok:hover{background:rgba(59,130,246,.2);transform:scale(1.03)}
+.tok.used{opacity:.25;cursor:default;pointer-events:none}
+.dzones{display:grid;gap:9px}
+.dz{background:rgba(255,255,255,.02);border:2px dashed var(--border);border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;transition:all .2s}
+.dz.over{border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.04)}
+.dz-slot{min-width:110px;height:32px;border:1.5px dashed #475569;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#475569;padding:0 10px;flex-shrink:0;font-family:'Inter',sans-serif;font-weight:600}
+.dz-slot.fill{border-style:solid;border-color:#3b82f6;background:rgba(59,130,246,.1);color:#93c5fd}
+.dz-slot.win{border-color:#10b981;background:rgba(16,185,129,.1);color:#6ee7b7}
+.dz-slot.fail{border-color:#ef4444;background:rgba(239,68,68,.1);color:#fca5a5}
+.dz-desc{font-size:12px;color:#64748b;flex:1;line-height:1.65}
+.chk{width:100%;padding:13px;background:rgba(59,130,246,.15);border:1.5px solid rgba(59,130,246,.35);border-radius:10px;color:#93c5fd;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:14px;transition:all .2s}
+.chk:hover:not(:disabled){background:rgba(59,130,246,.25)}
+.chk:disabled{opacity:.3;cursor:default}
+
+/* BUILD SLOTS */
+.bslot{background:rgba(255,255,255,.02);border:1.5px dashed #334155;border-radius:12px;padding:13px 16px;font-size:13px;color:#64748b;margin-bottom:8px;transition:border-color .2s}
+.bslot span{color:#f1f5f9;font-weight:700}
+.bbank{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.btok{padding:8px 16px;background:rgba(16,185,129,.1);border:1.5px solid rgba(16,185,129,.3);border-radius:8px;font-size:12px;font-weight:700;color:#34d399;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.btok:hover:not(:disabled){background:rgba(16,185,129,.2);transform:scale(1.03)}
+.btok:disabled{opacity:.3;cursor:default}
+
+/* CODE BLOCK */
+.cb{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.85;overflow-x:auto;white-space:pre;margin-bottom:14px}
+.kw{color:#f87171;font-weight:600}.fn{color:#c084fc}.str{color:#7dd3fc}.cm{color:#475569;font-style:italic}.col{color:#93c5fd}.tbl{color:#fb923c}
+
+/* SUMMARY */
+.sumcard{background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.2);border-radius:16px;padding:20px;margin-bottom:14px}
+.sum-ttl{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#10b981;margin-bottom:14px}
+.si{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;color:#94a3b8;line-height:1.65}
+.si:last-child{border-bottom:none}
+.sck{color:#10b981;flex-shrink:0;font-weight:700}
+
+/* RFM */
+.rfm-grid{display:grid;gap:14px}
+.rfm-card{background:rgba(255,255,255,.02);border:2px solid var(--border);border-radius:16px;padding:20px;transition:border-color .3s}
+.rfm-card.won{border-color:#10b981}
+.rfm-card.lost{border-color:#ef4444}
+.rfm-hd{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.rfm-av{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.rfm-nm{font-weight:700;font-size:16px}
+.rfm-loc{font-size:12px;color:var(--muted);margin-top:2px}
+.rfm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.rfm-stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.rs-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.rs-val{font-size:20px;font-weight:900}
+.rs-unit{font-size:10px;color:var(--muted)}
+.rfm-ch{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rfm-btn{padding:10px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.rfm-btn:hover:not(:disabled){transform:scale(1.04)}
+.rfm-btn.g{border-color:#10b981;color:#34d399}
+.rfm-btn.b{border-color:#3b82f6;color:#93c5fd}
+.rfm-btn.r{border-color:#ef4444;color:#fca5a5}
+.rfm-btn.sel-ok{background:rgba(16,185,129,.15)}
+.rfm-btn.sel-no{background:rgba(239,68,68,.15)}
+.rfm-btn:disabled{opacity:.5;cursor:default}
+.rfm-fb{display:none;margin-top:12px;padding:12px 14px;border-radius:10px;font-size:12px;line-height:1.7}
+.rfm-fb.ok{display:block;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);color:#86efac}
+.rfm-fb.no{display:block;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+
+/* END */
+#s-end{flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
+.trophy{font-size:72px;margin-bottom:14px;animation:bounce 1s ease infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+.end-ttl{font-size:52px;font-weight:900;margin-bottom:6px}
+.end-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+.score-ring{position:relative;width:160px;height:160px;margin:0 auto 24px}
+.score-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.rg-bg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:8}
+.rg-fill{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:439.8;stroke-dashoffset:439.8;transition:stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)}
+.sc-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sc-num{font-size:42px;font-weight:900}
+.sc-max{font-size:12px;color:var(--muted)}
+.mod-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:400px;width:100%;margin:0 auto 18px}
+.mod-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:left}
+.mod-nm{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.mod-pts{font-size:26px;font-weight:900}
+.rank-msg{font-size:14px;color:var(--muted);margin-bottom:20px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:460px;margin:0 auto 28px}
+.bdg{background:var(--card);border:1px solid var(--border);border-radius:100px;padding:7px 14px;font-size:12px;font-weight:600}
+.replay{padding:14px 40px;background:transparent;color:#8b5cf6;border:2px solid rgba(139,92,246,.4);border-radius:100px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.replay:hover{background:rgba(139,92,246,.1);border-color:#8b5cf6}
+
+/* PARTICLES */
+.spop{position:fixed;pointer-events:none;z-index:9999;font-family:'Inter',sans-serif;font-size:26px;font-weight:900;color:#f59e0b;animation:spop 1s ease-out forwards}
+@keyframes spop{0%{transform:translateY(0) scale(.8);opacity:1}100%{transform:translateY(-80px) scale(1.3);opacity:0}}
+.cfti{position:fixed;width:9px;height:9px;border-radius:2px;pointer-events:none;z-index:9999;animation:cffall 1.8s ease-in forwards}
+@keyframes cffall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+/* ANIM */
+@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.ain{opacity:0;transform:translateY(14px);animation:up .4s ease forwards}
+</style>
+</head>
+<body>
+<div class="mesh"></div>
+
+<div id="topbar">
+  <div class="tb-ch" id="tb-ch">SQL QUEST</div>
+  <div class="tb-sc">⭐ <span id="tb-sc">0</span> pts</div>
+</div>
+<div class="progbar" id="pgbar"><div class="progfill" id="pgfill"></div></div>
+
+<!-- TITLE -->
+<div id="s-title" class="scr on">
+  <div class="t-badge">🏪 Day 1 · GlobalMart SQL Challenge</div>
+  <h1 class="t-title"><span class="grad">SQL Quest</span></h1>
+  <p class="t-sub">Sarah just joined GlobalMart as a Data Analyst intern. Her manager dropped 4 tasks before she even logged in. Help her survive Day 1.</p>
+  <div class="cpills">
+    <div class="cpill"><div class="dot" style="background:#3b82f6"></div>SQL Basics</div>
+    <div class="cpill"><div class="dot" style="background:#10b981"></div>Joins & CTEs</div>
+    <div class="cpill"><div class="dot" style="background:#f59e0b"></div>Product Analysis</div>
+    <div class="cpill"><div class="dot" style="background:#8b5cf6"></div>RFM Loyalty</div>
+  </div>
+  <button class="go-btn" onclick="startGame()">Start the Quest →</button>
+</div>
+
+<!-- GAME -->
+<div id="s-game" class="scr">
+  <div class="gi" id="gi"></div>
+</div>
+
+<!-- END -->
+<div id="s-end" class="scr">
+  <div class="trophy">🏆</div>
+  <div class="end-ttl grad">Day 1 — Done!</div>
+  <div class="end-sub">Sarah's desk is clear. GlobalMart is safe. For now.</div>
+  <div class="score-ring">
+    <svg viewBox="0 0 160 160">
+      <circle class="rg-bg" cx="80" cy="80" r="70"/>
+      <circle class="rg-fill" id="rg-fill" cx="80" cy="80" r="70" stroke="url(#rg)"/>
+      <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#3b82f6"/>
+        <stop offset="50%" stop-color="#8b5cf6"/>
+        <stop offset="100%" stop-color="#ec4899"/>
+      </linearGradient></defs>
+    </svg>
+    <div class="sc-center"><div class="sc-num grad" id="fsc">0</div><div class="sc-max">/ 1350 pts</div></div>
+  </div>
+  <div class="mod-grid">
+    <div class="mod-card"><div class="mod-nm">SQL Basics</div><div class="mod-pts" style="color:#3b82f6" id="m1">0</div></div>
+    <div class="mod-card"><div class="mod-nm">Joins & CTEs</div><div class="mod-pts" style="color:#10b981" id="m2">0</div></div>
+    <div class="mod-card"><div class="mod-nm">Product Analysis</div><div class="mod-pts" style="color:#f59e0b" id="m3">0</div></div>
+    <div class="mod-card"><div class="mod-nm">RFM Loyalty</div><div class="mod-pts" style="color:#8b5cf6" id="m4">0</div></div>
+  </div>
+  <div class="rank-msg" id="rank"></div>
+  <div class="badges" id="bdgs"></div>
+  <button class="replay" onclick="location.reload()">🔄 Try Again</button>
+</div>
+
+<script>
+let score=0,mp={1:0,2:0,3:0,4:0},streak=0,maxStreak=0,correct=0,total=0,chIdx=0;
+const CHS=[ch1,ch2,ch3,ch4];
+
+function startGame(){
+  sw('s-title','s-game');
+  document.getElementById('topbar').classList.add('on');
+  document.getElementById('pgbar').classList.add('on');
+  renderCh();
+}
+function sw(off,on){
+  document.getElementById(off).classList.remove('on');
+  document.getElementById(on).classList.add('on');
+}
+function renderCh(){
+  document.getElementById('gi').innerHTML='';
+  CHS[chIdx]();
+  prog((chIdx/CHS.length)*100);
+  window.scrollTo(0,0);
+}
+function nextCh(){chIdx++;if(chIdx>=CHS.length)showEnd();else renderCh();}
+function prog(p){document.getElementById('pgfill').style.width=p+'%'}
+function setTb(t){document.getElementById('tb-ch').textContent=t}
+
+function addPts(p,mod,el){
+  score+=p;mp[mod]=(mp[mod]||0)+p;
+  document.getElementById('tb-sc').textContent=score;
+  const pop=document.createElement('div');
+  pop.className='spop';pop.textContent='+'+p;
+  const r=el?el.getBoundingClientRect():{left:window.innerWidth/2-30,top:200};
+  pop.style.left=r.left+'px';pop.style.top=(r.top+window.scrollY)+'px';
+  document.body.appendChild(pop);
+  setTimeout(()=>pop.remove(),1000);
+}
+
+function ans(btn,ok,pts,mod,fbId,nxtId,msg){
+  total++;
+  btn.closest('.opts').querySelectorAll('.opt').forEach(b=>b.disabled=true);
+  const fb=document.getElementById(fbId),nb=document.getElementById(nxtId);
+  if(ok){
+    btn.classList.add('ok');streak++;correct++;
+    if(streak>maxStreak)maxStreak=streak;
+    const bonus=streak>=3?Math.round(pts*.5):0;
+    addPts(pts+bonus,mod,btn);
+    fb.className='fb ok';
+    fb.innerHTML=`✅ <strong>Correct!</strong> +${pts}${bonus?` <span style="color:#fbbf24">+${bonus} streak bonus 🔥</span>`:''}. ${msg}`;
+  }else{
+    btn.classList.add('no');streak=0;
+    fb.className='fb no';
+    fb.innerHTML=`❌ <strong>Not quite.</strong> ${msg}`;
+  }
+  nb.classList.add('on');updStr();
+  setTimeout(()=>nb.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+function updStr(){document.querySelectorAll('.sd').forEach((d,i)=>d.classList.toggle('lit',i<streak))}
+
+function mkOpts(opts){
+  return `<div class="opts">${opts.map((o,i)=>`
+  <button class="opt" onclick="ans(this,${o.ok},${o.pts},${o.mod},'${o.fb}','${o.nb}',\`${o.msg.replace(/`/g,"'")}\`)">
+    <div class="oltr">${'ABCD'[i]}</div>${o.text}
+  </button>`).join('')}</div>`;
+}
+
+function inject(html){
+  const gi=document.getElementById('gi'),w=document.createElement('div');
+  w.innerHTML=html;gi.appendChild(w);
+  w.querySelectorAll('.ain').forEach((el,i)=>el.style.animationDelay=(i*.07)+'s');
+  setTimeout(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}),80);
+}
+
+// ════════════════════════════
+// CH 1 — SQL BASICS
+// ════════════════════════════
+function ch1(){
+  setTb('CH 1 · SQL BASICS');
+  document.getElementById('gi').innerHTML=`
+  <div class="ch-sp ain">
+    <div class="ch-num">Chapter 1 of 4</div>
+    <div class="ch-ico ain" style="background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2)">🔵</div>
+    <div class="ch-ttl ain" style="color:#3b82f6">SQL Foundations</div>
+    <div class="ch-tag ain">The CTO just walked in. She has 3 warm-up questions before Sarah touches production data.</div>
+  </div>
+
+  <div class="scene ain">
+    <div class="scene-hd"><div class="pdot"></div>GLOBALMART HQ — MONDAY 9:00 AM</div>
+    <div class="scene-bd">
+      <div class="speech"><span class="speaker">Priya — CTO 👩‍💻</span>"Sarah, welcome. Quick check before you touch anything. 3 questions. Let's go."</div>
+    </div>
+  </div>
+
+  <div class="qcard ain">
+    <div class="qtag qz">Quiz</div>
+    <div class="qpts">🎯 100 pts</div>
+    <div class="qstr">${[...Array(5)].map((_,i)=>`<div class="sd" id="sd${i}"></div>`).join('')}<span class="slbl">streak</span></div>
+    <div class="qtxt">SQL clauses are written in one order but run in a different order. Which execution order is correct?</div>
+    ${mkOpts([
+      {text:'SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY',ok:false,pts:100,mod:1,fb:'fb1',nb:'nb1',msg:'SQL is written in this order but does NOT run in it. SELECT actually executes near the end — that\'s why a SELECT alias isn\'t usable in WHERE.'},
+      {text:'FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY',ok:true,pts:100,mod:1,fb:'fb1',nb:'nb1',msg:'FROM first (get the table), WHERE filters rows, GROUP BY groups them, HAVING filters groups, SELECT picks columns, ORDER BY sorts the final output.'},
+      {text:'WHERE → FROM → SELECT → GROUP BY → HAVING → ORDER BY',ok:false,pts:100,mod:1,fb:'fb1',nb:'nb1',msg:'You can\'t filter rows before specifying the table. FROM always runs before WHERE.'},
+      {text:'FROM → SELECT → WHERE → GROUP BY → HAVING → ORDER BY',ok:false,pts:100,mod:1,fb:'fb1',nb:'nb1',msg:'SELECT runs much later — after WHERE and GROUP BY. That\'s why column aliases from SELECT can\'t be used in WHERE.'},
+    ])}
+    <div class="fb" id="fb1"></div>
+    <button class="nxt" id="nb1" onclick="ch1q2()">Next Question →</button>
+  </div>`;
+}
+
+function ch1q2(){
+  inject(`
+  <div class="ic bl ain">
+    <div class="ic-ico">🔢</div>
+    <div>
+      <div class="ic-ttl" style="color:#60a5fa">Math Functions Cheat Sheet</div>
+      <div class="ic-bod">
+        <code>FLOOR(8749.99)</code> = 8749 — always rounds <strong style="color:#f1f5f9">DOWN</strong><br>
+        <code>CEILING(8749.01)</code> = 8750 — always rounds <strong style="color:#f1f5f9">UP</strong><br>
+        <code>ROUND(8749.5, 0)</code> = 8750 — rounds to <strong style="color:#f1f5f9">nearest</strong><br>
+        <code>ROUND(8749.4, 0)</code> = 8749 — rounds to <strong style="color:#f1f5f9">nearest</strong>
+      </div>
+    </div>
+  </div>
+  <div class="qcard ain">
+    <div class="qtag qz">Quiz</div>
+    <div class="qpts">🎯 120 pts</div>
+    <div class="qtxt">Ravi from Marketing needs basket totals rounded <strong>down</strong> — no rounding up, ever. His total is ₹8,749.75. What does <code>FLOOR(8749.75)</code> return?</div>
+    ${mkOpts([
+      {text:'8750 — rounds to nearest whole number',ok:false,pts:120,mod:1,fb:'fb2',nb:'nb2',msg:'That\'s ROUND(), not FLOOR(). FLOOR always drops the decimal and goes DOWN regardless of the value after the decimal.'},
+      {text:'8749 — always drops the decimal, always goes down',ok:true,pts:120,mod:1,fb:'fb2',nb:'nb2',msg:'FLOOR = "floor it to the ground." 8749.01 → 8749. 8749.99 → 8749. It always goes to the lower whole number.'},
+      {text:'8749.75 — FLOOR doesn\'t change it',ok:false,pts:120,mod:1,fb:'fb2',nb:'nb2',msg:'FLOOR absolutely changes it — removing the decimal is its whole job. Result is 8749.'},
+      {text:'Error — FLOOR only works on integers',ok:false,pts:120,mod:1,fb:'fb2',nb:'nb2',msg:'Actually FLOOR is specifically designed for decimals. FLOOR(integer) just returns the same integer.'},
+    ])}
+    <div class="fb" id="fb2"></div>
+    <button class="nxt" id="nb2" onclick="ch1q3()">Final Question →</button>
+  </div>`);
+}
+
+function ch1q3(){
+  inject(`
+  <div class="scene ain">
+    <div class="scene-hd"><div class="pdot"></div>20 MINUTES LATER</div>
+    <div class="scene-bd">
+      <div class="speech"><span class="speaker">Priya — CTO 👩‍💻</span>"One more. Give me a list of unique cities from ex_locations — but only the first 10. Which clause limits rows and which removes duplicates?"</div>
+    </div>
+  </div>
+  <div class="ic bl ain">
+    <div class="ic-ico">🔍</div>
+    <div>
+      <div class="ic-ttl" style="color:#60a5fa">TOP vs DISTINCT</div>
+      <div class="ic-bod">
+        <code>TOP 5</code> — limits the result to the first N rows only (does NOT remove duplicates)<br>
+        <code>DISTINCT</code> — removes duplicate rows from the result<br>
+        They do different things. You can combine them: <code>SELECT DISTINCT TOP 10 ...</code>
+      </div>
+    </div>
+  </div>
+  <div class="qcard ain">
+    <div class="qtag qz">Quiz</div>
+    <div class="qpts">🎯 100 pts</div>
+    <div class="qtxt">Which query gives Sarah a list of unique cities, limited to the first 10?</div>
+    ${mkOpts([
+      {text:'SELECT TOP 10 city FROM ex_locations',ok:false,pts:100,mod:1,fb:'fb3',nb:'nb3',msg:'TOP 10 gives 10 rows but won\'t remove duplicates. If "Mumbai" appears 500 times in the table, you\'ll still get it multiple times.'},
+      {text:'SELECT DISTINCT TOP 10 city FROM ex_locations',ok:true,pts:100,mod:1,fb:'fb3',nb:'nb3',msg:'Correct! DISTINCT removes duplicates first, then TOP 10 limits to 10 unique cities. Both clauses working together.'},
+      {text:'SELECT city FROM ex_locations LIMIT 10',ok:false,pts:100,mod:1,fb:'fb3',nb:'nb3',msg:'LIMIT is MySQL/PostgreSQL syntax. In SQL Server, it\'s TOP — and it goes right after SELECT, not at the end.'},
+      {text:'SELECT city FROM ex_locations WHERE city IS DISTINCT',ok:false,pts:100,mod:1,fb:'fb3',nb:'nb3',msg:'IS DISTINCT is not SQL Server syntax. DISTINCT is a keyword placed right after SELECT: SELECT DISTINCT column FROM table.'},
+    ])}
+    <div class="fb" id="fb3"></div>
+    <button class="nxt" id="nb3" onclick="endCh1()">✅ Chapter 1 Complete →</button>
+  </div>`);
+}
+
+function endCh1(){
+  inject(`
+  <div class="sumcard ain">
+    <div class="sum-ttl">✅ Chapter 1 Complete — SQL Basics</div>
+    <div class="si"><span class="sck">✓</span>Execution order: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY (not the written order)</div>
+    <div class="si"><span class="sck">✓</span>FLOOR() always rounds down · CEILING() always rounds up · ROUND() rounds to nearest</div>
+    <div class="si"><span class="sck">✓</span>TOP N limits row count · DISTINCT removes duplicates — combine when you need both</div>
+  </div>
+  <button class="nxt on ain" onclick="nextCh()">Chapter 2: The JOIN Lab →</button>`);
+}
+
+// ════════════════════════════
+// CH 2 — JOINS & CTEs
+// ════════════════════════════
+function ch2(){
+  setTb('CH 2 · JOINS & CTEs');
+  window._ds={};
+  document.getElementById('gi').innerHTML=`
+  <div class="ch-sp ain">
+    <div class="ch-num">Chapter 2 of 4</div>
+    <div class="ch-ico ain" style="background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.2)">🔗</div>
+    <div class="ch-ttl ain" style="color:#10b981">The JOIN Lab</div>
+    <div class="ch-tag ain">Sarah needs to combine 4 tables. One wrong JOIN and customers disappear from the report.</div>
+  </div>
+
+  <div class="scene ain">
+    <div class="scene-hd"><div class="pdot"></div>DATA WAREHOUSE — 10:30 AM</div>
+    <div class="scene-bd">
+      <div class="speech"><span class="speaker">Ankit — Senior Analyst 👨‍💻</span>"Before you write any query — you need to know your JOINs. Match each JOIN type to what it actually does. Drag and drop."</div>
+    </div>
+  </div>
+
+  <div class="ic gr ain">
+    <div class="ic-ico">🔗</div>
+    <div>
+      <div class="ic-ttl" style="color:#34d399">The 4 JOINs — Quick Reference</div>
+      <div class="ic-bod">
+        <strong style="color:#f1f5f9">INNER JOIN</strong> — only rows matching in BOTH tables · unmatched rows dropped<br>
+        <strong style="color:#f1f5f9">LEFT JOIN</strong> — all left rows + matching right (NULLs where no match on right)<br>
+        <strong style="color:#f1f5f9">FULL OUTER JOIN</strong> — all rows both sides (NULLs wherever no match)<br>
+        <strong style="color:#f1f5f9">CROSS JOIN</strong> — every row × every row — can explode to millions of rows!
+      </div>
+    </div>
+  </div>
+
+  <div class="qcard ain">
+    <div class="qtag dr">Drag & Drop</div>
+    <div class="qpts">🎯 120 pts — drag each JOIN to its description</div>
+    <div class="tbank" id="tbank">
+      <div class="tok" draggable="true" data-v="LEFT JOIN" ondragstart="dStart(event)">LEFT JOIN</div>
+      <div class="tok" draggable="true" data-v="INNER JOIN" ondragstart="dStart(event)">INNER JOIN</div>
+      <div class="tok" draggable="true" data-v="CROSS JOIN" ondragstart="dStart(event)">CROSS JOIN</div>
+      <div class="tok" draggable="true" data-v="FULL OUTER JOIN" ondragstart="dStart(event)">FULL OUTER</div>
+    </div>
+    <div class="dzones">
+      <div class="dz" ondragover="dOver(event)" ondrop="dDrop(event,this,'LEFT JOIN')" data-a="LEFT JOIN">
+        <div class="dz-slot" id="dz0">drop here</div>
+        <div class="dz-desc">All customers + their orders if any. Customers with zero orders still show up — right side gets NULL.</div>
+      </div>
+      <div class="dz" ondragover="dOver(event)" ondrop="dDrop(event,this,'INNER JOIN')" data-a="INNER JOIN">
+        <div class="dz-slot" id="dz1">drop here</div>
+        <div class="dz-desc">Only customers who have at least one order. No match on either side = excluded from result.</div>
+      </div>
+      <div class="dz" ondragover="dOver(event)" ondrop="dDrop(event,this,'CROSS JOIN')" data-a="CROSS JOIN">
+        <div class="dz-slot" id="dz2">drop here</div>
+        <div class="dz-desc">Every customer × every product. 1,000 customers × 2,000 products = 2,000,000 rows. Dangerous!</div>
+      </div>
+      <div class="dz" ondragover="dOver(event)" ondrop="dDrop(event,this,'FULL OUTER JOIN')" data-a="FULL OUTER JOIN">
+        <div class="dz-slot" id="dz3">drop here</div>
+        <div class="dz-desc">All rows from both tables regardless of match. Unmatched rows from both sides get NULLs filled in.</div>
+      </div>
+    </div>
+    <button class="chk" id="dd-chk" onclick="checkDrop()" disabled>Check My Answers ✅</button>
+    <div class="fb" id="dd-fb"></div>
+    <button class="nxt" id="dd-nxt" onclick="ch2q2()">Next Challenge →</button>
+  </div>`;
+}
+
+let _dv='';
+function dStart(e){_dv=e.target.dataset.v;e.dataTransfer.setData('text',_dv)}
+function dOver(e){e.preventDefault();e.currentTarget.classList.add('over')}
+function dDrop(e,zone,ans){
+  e.preventDefault();zone.classList.remove('over');
+  const val=e.dataTransfer.getData('text')||_dv;
+  const idx=Array.from(document.querySelectorAll('.dz')).indexOf(zone);
+  const slot=zone.querySelector('.dz-slot');
+  document.querySelectorAll('.dz-slot').forEach((s,i)=>{if(s.textContent===val&&i!==idx){s.textContent='drop here';s.className='dz-slot';delete window._ds[i];}});
+  if(window._ds[idx]){document.querySelectorAll('.tok').forEach(t=>{if(t.dataset.v===window._ds[idx])t.classList.remove('used')});}
+  slot.textContent=val;slot.className='dz-slot fill';
+  window._ds[idx]=val;
+  document.querySelectorAll('.tok').forEach(t=>{if(t.dataset.v===val)t.classList.add('used')});
+  if(Object.keys(window._ds).length>=4)document.getElementById('dd-chk').disabled=false;
+}
+function checkDrop(){
+  let pts=0;
+  document.querySelectorAll('.dz').forEach((z,i)=>{
+    const slot=z.querySelector('.dz-slot'),ok=z.dataset.a===window._ds[i];
+    slot.className='dz-slot '+(ok?'win':'fail');if(ok)pts+=30;
+  });
+  document.getElementById('dd-chk').disabled=true;total++;
+  const fb=document.getElementById('dd-fb');
+  if(pts===120){
+    addPts(120,2,document.getElementById('dd-chk'));streak++;correct++;if(streak>maxStreak)maxStreak=streak;updStr();
+    fb.className='fb ok';fb.innerHTML='🎉 Perfect! All 4 matched! +120 pts';
+  }else if(pts>0){
+    addPts(pts,2,document.getElementById('dd-chk'));streak=0;updStr();
+    fb.className='fb ok';fb.innerHTML=`✅ ${pts/30}/4 correct. +${pts} pts — check the red ones.`;
+  }else{
+    streak=0;updStr();fb.className='fb no';fb.innerHTML='❌ None matched. Remember: LEFT = keep all left rows even with no match.';
+  }
+  document.getElementById('dd-nxt').classList.add('on');
+  setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+function ch2q2(){
+  inject(`
+  <div class="scene ain">
+    <div class="scene-hd"><div class="pdot"></div>THE WHERE vs HAVING TRAP</div>
+    <div class="scene-bd">
+      <div class="speech"><span class="speaker">Junior Analyst 😨</span>"I wrote <code>WHERE COUNT(order_id) > 3</code> and SQL gave me an error. What did I do wrong?!"</div>
+    </div>
+  </div>
+  <div class="ic gr ain">
+    <div class="ic-ico">⚡</div>
+    <div>
+      <div class="ic-ttl" style="color:#34d399">WHERE vs HAVING — One Rule to Remember</div>
+      <div class="ic-bod">
+        <strong style="color:#f1f5f9">WHERE</strong> runs on individual rows BEFORE grouping — aggregate functions like COUNT/SUM can't be used here<br>
+        <strong style="color:#f1f5f9">HAVING</strong> runs on groups AFTER GROUP BY — COUNT/SUM work perfectly here<br>
+        Simple rule: row-level filter → WHERE &nbsp;|&nbsp; group-level filter → HAVING
+      </div>
+    </div>
+  </div>
+  <div class="qcard ain">
+    <div class="qtag qz">Quiz</div>
+    <div class="qpts">🎯 130 pts</div>
+    <div class="qtxt">Sarah needs customers from <strong>Chennai only</strong> who have placed <strong>more than 3 orders</strong>. Where does each condition go?</div>
+    ${mkOpts([
+      {text:'Both conditions in WHERE',ok:false,pts:130,mod:2,fb:'fb4',nb:'nb4',msg:'COUNT() inside WHERE throws an error every time. Aggregate functions can\'t run before rows are grouped.'},
+      {text:'city = Chennai in WHERE · COUNT(order_id) > 3 in HAVING',ok:true,pts:130,mod:2,fb:'fb4',nb:'nb4',msg:'Textbook correct. WHERE filters Chennai rows early (efficient), then HAVING filters the groups with more than 3 orders.'},
+      {text:'Both conditions in HAVING',ok:false,pts:130,mod:2,fb:'fb4',nb:'nb4',msg:'Technically works but wasteful — HAVING would scan all cities first instead of filtering to Chennai early. Push row filters to WHERE.'},
+      {text:'city = Chennai in HAVING · COUNT(order_id) > 3 in WHERE',ok:false,pts:130,mod:2,fb:'fb4',nb:'nb4',msg:'Completely reversed. COUNT in WHERE errors. Scalar filters (city = value) belong in WHERE, aggregate filters in HAVING.'},
+    ])}
+    <div class="fb" id="fb4"></div>
+    <button class="nxt" id="nb4" onclick="endCh2()">✅ Chapter 2 Complete →</button>
+  </div>`);
+}
+
+function endCh2(){
+  inject(`
+  <div class="sumcard ain">
+    <div class="sum-ttl">✅ Chapter 2 Complete — Joins & CTEs</div>
+    <div class="si"><span class="sck">✓</span>LEFT JOIN keeps all left rows — customers with no orders still appear, order columns show NULL</div>
+    <div class="si"><span class="sck">✓</span>INNER JOIN only keeps rows that match on both sides — unmatched rows are dropped</div>
+    <div class="si"><span class="sck">✓</span>WHERE = row-level filter (before GROUP BY) · HAVING = group-level filter (after GROUP BY)</div>
+    <div class="si"><span class="sck">✓</span>COUNT/SUM/AVG can NEVER go inside a WHERE clause — they belong in HAVING</div>
+  </div>
+  <button class="nxt on ain" onclick="nextCh()">Chapter 3: Product Analysis Lab →</button>`);
+}
+
+// ════════════════════════════
+// CH 3 — PRODUCT ANALYSIS
+// ════════════════════════════
+function ch3(){
+  setTb('CH 3 · PRODUCT ANALYSIS');
+  window._cs={};window._co=['JOIN + WHERE filters','GROUP BY + SUM revenue','CASE WHEN tier labels'];
+  document.getElementById('gi').innerHTML=`
+  <div class="ch-sp ain">
+    <div class="ch-num">Chapter 3 of 4</div>
+    <div class="ch-ico ain" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2)">📊</div>
+    <div class="ch-ttl ain" style="color:#f59e0b">Product Analysis Lab</div>
+    <div class="ch-tag ain">Divya needs one clean report: one row per product, total revenue, performance tier.</div>
+  </div>
+
+  <div class="scene ain">
+    <div class="scene-hd"><div class="pdot"></div>PRODUCT TEAM — 1:00 PM</div>
+    <div class="scene-bd">
+      <div class="speech"><span class="speaker">Divya — Head of Product 📊</span>"Sarah — one row per product, total sales revenue, and a tier: Star, Rising, or Underperformer. Use the 3-CTE pattern. Keep it readable."</div>
+    </div>
+  </div>
+
+  <div class="ic ye ain">
+    <div class="ic-ico">⚙️</div>
+    <div>
+      <div class="ic-ttl" style="color:#fbbf24">The 3-CTE Pattern</div>
+      <div class="ic-bod">
+        <strong style="color:#f1f5f9">CTE 1 — Base:</strong> JOIN tables + WHERE filters — get clean, filtered raw data<br>
+        <strong style="color:#f1f5f9">CTE 2 — Metrics:</strong> GROUP BY product + SUM(Sales_Amount) — calculate the numbers<br>
+        <strong style="color:#f1f5f9">CTE 3 — Labels:</strong> CASE WHEN revenue > X THEN 'Star' — apply business logic<br>
+        Rule: you can't label what you haven't calculated yet. Always build in order!
+      </div>
+    </div>
+  </div>
+
+  <div class="qcard ain">
+    <div class="qtag bd">Build the Query</div>
+    <div class="qpts">🎯 140 pts — tap the steps in the correct CTE order</div>
+    <div id="bslots">
+      <div class="bslot">CTE 1 — Base: <span id="s1">?</span></div>
+      <div class="bslot">CTE 2 — Metrics: <span id="s2">?</span></div>
+      <div class="bslot">CTE 3 — Labels: <span id="s3">?</span></div>
+    </div>
+    <div class="bbank" style="margin-top:14px" id="bbank">
+      <button class="btok" onclick="placeCTE(this,'CASE WHEN tier labels')">CASE WHEN tier labels</button>
+      <button class="btok" onclick="placeCTE(this,'JOIN + WHERE filters')">JOIN + WHERE filters</button>
+      <button class="btok" onclick="placeCTE(this,'GROUP BY + SUM revenue')">GROUP BY + SUM revenue</button>
+    </div>
+    <div class="fb" id="fb-b"></div>
+    <button class="nxt" id="nb-b" onclick="ch3q2()">Next →</button>
+  </div>`;
+}
+
+function placeCTE(btn,val){
+  const slots=['s1','s2','s3'],slotEls=slots.map(id=>document.getElementById(id));
+  for(let i=0;i<3;i++){
+    if(slotEls[i].textContent==='?'){
+      slotEls[i].textContent=val;
+      slotEls[i].parentElement.style.borderColor='#3b82f6';
+      window._cs[i]=val;btn.disabled=true;btn.style.opacity='.3';break;
+    }
+  }
+  if(Object.keys(window._cs).length===3){
+    const ok=window._co.every((v,i)=>window._cs[i]===v);
+    const fb=document.getElementById('fb-b');total++;
+    if(ok){
+      addPts(140,3,document.getElementById('nb-b'));
+      streak++;correct++;if(streak>maxStreak)maxStreak=streak;updStr();
+      fb.className='fb ok';fb.innerHTML='🏆 Perfect order! +140 pts. You can\'t label what you haven\'t calculated — always Base → Metrics → Labels!';
+    }else{
+      streak=0;updStr();
+      fb.className='fb no';fb.innerHTML='❌ Wrong order. You need revenue numbers before you can assign tiers. Correct: JOIN first → GROUP BY second → CASE WHEN last.';
+    }
+    document.getElementById('nb-b').classList.add('on');
+  }
+}
+
+function ch3q2(){
+  inject(`
+  <div class="scene ain">
+    <div class="scene-hd"><div class="pdot"></div>5 MINUTES LATER — DEBUG TIME</div>
+    <div class="scene-bd">
+      <div class="speech"><span class="speaker">Divya 📊</span>"Sarah! I'm seeing 3 rows for 'Wireless Headphones'. One row per transaction line. I need ONE row with the total revenue. What's wrong?"</div>
+    </div>
+  </div>
+  <div class="cb ain"><span class="cm">-- The broken query — returns 3 rows for same product</span>
+<span class="kw">SELECT</span>
+    <span class="col">p.product_name</span>,
+    <span class="col">t.Sales_Amount</span>    <span class="cm">-- each transaction row separately!</span>
+<span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="col">t</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_products</span> <span class="col">p</span>
+  <span class="kw">ON</span> <span class="col">t.Product_ID</span> = <span class="col">p.product_id</span>
+<span class="kw">WHERE</span> <span class="col">p.product_name</span> = <span class="str">'Wireless Headphones'</span></div>
+  <div class="qcard ain">
+    <div class="qtag dg">Debug</div>
+    <div class="qpts">🎯 140 pts</div>
+    <div class="qtxt">Same product, 3 rows — one per transaction. What's the correct fix to get ONE row with total revenue?</div>
+    ${mkOpts([
+      {text:'Add DISTINCT to SELECT to remove duplicate product names',ok:false,pts:140,mod:3,fb:'fb5',nb:'nb5',msg:'DISTINCT removes identical rows — but these 3 rows have different Sales_Amount values, so DISTINCT won\'t help. You still get 3 rows.'},
+      {text:'Add GROUP BY product_name and use SUM(Sales_Amount)',ok:true,pts:140,mod:3,fb:'fb5',nb:'nb5',msg:'Correct! This is a granularity problem. GROUP BY collapses multiple transaction rows into one product row, and SUM() adds all the amounts together.'},
+      {text:'Add ORDER BY product_name to group them visually',ok:false,pts:140,mod:3,fb:'fb5',nb:'nb5',msg:'ORDER BY sorts the output — you\'d still have 3 rows, now sorted. Sorting is not the same as aggregating.'},
+      {text:'Use TOP 1 to pick the first row per product',ok:false,pts:140,mod:3,fb:'fb5',nb:'nb5',msg:'TOP 1 picks one row and discards the other 2. You\'d lose revenue from those transactions — the total would be wrong.'},
+    ])}
+    <div class="fb" id="fb5"></div>
+    <button class="nxt" id="nb5" onclick="endCh3()">✅ Chapter 3 Complete →</button>
+  </div>`);
+}
+
+function endCh3(){
+  inject(`
+  <div class="sumcard ain">
+    <div class="sum-ttl">✅ Chapter 3 Complete — Product Analysis</div>
+    <div class="si"><span class="sck">✓</span>3-CTE pattern: Base (JOIN+WHERE) → Metrics (GROUP BY+SUM) → Labels (CASE WHEN)</div>
+    <div class="si"><span class="sck">✓</span>ex_transactions has one row per transaction line — not one row per product</div>
+    <div class="si"><span class="sck">✓</span>Multiple rows per product = granularity problem → fix with GROUP BY + SUM()</div>
+    <div class="si"><span class="sck">✓</span>CASE WHEN must come after aggregation — you can't tier-label before you have the revenue number</div>
+  </div>
+  <button class="nxt on ain" onclick="nextCh()">Final Chapter: RFM Boss Battle →</button>`);
+}
+
+// ════════════════════════════
+// CH 4 — RFM LOYALTY
+// ════════════════════════════
+const RFM_DATA=[
+  {idx:0,emoji:'😎',name:'Arjun K.',city:'Mumbai',rec:10,freq:25,mon:12000,bg:'rgba(59,130,246,.2)',correct:'promoter',
+   msgs:{promoter:'Recency 10 ≤ 18 = High, Frequency 25 ≤ 30 = High, Monetary ₹12k > ₹6.9k = High. All three HIGH = Promoter! 🌟',
+         potential:'Not quite — all 3 are HIGH here (Recency=High, Frequency=High, Monetary=High). All-High = Promoter.',
+         detractor:'All 3 are actually High. Recency of 10 days is very recent, frequency is high, spend is high.'}},
+  {idx:1,emoji:'😐',name:'Sneha M.',city:'Chennai',rec:45,freq:35,mon:5500,bg:'rgba(139,92,246,.2)',correct:'potential',
+   msgs:{promoter:'Not quite — Recency 45 ≥ 32 = LOW, not High. Mixed scores here, not all-High.',
+         potential:'Recency 45 ≥ 32 = Low, Frequency 35 between 31–38 = Med, Monetary ₹5.5k between ₹4.3k–₹6.9k = Med. Mixed = Potential! 💫',
+         detractor:'Not all Low — Frequency and Monetary are Medium, not Low. Mixed dimensions = Potential, not Detractor.'}},
+  {idx:2,emoji:'😴',name:'Ramu G.',city:'Delhi',rec:200,freq:60,mon:1200,bg:'rgba(236,72,153,.2)',correct:'detractor',
+   msgs:{promoter:'200 days since last order = very Low Recency. Frequency 60 > 38 = Low. Monetary ₹1.2k < ₹4.3k = Low. All Low = Detractor.',
+         potential:'All three dimensions are Low here — that\'s not "mixed", that\'s all-Low = Detractor.',
+         detractor:'Recency 200 days = Very Low. Frequency 60 > 38 = Low. Monetary ₹1.2k < ₹4.3k = Low. All three LOW = Detractor! 🚨'}}
+];
+
+function ch4(){
+  setTb('CH 4 · RFM BOSS');
+  window._rfmDone=0;
+  document.getElementById('gi').innerHTML=`
+  <div class="ch-sp ain">
+    <div class="ch-num">Chapter 4 of 4 · 🔥 FINAL BOSS</div>
+    <div class="ch-ico ain" style="background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.2)">🎯</div>
+    <div class="ch-ttl ain" style="color:#8b5cf6">RFM Endgame</div>
+    <div class="ch-tag ain">The CEO wants every customer classified. Sarah has 10 minutes.</div>
+  </div>
+
+  <div class="scene ain">
+    <div class="scene-hd"><div class="pdot"></div>BOARDROOM — 4:00 PM</div>
+    <div class="scene-bd">
+      <div class="speech"><span class="speaker">Mr. Sharma — CEO 👔</span>"3 customer types based on Recency, Frequency, and Monetary value. I need Promoters, Potentials, and Detractors. Apply the rules and classify these 3 customers."</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px" class="ain">
+    <div class="ic bl" style="margin:0;flex-direction:column">
+      <div style="font-size:26px;margin-bottom:6px">📅</div>
+      <div class="ic-ttl" style="color:#60a5fa">R — Recency</div>
+      <div class="ic-bod">Days since last order<br>≤ 18 = High<br>19–31 = Med<br>≥ 32 = Low</div>
+    </div>
+    <div class="ic gr" style="margin:0;flex-direction:column">
+      <div style="font-size:26px;margin-bottom:6px">🔁</div>
+      <div class="ic-ttl" style="color:#34d399">F — Frequency</div>
+      <div class="ic-bod">Avg days between orders<br>≤ 30 = High<br>31–38 = Med<br>> 38 = Low</div>
+    </div>
+    <div class="ic ye" style="margin:0;flex-direction:column">
+      <div style="font-size:26px;margin-bottom:6px">💰</div>
+      <div class="ic-ttl" style="color:#fbbf24">M — Monetary</div>
+      <div class="ic-bod">Total spend<br>> ₹6,900 = High<br>₹4,300–6,900 = Med<br>< ₹4,300 = Low</div>
+    </div>
+  </div>
+
+  <div class="ic pu ain">
+    <div class="ic-ico">🏷️</div>
+    <div>
+      <div class="ic-ttl" style="color:#c084fc">Segment Rules</div>
+      <div class="ic-bod">
+        <strong style="color:#f1f5f9">Promoter</strong> — all three dimensions are HIGH<br>
+        <strong style="color:#f1f5f9">Detractor</strong> — all three dimensions are LOW<br>
+        <strong style="color:#f1f5f9">Potential</strong> — mixed scores (not all High, not all Low)
+      </div>
+    </div>
+  </div>
+
+  <div class="qcard ain">
+    <div class="qtag bs">Classify Customers</div>
+    <div class="qpts">🎯 100 pts each — use the RFM rules above</div>
+    <div class="rfm-grid" id="rfm-grid">
+      ${RFM_DATA.map(c=>`
+      <div class="rfm-card" id="rfm-${c.idx}">
+        <div class="rfm-hd">
+          <div class="rfm-av" style="background:${c.bg}">${c.emoji}</div>
+          <div><div class="rfm-nm">${c.name}</div><div class="rfm-loc">📍 ${c.city}</div></div>
+        </div>
+        <div class="rfm-stats">
+          <div class="rfm-stat"><div class="rs-lbl">Recency</div><div class="rs-val" style="color:#60a5fa">${c.rec}</div><div class="rs-unit">days ago</div></div>
+          <div class="rfm-stat"><div class="rs-lbl">Frequency</div><div class="rs-val" style="color:#34d399">${c.freq}</div><div class="rs-unit">avg days</div></div>
+          <div class="rfm-stat"><div class="rs-lbl">Monetary</div><div class="rs-val" style="color:#fbbf24">₹${(c.mon/1000).toFixed(1)}k</div><div class="rs-unit">total spend</div></div>
+        </div>
+        <div class="rfm-ch" id="rch-${c.idx}">
+          <button class="rfm-btn g" onclick="rfmAns(${c.idx},'promoter')">🌟 Promoter</button>
+          <button class="rfm-btn b" onclick="rfmAns(${c.idx},'potential')">💫 Potential</button>
+          <button class="rfm-btn r" onclick="rfmAns(${c.idx},'detractor')">⚠️ Detractor</button>
+        </div>
+        <div class="rfm-fb" id="rfm-fb-${c.idx}"></div>
+      </div>`).join('')}
+    </div>
+    <div id="rfm-nxt" style="display:none;margin-top:14px">
+      <button class="nxt on" onclick="ch4q2()">One Final Question →</button>
+    </div>
+  </div>`;
+}
+
+function rfmAns(idx,chosen){
+  const d=RFM_DATA[idx];
+  document.getElementById('rch-'+idx).querySelectorAll('.rfm-btn').forEach(b=>b.disabled=true);
+  const btns=document.getElementById('rch-'+idx).querySelectorAll('.rfm-btn');
+  const seg=['promoter','potential','detractor'];
+  const ci=seg.indexOf(chosen),ri=seg.indexOf(d.correct);
+  const ok=chosen===d.correct;
+  btns[ri].classList.add('sel-ok');if(!ok)btns[ci].classList.add('sel-no');
+  document.getElementById('rfm-'+idx).classList.add(ok?'won':'lost');
+  const fb=document.getElementById('rfm-fb-'+idx);
+  fb.className='rfm-fb '+(ok?'ok':'no');
+  fb.textContent=(ok?'✅ ':'❌ ')+d.msgs[chosen];
+  if(ok){addPts(100,4,document.getElementById('rfm-'+idx));streak++;correct++;if(streak>maxStreak)maxStreak=streak;}
+  else{streak=0;}
+  updStr();total++;
+  window._rfmDone++;
+  if(window._rfmDone>=3){
+    setTimeout(()=>{
+      document.getElementById('rfm-nxt').style.display='block';
+      document.getElementById('rfm-nxt').scrollIntoView({behavior:'smooth',block:'nearest'});
+    },400);
+  }
+}
+
+function ch4q2(){
+  inject(`
+  <div class="ic pu ain">
+    <div class="ic-ico">📅</div>
+    <div>
+      <div class="ic-ttl" style="color:#c084fc">DATEDIFF — The Argument Order Trap</div>
+      <div class="ic-bod">
+        <code>DATEDIFF(day, start, end)</code> = end minus start<br>
+        For recency = days FROM last order TO analysis date:<br>
+        ✅ <code>DATEDIFF(day, MAX(order_date), '2018-09-01')</code><br>
+        ❌ <code>DATEDIFF(day, '2018-09-01', MAX(order_date))</code> → gives negative numbers!<br><br>
+        🚫 Don't use <code>GETDATE()</code> — data ends in 2018. Today is 2026 — every customer would look like a Detractor!
+      </div>
+    </div>
+  </div>
+  <div class="qcard ain">
+    <div class="qtag bs">Final Boss</div>
+    <div class="qpts">🎯 200 pts — biggest question of the day!</div>
+    <div class="qtxt">A customer spent ₹50,000 total — but their last order was 2 years ago and they've only ever placed 1 order. What is their RFM classification?</div>
+    ${mkOpts([
+      {text:'Promoter — ₹50,000 spend is massive, clearly a VIP',ok:false,pts:200,mod:4,fb:'fb6',nb:'nb6',msg:'High Monetary alone does NOT make a Promoter. Recency = 2 years ago (Very Low). Frequency = 1 order (Low). RFM needs ALL THREE — not just the biggest number.'},
+      {text:'Mixed: High Monetary, Low Recency, Low Frequency — all 3 dimensions matter',ok:true,pts:200,mod:4,fb:'fb6',nb:'nb6',msg:'THIS is why RFM was invented. One big purchase years ago could mean a churned customer. You need all 3 dimensions together to tell the real story — not just spend. 🏆'},
+      {text:'Potential — high spend suggests they might return',ok:false,pts:200,mod:4,fb:'fb6',nb:'nb6',msg:'"They might return" is not a data dimension — it\'s hope. Low Recency + Low Frequency is actual data. RFM is about what happened, not what might happen.'},
+      {text:'Detractor — 1 order in 2 years, clearly churned',ok:false,pts:200,mod:4,fb:'fb6',nb:'nb6',msg:'The spirit is right but the point of this question is the nuance: Monetary is High even though R and F are Low. A good analyst acknowledges ALL 3 dimensions rather than labelling based on one.'},
+    ])}
+    <div class="fb" id="fb6"></div>
+    <button class="nxt" id="nb6" onclick="endCh4()">🏆 See My Score →</button>
+  </div>`);
+}
+
+function endCh4(){
+  inject(`
+  <div class="sumcard ain">
+    <div class="sum-ttl">✅ Chapter 4 Complete — RFM Loyalty</div>
+    <div class="si"><span class="sck">✓</span>RFM needs ALL 3 dimensions together — one high number alone doesn't determine the segment</div>
+    <div class="si"><span class="sck">✓</span>DATEDIFF(day, MAX(order_date), '2018-09-01') — analysis date goes LAST or you get negatives</div>
+    <div class="si"><span class="sck">✓</span>Use a fixed reference date, NOT GETDATE() — historical data needs a fixed anchor point</div>
+    <div class="si"><span class="sck">✓</span>COUNT(DISTINCT order_id) — ex_transactions has multiple rows per order, don't double-count</div>
+    <div class="si"><span class="sck">✓</span>LEFT JOIN for returns — customers with 0 returns still appear, COUNT(return) shows 0</div>
+  </div>
+  <button class="nxt on ain" onclick="nextCh()">🏆 View Final Score →</button>`);
+}
+
+// ════════════════════════════
+// END SCREEN
+// ════════════════════════════
+function showEnd(){
+  document.getElementById('s-game').classList.remove('on');
+  document.getElementById('s-end').classList.add('on');
+  prog(100);
+  document.getElementById('fsc').textContent=score;
+  const pct=Math.min(100,(score/1350)*100);
+  const circ=2*Math.PI*70;
+  setTimeout(()=>{document.getElementById('rg-fill').style.strokeDashoffset=circ-(circ*pct/100)},300);
+  ['1','2','3','4'].forEach(m=>document.getElementById('m'+m).textContent=(mp[m]||0)+' pts');
+  document.getElementById('rank').textContent=
+    score>=1100?'🥇 SQL Legend — Sarah would hire you immediately!':
+    score>=750 ?'🥈 Strong Analyst — solid work, keep it up!':
+    score>=400 ?'🥉 Good start — revisit the summaries and try again!':
+               '📚 Keep going — every expert started exactly here!';
+  const bdgs=[];
+  if(maxStreak>=3)bdgs.push('🔥 Streak x'+maxStreak);
+  if((mp[1]||0)>=200)bdgs.push('🔵 SQL Wizard');
+  if((mp[2]||0)>=220)bdgs.push('🟢 JOIN Master');
+  if((mp[3]||0)>=260)bdgs.push('🟡 CTE Expert');
+  if((mp[4]||0)>=350)bdgs.push('🟣 RFM Champion');
+  bdgs.push('🏁 Day 1 Finisher');
+  document.getElementById('bdgs').innerHTML=bdgs.map(b=>`<div class="bdg">${b}</div>`).join('');
+  confetti();
+}
+
+function confetti(){
+  const cols=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ec4899','#06b6d4'];
+  for(let i=0;i<80;i++){
+    setTimeout(()=>{
+      const el=document.createElement('div');
+      el.className='cfti';
+      el.style.left=Math.random()*100+'vw';
+      el.style.background=cols[Math.floor(Math.random()*cols.length)];
+      el.style.animationDuration=(1.2+Math.random()*1.2)+'s';
+      el.style.animationDelay=Math.random()*.3+'s';
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),2800);
+    },i*25);
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+# Tracking customer purchase patterns for targeted marketing
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to analyse customer purchase patterns driven by marketing campaigns by building a Python-powered campaign performance summary for GlobalMart — merging multi-table data, computing derived rate metrics, and applying window-style operations to rank and accumulate campaign results.
+
+## Learning Objectives
+- Merge multiple marketing DataFrames to build a unified campaign-level performance summary
+- Apply groupby() and agg() to aggregate daily metrics into campaign-level totals
+- Compute derived metrics such as click-through rate, conversion rate, and campaign duration using assign() and np.where()
+- Rank campaigns within each marketing channel using groupby().rank() with min, dense, and first methods
+- Calculate cumulative conversions and running average clicks using cumsum() and expanding().mean()
+
+## Prerequisites
+- Familiarity with reading data using pd.read_csv() and basic DataFrame operations
+- Understanding of groupby() and aggregate functions such as sum(), count(), and mean()
+- Basic knowledge of merge() for combining DataFrames
+- Familiarity with assign() or apply() for creating derived columns
+
+## Duration of Completion
+60 minutes
+
+## Level
+Intermediate
+
+## Industries
+- marketing
+
+## Tags
+- data-wrangling (skill)
+- python (tool)
+
+#### Overview
+In this scenario you will learn how to analyse customer purchase patterns driven by marketing campaigns by building a Python-powered campaign performance summary for GlobalMart — merging multi-table data, computing derived rate metrics, and applying window-style operations to rank and accumulate campaign results.
+
+#### Level
+intermediate
+
+#### Industries
+- marketing
+
+#### Tags
+- data-wrangling (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## GlobalMart's Marketing Intelligence Report
+
+**GlobalMart's Marketing team is flying blind.** They're spending budget across Email, Social Media, Paid Search, and other channels - but they have no unified view of which campaigns are actually delivering conversions, and which are burning budget with high bounces and low clicks.
+
+**The Mission:** You have been brought in as a Marketing Analyst to build the data foundation for GlobalMart's **Targeted Marketing Intelligence Report**. Your goal is to transform raw, daily campaign metric data into a sophisticated performance engine that answers two critical business questions:
+
+- **Which campaigns are top performers within each channel?** (Ranking with pandas `rank()` partitioned by channel)
+- **What is the cumulative conversion impact across the campaign lifecycle?** (Running totals with `cumsum()` and `expanding().mean()`)
+
+You will:
+- Merge multi-table campaign data into a clean **campaign-level performance summary** using `merge()`, `groupby()`, and `assign()` for derived columns.
+- Apply **window-style operations** - including `rank()`, `cumsum()`, and `expanding().mean()` - to compute purchase pattern metrics and performance rankings across campaigns and channels.
+
+By the end, you'll have a working **campaign performance DataFrame** that a marketing team could plug directly into real-world **targeted marketing decisions**, **budget allocation strategies**, and **channel effectiveness analysis**.
+
+>[!IMPORTANT]
+> This scenario uses three datasets: ex_campaigns.csv, ex_channel.csv, and ex_campaign_metrics.csv. You will merge all three to build the final output.
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Concept: Window Operations in pandas
+
+As a Marketing Analyst, standard aggregation with `groupby().agg()` tells you the total picture but it **collapses all rows into one**. **Window-style operations** in pandas give you the power to compute metrics *across* rows while **keeping every row visible**. This is critical when you need to:
+
+- **Rank** campaigns against each other within the same channel (not globally).
+- **Accumulate** conversions progressively across a campaign's active days.
+
+In SQL, you use `OVER (PARTITION BY ...)`. In pandas, you achieve the same result using:
+
+| Family | pandas Equivalent | SQL Equivalent | Behaviour |
+|---|---|---|---|
+| **Ranking** | `groupby().rank(method='min')` | `RANK()` | Ties share rank; next rank skips (1, 1, 3) |
+| **Ranking** | `groupby().rank(method='dense')` | `DENSE_RANK()` | Ties share rank; no gap (1, 1, 2) |
+| **Ranking** | `groupby().rank(method='first')` | `ROW_NUMBER()` | Unique sequential number; no ties |
+| **Running Aggregates** | `groupby().cumsum()` | `SUM() OVER (...)` | Cumulative total per group |
+| **Running Aggregates** | `groupby().expanding().mean()` | `AVG() OVER (...)` | Running average per group |
+
+>[!TIP]
+> The key distinction: groupby().agg() reduces N rows to 1 per group. Window operations return the same number of rows as the input. They add a new column with per-row context.
+
+>[!NOTE]
+> Always sort your DataFrame by the grouping key and date before applying cumsum() or expanding(). Unsorted data produces incorrect running totals.
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Choice
+
+**Question:** You want to rank campaigns by `total_conversions` within each channel such that tied campaigns receive the same rank with **no gaps** in the sequence (e.g., if two campaigns tie for rank 1, the next rank assigned is 2, not 3). Which pandas method achieves this?
+
+**Options:** 
+- `groupby('channel_name')['total_conversions'].rank(method='rank', ascending=False)`
+
+- `groupby('channel_name')['total_conversions'].rank(method='dense', ascending=False)`
+
+- `groupby('channel_name')['total_conversions'].rank(method='first', ascending=False)`
+
+- `groupby('channel_name')['total_conversions'].rank(method='average', ascending=False)`
+
+**Correct Options:** 
+- `groupby('channel_name')['total_conversions'].rank(method='dense', ascending=False)`
+
+**Solution:** 
+- **Correct:** `method='dense'` is equivalent to SQL's `DENSE_RANK()`. Ties share the same rank and no rank value is skipped — producing 1, 1, 2 rather than 1, 1, 3.
+- **Wrong:** `method='rank'` is equivalent to SQL's `RANK()`. Ties share the lowest rank but the next rank skips — producing 1, 1, 3.
+- **Wrong:** `method='first'` is equivalent to SQL's `ROW_NUMBER()`. It assigns a unique rank to every row in order of appearance, so there are never any ties — producing 1, 2, 3 even for identical conversion values.
+- **Wrong:** `method='average'` assigns the average of the would-be ranks to tied values and returns floats (e.g., 1.5 for two tied rows). This is not meaningful for integer performance rankings.
+
+**Tags**
+- data-wrangling / group (skill)
+
+##### Input 4
+**Type:** Choice
+
+**Question:** Which of the following statements about pandas operations are correct? (Select 2)
+
+**Options:** 
+- `groupby().rank()` assigns a rank to each row within its group while preserving all rows in the DataFrame
+
+- `groupby().agg()` is a window operation that returns the same number of rows as the input
+
+- `groupby().cumsum()` computes a running total within each group without collapsing rows to a single summary
+
+- `groupby().expanding().mean()` reduces each group down to a single average value
+
+**Correct Options:** 
+- `groupby().rank()` assigns a rank to each row within its group while preserving all rows in the DataFrame
+
+- `groupby().cumsum()` computes a running total within each group without collapsing rows to a single summary
+
+**Solution:** 
+`groupby().rank()` and `groupby().cumsum()` are both **window-style operations** — they compute a new value for each row while keeping the full DataFrame structure intact. This is their key advantage over `groupby().agg()`, which collapses each group into a single summary row. Similarly, `groupby().expanding().mean()` also preserves all rows and computes a running average per row — it does **not** reduce groups to a single value.
+
+**Tags**
+- data-wrangling / group (skill)
+
+##### Input 5
+**Type:** Text
+
+## Loading GlobalMart's Campaign Datasets
+
+### Globalmart ER- Diagram 
+![Image-image.png](https://cdn.enqurious.com/images/38cb6542-1250-4273-9875-d2bf9ded3188_image.webp)
+
+**Data Dictionary:**
+
+| Table | Column | Description |
+|---|---|---|
+| `ex_campaigns` | `campaign_id` | Unique identifier for each marketing campaign |
+| `ex_campaigns` | `product_id` | Unique identifier for the product being promoted |
+| `ex_campaigns` | `channel_id` | Unique identifier for the channel |
+| `ex_campaigns` | `start_date` | Date when the campaign starts |
+| `ex_campaigns` | `end_date` | Date when the campaign ends |
+| `ex_campaigns` | `campaign_type` | Type of marketing campaign |
+| `ex_campaigns` | `budget` | Total budget allocated for the campaign |
+| `ex_channel` | `channel_id` | Unique identifier for each marketing channel |
+| `ex_channel` | `channel_name` | Name of the marketing channel |
+| `ex_campaign_metrics` | `metric_id` | Unique identifier for each metric record |
+| `ex_campaign_metrics` | `campaign_id` | Unique identifier for the campaign being measured |
+| `ex_campaign_metrics` | `metric_date` | Date on which the campaign metrics were recorded |
+| `ex_campaign_metrics` | `impressions` | Number of times the ad was displayed to users |
+| `ex_campaign_metrics` | `clicks` | Number of times users clicked on the ad |
+| `ex_campaign_metrics` | `conversions` | Number of conversion actions |
+| `ex_campaign_metrics` | `bounces` | Number of sessions where users left without interaction |
+---
+
+Download Python Notebook [Here](https://cdn.enqurious.com/others/a2db751e-8b79-40a7-b516-b04ea4707227_Trackingcustomerpurchasepatternsfortargetedmarketing.ipynb)
+
+
+
+**Tags**
+
+
+##### Input 6
+**Type:** Code
+
+**Question:** Build a **campaign-level performance summary** DataFrame with one row per campaign. The output must include the columns described below.
+
+| campaign_id | channel_name      | campaign_type        | budget  | total_impressions | total_clicks | total_conversions | total_bounces | avg_daily_conversions | click_through_rate | conversion_rate | campaign_duration_days | channel_rank | dense_channel_rank | row_num |
+|------------|-------------------|----------------------|--------:|------------------:|-------------:|------------------:|--------------:|----------------------:|-------------------|----------------|-----------------------:|-------------:|-------------------:|--------:|
+| 1101 | Email Marketing    | Product Launch       | 12500.0 | 185420 | 12450 | 5620 | 3180 | 312.22 | 6.71% | 45.14% | 180 | 1 | 1 | 1 |
+| 1102 | Social Media       | Brand Awareness      | 18500.0 | 245780 | 15680 | 6745 | 4250 | 385.43 | 6.38% | 43.02% | 210 | 2 | 2 | 2 |
+| 1103 | Search Advertising | Seasonal Promotion   | 9800.0  | 132640 | 9875  | 4210 | 2515 | 280.67 | 7.45% | 42.63% | 150 | 3 | 3 | 3 |
+
+>[!IMPORTANT]
+> These values are for representation purpose only. Your values could be different according to the dataset
+
+>[!TIP]
+> If you stuck while finding the real meaning of each column, Click on Hint to get definition of each column.
+
+**Language:** python
+
+**Snippet:** import pandas as pd 
+
+ex_campaignmetrics = pd.read_csv("https://cdn.enqurious.com/documents/2443026c-e6fe-4dde-b723-de45095f4634_excampaignmetrics.csv")
+
+ex_campaigns = pd.read_csv("https://cdn.enqurious.com/documents/2fb52f3f-77ae-4464-bd5c-a7753bee1fdb_excampaigns.csv")
+
+ex_channel = pd.read_csv("https://cdn.enqurious.com/documents/2faf9174-ef92-43f7-bc6d-bf5e9b2ede62_exchannel.csv")
+
+**Solution:** 
+```python
+import pandas as pd
+import numpy as np
+
+# ── Step 1: Load data ──────────────────────────────────────────────────────────
+campaigns = pd.read_csv('ex_campaigns.csv', parse_dates=['start_date', 'end_date'])
+channel   = pd.read_csv('ex_channel.csv')
+metrics   = pd.read_csv('ex_campaign_metrics.csv', parse_dates=['metric_date'])
+
+# ── Step 2: Aggregate raw daily metrics per campaign ──────────────────────────
+campaign_agg = (
+    metrics
+    .groupby('campaign_id')
+    .agg(
+        total_impressions = ('impressions',  'sum'),
+        total_clicks      = ('clicks',       'sum'),
+        total_conversions = ('conversions',  'sum'),
+        total_bounces     = ('bounces',      'sum'),
+        distinct_dates    = ('metric_date',  'nunique'),
+    )
+    .reset_index()
+)
+
+campaign_agg['avg_daily_conversions'] = (
+    campaign_agg['total_conversions'] / campaign_agg['distinct_dates']
+).round(2)
+
+campaign_agg.drop(columns='distinct_dates', inplace=True)
+
+# ── Step 3: Merge with campaign metadata and channel ──────────────────────────
+df = (
+    campaign_agg
+    .merge(campaigns, on='campaign_id', how='inner')
+    .merge(channel,   on='channel_id',  how='inner')
+)
+
+# ── Step 4: Compute derived metrics ───────────────────────────────────────────
+df['campaign_duration_days'] = (df['end_date'] - df['start_date']).dt.days + 1
+
+df['click_through_rate'] = np.where(
+    df['total_impressions'] > 0,
+    (df['total_clicks'] / df['total_impressions'] * 100).round(2),
+    0.0
+)
+df['click_through_rate'] = df['click_through_rate'].apply(lambda x: f"{x}%")
+
+df['conversion_rate'] = np.where(
+    df['total_clicks'] > 0,
+    (df['total_conversions'] / df['total_clicks'] * 100).round(2),
+    0.0
+)
+df['conversion_rate'] = df['conversion_rate'].apply(lambda x: f"{x}%")
+
+# ── Step 5: Apply ranking window operations within each channel ───────────────
+df['channel_rank'] = (
+    df.groupby('channel_name')['total_conversions']
+    .rank(method='min', ascending=False)
+    .astype(int)
+)
+
+df['dense_channel_rank'] = (
+    df.groupby('channel_name')['total_conversions']
+    .rank(method='dense', ascending=False)
+    .astype(int)
+)
+
+df['row_num'] = (
+    df.groupby('channel_name')['total_conversions']
+    .rank(method='first', ascending=False)
+    .astype(int)
+)
+
+# ── Step 6: Select and sort final output ──────────────────────────────────────
+result = df[[
+    'campaign_id', 'channel_name', 'campaign_type', 'budget',
+    'total_impressions', 'total_clicks', 'total_conversions', 'total_bounces',
+    'avg_daily_conversions', 'click_through_rate', 'conversion_rate',
+    'campaign_duration_days', 'channel_rank', 'dense_channel_rank', 'row_num'
+]].sort_values(['channel_name', 'channel_rank']).reset_index(drop=True)
+
+print(result)
+```
+
+**Tags**
+- data-wrangling / derived-column (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / join (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / math-calculations (skill)
+
+##### Input 7
+**Type:** Code
+
+**Question:** Write a Python script that computes **running cumulative metrics** across each campaign's daily records. Your output should have one row per campaign per day with the following columns:
+
+| campaign_id | metric_date | daily_conversions | cumulative_conversions | running_avg_clicks |
+|------------|------------|------------------:|------------------------:|-------------------:|
+| 501 | 2025-06-10 | 87  | 87  | 432.25 |
+| 501 | 2025-06-11 | 154 | 241 | 518.40 |
+| 501 | 2025-06-12 | 219 | 460 | 603.75 |
+
+>[!IMPORTANT]
+> These values are for representation purpose only. Your values could be different according to the dataset
+
+>[!TIP]
+> If you stuck while finding the real meaning of each column, Click on Hint to get definition of each column.
+
+
+**Language:** python
+
+**Snippet:** import pandas as pd 
+
+ex_campaignmetrics = pd.read_csv("https://cdn.enqurious.com/documents/2443026c-e6fe-4dde-b723-de45095f4634_excampaignmetrics.csv")
+
+ex_campaigns = pd.read_csv("https://cdn.enqurious.com/documents/2fb52f3f-77ae-4464-bd5c-a7753bee1fdb_excampaigns.csv")
+
+ex_channel = pd.read_csv("https://cdn.enqurious.com/documents/2faf9174-ef92-43f7-bc6d-bf5e9b2ede62_exchannel.csv")
+
+**Solution:** 
+```python
+import pandas as pd
+
+metrics = pd.read_csv('ex_campaign_metrics.csv', parse_dates=['metric_date'])
+
+# Step 1: Sort by campaign and date — required before cumulative operations
+metrics_sorted = metrics.sort_values(by=['campaign_id', 'metric_date']).reset_index(drop=True)
+
+# Step 2: Cumulative conversions per campaign
+metrics_sorted['cumulative_conversions'] = (
+    metrics_sorted
+    .groupby('campaign_id')['conversions']
+    .cumsum()
+)
+
+# Step 3: Running average of clicks per campaign
+metrics_sorted['running_avg_clicks'] = (
+    metrics_sorted
+    .groupby('campaign_id')['clicks']
+    .expanding()
+    .mean()
+    .round(2)
+    .values
+)
+
+# Step 4: Select and rename final columns
+daily_trend = metrics_sorted[[
+    'campaign_id', 'metric_date', 'conversions',
+    'cumulative_conversions', 'running_avg_clicks'
+]].rename(columns={'conversions': 'daily_conversions'})
+
+print(daily_trend.head(10))
+```
+
+**Tags**
+- data-wrangling / derived-column (skill)
+- data-wrangling / join (skill)
+- data-wrangling / group (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / sort (skill)

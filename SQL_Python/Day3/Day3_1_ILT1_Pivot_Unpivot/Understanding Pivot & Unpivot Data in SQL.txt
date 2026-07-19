@@ -1,0 +1,334 @@
+# Understanding Pivot & Unpivot Data in SQL
+## Content Type
+Scenario
+
+## Overview
+SQL is a powerful tool for data analysis, allowing users to focus on the insights rather than the mechanics of data retrieval. In this masterclass, you will learn how to use **PIVOT** and **UNPIVOT** operations to manage and manipulate data stored in relational databases. We’ll explore how **PIVOT** transforms rows into columns for year-on-year comparisons, and how **UNPIVOT** converts columns into rows for better analysis. By the end, you’ll be able to efficiently retrieve, filter, aggregate, and reshape large datasets for meaningful insights.
+
+## Learning Objectives
+- Understand how to manipulate data for reporting purposes, such as generating year-on-year comparisons.
+- Learn how to use PIVOT and UNPIVOT to transform data in SQL.
+- Gain hands-on experience with SQL operations to reshape large datasets for better analysis and insights.
+
+## Prerequisites
+- Familiarity with relational databases and table structures.
+- Knowledge of SQL aggregation functions like SUM(), COUNT(), and GROUP BY.
+- Basic understanding of SQL syntax and queries.
+- Experience with basic SQL filtering and sorting operations.
+
+## Duration of Completion
+45 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+SQL is a powerful tool for data analysis, allowing users to focus on the insights rather than the mechanics of data retrieval. In this masterclass, you will learn how to use **PIVOT** and **UNPIVOT** operations to manage and manipulate data stored in relational databases. We’ll explore how **PIVOT** transforms rows into columns for year-on-year comparisons, and how **UNPIVOT** converts columns into rows for better analysis. By the end, you’ll be able to efficiently retrieve, filter, aggregate, and reshape large datasets for meaningful insights.
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+Rajiv received a new mail from Robert this morning with some new reporting tasks. Let's read through the mail. 
+
+* * *
+
+Hi Rajiv, 
+
+Hope you are doing well. We are currently in the process of yearly review with our top customers. One important piece of information we need is the year on year growth of orders placed by them. If you can provide me a simple report of number of orders placed in the below format, it would be great!
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/0137688c-251b-419f-bfed-2bffdb44709b_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+I guess this is easily doable. Seems like a no-brainer in Excel though :)
+
+Looking forward,
+
+Robert
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+Rajiv was suddenly stumped by the ask. This is really a no-brainer in Excel. But, in SQL? 
+
+He thought hard on what could be the way out, but to his surprise such a simple task in Excel doesn't seem like doable by SQL with all his knowledge acquired till now. 
+
+He didn't want to appear stupid in front of Robert for such a straight forward task. He needed a hint. Seeing no road ahead, he pinged this report to Sharon. 
+
+Let's go through their conversation and learn how this could be solved.
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+**Rajiv :** Hi Sharon, Just had a quick ask to a little bizarre situation I'm in. Hope you checked the format. How come this no-brainer task in Excel seems so hard for me in SQL?
+
+**Sharon :** Hey, Rajiv. I understand your frustration. However, there is an easy way out. Let me explain. Look at the below example. Hope preparing this is a cake walk for you :
+<figure class="image image_resized"><img src="https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/321c9ff8-6c8d-4176-8e79-f674c31a3b81_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp"></figure>
+
+**Rajiv :**  Yes, I already have the code for this. Problem is, I how to get into the format :
+<figure class="image image_resized"><img src="https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/bbc55c4b-d800-4d10-9147-7ab6552feb20_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp"></figure>
+
+**Sharon :** Hold on. Just think, how would you do this in Excel?
+
+**Rajiv :** Simple. I'll do pivot. Drag month in Rows, year in column and order\_id in Values. 
+
+**Sharon :** That's exactly what you do in SQL too. It's just that traditionally, pivoting didn't exist in SQL. In essence if you see, pivoting is nothing but group by 2 dimensions or more where one or more dimensions can be dragged in Rows and one or more can be dragged in columns. 
+
+Soon, the makers of SQL realized this need and implemented a new construct in SQL too, with the same name PIVOT. Let's quickly see that. 
+
+**Rajiv :** All right, here's my code till now
+
+
+``` 
+with base_data as (
+select
+o.order_id,
+datename(month,o.order_purchase_date) as month_name,
+month(o.order_purchase_date) as month_seq,
+year(o.order_purchase_date) as order_year
+from orders o
+where year(o.order_purchase_date) <> 2016
+),
+order_summary as (
+select
+month_name,
+month_seq,
+order_year,
+count(order_id) as order_placed
+from base_data
+group by
+month_name,
+month_seq,
+order_year
+)
+select * from order_summary
+```
+**Sharon :** Now, all you need to do is to modify the last statement from :
+
+```    
+select * from order_summary
+```
+
+To :
+
+```
+SELECT
+month_name,
+[2017],
+[2018]
+FROM order_summary
+    PIVOT(
+        sum(order_placed)
+        FOR [order_year]
+        IN (
+            [2017],
+            [2018]
+        )
+    ) as pvt
+
+```
+
+Let me explain. Just keep visualizing the Pivoting you did in SQL. Let's understand the part inside PIVOT first :
+
+<figure class="image image_resized"><img src="https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/3e31cbe6-526e-41c2-82fe-8224caa4892d_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp"></figure>
+
+Remember, the **as pvt** in the end. It's just an alias of the entire code block created under PIVOT clause. It can be any name :)
+
+Try mimicking this in your code and see what you get. Note the square brackets in which we have wrapped the year values within the IN clause. It is mandatory to write like that. 
+
+**Rajiv :** Hmmm. Let me try right away. 
+```
+with base_data as (
+select
+o.order_id,
+datename(month,o.order_purchase_date) as month_name,
+month(o.order_purchase_date) as month_seq,
+year(o.order_purchase_date) as order_year
+from orders o
+where year(o.order_purchase_date) <> 2016
+),
+order_summary as (
+select
+month_name,
+month_seq,
+order_year,
+count(order_id) as order_placed
+from base_data
+group by
+month_name,
+month_seq,
+order_year
+)
+SELECT
+month_name,
+[2017],
+[2018]
+FROM order_summary
+    PIVOT(
+        sum(order_placed)
+        FOR [order_year]
+        IN (
+            [2017],
+            [2018]
+        )
+    ) as pvt
+```
+
+**Rajiv :** Wow, got the result!
+<figure class="image"><img src="https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/80f8781e-0e71-461b-b3b8-371622d746cd_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp"></figure>
+
+**Sharon :** Nice one. However, let me also tell you the opposite operation to this, the UNPIVOT. What if you got data in tables like this?
+<figure class="image image_resized"><img src="https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/bbc55c4b-d800-4d10-9147-7ab6552feb20_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp"></figure>
+And were required to produce output like this?
+<figure class="image image_resized"><img src="https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/321c9ff8-6c8d-4176-8e79-f674c31a3b81_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp"></figure>
+
+This is exact opposite operation to what PIVOT does and is rightly called the UNPIVOT operation. Again, the syntax is similar. Let's check out. 
+
+Consider the table **unpivot\_example.** On running the below query,
+```
+select * from unpivot_example
+````
+You'll get the following result :
+<figure class="image image_resized"><img src="https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/bbc55c4b-d800-4d10-9147-7ab6552feb20_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp"></figure>
+
+Now, let's re-write the above query with all columns listed properly as below :
+
+```
+select 
+order_month,
+[2017],
+[2018]
+from unpivot_example
+```
+Now, wrap this under a sub-query with some alias name and applying the UNPIVOT clause :
+
+ ```
+select month_name,
+order_year,
+order_count from
+(
+select
+month_name,
+[2017],
+[2018]
+from unpivot_example
+) p
+unpivot (
+order_count
+for order_year in ([2017],[2018])
+) as result
+```
+
+**Rajiv :** Got the result. 
+<figure class="image image_resized"><img src="https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/bbb09b94-a940-440c-bf2c-6e14681719d9_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp"></figure>
+
+**Sharon :** Excellent! That's it about pivoting and unpivoting operations. 
+
+**Rajiv :** Thanks for the quick help Sharon. There's always something new to learn from you. 
+
+**Sharon :** Best of luck!
+
+
+**Tags**
+
+
+##### Input 4
+**Type:** Choice
+
+**Question:** Mark the correct statements from the following
+
+**Options:** 
+- Pivot operator converts the rows data of the table into the column data
+
+- Unpivot rotates a table or CTE by turning the unique values from one column in the expression into multiple columns in the output
+
+- Unpivot operator transforms the column based data into rows
+
+- When aggregate functions are used with PIVOT, the presence of any null values in the value column are not considered when computing an aggregation
+
+**Correct Options:** 
+- Pivot operator converts the rows data of the table into the column data
+
+- Unpivot operator transforms the column based data into rows
+
+- When aggregate functions are used with PIVOT, the presence of any null values in the value column are not considered when computing an aggregation
+
+**Solution:** 
+PIVOT rotates a table or CTE by turning the unique values from one column in the expression into multiple columns in the output
+
+**Tags**
+- sql (tool)
+- data-wrangling / pivot (skill)
+- data-wrangling / unpivot (skill)
+
+##### Input 5
+**Type:** Choice
+
+**Question:** Which month in the year 2017 had the highest number of orders placed?
+
+**Options:** 
+- October
+
+- September
+
+- December
+
+- November
+
+**Correct Options:** 
+- November
+
+**Solution:** 
+![Image-image.png](https://cdn.enqurious.com/images/ecc0fac4-df0b-46b7-a3d7-610753cf9a13_image.webp)
+
+November month in the year 2017 has the highest number of orders placed.
+
+**Tags**
+- sql (tool)
+- data-wrangling / pivot (skill)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** What is the number of orders placed in the month of August in 2018?
+
+**Options:** 
+- 319
+
+- 310
+
+- 298
+
+- 360
+
+**Correct Options:** 
+- 360
+
+**Solution:** 
+![Image-image.png](https://cdn.enqurious.com/images/f1e9ede2-d3c6-42db-a242-c8b8944c74e4_image.webp)
+
+**Tags**
+- data-wrangling / pivot (skill)
+- sql (tool)

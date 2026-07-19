@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineStream Content Analytics - SQL Case Study</title>
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/sql-wasm.js"></script>
+<style>
+:root {
+  --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d;
+  --accent: #e11d48; --accent-light: #fb7185; --accent-dim: rgba(225,29,72,0.13); --accent-border: rgba(225,29,72,0.30); --accent-hover: #be123c;
+  --green: #238636; --green-text: #3fb950; --green-bg: #0d2618;
+  --red: #da3633; --red-text: #f85149; --red-bg: #210d0d;
+  --yellow: #9e6a03; --yellow-text: #d29922; --yellow-bg: #1f1700;
+  --text: #c9d1d9; --text-dim: #8b949e; --text-bright: #f0f6fc;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
+#loader { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; }
+.spinner { width: 38px; height: 38px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#loader p { color: var(--text-dim); font-size: 14px; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 32px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.header-logo { width: 36px; height: 36px; background: var(--accent); color: #08111f; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; letter-spacing: 0; flex: 0 0 auto; }
+header h1 { font-size: 15px; font-weight: 700; color: var(--text-bright); }
+header p { font-size: 12px; color: var(--text-dim); }
+.progress-wrap { display: flex; align-items: center; gap: 10px; }
+.pills { display: flex; gap: 6px; }
+.pill { width: 30px; height: 7px; background: var(--border); border-radius: 4px; transition: background .4s; }
+.pill.done { background: var(--accent); }
+.prog-text { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+main { max-width: 940px; margin: 0 auto; padding: 32px 20px; display: flex; flex-direction: column; gap: 36px; }
+.section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent-light); margin-bottom: 12px; }
+.card, .qcard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.card-body { padding: 24px; }
+.prob-text { font-size: 14px; line-height: 1.8; }
+.prob-text strong { color: var(--text-bright); }
+.prob-bullets { margin: 14px 0 14px 20px; display: flex; flex-direction: column; gap: 5px; font-size: 14px; }
+.stake { border-left: 3px solid var(--accent); padding-left: 14px; margin-top: 14px; font-style: italic; color: var(--text-dim); font-size: 13px; }
+.table-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 20px; overflow-x: auto; }
+.tab-btn { background: none; border: none; color: var(--text-dim); padding: 11px 15px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: 'Courier New', monospace; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+.tab-panel { display: none; padding: 20px; overflow-x: auto; }
+.tab-panel.active { display: block; }
+.tab-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 14px; }
+.dtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dtable th { background: var(--surface2); color: var(--accent-light); font-weight: 600; padding: 9px 13px; text-align: left; border: 1px solid var(--border); font-family: 'Courier New', monospace; }
+.dtable td { padding: 8px 13px; border: 1px solid var(--border); color: var(--text); }
+.dtable tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+.qcard { transition: border-color .3s; }
+.qcard.solved { border-color: var(--green); }
+.qcard-head { padding: 15px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.qnum { font-size: 15px; font-weight: 700; color: var(--text-bright); }
+.badge { font-size: 11px; font-weight: 700; padding: 3px 11px; border-radius: 20px; text-transform: uppercase; letter-spacing: .05em; }
+.badge-b { background: #0d2618; color: #3fb950; border: 1px solid #238636; }
+.badge-i { background: #1f1700; color: #d29922; border: 1px solid #9e6a03; }
+.badge-a { background: #210d0d; color: #f85149; border: 1px solid #da3633; }
+.qbody { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.ctx-box { background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 8px; padding: 15px; }
+.ctx-label, .task-label, .output-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
+.ctx-label { color: var(--accent-light); }
+.ctx-box p, .task-box p { font-size: 14px; line-height: 1.75; }
+.ctx-box strong { color: var(--text-bright); }
+.task-box { background: var(--surface2); border-radius: 8px; padding: 15px; }
+.task-label, .output-label { color: var(--text-dim); }
+.task-box p { color: var(--text-bright); }
+.editor-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
+.editor-wrap:focus-within { border-color: var(--accent); }
+.editor-bar { background: var(--surface2); padding: 7px 13px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.editor-lang { font-size: 11px; color: var(--text-dim); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.clear-btn { background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; padding: 2px 8px; border-radius: 4px; }
+.clear-btn:hover { background: var(--border); color: var(--text); }
+.sql-editor { width: 100%; background: #080b10; color: #7ee787; font-family: 'Courier New', Consolas, monospace; font-size: 14px; line-height: 1.65; padding: 16px; border: none; outline: none; resize: vertical; min-height: 110px; tab-size: 4; }
+.sql-editor::placeholder { color: #2d3748; }
+.action-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.run-btn { background: var(--accent); color: #08111f; border: none; padding: 9px 22px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.run-btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); color: #fff; }
+.reset-btn { background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 9px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.reset-btn:hover { border-color: var(--text-dim); color: var(--text); }
+.output-area { display: none; flex-direction: column; gap: 12px; }
+.output-area.show { display: flex; }
+.result-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+.empty-result { padding: 12px 16px; color: var(--text-dim); font-size: 13px; font-style: italic; }
+.fb-box { border-radius: 8px; padding: 14px 16px; font-size: 14px; line-height: 1.7; display: flex; gap: 12px; align-items: flex-start; }
+.fb-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; font-weight: 900; }
+.fb-content { flex: 1; }
+.fb-title { font-weight: 700; margin-bottom: 3px; }
+.fb-box.success { background: var(--green-bg); border: 1px solid var(--green); color: var(--green-text); }
+.fb-box.error { background: var(--red-bg); border: 1px solid var(--red); color: var(--red-text); }
+.fb-box.hint { background: var(--yellow-bg); border: 1px solid var(--yellow); color: var(--yellow-text); }
+.fb-box code { font-family: 'Courier New', monospace; font-size: 12px; background: rgba(0,0,0,.3); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 6px; word-break: break-all; }
+.solved-banner { display: none; align-items: center; gap: 8px; background: var(--green-bg); border-top: 1px solid var(--green); padding: 11px 22px; font-size: 13px; color: var(--green-text); font-weight: 700; }
+.solved-banner.show { display: flex; }
+#all-done { display: none; text-align: center; padding: 40px 20px; background: var(--surface); border: 1px solid var(--green); border-radius: 12px; }
+#all-done h2 { color: var(--green-text); font-size: 22px; margin-bottom: 8px; }
+#all-done p { color: var(--text-dim); font-size: 14px; }
+#all-done.show { display: block; }
+@media (max-width: 700px) {
+  header { padding: 12px 16px; align-items: flex-start; flex-direction: column; }
+  main { padding: 24px 14px; }
+  .progress-wrap { width: 100%; justify-content: space-between; }
+  .pill { width: 24px; }
+}
+</style>
+</head>
+<body>
+<div id="loader"><div class="spinner"></div><p>Initializing SQL Engine...</p></div>
+<header>
+  <div class="header-left"><div class="header-logo">CIN</div><div><h1>CineStream Content Analytics Challenge</h1><p>Movies Domain - SQL Case Study</p></div></div>
+  <div class="progress-wrap"><div class="pills"><div class="pill" id="p1"></div><div class="pill" id="p2"></div><div class="pill" id="p3"></div><div class="pill" id="p4"></div></div><span class="prog-text" id="prog-text">0 / 4 solved</span></div>
+</header>
+<main>
+  <section>
+    <p class="section-label">Problem Statement</p>
+    <div class="card"><div class="card-body"><div class="prob-text">
+      <p><strong>CineStream</strong> is a fast-rising global OTT platform preparing for the <strong>Annual Content Strategy Meeting</strong>.</p><p style="margin-top:12px">Your findings will directly influence decisions on:</p>
+      <ul class="prob-bullets"><li>Which movies get featured next quarter</li><li>Which genres deserve more investment</li><li>Which directors merit a Spotlight Series</li><li>How movies rank within their genre</li></ul><p class="stake">The Head of Content, Finance Lead, and Regional Marketing Managers are counting on your queries.</p>
+    </div></div></div>
+  </section>
+  <section>
+    <p class="section-label">Database Tables</p>
+    <div class="card"><div class="table-tabs">
+        <button class="tab-btn active" onclick="switchTab('movies',this)">movies</button>
+        <button class="tab-btn " onclick="switchTab('directors',this)">directors</button>
+        <button class="tab-btn " onclick="switchTab('box_office',this)">box_office</button>
+        <button class="tab-btn " onclick="switchTab('reviews',this)">reviews</button>
+      </div>
+      <div class="tab-panel active" id="tab-movies">
+        <p class="tab-desc">Core catalog of movies on the platform.</p>
+        <table class="dtable"><thead><tr><th>movie_id</th><th>title</th><th>genre</th><th>release_year</th><th>language</th><th>director_id</th></tr></thead><tbody>
+            <tr><td>1</td><td>The Last Horizon</td><td>Sci-Fi</td><td>2021</td><td>English</td><td>101</td></tr>
+            <tr><td>2</td><td>Rang De Sapne</td><td>Drama</td><td>2022</td><td>Hindi</td><td>102</td></tr>
+            <tr><td>3</td><td>Neon City</td><td>Thriller</td><td>2023</td><td>English</td><td>103</td></tr>
+            <tr><td>4</td><td>Andha Yug</td><td>Drama</td><td>2021</td><td>Telugu</td><td>102</td></tr>
+            <tr><td>5</td><td>Starfall</td><td>Sci-Fi</td><td>2020</td><td>English</td><td>101</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="tab-panel " id="tab-directors">
+        <p class="tab-desc">Director profiles.</p>
+        <table class="dtable"><thead><tr><th>director_id</th><th>full_name</th><th>country</th><th>debut_year</th></tr></thead><tbody>
+            <tr><td>101</td><td>James Calloway</td><td>USA</td><td>2015</td></tr>
+            <tr><td>102</td><td>Arjun Reddy</td><td>India</td><td>2018</td></tr>
+            <tr><td>103</td><td>Sofia Mendes</td><td>Brazil</td><td>2019</td></tr>
+            <tr><td>104</td><td>Lena Fischer</td><td>Germany</td><td>2021</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="tab-panel " id="tab-box_office">
+        <p class="tab-desc">Budget and worldwide collection in crores.</p>
+        <table class="dtable"><thead><tr><th>bo_id</th><th>movie_id</th><th>budget_cr</th><th>collection_cr</th><th>release_country</th></tr></thead><tbody>
+            <tr><td>1</td><td>1</td><td>120</td><td>310</td><td>USA</td></tr>
+            <tr><td>2</td><td>2</td><td>45</td><td>98</td><td>India</td></tr>
+            <tr><td>3</td><td>3</td><td>80</td><td>65</td><td>Brazil</td></tr>
+            <tr><td>4</td><td>4</td><td>30</td><td>112</td><td>India</td></tr>
+            <tr><td>5</td><td>5</td><td>95</td><td>220</td><td>USA</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="tab-panel " id="tab-reviews">
+        <p class="tab-desc">User ratings and vote counts.</p>
+        <table class="dtable"><thead><tr><th>review_id</th><th>movie_id</th><th>platform</th><th>rating</th><th>total_votes</th></tr></thead><tbody>
+            <tr><td>1</td><td>1</td><td>IMDb</td><td>8.2</td><td>124000</td></tr>
+            <tr><td>2</td><td>2</td><td>IMDb</td><td>7.5</td><td>43000</td></tr>
+            <tr><td>3</td><td>3</td><td>IMDb</td><td>6.8</td><td>31000</td></tr>
+            <tr><td>4</td><td>4</td><td>RottenTomatoes</td><td>8.9</td><td>18000</td></tr>
+            <tr><td>5</td><td>5</td><td>IMDb</td><td>7.1</td><td>89000</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </section>
+  <section>
+    <p class="section-label">Questions</p>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div class="qcard" id="qcard-1">
+        <div class="qcard-head"><span class="qnum">Question 1</span><span class="badge badge-b">Beginner</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>The Content team is launching <strong>Best of English Cinema Post-2020</strong> for subscribers.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>Retrieve the title and release year of all English language movies released after 2020, sorted by most recent first.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(1)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-1" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(1)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(1)">Reset</button></div>
+          <div class="output-area" id="out-1"><div class="output-label">Your Output</div><div class="result-wrap" id="res-1"></div><div id="fb-1"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-1">OK - Question 1 solved!</div>
+      </div>
+
+      <div class="qcard" id="qcard-2">
+        <div class="qcard-head"><span class="qnum">Question 2</span><span class="badge badge-i">Intermediate</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>Finance is building a <strong>Genre Performance Report</strong> across box office and audience ratings.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>For each genre, find total box office collection and average user rating.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(2)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-2" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(2)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(2)">Reset</button></div>
+          <div class="output-area" id="out-2"><div class="output-label">Your Output</div><div class="result-wrap" id="res-2"></div><div id="fb-2"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-2">OK - Question 2 solved!</div>
+      </div>
+
+      <div class="qcard" id="qcard-3">
+        <div class="qcard-head"><span class="qnum">Question 3</span><span class="badge badge-i">Intermediate</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>CineStream is planning a <strong>Director Spotlight Series</strong> for directors with more than one movie.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>Show eligible directors, number of movies, and total box office collection.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(3)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-3" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(3)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(3)">Reset</button></div>
+          <div class="output-area" id="out-3"><div class="output-label">Your Output</div><div class="result-wrap" id="res-3"></div><div id="fb-3"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-3">OK - Question 3 solved!</div>
+      </div>
+
+      <div class="qcard" id="qcard-4">
+        <div class="qcard-head"><span class="qnum">Question 4</span><span class="badge badge-a">Advanced</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>Regional Marketing Managers need a <strong>Genre Leaderboard</strong> for licensing and ad pitches.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>For each movie, show title, genre, collection, genre rank, and percentage of genre total rounded to 2 decimals.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(4)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-4" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(4)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(4)">Reset</button></div>
+          <div class="output-area" id="out-4"><div class="output-label">Your Output</div><div class="result-wrap" id="res-4"></div><div id="fb-4"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-4">OK - Question 4 solved!</div>
+      </div>
+    </div>
+  </section>
+  <div id="all-done"><h2>All Questions Solved!</h2><p>You've completed the CineStream Content Analytics Challenge. The strategy room is ready.</p></div>
+</main>
+<script>
+let db = null;
+const solved = { 1: false, 2: false, 3: false, 4: false };
+const EXP = {"1":[["The Last Horizon",2021],["Neon City",2023]],"2":[["Drama",210,8.2],["Sci-Fi",530,7.65],["Thriller",65,6.8]],"3":[["James Calloway",2,530],["Arjun Reddy",2,210]],"4":[["Andha Yug","Drama",112,1,53.33],["Rang De Sapne","Drama",98,2,46.67],["The Last Horizon","Sci-Fi",310,1,58.49],["Starfall","Sci-Fi",220,2,41.51],["Neon City","Thriller",65,1,100]]};
+const HINTS = {
+  generic: {
+    noRows: "Your query returned no rows. Check the joins and filters against the sample data.",
+    wrongCount: "The row count is different from the expected answer. Recheck the filters, grouping, or HAVING clause.",
+    wrongValues: "The row count is close, but one or more values do not match. Review selected columns, calculations, and rounding."
+  }
+};
+initSqlJs({ locateFile: f => 'https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/' + f })
+  .then(SQL => {
+    db = new SQL.Database();
+    db.run(`
+      CREATE TABLE movies (movie_id REAL, title TEXT, genre TEXT, release_year REAL, language TEXT, director_id REAL);
+      INSERT INTO movies VALUES (1,'The Last Horizon','Sci-Fi',2021,'English',101);
+      INSERT INTO movies VALUES (2,'Rang De Sapne','Drama',2022,'Hindi',102);
+      INSERT INTO movies VALUES (3,'Neon City','Thriller',2023,'English',103);
+      INSERT INTO movies VALUES (4,'Andha Yug','Drama',2021,'Telugu',102);
+      INSERT INTO movies VALUES (5,'Starfall','Sci-Fi',2020,'English',101);
+
+      CREATE TABLE directors (director_id REAL, full_name TEXT, country TEXT, debut_year REAL);
+      INSERT INTO directors VALUES (101,'James Calloway','USA',2015);
+      INSERT INTO directors VALUES (102,'Arjun Reddy','India',2018);
+      INSERT INTO directors VALUES (103,'Sofia Mendes','Brazil',2019);
+      INSERT INTO directors VALUES (104,'Lena Fischer','Germany',2021);
+
+      CREATE TABLE box_office (bo_id REAL, movie_id REAL, budget_cr REAL, collection_cr REAL, release_country TEXT);
+      INSERT INTO box_office VALUES (1,1,120,310,'USA');
+      INSERT INTO box_office VALUES (2,2,45,98,'India');
+      INSERT INTO box_office VALUES (3,3,80,65,'Brazil');
+      INSERT INTO box_office VALUES (4,4,30,112,'India');
+      INSERT INTO box_office VALUES (5,5,95,220,'USA');
+
+      CREATE TABLE reviews (review_id REAL, movie_id REAL, platform TEXT, rating REAL, total_votes REAL);
+      INSERT INTO reviews VALUES (1,1,'IMDb',8.2,124000);
+      INSERT INTO reviews VALUES (2,2,'IMDb',7.5,43000);
+      INSERT INTO reviews VALUES (3,3,'IMDb',6.8,31000);
+      INSERT INTO reviews VALUES (4,4,'RottenTomatoes',8.9,18000);
+      INSERT INTO reviews VALUES (5,5,'IMDb',7.1,89000);
+    `);
+    document.getElementById('loader').style.display = 'none';
+  })
+  .catch(e => {
+    document.getElementById('loader').innerHTML = '<p style="color:var(--red-text)">Failed to load SQL engine: ' + e.message + '</p>';
+  });
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+function handleTab(e) {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const t = e.target, s = t.selectionStart;
+  t.value = t.value.slice(0, s) + '    ' + t.value.slice(t.selectionEnd);
+  t.selectionStart = t.selectionEnd = s + 4;
+}
+function clearQ(n) {
+  document.getElementById('ed-' + n).value = '';
+  document.getElementById('out-' + n).classList.remove('show');
+}
+function renderTable(result) {
+  if (!result || !result.length) return '<p class="empty-result">Query returned 0 rows.</p>';
+  const columns = result[0].columns, values = result[0].values;
+  let h = '<table class="dtable"><thead><tr>';
+  columns.forEach(c => h += '<th>' + c + '</th>');
+  h += '</tr></thead><tbody>';
+  values.forEach(row => {
+    h += '<tr>';
+    row.forEach(v => h += '<td>' + (v ?? 'NULL') + '</td>');
+    h += '</tr>';
+  });
+  return h + '</tbody></table>';
+}
+function norm(v) {
+  if (v === null || v === undefined) return '';
+  const n = parseFloat(v);
+  return isNaN(n) ? String(v).toLowerCase().trim() : Math.round(n * 100) / 100;
+}
+function sortRows(rows) {
+  return [...rows].sort((a, b) => {
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      const av = String(a[i] ?? ''), bv = String(b[i] ?? '');
+      if (av < bv) return -1;
+      if (av > bv) return 1;
+    }
+    return 0;
+  });
+}
+function matches(actualValues, expected) {
+  if (actualValues.length !== expected.length) return false;
+  const as = sortRows(actualValues.map(r => r.map(norm)));
+  const es = sortRows(expected.map(r => r.map(norm)));
+  for (let i = 0; i < as.length; i++) {
+    if (as[i].length !== es[i].length) return false;
+    for (let j = 0; j < as[i].length; j++) {
+      const a = as[i][j], e = es[i][j];
+      if (typeof a === 'number' && typeof e === 'number') {
+        if (Math.abs(a - e) > 0.1) return false;
+      } else if (a !== e) return false;
+    }
+  }
+  return true;
+}
+function showFb(n, type, title, body) {
+  const icon = type === 'success' ? 'OK' : type === 'error' ? 'X' : '!';
+  document.getElementById('fb-' + n).innerHTML = '<div class="fb-box ' + type + '"><span class="fb-icon">' + icon + '</span><div class="fb-content"><div class="fb-title">' + title + '</div>' + (body ? '<div>' + body + '</div>' : '') + '</div></div>';
+}
+function markSolved(n) {
+  if (solved[n]) return;
+  solved[n] = true;
+  document.getElementById('qcard-' + n).classList.add('solved');
+  document.getElementById('sb-' + n).classList.add('show');
+  document.getElementById('p' + n).classList.add('done');
+  const count = Object.values(solved).filter(Boolean).length;
+  document.getElementById('prog-text').textContent = count + ' / 4 solved';
+  if (count === 4) document.getElementById('all-done').classList.add('show');
+}
+function getHint(n, result) {
+  const rows = result && result.length ? result[0].values : [];
+  const expected = EXP[n];
+  if (matches(rows, expected)) return ['success', 'Correct!', 'Your output matches the expected result. Question ' + n + ' solved!'];
+  if (rows.length === 0) return ['hint', 'No Results', HINTS.generic.noRows];
+  if (rows.length !== expected.length) return ['hint', 'Row Count Mismatch', HINTS.generic.wrongCount];
+  return ['hint', 'Close, but Not Quite', HINTS.generic.wrongValues];
+}
+function checkQ(n) {
+  if (!db) { alert('SQL engine still loading - please wait a moment.'); return; }
+  const query = document.getElementById('ed-' + n).value.trim();
+  if (!query) { alert('Please write a query first.'); return; }
+  const outEl = document.getElementById('out-' + n);
+  outEl.classList.add('show');
+  document.getElementById('res-' + n).innerHTML = '';
+  document.getElementById('fb-' + n).innerHTML = '';
+  let result;
+  try {
+    result = db.exec(query);
+  } catch (err) {
+    showFb(n, 'error', 'SQL Error', '<code>' + err.message + '</code>');
+    return;
+  }
+  document.getElementById('res-' + n).innerHTML = renderTable(result);
+  const fb = getHint(n, result);
+  showFb(n, fb[0], fb[1], fb[2]);
+  if (fb[0] === 'success') markSolved(n);
+}
+</script>
+</body>
+</html>

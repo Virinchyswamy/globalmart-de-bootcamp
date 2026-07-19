@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 7 – Sales-Category Analysis | Day 2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; }
+  nav .logo { font-weight: 700; font-size: 14px; color: #a78bfa; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #a78bfa; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 40px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1a0a3d 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 38px; font-weight: 800; color: #a78bfa; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 16px; color: #94a3b8; max-width: 640px; line-height: 1.7; }
+  .slide-cover .badge { margin-top: 16px; background: #1e1040; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  .slide-section { background: #100820; }
+  .slide-section h2 { font-size: 28px; font-weight: 700; color: #a78bfa; margin-bottom: 6px; }
+  .section-tag { color: #6b7280; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
+  .slide-demo { background: #0a0820; border-left: 4px solid #a78bfa; }
+  .slide-demo h3 { font-size: 21px; color: #a78bfa; margin-bottom: 4px; }
+  .demo-label { color: #6b7280; font-size: 13px; margin-bottom: 14px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 18px; }
+  .card h4 { color: #a78bfa; margin-bottom: 8px; font-size: 14px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13px; line-height: 1.7; }
+  .card ul { padding-left: 16px; }
+  .hl { background: #1a0a3d; border: 1px solid #a78bfa; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+  .hl.green { background: #0d2d1a; border-color: #22c55e; }
+  .hl.red { background: #2d0f0f; border-color: #ef4444; }
+  .hl.orange { background: #1a1200; border-color: #f59e0b; }
+  .hl p { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+  pre { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 14px; overflow-x: auto; font-family: 'Cascadia Code','Consolas',monospace; font-size: 12.5px; line-height: 1.8; color: #e6edf3; }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.t th { background: #2d1060; color: #c4b5fd; padding: 8px 12px; text-align: left; }
+  table.t td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  table.t tr:nth-child(even) td { background: #0f172a; }
+  .table-sm { font-size: 12px; }
+  .quiz-box { background: #1a2e1a; border: 1px solid #22c55e; padding: 14px; border-radius: 10px; margin: 10px 0; }
+  .quiz-q { font-size: 13px; color: #f8fafc; margin-bottom: 8px; }
+  .reveal-btn { background: #a78bfa; color: #0f172a; padding: 7px 18px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; }
+  .quiz-answer { margin-top: 8px; color: #4ade80; font-size: 13px; line-height: 1.6; }
+  .cte-badge { display: inline-block; background: #2d1060; border: 1px solid #a78bfa; padding: 4px 10px; border-radius: 6px; font-size: 12px; color: #c4b5fd; margin-right: 6px; margin-bottom: 4px; }
+  .step-flow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .step-box { background: #1a0a3d; border: 1px solid #a78bfa; padding: 8px 12px; border-radius: 8px; font-size: 12px; color: #c4b5fd; text-align: center; }
+  .step-arrow { color: #4b5563; font-size: 16px; }
+  .highlight-row { background: #2d1060 !important; color: #fbbf24 !important; font-weight: 700; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">DAY 2 · MODULE 7 — Sales-Category Analysis</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter"></span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active">
+  <h1>📊 Sales-Category Analysis Report</h1>
+  <p class="subtitle">Which sub-categories are driving the most revenue? Find the "tipping point" — the minimal set of sub-categories that accounts for more than 50% of category sales.</p>
+  <div class="badge">Module 7 &nbsp;·&nbsp; Day 2 &nbsp;·&nbsp; Advanced &nbsp;·&nbsp; 60 min self-paced</div>
+  <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">SUM() OVER — running totals</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">4-CTE chain</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">Tipping Point filter</span>
+    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">RANK on filtered set</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE BUSINESS ASK -->
+<div class="slide slide-section">
+  <div class="section-tag">The Challenge</div>
+  <h2>Two Reports for Upper Management 📋</h2>
+  <p style="color:#94a3b8;font-size:14px;margin-bottom:18px;">GlobalMart's management asks: which sub-categories matter most? They want two outputs built from the same data.</p>
+  <div class="two-col">
+    <div class="card">
+      <h4>Result 1 — Full Contribution Table</h4>
+      <p>One row per sub-category showing:</p>
+      <ul style="margin-top:8px;">
+        <li><strong>sales</strong> — total sales for that sub-category</li>
+        <li><strong>tot_cat_sales</strong> — category total</li>
+        <li><strong>cumm_sales</strong> — running total within the category</li>
+        <li><strong>contrib_1</strong> — that sub-category's % share</li>
+        <li><strong>contrib_2</strong> — cumulative % up to that sub-category</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Result 2 — The Tipping Point</h4>
+      <p>For each category, identify the <strong>first sub-category</strong> where the cumulative contribution exceeds 50%.</p>
+      <p style="margin-top:10px;">This is the "tipping point" sub-category — the one that pushes cumulative sales past the halfway mark of its category.</p>
+      <p style="margin-top:10px;color:#a78bfa;font-size:13px;">Result 2 is built by <strong>filtering</strong> Result 1 — not a separate query from scratch!</p>
+    </div>
+  </div>
+  <div class="step-flow" style="margin-top:18px;">
+    <div class="step-box">base_data<br><span style="color:#6b7280;font-size:11px;">GROUP BY sub-cat</span></div>
+    <div class="step-arrow">→</div>
+    <div class="step-box">running_totals<br><span style="color:#6b7280;font-size:11px;">add tot + cumm</span></div>
+    <div class="step-arrow">→</div>
+    <div class="step-box">contribution_summary<br><span style="color:#6b7280;font-size:11px;">add % cols</span></div>
+    <div class="step-arrow">→</div>
+    <div class="step-box">ranking_table<br><span style="color:#6b7280;font-size:11px;">filter &gt;50%, rank</span></div>
+    <div class="step-arrow">→</div>
+    <div class="step-box" style="border-color:#22c55e;color:#4ade80;">WHERE ranks=1<br><span style="color:#6b7280;font-size:11px;">Result 2</span></div>
+  </div>
+</div>
+
+<!-- SLIDE 3: OUTPUT FORMAT -->
+<div class="slide slide-content">
+  <h3>Understanding the Output Format — Before Writing SQL</h3>
+  <div class="two-col">
+    <div>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:10px;"><strong>Result 1</strong> (illustrative data):</p>
+      <table class="t table-sm">
+        <tr><th>category</th><th>sub_cat</th><th>sales</th><th>tot_cat</th><th>cumm</th><th>contrib_1</th><th>contrib_2</th></tr>
+        <tr><td>A1</td><td>B1</td><td>100</td><td>390</td><td>100</td><td>25.64%</td><td>25.64%</td></tr>
+        <tr><td>A1</td><td>B2</td><td>130</td><td>390</td><td>230</td><td>33.33%</td><td>58.97%</td></tr>
+        <tr><td>A1</td><td>B3</td><td>160</td><td>390</td><td>390</td><td>41.03%</td><td>100.00%</td></tr>
+        <tr><td>A2</td><td>B4</td><td>120</td><td>440</td><td>120</td><td>27.27%</td><td>27.27%</td></tr>
+        <tr><td>A2</td><td>B5</td><td>140</td><td>440</td><td>260</td><td>31.82%</td><td>59.09%</td></tr>
+        <tr><td>A2</td><td>B6</td><td>180</td><td>440</td><td>440</td><td>40.91%</td><td>100.00%</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Column-by-column breakdown</h4>
+        <table class="t table-sm" style="margin-top:6px;">
+          <tr><th>Column</th><th>How to get it</th></tr>
+          <tr><td>sales</td><td>GROUP BY → SUM(sales_amount)</td></tr>
+          <tr><td>tot_cat_sales</td><td>SUM(sales) OVER(PARTITION BY category)<br><em>no ORDER BY — full category total</em></td></tr>
+          <tr><td>cumm_sales</td><td>SUM(sales) OVER(PARTITION BY category ORDER BY sales)<br><em>with ORDER BY = running total</em></td></tr>
+          <tr><td>contrib_1</td><td>FORMAT(sales / tot_cat_sales, 'P2')</td></tr>
+          <tr><td>contrib_2</td><td>FORMAT(cumm_sales / tot_cat_sales, 'P2')</td></tr>
+        </table>
+      </div>
+      <div class="hl orange" style="margin-top:12px;">
+        <p><strong style="color:#f59e0b;">Critical difference:</strong><br>
+        <code>tot_cat_sales</code> uses SUM <strong>without</strong> ORDER BY → full category total on every row.<br>
+        <code>cumm_sales</code> uses SUM <strong>with</strong> ORDER BY → builds up row by row.<br>
+        Same PARTITION BY, completely different behavior.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: DEMO - RESULT 1 -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Result 1: Full Contribution Table 📊</h3>
+  <div class="demo-label">Tables: ex_transactions, ex_products | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:12px;line-height:1.78;">
+<span class="cm">-- CTE 1: Aggregate raw sales by category + sub_category</span>
+<span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">p</span>.<span class="col">category</span>,
+        <span class="tbl">p</span>.<span class="col">sub_category</span>,
+        <span class="cm">-- ROUND to 0 decimal places for clean numbers</span>
+        <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>), <span class="str">0</span>) <span class="kw">AS</span> sales
+    <span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_products</span> <span class="tbl">p</span>
+        <span class="kw">ON</span> <span class="tbl">p</span>.<span class="col">product_id</span> = <span class="tbl">t</span>.<span class="col">product_id</span>
+    <span class="kw">GROUP BY</span> <span class="tbl">p</span>.<span class="col">category</span>, <span class="tbl">p</span>.<span class="col">sub_category</span>
+),
+<span class="cm">-- CTE 2: Add category total and cumulative sales
+-- SUM without ORDER BY = full total per category
+-- SUM with ORDER BY = running total ascending by sales</span>
+running_totals <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> *,
+        <span class="fn">SUM</span>(<span class="col">sales</span>) <span class="kw">OVER</span>(
+            <span class="kw">PARTITION BY</span> <span class="col">category</span>
+            <span class="cm">-- No ORDER BY: static total for whole category</span>
+        ) <span class="kw">AS</span> tot_cat_sales,
+        <span class="fn">SUM</span>(<span class="col">sales</span>) <span class="kw">OVER</span>(
+            <span class="kw">PARTITION BY</span> <span class="col">category</span>
+            <span class="kw">ORDER BY</span> <span class="col">sales</span>
+            <span class="cm">-- ORDER BY sales: accumulates ascending</span>
+        ) <span class="kw">AS</span> cumm_sales
+    <span class="kw">FROM</span> base_data
+)
+<span class="cm">-- Final SELECT: format percentages for display</span>
+<span class="kw">SELECT</span>
+    <span class="col">category</span>, <span class="col">sub_category</span>,
+    <span class="col">sales</span>, <span class="col">tot_cat_sales</span>, <span class="col">cumm_sales</span>,
+    <span class="cm">-- * 1.0 forces decimal division (integer ÷ integer = 0)</span>
+    <span class="fn">FORMAT</span>(<span class="str">1.0</span> * <span class="col">sales</span> / <span class="col">tot_cat_sales</span>, <span class="str">'P2'</span>) <span class="kw">AS</span> contrib_1,
+    <span class="fn">FORMAT</span>(<span class="str">1.0</span> * <span class="col">cumm_sales</span> / <span class="col">tot_cat_sales</span>, <span class="str">'P2'</span>) <span class="kw">AS</span> contrib_2
+<span class="kw">FROM</span> running_totals
+<span class="kw">ORDER BY</span> <span class="col">category</span>, <span class="col">sales</span>;</pre>
+    </div>
+    <div>
+      <div class="quiz-box">
+        <p class="quiz-q">❓ Predict: Running this query, what is the total sales for the sub-category 'Appliances'?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>106,949</strong> — run Result 1 in SSMS and look for Appliances in the sales column.</p></div>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ Which category has the LOWEST total sales in the entire dataset?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>Office Supplies</strong> — look at the tot_cat_sales column and compare across categories.</p></div>
+      </div>
+      <div class="hl" style="margin-top:12px;">
+        <p><strong style="color:#a78bfa;">Stop and run CTE 1 alone first:</strong><br>
+        Verify base_data — does each category/sub_category appear once? Then add running_totals and check that tot_cat_sales is the same on every sub-category row within a category. Then add the final formatting.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: THE TIPPING POINT CONCEPT -->
+<div class="slide slide-content">
+  <h3>🎯 What is the "Tipping Point" Sub-Category?</h3>
+  <div class="two-col">
+    <div>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:12px;">From Result 1 (illustrative data), look at category A1:</p>
+      <table class="t table-sm">
+        <tr><th>sub_cat</th><th>sales</th><th>cumm_sales</th><th>contrib_2</th></tr>
+        <tr><td>B1</td><td>100</td><td>100</td><td>25.64%</td></tr>
+        <tr class="highlight-row"><td>B2 ← tipping point</td><td>130</td><td>230</td><td>58.97% ✅</td></tr>
+        <tr><td>B3</td><td>160</td><td>390</td><td>100.00%</td></tr>
+      </table>
+      <div class="hl" style="margin-top:12px;">
+        <p>B2 is the tipping point for A1 because:<br>
+        • B1 alone: 25.64% — not yet past 50%<br>
+        • B1 + B2: 58.97% — <strong>first to cross 50%!</strong><br>
+        • B2 is what we want in Result 2.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h4>The 2-Step Logic for Result 2</h4>
+        <p><strong>Step 1:</strong> From Result 1 rows, keep only those where <code>contrib_2 &gt; 50%</code>. These are all sub-categories that are AT or PAST the tipping point.</p>
+        <p style="margin-top:10px;"><strong>Step 2:</strong> Within those filtered rows, pick the one with the <strong>lowest sales</strong> per category (the smallest one that pushed past 50%). That's rank 1 when ranking by sales ascending.</p>
+      </div>
+      <div class="hl red" style="margin-top:12px;">
+        <p><strong style="color:#f87171;">Critical: Keep pct_contrib_2 as a NUMBER!</strong><br>
+        You need to filter: <code>WHERE pct_contrib_2 &gt; 0.5</code><br>
+        If you only have <code>FORMAT(..., 'P2')</code> → '58.97%' — that's a TEXT string. You cannot compare text with 0.5. Always create a separate numeric column for logic, format separately for display.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: DEMO - RESULT 2 -->
+<div class="slide slide-demo">
+  <h3>Live Demo — Result 2: The Tipping Point Per Category 🎯</h3>
+  <div class="demo-label">Full 4-CTE solution | ex_transactions, ex_products | mskl-masterclass</div>
+  <div class="two-col">
+    <div>
+      <pre style="font-size:11.5px;line-height:1.78;">
+<span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="cm">-- Same as Result 1 step 1</span>
+    <span class="kw">SELECT</span> <span class="tbl">p</span>.<span class="col">category</span>, <span class="tbl">p</span>.<span class="col">sub_category</span>,
+           <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>), <span class="str">0</span>) <span class="kw">AS</span> sales
+    <span class="kw">FROM</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_products</span> <span class="tbl">p</span>
+        <span class="kw">ON</span> <span class="tbl">p</span>.<span class="col">product_id</span> = <span class="tbl">t</span>.<span class="col">product_id</span>
+    <span class="kw">GROUP BY</span> <span class="tbl">p</span>.<span class="col">category</span>, <span class="tbl">p</span>.<span class="col">sub_category</span>
+),
+running_totals <span class="kw">AS</span> (
+    <span class="cm">-- Add total and cumulative columns</span>
+    <span class="kw">SELECT</span> *,
+        <span class="fn">SUM</span>(<span class="col">sales</span>) <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> <span class="col">category</span>)
+            <span class="kw">AS</span> total_cat_sales,
+        <span class="fn">SUM</span>(<span class="col">sales</span>) <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> <span class="col">category</span>
+                        <span class="kw">ORDER BY</span> <span class="col">sales</span>)
+            <span class="kw">AS</span> cumm_sales
+    <span class="kw">FROM</span> base_data
+),
+contribution_summary <span class="kw">AS</span> (
+    <span class="cm">-- CRITICAL: create BOTH numeric pct AND formatted string
+    -- Numeric pct_contrib_2: used in WHERE below
+    -- contrib_2 (formatted): shown in final output</span>
+    <span class="kw">SELECT</span> *,
+        <span class="fn">FORMAT</span>(<span class="str">1.0</span> * <span class="col">sales</span> / <span class="col">total_cat_sales</span>, <span class="str">'P2'</span>)
+            <span class="kw">AS</span> contrib_1,
+        <span class="str">1.0</span> * <span class="col">cumm_sales</span> / <span class="col">total_cat_sales</span>
+            <span class="kw">AS</span> pct_contrib_2,
+        <span class="fn">FORMAT</span>(<span class="str">1.0</span> * <span class="col">cumm_sales</span> / <span class="col">total_cat_sales</span>, <span class="str">'P2'</span>)
+            <span class="kw">AS</span> contrib_2
+    <span class="kw">FROM</span> running_totals
+),
+ranking_table <span class="kw">AS</span> (
+    <span class="cm">-- FILTER first: only rows where cumulative is past 50%
+    -- Then RANK these remaining rows by sales
+    -- The smallest sales = first to tip past 50% = rank 1</span>
+    <span class="kw">SELECT</span> *,
+        <span class="fn">RANK</span>() <span class="kw">OVER</span>(
+            <span class="kw">PARTITION BY</span> <span class="col">category</span>
+            <span class="kw">ORDER BY</span> <span class="col">sales</span> <span class="kw">DESC</span>
+        ) <span class="kw">AS</span> ranks
+    <span class="kw">FROM</span> contribution_summary
+    <span class="cm">-- pct_contrib_2 is numeric here → comparison works!</span>
+    <span class="kw">WHERE</span> <span class="col">pct_contrib_2</span> > <span class="str">0.5</span>
+)
+<span class="cm">-- ranks = 1 picks the tipping point sub-category per category</span>
+<span class="kw">SELECT</span>
+    <span class="col">category</span>, <span class="col">sub_category</span>,
+    <span class="col">sales</span>, <span class="col">total_cat_sales</span>, <span class="col">cumm_sales</span>,
+    <span class="col">contrib_1</span>, <span class="col">contrib_2</span>
+<span class="kw">FROM</span> ranking_table
+<span class="kw">WHERE</span> ranks = <span class="str">1</span>;</pre>
+    </div>
+    <div>
+      <div class="card">
+        <h4>Result 2 format (illustrative)</h4>
+        <table class="t table-sm" style="margin-top:8px;">
+          <tr><th>category</th><th>sub_cat</th><th>sales</th><th>contrib_2</th></tr>
+          <tr><td>A1</td><td>B2</td><td>130</td><td>58.97%</td></tr>
+          <tr><td>A2</td><td>B5</td><td>140</td><td>59.09%</td></tr>
+          <tr><td>A3</td><td>B8</td><td>100</td><td>60.00%</td></tr>
+          <tr><td>A4</td><td>B11</td><td>180</td><td>62.26%</td></tr>
+        </table>
+        <p style="margin-top:8px;font-size:12px;color:#94a3b8;">Each row = one category's tipping point sub-category.</p>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ Which is the 2nd highest contributor to sales in Office Supplies?</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>Binders</strong> — from Result 1, look at Office Supplies sorted by sales DESC. Binders ranks #2.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: COMMON MISTAKES -->
+<div class="slide slide-content">
+  <h3>🚫 Common Mistakes — Module 7</h3>
+  <div class="two-col">
+    <div>
+      <table class="t" style="margin-bottom:14px;">
+        <tr><th>Mistake</th><th>Consequence</th></tr>
+        <tr><td>No ORDER BY in cumm_sales</td><td style="color:#f87171;">Running total not meaningful — random order</td></tr>
+        <tr><td>Same window for tot and cumm</td><td style="color:#f87171;">Both look identical — one is wrong</td></tr>
+        <tr><td>Applying WHERE pct &gt; 0.5 too early</td><td style="color:#f87171;">Tries to filter before window fn runs — error or wrong result</td></tr>
+        <tr><td>FORMAT before using for numeric compare</td><td style="color:#f87171;">'58.97%' is a string — can't compare to 0.5</td></tr>
+        <tr><td>RANK before filtering</td><td style="color:#f87171;">Ranks across all rows — wrong tipping point</td></tr>
+        <tr><td>ORDER BY sub_category in cumm</td><td style="color:#f87171;">Alphabetical order ≠ ascending sales order</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="hl">
+        <p><strong style="color:#a78bfa;">The formatting trap explained:</strong></p>
+        <pre style="font-size:12px;margin-top:8px;">
+<span class="cm">-- This creates a STRING '58.97%' — cannot compare!</span>
+<span class="fn">FORMAT</span>(<span class="str">1.0</span> * cumm / total, <span class="str">'P2'</span>) <span class="kw">AS</span> pct
+
+<span class="cm">-- This creates a NUMBER 0.5897 — can compare!</span>
+<span class="str">1.0</span> * cumm / total <span class="kw">AS</span> pct_numeric
+
+<span class="cm">-- The rule: always keep TWO columns:
+-- 1. Numeric for WHERE logic
+-- 2. FORMAT() for display output</span></pre>
+      </div>
+      <div class="quiz-box" style="margin-top:12px;">
+        <p class="quiz-q">❓ True or False: You can write WHERE FORMAT(cumm/total,'P2') &gt; '50.00%' to filter by 50% contribution.</p>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
+        <div class="quiz-answer" style="display:none"><p>✅ <strong>False.</strong> String comparison with '&gt;' in SQL compares alphabetically — '9%' would sort "greater than" '50%' because '9' &gt; '5'. Always compare numeric values.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: QUIZ TIME -->
+<div class="slide slide-content">
+  <h3>🧠 Module 7 Quiz — Test Your Understanding</h3>
+  <div class="three-col">
+    <div class="quiz-box">
+      <p class="quiz-q">Q1: How many sales were recorded for sub-category 'Appliances'?<br><small>a) 165,836 &nbsp; b) 160,793 &nbsp; c) 106,949 &nbsp; d) 202,426</small></p>
+      <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+      <div class="quiz-answer" style="display:none"><p>✅ c) <strong>106,949</strong></p></div>
+    </div>
+    <div class="quiz-box">
+      <p class="quiz-q">Q2: Which category has the lowest total sales?<br><small>a) Furniture &nbsp; b) Office Supplies &nbsp; c) Technology</small></p>
+      <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+      <div class="quiz-answer" style="display:none"><p>✅ b) <strong>Office Supplies</strong></p></div>
+    </div>
+    <div class="quiz-box">
+      <p class="quiz-q">Q3: Which of these statements is INCORRECT?<br><small>a) Art = 18.64% of Office Supplies &nbsp; b) Chairs contribute most to Furniture &nbsp; c) Machines are 2nd in Technology &nbsp; d) Labels = 12264 sales</small></p>
+      <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+      <div class="quiz-answer" style="display:none"><p>✅ <strong>a) and c) are incorrect</strong> — Art's actual % is different from 18.64%, and Machines are not the 2nd highest contributor to Technology.</p></div>
+    </div>
+  </div>
+  <div style="margin-top:16px;">
+    <div class="quiz-box">
+      <p class="quiz-q">Q4: Which is the 2nd highest contributor to sales in Office Supplies?<br><small>a) Appliances &nbsp; b) Binders &nbsp; c) Envelopes &nbsp; d) Fasteners</small></p>
+      <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+      <div class="quiz-answer" style="display:none"><p>✅ b) <strong>Binders</strong> — sort Office Supplies sub-categories by sales DESC in Result 1 to verify.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: WRAP UP -->
+<div class="slide slide-section" style="text-align:center;align-items:center;">
+  <div class="section-tag">Summary</div>
+  <h2>What We Built 🚀</h2>
+  <div class="two-col" style="max-width:820px;margin-top:20px;text-align:left;">
+    <div class="card">
+      <h4>Result 1 — 3-CTE pattern</h4>
+      <p><span class="cte-badge">base_data</span> — aggregate sales per sub-cat<br>
+      <span class="cte-badge">running_totals</span> — add tot_cat + cumm_sales window fns<br>
+      <span class="cte-badge">Final SELECT</span> — format % for display</p>
+    </div>
+    <div class="card">
+      <h4>Result 2 — Extended to 4 CTEs</h4>
+      <p><span class="cte-badge">contribution_summary</span> — keep numeric pct AND formatted %<br>
+      <span class="cte-badge">ranking_table</span> — filter WHERE pct &gt; 0.5, then RANK<br>
+      <span class="cte-badge">Final WHERE</span> — ranks = 1 gives one row per category</p>
+    </div>
+  </div>
+  <div class="hl" style="max-width:700px;margin-top:20px;text-align:left;">
+    <p><strong style="color:#a78bfa;">The Big Lesson:</strong> The difference between tot_cat_sales and cumm_sales is ONE thing — <code>ORDER BY</code> inside the window. Without ORDER BY: full group total. With ORDER BY: row-by-row running total. This distinction powers all cumulative analysis.</p>
+  </div>
+</div>
+
+</div><!-- /deck -->
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const total = slides.length;
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+  function changeSlide(dir) { showSlide(current + dir); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+  counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>

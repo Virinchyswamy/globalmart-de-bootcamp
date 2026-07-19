@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Analyzing Customer Reviews at GlobalMart</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
+  --green:#3fb950;--yellow:#d29922;--red:#f85149;--purple:#bc8cff;
+  --kw:#ff7b72;--fn:#d2a8ff;--st:#a5d6ff;--cm:#8b949e;--nm:#79c0ff;
+  --var:#ffa657;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+  height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.deck{flex:1;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;padding:2.5rem 3rem;
+  display:flex;flex-direction:column;gap:1.2rem;
+  opacity:0;pointer-events:none;transition:opacity .25s;overflow-y:auto}
+.slide.active{opacity:1;pointer-events:all}
+h1{font-size:2rem;font-weight:700;color:var(--accent)}
+h2{font-size:1.4rem;font-weight:600;color:var(--accent);margin-bottom:.4rem}
+h3{font-size:1.05rem;font-weight:600;color:var(--yellow);margin-bottom:.3rem}
+p,li{font-size:.95rem;line-height:1.6;color:var(--text)}
+ul{padding-left:1.2rem}
+li{margin-bottom:.3rem}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.8rem;
+  font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag.mod{background:#1f3a5f;color:var(--accent)}
+.tag.py{background:#1e3a2f;color:var(--green)}
+.tag.sql{background:#3a1f4a;color:var(--purple)}
+.tag.concept{background:#3a2f1e;color:var(--yellow)}
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:12px;font-size:.78rem;
+  font-weight:600;margin-right:.4rem}
+.badge.new{background:#1e3a2f;color:var(--green)}
+.badge.warn{background:#3a2f1e;color:var(--yellow)}
+pre{background:#010409;border:1px solid var(--border);border-radius:8px;
+  padding:1rem 1.2rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;
+  line-height:1.7;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.85rem}
+.kw{color:var(--kw)}
+.fn{color:var(--fn)}
+.st{color:var(--st)}
+.cm{color:var(--cm);font-style:italic}
+.nm{color:var(--nm)}
+.var{color:var(--var)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem}
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:1rem 1.2rem}
+.card h3{margin-bottom:.5rem}
+.callout{background:#1a2332;border-left:3px solid var(--accent);
+  border-radius:0 6px 6px 0;padding:.7rem 1rem;font-size:.88rem}
+.callout.green{background:#0d2318;border-color:var(--green)}
+.callout.yellow{background:#2a1f0d;border-color:var(--yellow)}
+.callout.purple{background:#1e1030;border-color:var(--purple)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#1f2937;color:var(--accent);padding:.5rem .8rem;text-align:left;
+  border:1px solid var(--border)}
+td{padding:.45rem .8rem;border:1px solid var(--border);vertical-align:top}
+tr:nth-child(even) td{background:#0f1117}
+td code{font-size:.8rem}
+.nav{display:flex;align-items:center;gap:1rem;padding:.6rem 3rem;
+  background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.nav button{background:none;border:1px solid var(--border);color:var(--text);
+  padding:.35rem .9rem;border-radius:6px;cursor:pointer;font-size:.85rem}
+.nav button:hover{background:var(--border)}
+#counter{margin-left:auto;color:var(--muted);font-size:.85rem;
+  font-family:'JetBrains Mono',monospace}
+.title-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:.5rem}
+.dataset-col{display:flex;flex-direction:column;gap:.7rem}
+.subtitle{color:var(--muted);font-size:1rem;margin-top:.3rem}
+.step-num{display:inline-block;width:22px;height:22px;border-radius:50%;
+  background:var(--accent);color:#000;font-size:.72rem;font-weight:700;
+  text-align:center;line-height:22px;margin-right:.4rem;flex-shrink:0}
+.step-row{display:flex;align-items:flex-start;gap:.3rem;margin-bottom:.4rem}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <span class="tag mod">Day 8 · Module 1</span>
+    <h1 style="margin-top:.5rem">Analyzing Customer Reviews at GlobalMart</h1>
+    <p class="subtitle">Use Python's <code>re</code> module to clean text, detect issues, extract phone numbers, count keywords, and validate review length.</p>
+  </div>
+  <div class="title-grid">
+    <div class="dataset-col">
+      <div class="card">
+        <h3>Dataset: GlobalMart Reviews</h3>
+        <p style="margin-bottom:.6rem;font-size:.88rem;color:var(--muted)">1,597 customer reviews — 5 columns</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+          <tr><td><code>review_id</code></td><td>int</td><td>Unique row ID</td></tr>
+          <tr><td><code>review_text</code></td><td>str</td><td>Raw customer review</td></tr>
+          <tr><td><code>order_id</code></td><td>str</td><td>Linked order</td></tr>
+          <tr><td><code>customer_id</code></td><td>str</td><td>Linked customer</td></tr>
+          <tr><td><code>reviews_rating</code></td><td>float</td><td>1–5 star rating</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="dataset-col">
+      <div class="card">
+        <h3>What you'll build</h3>
+        <div class="step-row"><span class="step-num">1</span><p><strong>clean_text()</strong> — remove punctuation, collapse spaces, lowercase</p></div>
+        <div class="step-row"><span class="step-num">2</span><p><strong>mentions_issue</strong> — detect broken / defective / damaged</p></div>
+        <div class="step-row"><span class="step-num">3</span><p><strong>contact_numbers</strong> — extract phone numbers from free text</p></div>
+        <div class="step-row"><span class="step-num">4</span><p><strong>count_keyword()</strong> — count any word per review with raw f-string regex</p></div>
+        <div class="step-row"><span class="step-num">5</span><p><strong>valid_review</strong> — flag reviews with 10–100 words</p></div>
+      </div>
+      <div class="callout green"><span class="badge new">New</span> <code>re</code> module: <code>re.sub()</code>, <code>re.findall()</code>, <code>str.contains()</code>, <code>str.extract()</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: CONCEPT — WHAT IS REGEX -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">What Even Is Regex?</h1>
+    <p class="subtitle">Before any code — the one idea every single task in this module is built on.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>Normal searching (what you already know)</h3>
+      <ul>
+        <li>You search for an <strong>exact</strong> piece of text — "find the word refund"</li>
+        <li>Works great when you know exactly what you're looking for, letter for letter</li>
+        <li>Falls apart when the thing you want has many possible forms — like a phone number, which can be typed a dozen different ways</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Pattern searching (regex)</h3>
+      <ul>
+        <li>You describe the <strong>shape</strong> of what you want, not the exact text</li>
+        <li>"Find something that looks like 3 digits, a dash, 4 digits" matches <code>555-1234</code>, <code>800-9999</code>, or any other number with that same shape</li>
+        <li>"Regex" is short for "regular expression" — think of it as a tiny language whose only job is describing shapes of text</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout purple">
+    <strong>The one-sentence version:</strong> Ctrl+F is normal searching. Regex is Ctrl+F for <em>shapes</em>, not exact words. Every task in this module — cleaning text, flagging issues, pulling out phone numbers, counting words — is really just "describe the shape, then let Python find it."
+  </div>
+</div>
+
+<!-- SLIDE 3: CONCEPT — RAW STRINGS -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">Raw Strings — the <code>r</code> in <code>r"..."</code></h1>
+    <p class="subtitle">The one thing every single pattern in this module starts with — and why it has to be there.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>The problem</h3>
+      <ul>
+        <li>Backslash <code>\</code> already means something special to Python, even before regex gets involved</li>
+        <li><code>\n</code> = new line, <code>\t</code> = tab — Python quietly "eats" the backslash and turns it into that special character</li>
+        <li>Regex <strong>also</strong> wants to use backslash for its own meanings: <code>\d</code> = a digit, <code>\b</code> = word edge, <code>\s</code> = space</li>
+        <li>If Python eats the backslash first, regex never even sees it — your pattern breaks silently, with no error message to warn you</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>The fix: put <code>r</code> right before the quotes</h3>
+<pre><span class="cm"># WITHOUT r -- Python may mangle \b before regex ever sees it</span>
+<span class="var">bad_pattern</span> = <span class="st">'\bhello\b'</span>      <span class="cm"># risky, don't do this</span>
+
+<span class="cm"># WITH r -- Python leaves every backslash untouched</span>
+<span class="var">good_pattern</span> = <span class="kw">r</span><span class="st">'\bhello\b'</span>    <span class="cm"># correct, this is what regex expects</span></pre>
+      <p style="margin-top:.5rem">The two characters <code>\</code> and <code>b</code> now travel untouched into regex, which reads <code>\b</code> as "word boundary" — exactly what you meant.</p>
+    </div>
+  </div>
+  <div class="callout yellow">
+    <strong>Rule of thumb:</strong> if a string contains regex, put <code>r</code> in front of it — no exceptions. You'll see <code>r'...'</code> at the start of every single pattern in this module.
+  </div>
+</div>
+
+<!-- SLIDE 4: SQL MENTAL MODEL -->
+<div class="slide">
+  <div>
+    <span class="tag sql">SQL Mental Model</span>
+    <h1 style="margin-top:.5rem">SQL vs Python for Text Analysis</h1>
+    <p class="subtitle">SQL can filter text — but Python's <code>re</code> module gives you true pattern matching power.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>What SQL can do</h3>
+      <pre><span class="cm">-- Basic keyword filter (no word boundaries)</span>
+<span class="kw">SELECT</span> review_id, review_text
+<span class="kw">FROM</span>   reviews
+<span class="kw">WHERE</span>  review_text <span class="kw">LIKE</span> <span class="st">'%broken%'</span>
+   <span class="kw">OR</span> review_text <span class="kw">LIKE</span> <span class="st">'%defective%'</span>;
+<span class="cm">-- ⚠ matches "unbroken", "defectively" too
+--   no word-boundary control</span>
+
+<span class="cm">-- Clean text: SQL has no regex replace in most DBs</span>
+<span class="cm">-- PostgreSQL ONLY: regexp_replace()</span>
+<span class="kw">SELECT</span> <span class="fn">LOWER</span>(<span class="fn">REGEXP_REPLACE</span>(review_text,
+         <span class="st">'[^\\w\\s]'</span>, <span class="st">''</span>, <span class="st">'g'</span>)) <span class="kw">AS</span> cleaned
+<span class="kw">FROM</span>   reviews;</pre>
+    </div>
+    <div>
+      <h3>What Python regex adds</h3>
+      <pre><span class="cm"># ✅ Word boundaries — exact word match only</span>
+<span class="nm">pattern</span> = <span class="st">r'\b(broken|defective|damaged)\b'</span>
+df[<span class="st">'mentions_issue'</span>] = df[<span class="st">'cleaned'</span>].<span class="fn">str.contains</span>(
+    pattern, flags=re.IGNORECASE
+)
+<span class="cm"># \b = boundary: "broken" ✓, "unbroken" ✗</span>
+
+<span class="cm"># ✅ Extract phone numbers — impossible in plain SQL</span>
+<span class="nm">phone</span> = <span class="st">r'\b(?:\+?\d{1,3})?[\-.\s]?\(?\d{3}\)?'</span>
+      <span class="st">r'[\-.\s]?\d{3}[\-.\s]?\d{4}\b'</span>
+df[<span class="st">'contact'</span>] = df[<span class="st">'cleaned'</span>].<span class="fn">str.extract</span>(<span class="st">f'({phone})'</span>)
+
+<span class="cm"># ✅ Count word occurrences per row — no SQL equivalent</span>
+<span class="kw">def</span> <span class="fn">count_keyword</span>(text, keyword):
+    <span class="kw">return</span> <span class="fn">len</span>(re.<span class="fn">findall</span>(<span class="st">rf'\b{keyword}\b'</span>, text,
+                            flags=re.IGNORECASE))</pre>
+    </div>
+  </div>
+  <div class="callout purple">
+    <strong>Key insight:</strong> SQL's <code>LIKE '%word%'</code> is a substring match — it can't distinguish whole words. Python's <code>\b</code> (word boundary) anchors to word edges, so <code>\bbroken\b</code> never matches "unbroken".
+  </div>
+</div>
+
+<!-- SLIDE 5: REGEX REFERENCE -->
+<div class="slide">
+  <div>
+    <span class="tag py">Regex Quick Reference</span>
+    <h1 style="margin-top:.5rem">Pattern Building Blocks</h1>
+    <p class="subtitle">The 10 symbols you'll use in this module — understand these and you can read any regex.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>Character classes &amp; anchors</h3>
+      <table>
+        <tr><th>Symbol</th><th>Meaning</th><th>Example match</th></tr>
+        <tr><td><code>\w</code></td><td>Word char (letter/digit/_)</td><td><code>hello</code>, <code>A1</code></td></tr>
+        <tr><td><code>\s</code></td><td>Whitespace</td><td>space, tab</td></tr>
+        <tr><td><code>\d</code></td><td>Digit 0–9</td><td><code>42</code></td></tr>
+        <tr><td><code>[^\w\s]</code></td><td>NOT word or space (= punctuation)</td><td><code>!</code>, <code>.</code>, <code>,</code></td></tr>
+        <tr><td><code>\b</code></td><td>Word boundary (zero-width)</td><td>edge of a word</td></tr>
+        <tr><td><code>^</code> / <code>$</code></td><td>Start / end of string</td><td>—</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Quantifiers &amp; groups</h3>
+      <table>
+        <tr><th>Symbol</th><th>Meaning</th><th>Example</th></tr>
+        <tr><td><code>+</code></td><td>One or more</td><td><code>\s+</code> = one+ spaces</td></tr>
+        <tr><td><code>*</code></td><td>Zero or more</td><td><code>\d*</code></td></tr>
+        <tr><td><code>?</code></td><td>Optional (0 or 1)</td><td><code>\+?</code> = optional +</td></tr>
+        <tr><td><code>{n}</code></td><td>Exactly n times</td><td><code>\d{4}</code> = 4 digits</td></tr>
+        <tr><td><code>(a|b|c)</code></td><td>Alternation group</td><td><code>(broken|defective)</code></td></tr>
+        <tr><td><code>(?:...)</code></td><td>Non-capturing group</td><td>groups without saving</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="callout yellow">
+    <strong>Raw strings</strong> <code>r"..."</code> — always use <code>r</code> prefix for regex. Without it, Python interprets <code>\b</code> as backspace and <code>\d</code> as <code>d</code>.
+    For f-strings with regex: use <code>rf"..."</code> (raw AND formatted).
+  </div>
+</div>
+
+<!-- SLIDE 6: CONCEPT — re.sub() -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">re.sub() — Find and Replace, But Smarter</h1>
+    <p class="subtitle">The exact idea behind Task 1's <code>clean_text()</code> function — nothing more than this.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>The 3 ingredients of <code>re.sub(pattern, replacement, text)</code></h3>
+      <div class="step-row"><span class="step-num">1</span><p><strong>pattern</strong> — the shape to look for, e.g. <code>r'[^\w\s]'</code> = "anything that isn't a letter, digit, or space" = punctuation</p></div>
+      <div class="step-row"><span class="step-num">2</span><p><strong>replacement</strong> — what to put in its place, often just <code>''</code> (nothing, i.e. delete it)</p></div>
+      <div class="step-row"><span class="step-num">3</span><p><strong>text</strong> — the actual string to search through</p></div>
+    </div>
+    <div class="card">
+      <h3>Think of it like Word's Find &amp; Replace</h3>
+      <ul>
+        <li>Find &amp; Replace: type an exact word to find, type what to replace it with</li>
+        <li><code>re.sub()</code>: same idea, except "what to find" is a <em>pattern</em> instead of exact text</li>
+        <li>It replaces <strong>every</strong> match, not just the first one — that's the "sub" in "substitute all occurrences"</li>
+      </ul>
+<pre><span class="cm"># "find any punctuation, replace with nothing" = delete all punctuation</span>
+re.<span class="fn">sub</span>(<span class="kw">r</span><span class="st">'[^\w\s]'</span>, <span class="st">''</span>, <span class="st">"Great price!!"</span>)
+<span class="cm"># -&gt; "Great price"</span></pre>
+    </div>
+  </div>
+  <div class="callout green">
+    <strong>Put it together:</strong> <code>clean_text()</code> is just two of these calls back to back — one <code>re.sub()</code> to delete punctuation, one <code>re.sub()</code> to collapse extra spaces into one. That's the whole function.
+  </div>
+</div>
+
+<!-- SLIDE 7: TASK 1 — clean_text -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 1</span>
+    <h1 style="margin-top:.5rem">Clean Customer Review Text</h1>
+    <p class="subtitle">Define <code>clean_text()</code> — two regex substitutions that remove noise before any analysis.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>SQL equivalent</h3>
+      <pre><span class="cm">-- PostgreSQL: two regex passes + LOWER + TRIM</span>
+<span class="kw">SELECT</span>
+  <span class="fn">TRIM</span>(<span class="fn">LOWER</span>(
+    <span class="fn">REGEXP_REPLACE</span>(
+      <span class="fn">REGEXP_REPLACE</span>(review_text,
+        <span class="st">'[^\w\s]'</span>, <span class="st">''</span>, <span class="st">'g'</span>),   <span class="cm">-- pass 1: remove punct</span>
+      <span class="st">'\s+'</span>, <span class="st">' '</span>, <span class="st">'g'</span>)           <span class="cm">-- pass 2: collapse spaces</span>
+  )) <span class="kw">AS</span> cleaned_text
+<span class="kw">FROM</span> reviews;
+<span class="cm">-- Most SQL dialects (MySQL, BigQuery, Spark SQL)
+-- require UDFs for this — Python is cleaner here</span></pre>
+    </div>
+    <div>
+      <h3>Python: <code>re.sub(pattern, replacement, string)</code></h3>
+      <pre><span class="kw">import</span> re
+
+<span class="kw">def</span> <span class="fn">clean_text</span>(text):
+    <span class="cm"># re.sub(pattern, repl, string) replaces ALL matches</span>
+    <span class="cm"># [^\w\s] = any char that is NOT word-char or space</span>
+    <span class="cm">#   → removes ! . , " ' ? etc.</span>
+    text = re.<span class="fn">sub</span>(<span class="st">r'[^\w\s]'</span>, <span class="st">''</span>, text)
+
+    <span class="cm"># \s+ = one or more whitespace chars (space, tab, newline)</span>
+    <span class="cm"># replace with single space → collapses "  " to " "</span>
+    text = re.<span class="fn">sub</span>(<span class="st">r'\s+'</span>, <span class="st">' '</span>, text)
+
+    <span class="cm"># .strip() removes leading/trailing spaces</span>
+    <span class="cm"># .lower() converts to lowercase for uniform matching</span>
+    <span class="kw">return</span> text.<span class="fn">strip</span>().<span class="fn">lower</span>()
+
+<span class="cm"># .apply() calls clean_text once per row in review_text</span>
+df[<span class="st">'cleaned_reviews'</span>] = df[<span class="st">'review_text'</span>].<span class="fn">apply</span>(clean_text)</pre>
+    </div>
+  </div>
+  <div class="callout green">
+    <strong>re.sub(pattern, repl, string)</strong> — replaces every match of <code>pattern</code> with <code>repl</code> in <code>string</code>.
+    Two passes: first remove punctuation, then collapse extra spaces. Order matters — do punctuation first.
+  </div>
+</div>
+
+<!-- SLIDE 8: CONCEPT — WORD BOUNDARIES + ALTERNATION -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">Word Boundaries \b and "Either/Or" Patterns</h1>
+    <p class="subtitle">The two ideas Task 2 combines to catch whole-word matches only.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>\b — invisible fences around a word</h3>
+      <ul>
+        <li><code>\b</code> matches a <strong>position</strong>, not a character — it doesn't "use up" any letters, it just marks a spot</li>
+        <li>Think of it as an invisible fence marking where a word starts or ends</li>
+        <li><code>r'\bbroken\b'</code> means "the word broken, with fences on both sides" — so it will <strong>not</strong> match inside "unbroken" (there's no fence between "un" and "broken")</li>
+        <li>Without <code>\b</code>, <code>r'broken'</code> would happily match the middle of "unbroken" too — a false positive</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>(a|b|c) — pick any one of these</h3>
+      <ul>
+        <li>The pipe symbol <code>|</code> means "or"</li>
+        <li><code>(broken|defective|damaged)</code> means "match broken, OR defective, OR damaged — any one of the three"</li>
+        <li>Combine both: <code>r'\b(broken|defective|damaged)\b'</code> = "any one of these three words, and only as a whole word"</li>
+      </ul>
+<pre><span class="nm">pattern</span> = <span class="kw">r</span><span class="st">'\b(broken|defective|damaged)\b'</span>
+<span class="cm"># matches: "the item was broken"      -&gt; YES
+# matches: "totally unbroken product" -&gt; NO (no fence before "broken")</span></pre>
+    </div>
+  </div>
+  <div class="callout purple">
+    <strong>Why this matters:</strong> this is exactly why SQL's <code>LIKE '%broken%'</code> gets tricked by "unbroken" but Python's <code>\b</code> doesn't — <code>LIKE</code> has no concept of word edges, it's just a raw substring check.
+  </div>
+</div>
+
+<!-- SLIDE 9: TASK 2 — str.contains -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 2</span>
+    <h1 style="margin-top:.5rem">Extract Mentions of Product Issues</h1>
+    <p class="subtitle">Use <code>str.contains()</code> with alternation <code>(a|b|c)</code> and word boundaries to detect exact words.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>SQL equivalent (limited)</h3>
+      <pre><span class="cm">-- SQL LIKE: matches substrings, not whole words</span>
+<span class="kw">SELECT</span> review_id,
+  (<span class="kw">CASE</span>
+    <span class="kw">WHEN</span> review_text <span class="kw">ILIKE</span> <span class="st">'%broken%'</span>
+      <span class="kw">OR</span> review_text <span class="kw">ILIKE</span> <span class="st">'%defective%'</span>
+      <span class="kw">OR</span> review_text <span class="kw">ILIKE</span> <span class="st">'%damaged%'</span>
+    <span class="kw">THEN</span> <span class="kw">TRUE</span> <span class="kw">ELSE</span> <span class="kw">FALSE</span>
+  <span class="kw">END</span>) <span class="kw">AS</span> mentions_issue
+<span class="kw">FROM</span> reviews;
+<span class="cm">-- ⚠ 'unbroken' → TRUE (false positive)
+-- ⚠ Python \b boundary catches this correctly</span></pre>
+    </div>
+    <div>
+      <h3>Python: <code>str.contains(pattern, na=False)</code></h3>
+      <pre><span class="cm"># Alternation: (a|b|c) matches broken OR defective OR damaged</span>
+<span class="cm"># \b ... \b = word boundaries on both sides</span>
+<span class="cm"># → "unbroken" ✗  "broken" ✓  "Broken!" ✓ (already cleaned)</span>
+<span class="nm">issue_pattern</span> = <span class="st">r'\b(broken|defective|damaged)\b'</span>
+
+<span class="cm"># str.contains() returns True/False per row</span>
+<span class="cm"># flags=re.IGNORECASE makes Broken == broken</span>
+<span class="cm"># na=False: if cell is NaN, return False (not NaN)</span>
+df[<span class="st">'mentions_issue'</span>] = (
+    df[<span class="st">'cleaned_reviews'</span>]
+    .<span class="fn">str.contains</span>(<span class="nm">issue_pattern</span>,
+                  flags=re.IGNORECASE,
+                  na=<span class="kw">False</span>)
+)
+
+<span class="cm"># Check how many reviews mention product issues</span>
+df[<span class="st">'mentions_issue'</span>].<span class="fn">value_counts</span>()
+<span class="cm"># False: 1591   True: 6</span></pre>
+    </div>
+  </div>
+  <div class="callout yellow">
+    <strong>Warning from notebook:</strong> pandas warns that a pattern with groups <code>(broken|...)</code> looks like it should use <code>str.extract()</code>. It still works for <code>str.contains()</code> — the warning is just informational. Add <code>na=False</code> to avoid NaN propagation.
+  </div>
+</div>
+
+<!-- SLIDE 10: CONCEPT — CAPTURE GROUPS, F-STRINGS, EXTRACT VS CONTAINS -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">"Yes/No" vs "Show Me The Value"</h1>
+    <p class="subtitle">Why Task 3 needs a different tool than Task 2 — and what f"..." adds to the mix.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>str.contains() vs str.extract()</h3>
+      <ul>
+        <li><code>str.contains(pattern)</code> → answers True or False: "does this pattern appear somewhere in the text?"</li>
+        <li><code>str.extract(pattern)</code> → answers with the actual matching text: "show me exactly what matched"</li>
+        <li>Task 2 only needed a flag (<code>mentions_issue</code>: True/False) → <code>contains()</code> was enough</li>
+        <li>Task 3 needs the actual phone number pulled out → <code>extract()</code> is required</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Capture groups — the ( ) that says "grab this part"</h3>
+      <ul>
+        <li>Wrapping part of a pattern in parentheses <code>( )</code> marks it as a "capture group" — the piece you want handed back to you</li>
+        <li><code>str.extract()</code> requires exactly ONE capture group — wrap your whole pattern in one pair of <code>( )</code></li>
+        <li><code>f"..."</code> (an f-string) lets you drop a variable's value into a string — it "fills in the blank"</li>
+      </ul>
+<pre><span class="var">phone_pattern</span> = <span class="kw">r</span><span class="st">'\d{3}-\d{4}'</span>          <span class="cm"># the shape, defined once</span>
+df[<span class="st">'x'</span>] = df[<span class="st">'col'</span>].<span class="fn">str.extract</span>(<span class="kw">f</span><span class="st">'({phone_pattern})'</span>)
+<span class="cm"># f"(...)" wraps phone_pattern in parentheses and inserts it</span></pre>
+    </div>
+  </div>
+  <div class="callout green">
+    <strong>Rule of thumb:</strong> need a True/False flag? Use <code>contains()</code>. Need the actual matched text back? Wrap it in <code>( )</code> and use <code>extract()</code>.
+  </div>
+</div>
+
+<!-- SLIDE 11: TASK 3 — str.extract -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 3</span>
+    <h1 style="margin-top:.5rem">Extract Contact Numbers from Reviews</h1>
+    <p class="subtitle"><code>str.extract()</code> returns the first regex capture group per row — perfect for pulling structured data from free text.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>Phone pattern breakdown</h3>
+      <pre><span class="nm">phone_pattern</span> = (
+  <span class="st">r'\b'</span>             <span class="cm"># word boundary — start of number</span>
+  <span class="st">r'(?:\+?\d{1,3})?'</span> <span class="cm"># optional country code: +91, 1, etc.</span>
+  <span class="st">r'[.\s-]?'</span>        <span class="cm"># optional separator: space, dot, dash</span>
+  <span class="st">r'\(?\d{3}\)?'</span>    <span class="cm"># area code — optional parens (800)</span>
+  <span class="st">r'[.\s-]?'</span>        <span class="cm"># optional separator</span>
+  <span class="st">r'\d{3}'</span>          <span class="cm"># exchange: 3 digits</span>
+  <span class="st">r'[.\s-]?'</span>        <span class="cm"># optional separator</span>
+  <span class="st">r'\d{4}'</span>          <span class="cm"># subscriber: 4 digits</span>
+  <span class="st">r'\b'</span>             <span class="cm"># word boundary — end of number</span>
+)
+<span class="cm"># Matches: 800-555-1234  (800) 555.1234  +1 800 555 1234</span></pre>
+    </div>
+    <div>
+      <h3>Python: <code>str.extract(pattern, expand=False)</code></h3>
+      <pre><span class="cm"># str.extract() needs exactly ONE capture group (...)
+# wrap the whole pattern in f"({phone_pattern})"
+# expand=False → returns a Series (not a DataFrame)</span>
+df[<span class="st">'contact_numbers'</span>] = (
+    df[<span class="st">'cleaned_reviews'</span>]
+    .<span class="fn">str.extract</span>(<span class="st">f'({phone_pattern})'</span>, expand=<span class="kw">False</span>)
+)
+
+<span class="cm"># Rows without a phone number → NaN (not empty string)</span>
+<span class="nm">found</span> = df[<span class="st">'contact_numbers'</span>].<span class="fn">notna</span>().<span class="fn">sum</span>()
+<span class="fn">print</span>(<span class="st">f"Phone numbers found: {found}"</span>)  <span class="cm"># → 2</span>
+
+<span class="cm"># See which reviews had numbers</span>
+df[df[<span class="st">'contact_numbers'</span>].<span class="fn">notna</span>()][[
+    <span class="st">'cleaned_reviews'</span>, <span class="st">'contact_numbers'</span>
+]]</pre>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>str.contains vs str.extract:</strong>
+    <code>str.contains()</code> → True/False (does it appear?) &nbsp;|&nbsp;
+    <code>str.extract()</code> → the matched text itself (what is it?). Use extract when you need the actual value.
+  </div>
+</div>
+
+<!-- SLIDE 12: CONCEPT — re.findall() + rf-strings -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">re.findall() — Get Every Match, Not Just the First</h1>
+    <p class="subtitle">Task 4 combines this with one more string trick: <code>rf"..."</code> — raw AND f-string at once.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>findall() returns a LIST</h3>
+      <ul>
+        <li><code>re.findall(pattern, text)</code> doesn't just say "yes it matched" — it hands back a <strong>list</strong> of every single match it found</li>
+        <li>"excellent product, excellent service" searched for "excellent" → <code>['excellent', 'excellent']</code> (a list with 2 items)</li>
+        <li><code>len()</code> of a list = how many items are inside it</li>
+        <li>So <code>len(re.findall(pattern, text))</code> = "how many times did this pattern appear?" — that's the entire idea behind <code>count_keyword()</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>rf'...' — raw string + f-string, combined</h3>
+      <ul>
+        <li>You already met <code>r"..."</code> (keep backslashes literal) and <code>f"..."</code> (insert a variable)</li>
+        <li><code>rf"..."</code> does <strong>both at once</strong> — needed when your pattern itself contains a variable</li>
+        <li><code>rf'\b{keyword}\b'</code>: the <code>\b</code>'s stay as real regex word-boundaries (thanks to <code>r</code>), and <code>{keyword}</code> gets swapped for whatever word is passed in (thanks to <code>f</code>)</li>
+      </ul>
+<pre><span class="var">keyword</span> = <span class="st">"refund"</span>
+<span class="var">pattern</span> = <span class="kw">rf</span><span class="st">'\b{keyword}\b'</span>   <span class="cm"># becomes: \brefund\b</span>
+<span class="fn">len</span>(re.<span class="fn">findall</span>(pattern, text, flags=re.IGNORECASE))</pre>
+    </div>
+  </div>
+  <div class="callout yellow">
+    <strong>Rule of thumb:</strong> if you ever need both "don't touch my backslashes" AND "insert a variable" in the same string, that's exactly when you reach for <code>rf"..."</code>.
+  </div>
+</div>
+
+<!-- SLIDE 13: TASK 4 — count_keyword -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 4</span>
+    <h1 style="margin-top:.5rem">Count Keywords in Reviews</h1>
+    <p class="subtitle"><code>re.findall()</code> returns a list of all matches — <code>len()</code> of that list = count. The raw f-string <code>rf"..."</code> lets you inject variables into patterns.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>SQL equivalent (aggregate only)</h3>
+      <pre><span class="cm">-- SQL can count rows mentioning a word</span>
+<span class="cm">-- but NOT occurrences per row</span>
+<span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> text <span class="kw">ILIKE</span> <span class="st">'%excellent%'</span>)
+    <span class="kw">AS</span> rows_with_excellent
+<span class="kw">FROM</span> reviews;
+<span class="cm">-- ✗ Cannot count: "excellent product, excellent price"
+--   as 2 — SQL sees it as 1 matching row
+-- ✅ Python re.findall() counts ALL occurrences</span></pre>
+    </div>
+    <div>
+      <h3>Python: raw f-string <code>rf"\b{keyword}\b"</code></h3>
+      <pre><span class="cm"># re.findall(pattern, string) → list of all matches
+# len() of that list = how many times word appears</span>
+
+<span class="kw">def</span> <span class="fn">count_keyword</span>(text, keyword):
+    <span class="cm"># rf"..." = raw f-string: raw (\ not escaped) +
+    #          formatted ({keyword} substituted in)
+    # \b{keyword}\b ensures whole-word match only</span>
+    <span class="kw">return</span> <span class="fn">len</span>(re.<span class="fn">findall</span>(
+        <span class="st">rf'\b{keyword}\b'</span>, text, flags=re.IGNORECASE
+    ))
+
+<span class="cm"># Count 3 keywords → 3 new columns</span>
+<span class="nm">keywords</span> = [<span class="st">'excellent'</span>, <span class="st">'poor'</span>, <span class="st">'refund'</span>]
+<span class="kw">for</span> <span class="var">kw</span> <span class="kw">in</span> keywords:
+    df[<span class="st">f'count_{kw}'</span>] = df[<span class="st">'cleaned_reviews'</span>].<span class="fn">apply</span>(
+        <span class="kw">lambda</span> x: <span class="fn">count_keyword</span>(x, <span class="var">kw</span>)
+    )</pre>
+    </div>
+  </div>
+  <div class="callout purple">
+    <strong>Raw f-string <code>rf"..."</code>:</strong>
+    <code>r</code> = don't interpret backslashes (so <code>\b</code> stays as <code>\b</code>, not backspace).
+    <code>f</code> = substitute <code>{keyword}</code> at runtime.
+    Combine both: <code>rf'\b{keyword}\b'</code> — you get a proper regex with a variable word.
+  </div>
+</div>
+
+<!-- SLIDE 14: CONCEPT — \w+ AND CHAINED COMPARISONS -->
+<div class="slide">
+  <div>
+    <span class="tag concept">Python Concept</span>
+    <h1 style="margin-top:.5rem">Counting Words the Right Way</h1>
+    <p class="subtitle">Why Task 5 uses \b\w+\b instead of just splitting on spaces — plus a neat Python shortcut.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>\w+ — one or more word characters, glued together</h3>
+      <ul>
+        <li><code>\w</code> matches a single letter, digit, or underscore</li>
+        <li><code>\w+</code> means "one or more of those in a row" — i.e. a whole word token</li>
+        <li><code>re.findall(r'\b\w+\b', text)</code> returns a list of every real word in the text</li>
+        <li>Compare to <code>text.split(' ')</code>: two spaces in a row create an empty <code>''</code> entry that isn't a real word — it quietly inflates your count. <code>\w+</code> never has this problem.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Chained comparisons — Python reads like math class</h3>
+      <ul>
+        <li>Most languages make you write two separate checks joined by "and": <code>n &gt;= 10 and n &lt;= 100</code></li>
+        <li>Python lets you chain them into one readable line: <code>10 &lt;= n &lt;= 100</code></li>
+        <li>Reads exactly like a number line: "is n somewhere between 10 and 100?"</li>
+      </ul>
+<pre><span class="nm">word_count</span> = <span class="fn">len</span>(re.<span class="fn">findall</span>(<span class="kw">r</span><span class="st">'\b\w+\b'</span>, text))
+<span class="var">is_valid</span> = <span class="nm">10</span> &lt;= word_count &lt;= <span class="nm">100</span>   <span class="cm"># one line, very readable</span></pre>
+    </div>
+  </div>
+  <div class="callout green">
+    <strong>Put it together:</strong> <code>validate_review_length()</code> is really just: count the real words, then ask "is that number in a sensible range?" — two ideas you've now seen built from scratch.
+  </div>
+</div>
+
+<!-- SLIDE 15: TASK 5 — validate_review_length -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 5</span>
+    <h1 style="margin-top:.5rem">Validate Review Length</h1>
+    <p class="subtitle">Count actual words (not characters) using <code>re.findall(r"\b\w+\b")</code> and flag reviews in the 10–100 word range.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>SQL equivalent</h3>
+      <pre><span class="cm">-- Word count via array split (standard SQL)</span>
+<span class="kw">SELECT</span> review_id,
+  <span class="fn">CARDINALITY</span>(<span class="fn">STRING_TO_ARRAY</span>(
+      <span class="fn">TRIM</span>(review_text), <span class="st">' '</span>)) <span class="kw">AS</span> word_count
+<span class="kw">FROM</span> reviews;
+<span class="cm">-- PostgreSQL only. Splits on space, not regex.
+-- Double spaces → empty array elements (over-count).
+-- Python \b\w+\b is more robust.</span>
+
+<span class="cm">-- To filter valid reviews:</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> above_query
+<span class="kw">WHERE</span> word_count <span class="kw">BETWEEN</span> <span class="nm">10</span> <span class="kw">AND</span> <span class="nm">100</span>;</pre>
+    </div>
+    <div>
+      <h3>Python: count words with <code>\b\w+\b</code></h3>
+      <pre><span class="kw">def</span> <span class="fn">validate_review_length</span>(text):
+    <span class="cm"># \b\w+\b matches each word token:
+    #   \b = word boundary (start)
+    #   \w+ = one or more word characters
+    #   \b = word boundary (end)
+    # re.findall() returns a list — one element per word</span>
+    <span class="nm">word_count</span> = <span class="fn">len</span>(re.<span class="fn">findall</span>(<span class="st">r'\b\w+\b'</span>, text))
+
+    <span class="cm"># Chained comparison: 10 <= n <= 100
+    # Returns True if review is long enough but not too long</span>
+    <span class="kw">return</span> <span class="nm">10</span> &lt;= <span class="nm">word_count</span> &lt;= <span class="nm">100</span>
+
+df[<span class="st">'valid_review'</span>] = (
+    df[<span class="st">'cleaned_reviews'</span>].<span class="fn">apply</span>(validate_review_length)
+)
+
+df[<span class="st">'valid_review'</span>].<span class="fn">value_counts</span>()
+<span class="cm"># False: 813 (too short or too long)
+# True:  784 (valid 10-100 word reviews)</span></pre>
+    </div>
+  </div>
+  <div class="callout green">
+    <strong>Why \b\w+\b instead of .split()?</strong>
+    <code>.split(' ')</code> counts empty strings when there are extra spaces.
+    <code>\b\w+\b</code> matches only real word tokens — punctuation, numbers, and gaps are handled correctly.
+  </div>
+</div>
+
+<!-- SLIDE 16: FULL CODE -->
+<div class="slide">
+  <div>
+    <span class="tag py">Full Code</span>
+    <h1 style="margin-top:.5rem">Complete Pipeline</h1>
+  </div>
+  <div class="two" style="flex:1;min-height:0">
+    <pre style="overflow-y:auto;font-size:.76rem"><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> re
+
+df = pd.<span class="fn">read_csv</span>(<span class="st">"Globalmart_reviews.csv"</span>)
+
+<span class="cm"># ── Task 1: Clean text ──────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">clean_text</span>(text):
+    text = re.<span class="fn">sub</span>(<span class="st">r'[^\w\s]'</span>, <span class="st">''</span>, text)  <span class="cm"># remove punctuation</span>
+    text = re.<span class="fn">sub</span>(<span class="st">r'\s+'</span>, <span class="st">' '</span>, text)      <span class="cm"># collapse spaces</span>
+    <span class="kw">return</span> text.<span class="fn">strip</span>().<span class="fn">lower</span>()
+
+df[<span class="st">'cleaned_reviews'</span>] = df[<span class="st">'review_text'</span>].<span class="fn">apply</span>(clean_text)
+
+<span class="cm"># ── Task 2: Detect product issues ───────────────────</span>
+<span class="nm">issue_pattern</span> = <span class="st">r'\b(broken|defective|damaged)\b'</span>
+df[<span class="st">'mentions_issue'</span>] = df[<span class="st">'cleaned_reviews'</span>].<span class="fn">str.contains</span>(
+    <span class="nm">issue_pattern</span>, flags=re.IGNORECASE, na=<span class="kw">False</span>
+)
+
+<span class="cm"># ── Task 3: Extract phone numbers ───────────────────</span>
+<span class="nm">phone_pattern</span> = <span class="st">r'\b(?:\+?\d{1,3})?[.\s-]?\(?\d{3}\)?[.\s-]?\d{3}[.\s-]?\d{4}\b'</span>
+df[<span class="st">'contact_numbers'</span>] = df[<span class="st">'cleaned_reviews'</span>].<span class="fn">str.extract</span>(
+    <span class="st">f'({phone_pattern})'</span>, expand=<span class="kw">False</span>
+)
+
+<span class="cm"># ── Task 4: Count keywords ──────────────────────────</span>
+<span class="kw">def</span> <span class="fn">count_keyword</span>(text, keyword):
+    <span class="kw">return</span> <span class="fn">len</span>(re.<span class="fn">findall</span>(<span class="st">rf'\b{keyword}\b'</span>, text, flags=re.IGNORECASE))
+
+<span class="kw">for</span> <span class="var">kw</span> <span class="kw">in</span> [<span class="st">'excellent'</span>, <span class="st">'poor'</span>, <span class="st">'refund'</span>]:
+    df[<span class="st">f'count_{kw}'</span>] = df[<span class="st">'cleaned_reviews'</span>].<span class="fn">apply</span>(<span class="kw">lambda</span> x: <span class="fn">count_keyword</span>(x, <span class="var">kw</span>))
+
+<span class="cm"># ── Task 5: Validate review length ──────────────────</span>
+<span class="kw">def</span> <span class="fn">validate_review_length</span>(text):
+    <span class="nm">n</span> = <span class="fn">len</span>(re.<span class="fn">findall</span>(<span class="st">r'\b\w+\b'</span>, text))
+    <span class="kw">return</span> <span class="nm">10</span> &lt;= <span class="nm">n</span> &lt;= <span class="nm">100</span>
+
+df[<span class="st">'valid_review'</span>] = df[<span class="st">'cleaned_reviews'</span>].<span class="fn">apply</span>(validate_review_length)</pre>
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      <h3>SQL ↔ Python comparison</h3>
+      <table style="font-size:.78rem">
+        <tr><th>Task</th><th>SQL</th><th>Python</th></tr>
+        <tr><td>Remove punctuation</td><td><code>REGEXP_REPLACE(col,'[^\w\s]','')</code> (PG only)</td><td><code>re.sub(r'[^\w\s]','',text)</code></td></tr>
+        <tr><td>Detect keyword</td><td><code>ILIKE '%broken%'</code> (no boundary)</td><td><code>str.contains(r'\bbroken\b')</code></td></tr>
+        <tr><td>Extract value</td><td>No generic equivalent</td><td><code>str.extract(f'({pattern})')</code></td></tr>
+        <tr><td>Count occurrences</td><td>Only counts rows, not per-row hits</td><td><code>len(re.findall(rf'\b{kw}\b', text))</code></td></tr>
+        <tr><td>Word count</td><td><code>CARDINALITY(STRING_TO_ARRAY(...))</code></td><td><code>len(re.findall(r'\b\w+\b', text))</code></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- end deck -->
+
+<div class="nav">
+  <button onclick="go(-1)">← Prev</button>
+  <button onclick="go(1)">Next →</button>
+  <span id="counter"></span>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+function show(n){
+  slides[cur].classList.remove('active');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  document.getElementById('counter').textContent = (cur+1)+' / '+slides.length;
+}
+function go(d){ show(cur+d); }
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') go(-1);
+});
+show(0);
+</script>
+</body>
+</html>

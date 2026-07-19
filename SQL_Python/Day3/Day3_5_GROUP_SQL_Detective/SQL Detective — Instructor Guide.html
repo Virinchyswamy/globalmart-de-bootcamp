@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Detective — Instructor Guide (Do Not Share)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--g1:#3b82f6;--g2:#22c55e;--g3:#a78bfa;--g4:#f59e0b;--g5:#ef4444}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:100}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:#ef4444;text-transform:uppercase}
+.nav-title{font-size:12px;color:var(--muted)}
+.nav-right{display:flex;align-items:center;gap:6px}
+.nb{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nb:hover{background:var(--a);color:#fff;border-color:var(--a)}
+.nc{font-size:12px;color:var(--muted);min-width:90px;text-align:center}
+.deck{padding-top:52px;height:100vh;overflow-y:auto}
+.slide{display:none;min-height:calc(100vh - 52px);padding:18px 40px 28px;flex-direction:column;gap:10px;animation:fi .2s ease}
+.slide.active{display:flex}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+h1{font-size:1.75rem;font-weight:900;line-height:1.1}
+h2{font-size:1.2rem;font-weight:800}
+h3{font-size:.87rem;font-weight:700;margin-bottom:4px}
+p{font-size:.82rem;color:#c9d1d9;line-height:1.65}
+.tag{font-size:.64rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
+.sub{font-size:.81rem;color:var(--muted);margin-top:2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.five{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 13px}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-family:'JetBrains Mono',monospace;font-size:.72rem;line-height:1.8;overflow-x:auto;white-space:pre}
+table{width:100%;border-collapse:collapse}
+th{background:rgba(59,130,246,.1);color:var(--a2);padding:5px 9px;text-align:left;border-bottom:2px solid var(--border);font-size:.7rem}
+td{padding:4px 9px;border-bottom:1px solid var(--border);color:#c9d1d9;font-size:.75rem}
+code{font-family:'JetBrains Mono',monospace;font-size:.75rem;background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;color:var(--a2)}
+
+.bg1{background:rgba(59,130,246,.15);border:1px solid var(--g1);color:var(--g1);border-radius:100px;padding:2px 10px;font-size:.7rem;font-weight:700;display:inline-block}
+.bg2{background:rgba(34,197,94,.15);border:1px solid var(--g2);color:var(--g2);border-radius:100px;padding:2px 10px;font-size:.7rem;font-weight:700;display:inline-block}
+.bg3{background:rgba(167,139,250,.15);border:1px solid var(--g3);color:var(--g3);border-radius:100px;padding:2px 10px;font-size:.7rem;font-weight:700;display:inline-block}
+.bg4{background:rgba(245,158,11,.15);border:1px solid var(--g4);color:var(--g4);border-radius:100px;padding:2px 10px;font-size:.7rem;font-weight:700;display:inline-block}
+.bg5{background:rgba(239,68,68,.15);border:1px solid var(--g5);color:var(--g5);border-radius:100px;padding:2px 10px;font-size:.7rem;font-weight:700;display:inline-block}
+.cg1{background:var(--bg2);border:2px solid var(--g1);border-radius:12px;padding:10px 12px}
+.cg2{background:var(--bg2);border:2px solid var(--g2);border-radius:12px;padding:10px 12px}
+.cg3{background:var(--bg2);border:2px solid var(--g3);border-radius:12px;padding:10px 12px}
+.cg4{background:var(--bg2);border:2px solid var(--g4);border-radius:12px;padding:10px 12px}
+.cg5{background:var(--bg2);border:2px solid var(--g5);border-radius:12px;padding:10px 12px}
+
+/* Timer */
+.timer-card{background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:16px 24px;text-align:center}
+.td{font-family:'JetBrains Mono',monospace;font-size:3.8rem;font-weight:700;letter-spacing:5px;color:var(--a);line-height:1;transition:color .4s}
+.td.warn{color:#f59e0b}
+.td.danger{color:#ef4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.go-btn{background:var(--g2);border:none;color:#000;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:900;padding:9px 28px;border-radius:9px;cursor:pointer;letter-spacing:1px;margin-top:8px;transition:all .15s}
+.go-btn:hover{filter:brightness(1.12)}
+.go-btn.running{background:#ef4444;color:#fff}
+.reset-btn{background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;padding:5px 13px;border-radius:7px;cursor:pointer;margin-left:6px}
+
+/* Reveal buttons */
+.rev-btn{padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.77rem;font-weight:700;border:none;margin-bottom:6px;transition:all .12s;width:100%}
+.rv1{background:rgba(59,130,246,.12);border:1px solid var(--g1);color:var(--g1)}
+.rv2{background:rgba(34,197,94,.12);border:1px solid var(--g2);color:var(--g2)}
+.rv3{background:rgba(167,139,250,.12);border:1px solid var(--g3);color:var(--g3)}
+.rv4{background:rgba(245,158,11,.12);border:1px solid var(--g4);color:var(--g4)}
+.rv5{background:rgba(239,68,68,.12);border:1px solid var(--g5);color:var(--g5)}
+.ans{display:none}
+.note{background:rgba(239,68,68,.06);border-left:3px solid #ef4444;padding:7px 11px;border-radius:0 7px 7px 0;font-size:.78rem;color:#fca5a5;margin-top:6px}
+.check-li{list-style:none;padding:0}
+.check-li li{font-size:.79rem;color:#c9d1d9;padding:3px 0;display:flex;align-items:flex-start;gap:7px}
+.check-li li::before{content:"☐";opacity:.5;flex-shrink:0}
+
+/* Leaderboard */
+.lb-card{background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center;transition:border-color .3s}
+.lb-card.winner{border-color:#f59e0b;box-shadow:0 0 16px rgba(245,158,11,.2)}
+.lb-score{font-family:'JetBrains Mono',monospace;font-size:2.8rem;font-weight:800;line-height:1;margin:8px 0}
+.lb-btns{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.lb-btn{padding:4px 0;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.72rem;font-weight:700;border:none;transition:all .12s;width:100%}
+.pt3{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.4);color:var(--a2)}
+.pt5{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:var(--g2)}
+.pt2{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:var(--g4)}
+.pt-undo{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;font-size:.67rem}
+.reset-lb{background:var(--bg2);border:1px solid var(--border);color:var(--muted);padding:5px 14px;border-radius:7px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:600}
+
+.run-step{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;display:flex;gap:10px;align-items:flex-start}
+.rs-time{font-size:.72rem;font-weight:800;color:var(--a2);background:rgba(59,130,246,.1);padding:2px 8px;border-radius:100px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.rs-say{font-size:.82rem;color:#e6edf3;line-height:1.6}
+.rs-say em{color:var(--g4);font-style:normal;font-weight:700}
+.obox{background:var(--code);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#a5d6ff;margin-top:4px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <span class="nav-badge">INSTRUCTOR ONLY — Do Not Share</span>
+    <span class="nav-title">SQL Detective — Instructor Guide · Day 3</span>
+  </div>
+  <div class="nav-right">
+    <button class="nb" onclick="go(-1)">← Prev</button>
+    <span class="nc" id="ctr">Mission Control</span>
+    <button class="nb" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- 0: MISSION CONTROL + TIMERS -->
+<div class="slide active">
+  <div><div class="tag">Instructor · Mission Control</div>
+  <h1>SQL Detective — Launch Control</h1>
+  <p class="sub">Two separate timers — one per round. Keep this screen for yourself; project Activity.html for students.</p></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="timer-card">
+        <div class="tag" style="margin-bottom:6px">ROUND 1 TIMER · 8 MIN</div>
+        <div class="td" id="t1">08:00</div>
+        <div style="margin-top:8px">
+          <button class="go-btn" id="b1" onclick="startTimer(1)">▶ START R1</button>
+          <button class="reset-btn" onclick="resetTimer(1)">↺ Reset</button>
+        </div>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:8px">Yellow at 2 min · Red + flash at 1 min</p>
+      </div>
+      <div class="timer-card">
+        <div class="tag" style="margin-bottom:6px">ROUND 2 TIMER · 12 MIN</div>
+        <div class="td" id="t2">12:00</div>
+        <div style="margin-top:8px">
+          <button class="go-btn" id="b2" onclick="startTimer(2)">▶ START R2</button>
+          <button class="reset-btn" onclick="resetTimer(2)">↺ Reset</button>
+        </div>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:8px">Yellow at 3 min · Red + flash at 1 min</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card"><h3 style="margin-bottom:7px">Pre-flight checklist</h3>
+        <ul class="check-li">
+          <li>Activity.html shared with all students on their laptops</li>
+          <li>Each student has SSMS open and connected to mskl-masterclass</li>
+          <li>Each group has navigated to their Roleplay slide</li>
+          <li>Tell class: "Roleplay first — 2 minutes. Then I start the timer."</li>
+        </ul>
+      </div>
+      <div class="card"><h3 style="margin-bottom:7px">When a group shouts DONE</h3>
+        <p style="font-size:.8rem;color:#c9d1d9;line-height:1.65">Walk to their screen. Check output columns and row count using the verify checklists on slides 3–7. If correct — announce winner to class, award points on Slide 9 (Leaderboard). Let other groups finish their round before calling time.</p>
+      </div>
+      <div class="note">This file is for you only. Students should never see this screen.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 1: RUN SHEET -->
+<div class="slide">
+  <div><div class="tag">Instructor Script</div>
+  <h2>Run Sheet — What to Say at Each Step</h2>
+  <p class="sub">Follow this sequence. The quotes are what you say aloud to the class.</p></div>
+  <div style="display:flex;flex-direction:column;gap:7px">
+    <div class="run-step"><span class="rs-time">0:00</span><div class="rs-say">Tell the class: <em>"Alright everyone — end-of-day activity. Open Activity.html on your laptop. Go to Slide 2 — Role Assignments — and click your group's button. You will see a Roleplay slide. Your Analyst reads the script out loud to the team. Everyone plays their role. You have 2 minutes."</em> Do NOT start the timer yet.</div></div>
+    <div class="run-step"><span class="rs-time">0:02</span><div class="rs-say">After 2 min: <em>"Great. Analysts — brief done? Coders — SSMS open? Everyone know their role? Okay. Round 1 starts NOW."</em> Hit START R1 on Mission Control.</div></div>
+    <div class="run-step"><span class="rs-time">R1 Mid</span><div class="rs-say">At ~4 minutes into Round 1, do a quick walk-around. Check which groups are stuck. If a group is blocked on joins, point to their Schema card. Don't give answers — just redirect.</div></div>
+    <div class="run-step"><span class="rs-time">R1 Done</span><div class="rs-say">When a group shouts DONE — check their output (slides 3–7). If correct: <em>"[Group X] finishes Round 1 — 3 points!"</em> Award on Leaderboard (Slide 9). Then: <em>"Tell your Coders to go to the Questions slide and unlock Round 2 when I say so."</em></div></div>
+    <div class="run-step"><span class="rs-time">~0:10</span><div class="rs-say">When most groups have finished R1 (or timer ends): <em>"Round 1 closes. Everyone click Unlock Round 2 on your Questions slide now. Round 2 starts."</em> Hit START R2.</div></div>
+    <div class="run-step"><span class="rs-time">R2 Done</span><div class="rs-say">First correct R2 output: <em>"[Group X] finishes Round 2 — 5 points!"</em> Award on leaderboard. Let others continue until R2 timer ends.</div></div>
+    <div class="run-step"><span class="rs-time">~0:22</span><div class="rs-say"><em>"Time! Coders put down keyboards. Presenters — you have 60 seconds each. Start with Group 1. Go."</em> Run through all 5 presenters.</div></div>
+    <div class="run-step"><span class="rs-time">~0:27</span><div class="rs-say"><em>"Class vote — who explained it best? Raise your hand. [Count]. Group X wins the presenter bonus — 2 points!"</em> Award on leaderboard. Show final scores. Debrief with Slide 10.</div></div>
+  </div>
+</div>
+
+<!-- 2: GROUP ASSIGNMENTS -->
+<div class="slide">
+  <div><div class="tag">Quick Reference</div><h2>Group Assignments + What Each Group Solves</h2></div>
+  <div class="five">
+    <div class="cg1"><span class="bg1">Group 1</span>
+      <p style="font-size:.78rem;font-weight:700;color:var(--g1);margin:4px 0">Logistics</p>
+      <div style="font-size:.72rem;color:#c9d1d9;line-height:1.8">📖 Aman S. Verma<br>💻 Aman Thapliyal<br>💻 Amardeep Meena<br>✅ Aviskar Dhavale<br>🎤 Bysani Karthik</div>
+      <p style="font-size:.68rem;color:var(--muted);margin-top:6px">R1: CTE top-5 cities<br>R2: DATEDIFF late delivery</p>
+    </div>
+    <div class="cg2"><span class="bg2">Group 2</span>
+      <p style="font-size:.78rem;font-weight:700;color:var(--g2);margin:4px 0">Finance</p>
+      <div style="font-size:.72rem;color:#c9d1d9;line-height:1.8">📖 Devanand P<br>💻 Harsh Kumar<br>💻 Heemansh Bhawsar<br>✅ Hritin Raj<br>🎤 Kumar Pratik</div>
+      <p style="font-size:.68rem;color:var(--muted);margin-top:6px">R1: DENSE_RANK customers<br>R2: CASE WHEN GROUP BY</p>
+    </div>
+    <div class="cg3"><span class="bg3">Group 3</span>
+      <p style="font-size:.78rem;font-weight:700;color:var(--g3);margin:4px 0">Customer</p>
+      <div style="font-size:.72rem;color:#c9d1d9;line-height:1.8">📖 M Gaurav Kumar<br>💻 P V Ganadeep<br>💻 Payal<br>✅ Prishita Shukla<br>🎤 Raj Sharma</div>
+      <p style="font-size:.68rem;color:var(--muted);margin-top:6px">R1: HAVING + subquery<br>R2: Profit margin formula</p>
+    </div>
+    <div class="cg4"><span class="bg4">Group 4</span>
+      <p style="font-size:.78rem;font-weight:700;color:var(--g4);margin:4px 0">Operations</p>
+      <div style="font-size:.72rem;color:#c9d1d9;line-height:1.8">📖 Kamal Kumar<br>💻 S R Sneha<br>💻 Saket Ranjan<br>✅ Santosh Kumar<br>🎤 Shivam Kumar</div>
+      <p style="font-size:.68rem;color:var(--muted);margin-top:6px">R1: Running total window fn<br>R2: DATEDIFF ×2 ship mode</p>
+    </div>
+    <div class="cg5"><span class="bg5">Group 5</span>
+      <p style="font-size:.78rem;font-weight:700;color:var(--g5);margin:4px 0">Strategy</p>
+      <div style="font-size:.72rem;color:#c9d1d9;line-height:1.8">📖 Sujit Kumar<br>💻 Sukrit Ghosh<br>💻 Sushant Kumar<br>✅ T Nikshitha<br>🎤 Yogesh Patidar</div>
+      <p style="font-size:.68rem;color:var(--muted);margin-top:6px">R1: CTE regional summary<br>R2: Subquery in SELECT %</p>
+    </div>
+  </div>
+</div>
+
+<!-- 3: G1 ANSWERS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg1">Group 1 · Logistics</span><span style="font-size:.76rem;color:var(--muted)">Aman S. · Aman T. · Amardeep · Aviskar · Bysani</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card" style="border-color:rgba(59,130,246,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g1);margin-bottom:5px;letter-spacing:1px">ROUND 1 — CTE Top 5 Cities by Orders</div>
+        <button class="rev-btn rv1" onclick="rev('a1r1',this)">▼ Reveal R1 Answer</button>
+        <div class="ans" id="a1r1">
+<pre>WITH city_orders AS (
+    SELECT l.city, l.state,
+           COUNT(o.order_id) AS order_count
+    FROM ex_orders o
+    LEFT JOIN ex_customers c
+        ON o.customer_id = c.customer_id
+    LEFT JOIN ex_locations l
+        ON c.postal_code = l.postal_code
+    WHERE l.city IS NOT NULL
+    GROUP BY l.city, l.state
+)
+SELECT TOP 5 city, state, order_count
+FROM city_orders
+ORDER BY order_count DESC</pre>
+          <div class="obox">city | state | order_count</div>
+          <ul class="check-li" style="margin-top:6px">
+            <li>Exactly 5 rows</li>
+            <li>Ordered by order_count DESC</li>
+            <li>No NULL in city column</li>
+            <li>CTE used (not a subquery inline)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(59,130,246,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g1);margin-bottom:5px;letter-spacing:1px">ROUND 2 — DATEDIFF Late Delivery Top 5 States</div>
+        <button class="rev-btn rv1" onclick="rev('a1r2',this)">▼ Reveal R2 Answer</button>
+        <div class="ans" id="a1r2">
+<pre>SELECT TOP 5
+    l.state,
+    COUNT(*)                                   AS late_orders,
+    AVG(DATEDIFF(day,
+        o.order_estimated_delivery_date,
+        o.order_delivered_date))               AS avg_delay_days
+FROM ex_orders o
+LEFT JOIN ex_customers c ON o.customer_id=c.customer_id
+LEFT JOIN ex_locations l ON c.postal_code=l.postal_code
+WHERE o.order_delivered_date &gt;
+      o.order_estimated_delivery_date
+  AND o.order_delivered_date IS NOT NULL
+GROUP BY l.state
+ORDER BY late_orders DESC</pre>
+          <ul class="check-li" style="margin-top:6px">
+            <li>5 rows · ordered by late_orders DESC</li>
+            <li>avg_delay_days is a positive number</li>
+            <li>No NULL in state column</li>
+          </ul>
+          <div class="note">Key concept: DATEDIFF(day, start, end) + WHERE delivered &gt; estimated + IS NOT NULL guard on AVG</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:7px">R1 Concept · CTE</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9">CTE separates the aggregation logic from the TOP N selection. Students must understand that you cannot do <code>SELECT TOP 5 ... GROUP BY</code> directly — you aggregate first, then filter with TOP or HAVING in the outer query.</p>
+      <h3 style="margin-bottom:5px;margin-top:10px">R2 Concept · DATEDIFF</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9"><code>DATEDIFF(day, start, end)</code> — arguments are in order of start to end, NOT "which date comes later". The IS NOT NULL guard prevents NULL values from skewing the AVG.</p>
+      <div class="note">If a group gets empty results in R2 — check they have the WHERE condition correct (delivered &gt; estimated).</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4: G2 ANSWERS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg2">Group 2 · Finance</span><span style="font-size:.76rem;color:var(--muted)">Devanand · Harsh · Heemansh · Hritin · Kumar Pratik</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card" style="border-color:rgba(34,197,94,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g2);margin-bottom:5px;letter-spacing:1px">ROUND 1 — DENSE_RANK Top 5 Customers by Revenue</div>
+        <button class="rev-btn rv2" onclick="rev('a2r1',this)">▼ Reveal R1 Answer</button>
+        <div class="ans" id="a2r1">
+<pre>WITH customer_rev AS (
+    SELECT c.customer_name,
+           ROUND(SUM(t.Sales_Amount), 2) AS total_revenue
+    FROM ex_transactions t
+    LEFT JOIN ex_orders o
+        ON t.Order_ID = o.order_id
+    LEFT JOIN ex_customers c
+        ON o.customer_id = c.customer_id
+    GROUP BY c.customer_name
+)
+SELECT TOP 5
+    customer_name,
+    total_revenue,
+    DENSE_RANK() OVER (ORDER BY total_revenue DESC)
+        AS revenue_rank
+FROM customer_rev
+ORDER BY revenue_rank</pre>
+          <ul class="check-li" style="margin-top:6px">
+            <li>5 rows · ordered by revenue_rank ASC</li>
+            <li>revenue_rank starts at 1</li>
+            <li>Window function is in outer SELECT, not inside CTE</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(34,197,94,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g2);margin-bottom:5px;letter-spacing:1px">ROUND 2 — CASE WHEN in GROUP BY</div>
+        <button class="rev-btn rv2" onclick="rev('a2r2',this)">▼ Reveal R2 Answer</button>
+        <div class="ans" id="a2r2">
+<pre>SELECT
+    CASE WHEN Discount &gt; 0
+         THEN 'Discounted'
+         ELSE 'Full Price' END          AS price_type,
+    COUNT(DISTINCT Order_ID)            AS order_count,
+    ROUND(SUM(Sales_Amount), 2)         AS total_revenue,
+    ROUND(AVG(Sales_Amount), 2)         AS avg_revenue
+FROM ex_transactions
+GROUP BY
+    CASE WHEN Discount &gt; 0
+         THEN 'Discounted'
+         ELSE 'Full Price' END
+ORDER BY total_revenue DESC</pre>
+          <ul class="check-li" style="margin-top:6px">
+            <li>Exactly 2 rows: 'Discounted' and 'Full Price'</li>
+            <li>CASE WHEN repeated exactly in GROUP BY</li>
+            <li>Uses COUNT(DISTINCT Order_ID)</li>
+            <li>Only ex_transactions — no joins</li>
+          </ul>
+          <div class="note">Key concept: SQL Server does not allow GROUP BY alias — the exact CASE WHEN expression must be repeated</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:7px">R1 Concept · Window function over aggregate</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9">You cannot apply <code>DENSE_RANK() OVER (...)</code> to a column that is itself the result of <code>SUM()</code> in the same SELECT level. The CTE creates an intermediate result set (flat table with total_revenue), and the window function is applied in the next SELECT on top of it.</p>
+      <h3 style="margin-bottom:5px;margin-top:10px">R2 Concept · CASE WHEN in GROUP BY</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9">SQL Server evaluates GROUP BY before SELECT aliases — so you must copy the full CASE WHEN logic into GROUP BY. This is a common mistake beginners make (trying to GROUP BY 'price_type').</p>
+    </div>
+  </div>
+</div>
+
+<!-- 5: G3 ANSWERS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg3">Group 3 · Customer</span><span style="font-size:.76rem;color:var(--muted)">Gaurav · Ganadeep · Payal · Prishita · Raj</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card" style="border-color:rgba(167,139,250,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g3);margin-bottom:5px;letter-spacing:1px">ROUND 1 — HAVING with Subquery</div>
+        <button class="rev-btn rv3" onclick="rev('a3r1',this)">▼ Reveal R1 Answer</button>
+        <div class="ans" id="a3r1">
+<pre>SELECT c.segment,
+       ROUND(AVG(t.Sales_Amount), 2)  AS avg_order_value
+FROM ex_transactions t
+LEFT JOIN ex_orders o
+    ON t.Order_ID = o.order_id
+LEFT JOIN ex_customers c
+    ON o.customer_id = c.customer_id
+GROUP BY c.segment
+HAVING AVG(t.Sales_Amount) &gt; (
+    SELECT AVG(Sales_Amount)
+    FROM ex_transactions
+)
+ORDER BY avg_order_value DESC</pre>
+          <ul class="check-li" style="margin-top:6px">
+            <li>Only segments above overall average appear</li>
+            <li>Ordered by avg_order_value DESC</li>
+            <li>HAVING used — not WHERE</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(167,139,250,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g3);margin-bottom:5px;letter-spacing:1px">ROUND 2 — Profit Margin by Segment</div>
+        <button class="rev-btn rv3" onclick="rev('a3r2',this)">▼ Reveal R2 Answer</button>
+        <div class="ans" id="a3r2">
+<pre>SELECT
+    c.segment,
+    ROUND(SUM(t.Sales_Amount), 2)        AS total_revenue,
+    ROUND(SUM(t.COGS), 2)                AS total_cogs,
+    ROUND(SUM(t.Sales_Amount-t.COGS),2)  AS total_profit,
+    ROUND(SUM(t.Sales_Amount-t.COGS)
+          / SUM(t.Sales_Amount)*100, 2)  AS profit_margin_pct
+FROM ex_transactions t
+LEFT JOIN ex_orders o ON t.Order_ID=o.order_id
+LEFT JOIN ex_customers c ON o.customer_id=c.customer_id
+GROUP BY c.segment
+ORDER BY total_profit DESC</pre>
+          <ul class="check-li" style="margin-top:6px">
+            <li>3 rows: Consumer, Corporate, Home Office</li>
+            <li>profit_margin_pct between 0–100</li>
+            <li>Ordered by total_profit DESC</li>
+          </ul>
+          <div class="note">Key concept: margin = SUM(rev−cost)/SUM(rev)*100 — divide aggregate sums, not average of row-level ratios</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:7px">R1 Concept · HAVING vs WHERE</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9">WHERE filters rows before aggregation. HAVING filters groups after. A scalar subquery inside HAVING is evaluated once and compared against each group's aggregate value. Common mistake: putting the subquery in WHERE instead of HAVING.</p>
+      <h3 style="margin-bottom:5px;margin-top:10px">R2 Concept · Profit margin aggregation</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9">The margin formula must use SUM-level division. <code>AVG(Sales_Amount - COGS) / AVG(Sales_Amount)</code> gives a different (wrong) answer — the correct approach sums both numerator and denominator separately before dividing.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 6: G4 ANSWERS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg4">Group 4 · Operations</span><span style="font-size:.76rem;color:var(--muted)">Kamal · Sneha · Saket · Santosh · Shivam</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card" style="border-color:rgba(245,158,11,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g4);margin-bottom:5px;letter-spacing:1px">ROUND 1 — Running Total (Window Function)</div>
+        <button class="rev-btn rv4" onclick="rev('a4r1',this)">▼ Reveal R1 Answer</button>
+        <div class="ans" id="a4r1">
+<pre>WITH monthly AS (
+    SELECT YEAR(order_purchase_date)   AS yr,
+           MONTH(order_purchase_date)  AS mo,
+           COUNT(order_id)             AS monthly_orders
+    FROM ex_orders
+    WHERE order_purchase_date IS NOT NULL
+    GROUP BY YEAR(order_purchase_date),
+             MONTH(order_purchase_date)
+)
+SELECT yr, mo, monthly_orders,
+       SUM(monthly_orders) OVER (
+           ORDER BY yr, mo
+       ) AS running_total
+FROM monthly
+ORDER BY yr, mo</pre>
+          <ul class="check-li" style="margin-top:6px">
+            <li>One row per month</li>
+            <li>running_total grows monotonically (never decreases)</li>
+            <li>Ordered by yr, mo ASC</li>
+            <li>Window function in outer SELECT, not inside CTE</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(245,158,11,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g4);margin-bottom:5px;letter-spacing:1px">ROUND 2 — Ship Mode Speed (DATEDIFF ×2)</div>
+        <button class="rev-btn rv4" onclick="rev('a4r2',this)">▼ Reveal R2 Answer</button>
+        <div class="ans" id="a4r2">
+<pre>SELECT
+    ship_mode,
+    COUNT(order_id)                     AS total_orders,
+    AVG(DATEDIFF(day,
+        order_purchase_date,
+        order_dispatched_date))         AS avg_days_to_dispatch,
+    AVG(DATEDIFF(day,
+        order_purchase_date,
+        order_delivered_date))          AS avg_days_to_deliver
+FROM ex_orders
+WHERE order_dispatched_date IS NOT NULL
+  AND order_delivered_date  IS NOT NULL
+GROUP BY ship_mode
+ORDER BY avg_days_to_deliver ASC</pre>
+          <ul class="check-li" style="margin-top:6px">
+            <li>3 rows (one per ship mode)</li>
+            <li>avg_days_to_deliver ascending (fastest first)</li>
+            <li>Both IS NOT NULL filters applied</li>
+            <li>Only ex_orders — no joins</li>
+          </ul>
+          <div class="note">Key concept: two separate DATEDIFF() calls in one SELECT, both wrapped in AVG() — one pass gives two different averages</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:7px">R1 Concept · Cumulative SUM OVER</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9"><code>SUM(col) OVER (ORDER BY ...)</code> without a PARTITION BY creates a running total across all rows ordered by the specified column(s). Each row's value is the sum of all previous rows plus itself. The CTE is needed because you cannot reference an aggregate alias in a window function in the same SELECT.</p>
+      <h3 style="margin-bottom:5px;margin-top:10px">R2 Concept · Multiple DATEDIFF</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9">DATEDIFF arguments: <code>DATEDIFF(unit, earlier_date, later_date)</code>. Both calculations run per row before AVG aggregates them across the group. IS NOT NULL prevents partial order records from skewing averages.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 7: G5 ANSWERS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg5">Group 5 · Strategy</span><span style="font-size:.76rem;color:var(--muted)">Sujit · Sukrit · Sushant · Nikshitha · Yogesh</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card" style="border-color:rgba(239,68,68,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g5);margin-bottom:5px;letter-spacing:1px">ROUND 1 — CTE Regional Summary</div>
+        <button class="rev-btn rv5" onclick="rev('a5r1',this)">▼ Reveal R1 Answer</button>
+        <div class="ans" id="a5r1">
+<pre>WITH region_summary AS (
+    SELECT l.region,
+           ROUND(SUM(t.Sales_Amount), 2)    AS total_revenue,
+           COUNT(DISTINCT c.customer_id)    AS unique_customers,
+           ROUND(AVG(t.Sales_Amount), 2)    AS avg_order_value
+    FROM ex_transactions t
+    LEFT JOIN ex_orders o ON t.Order_ID=o.order_id
+    LEFT JOIN ex_customers c ON o.customer_id=c.customer_id
+    LEFT JOIN ex_locations l ON c.postal_code=l.postal_code
+    WHERE l.region IS NOT NULL
+    GROUP BY l.region
+)
+SELECT region, total_revenue,
+       unique_customers, avg_order_value
+FROM region_summary
+ORDER BY total_revenue DESC</pre>
+          <ul class="check-li" style="margin-top:6px">
+            <li>One row per region (typically 4)</li>
+            <li>unique_customers uses DISTINCT customer_id</li>
+            <li>Ordered by total_revenue DESC</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(239,68,68,.3)">
+        <div style="font-size:.7rem;font-weight:800;color:var(--g5);margin-bottom:5px;letter-spacing:1px">ROUND 2 — Revenue % by Region (Subquery in SELECT)</div>
+        <button class="rev-btn rv5" onclick="rev('a5r2',this)">▼ Reveal R2 Answer</button>
+        <div class="ans" id="a5r2">
+<pre>SELECT
+    l.region,
+    ROUND(SUM(t.Sales_Amount), 2)       AS total_revenue,
+    ROUND(SUM(t.Sales_Amount) * 100.0
+          / (SELECT SUM(Sales_Amount)
+             FROM ex_transactions), 2)  AS revenue_pct
+FROM ex_transactions t
+LEFT JOIN ex_orders o ON t.Order_ID=o.order_id
+LEFT JOIN ex_customers c ON o.customer_id=c.customer_id
+LEFT JOIN ex_locations l ON c.postal_code=l.postal_code
+WHERE l.region IS NOT NULL
+GROUP BY l.region
+ORDER BY total_revenue DESC</pre>
+          <ul class="check-li" style="margin-top:6px">
+            <li>One row per region</li>
+            <li>revenue_pct values sum to ~100</li>
+            <li>Ordered by total_revenue DESC</li>
+            <li>* 100.0 (not * 100) for decimal result</li>
+          </ul>
+          <div class="note">Key concept: scalar subquery in SELECT — runs once per query, not per row. Returns the global total to use as the denominator</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:7px">R1 Concept · COUNT(DISTINCT)</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9">A customer who placed 10 orders would be counted 10 times with plain COUNT. <code>COUNT(DISTINCT customer_id)</code> collapses duplicates — giving the actual number of unique customers, not transaction count.</p>
+      <h3 style="margin-bottom:5px;margin-top:10px">R2 Concept · Scalar subquery in SELECT</h3>
+      <p style="font-size:.79rem;line-height:1.7;color:#c9d1d9">A subquery in the SELECT clause is evaluated once and returns a single value (scalar). Every row's SUM(Sales_Amount) is then divided by this global total. The <code>* 100.0</code> forces float division — without the decimal, SQL Server would do integer division and return 0.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 8: LEADERBOARD -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div><div class="tag">Live Scoring</div><h2>Leaderboard</h2></div>
+    <button class="reset-lb" style="margin-left:auto" onclick="resetScores()">↺ Reset All Scores</button>
+  </div>
+  <div class="five" id="lb">
+    <div class="lb-card cg1" id="lc1">
+      <span class="bg1">Group 1</span>
+      <p style="font-size:.75rem;color:var(--g1);margin-top:4px;font-weight:700">Logistics</p>
+      <div class="lb-score" id="ls1" style="color:var(--g1)">0</div>
+      <p style="font-size:.65rem;color:var(--muted)">pts</p>
+      <div class="lb-btns">
+        <button class="lb-btn pt3" onclick="award(1,3)">+3 Round 1 First</button>
+        <button class="lb-btn pt5" onclick="award(1,5)">+5 Round 2 First</button>
+        <button class="lb-btn pt2" onclick="award(1,2)">+2 Best Presenter</button>
+        <button class="lb-btn pt-undo" onclick="award(1,-1)">−1 Undo</button>
+      </div>
+    </div>
+    <div class="lb-card cg2" id="lc2">
+      <span class="bg2">Group 2</span>
+      <p style="font-size:.75rem;color:var(--g2);margin-top:4px;font-weight:700">Finance</p>
+      <div class="lb-score" id="ls2" style="color:var(--g2)">0</div>
+      <p style="font-size:.65rem;color:var(--muted)">pts</p>
+      <div class="lb-btns">
+        <button class="lb-btn pt3" onclick="award(2,3)">+3 Round 1 First</button>
+        <button class="lb-btn pt5" onclick="award(2,5)">+5 Round 2 First</button>
+        <button class="lb-btn pt2" onclick="award(2,2)">+2 Best Presenter</button>
+        <button class="lb-btn pt-undo" onclick="award(2,-1)">−1 Undo</button>
+      </div>
+    </div>
+    <div class="lb-card cg3" id="lc3">
+      <span class="bg3">Group 3</span>
+      <p style="font-size:.75rem;color:var(--g3);margin-top:4px;font-weight:700">Customer</p>
+      <div class="lb-score" id="ls3" style="color:var(--g3)">0</div>
+      <p style="font-size:.65rem;color:var(--muted)">pts</p>
+      <div class="lb-btns">
+        <button class="lb-btn pt3" onclick="award(3,3)">+3 Round 1 First</button>
+        <button class="lb-btn pt5" onclick="award(3,5)">+5 Round 2 First</button>
+        <button class="lb-btn pt2" onclick="award(3,2)">+2 Best Presenter</button>
+        <button class="lb-btn pt-undo" onclick="award(3,-1)">−1 Undo</button>
+      </div>
+    </div>
+    <div class="lb-card cg4" id="lc4">
+      <span class="bg4">Group 4</span>
+      <p style="font-size:.75rem;color:var(--g4);margin-top:4px;font-weight:700">Operations</p>
+      <div class="lb-score" id="ls4" style="color:var(--g4)">0</div>
+      <p style="font-size:.65rem;color:var(--muted)">pts</p>
+      <div class="lb-btns">
+        <button class="lb-btn pt3" onclick="award(4,3)">+3 Round 1 First</button>
+        <button class="lb-btn pt5" onclick="award(4,5)">+5 Round 2 First</button>
+        <button class="lb-btn pt2" onclick="award(4,2)">+2 Best Presenter</button>
+        <button class="lb-btn pt-undo" onclick="award(4,-1)">−1 Undo</button>
+      </div>
+    </div>
+    <div class="lb-card cg5" id="lc5">
+      <span class="bg5">Group 5</span>
+      <p style="font-size:.75rem;color:var(--g5);margin-top:4px;font-weight:700">Strategy</p>
+      <div class="lb-score" id="ls5" style="color:var(--g5)">0</div>
+      <p style="font-size:.65rem;color:var(--muted)">pts</p>
+      <div class="lb-btns">
+        <button class="lb-btn pt3" onclick="award(5,3)">+3 Round 1 First</button>
+        <button class="lb-btn pt5" onclick="award(5,5)">+5 Round 2 First</button>
+        <button class="lb-btn pt2" onclick="award(5,2)">+2 Best Presenter</button>
+        <button class="lb-btn pt-undo" onclick="award(5,-1)">−1 Undo</button>
+      </div>
+    </div>
+  </div>
+  <div id="winner-banner" style="display:none;text-align:center;padding:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;font-size:.9rem;font-weight:800;color:#fcd34d"></div>
+</div>
+
+<!-- 9: DEBRIEF -->
+<div class="slide">
+  <div><div class="tag">After the activity · Project this</div><h2>Big Reveal — What Each Group Discovered</h2>
+  <p class="sub">Presenter explains in 60 sec, then you highlight the key concept learned.</p></div>
+  <div class="five">
+    <div class="cg1"><span class="bg1">Group 1</span>
+      <p style="font-size:.77rem;font-weight:700;color:var(--g1);margin:5px 0 4px">CTE + DATEDIFF</p>
+      <ul style="font-size:.72rem;color:#c9d1d9;padding-left:13px;line-height:1.9">
+        <li>CTE separates aggregation from TOP N</li>
+        <li>DATEDIFF(day, start, end)</li>
+        <li>WHERE delivered &gt; estimated</li>
+        <li>IS NOT NULL protects AVG</li>
+      </ul>
+    </div>
+    <div class="cg2"><span class="bg2">Group 2</span>
+      <p style="font-size:.77rem;font-weight:700;color:var(--g2);margin:5px 0 4px">Window fn + CASE WHEN</p>
+      <ul style="font-size:.72rem;color:#c9d1d9;padding-left:13px;line-height:1.9">
+        <li>CTE needed for window over agg</li>
+        <li>DENSE_RANK() OVER (ORDER BY)</li>
+        <li>CASE WHEN repeated in GROUP BY</li>
+        <li>COUNT(DISTINCT Order_ID)</li>
+      </ul>
+    </div>
+    <div class="cg3"><span class="bg3">Group 3</span>
+      <p style="font-size:.77rem;font-weight:700;color:var(--g3);margin:5px 0 4px">HAVING + Profit margin</p>
+      <ul style="font-size:.72rem;color:#c9d1d9;padding-left:13px;line-height:1.9">
+        <li>HAVING filters after aggregation</li>
+        <li>Scalar subquery inside HAVING</li>
+        <li>Margin = SUM(rev−cost)/SUM(rev)</li>
+        <li>Divide sums, not sum of ratios</li>
+      </ul>
+    </div>
+    <div class="cg4"><span class="bg4">Group 4</span>
+      <p style="font-size:.77rem;font-weight:700;color:var(--g4);margin:5px 0 4px">Running total + dual DATEDIFF</p>
+      <ul style="font-size:.72rem;color:#c9d1d9;padding-left:13px;line-height:1.9">
+        <li>SUM() OVER (ORDER BY) = cumulative</li>
+        <li>Two DATEDIFF in one SELECT</li>
+        <li>Both wrapped in AVG()</li>
+        <li>IS NOT NULL on both dates</li>
+      </ul>
+    </div>
+    <div class="cg5"><span class="bg5">Group 5</span>
+      <p style="font-size:.77rem;font-weight:700;color:var(--g5);margin:5px 0 4px">CTE + scalar subquery</p>
+      <ul style="font-size:.72rem;color:#c9d1d9;padding-left:13px;line-height:1.9">
+        <li>COUNT(DISTINCT) for unique count</li>
+        <li>Subquery in SELECT runs once</li>
+        <li>* 100.0 forces float division</li>
+        <li>4-table join chain</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note" style="font-size:.8rem;color:#fca5a5">New concepts today that were NOT covered in class: DATEDIFF · CASE WHEN in GROUP BY · Profit margin aggregation · Cumulative SUM OVER · Scalar subquery in SELECT</div>
+</div>
+
+</div>
+<script>
+// Navigation
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const N=slides.length;
+const labels=['Mission Control','Run Sheet','Group Assignments','G1 Answers','G2 Answers','G3 Answers','G4 Answers','G5 Answers','Leaderboard','Debrief'];
+function show(n){slides[cur].classList.remove('active');cur=(n+N)%N;slides[cur].classList.add('active');document.getElementById('ctr').textContent=labels[cur];document.querySelector('.deck').scrollTop=0;}
+function go(d){show(cur+d);}
+function rev(id,btn){const el=document.getElementById(id);if(el.style.display==='block'){el.style.display='none';btn.textContent=btn.textContent.replace('▲','▼');}else{el.style.display='block';btn.textContent=btn.textContent.replace('▼','▲');}}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+document.getElementById('ctr').textContent=labels[0];
+
+// Two independent timers
+const configs=[null,{sec:8*60,warnAt:120,dangerAt:60,tdId:'t1',bId:'b1'},{sec:12*60,warnAt:180,dangerAt:60,tdId:'t2',bId:'b2'}];
+const state=[null,{rem:8*60,iv:null,run:false},{rem:12*60,iv:null,run:false}];
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function updateDisp(t){
+  const cfg=configs[t],st=state[t];
+  const el=document.getElementById(cfg.tdId);
+  el.textContent=fmt(st.rem);
+  el.className='td'+(st.rem<=cfg.dangerAt?' danger':st.rem<=cfg.warnAt?' warn':'');
+}
+function startTimer(t){
+  const cfg=configs[t],st=state[t],btn=document.getElementById(cfg.bId);
+  if(st.run){clearInterval(st.iv);st.run=false;btn.textContent='▶ Resume R'+t;btn.classList.remove('running');}
+  else{
+    if(st.rem<=0)return;
+    st.run=true;btn.textContent='⏸ Pause';btn.classList.add('running');
+    st.iv=setInterval(()=>{if(st.rem<=0){clearInterval(st.iv);st.run=false;btn.textContent='⏱ Done';btn.classList.remove('running');return;}st.rem--;updateDisp(t);},1000);
+  }
+}
+function resetTimer(t){
+  const cfg=configs[t],st=state[t],btn=document.getElementById(cfg.bId);
+  clearInterval(st.iv);st.run=false;st.rem=cfg.sec;updateDisp(t);
+  btn.textContent='▶ START R'+t;btn.classList.remove('running');
+}
+updateDisp(1);updateDisp(2);
+
+// Leaderboard
+const scores=[0,0,0,0,0,0];
+function award(g,pts){
+  scores[g]=Math.max(0,scores[g]+pts);
+  document.getElementById('ls'+g).textContent=scores[g];
+  updateWinner();
+}
+function updateWinner(){
+  const max=Math.max(...scores.slice(1));
+  for(let i=1;i<=5;i++){document.getElementById('lc'+i).classList.toggle('winner',scores[i]===max&&max>0);}
+  const gNames=['','Logistics','Finance','Customer','Operations','Strategy'];
+  const winners=[];for(let i=1;i<=5;i++){if(scores[i]===max&&max>0)winners.push('Group '+i+' ('+gNames[i]+')');}
+  const b=document.getElementById('winner-banner');
+  if(winners.length>0){b.style.display='block';b.textContent='🏆 Leading: '+winners.join(' · ')+' — '+max+' pts';}
+  else{b.style.display='none';}
+}
+function resetScores(){for(let i=1;i<=5;i++){scores[i]=0;document.getElementById('ls'+i).textContent='0';document.getElementById('lc'+i).classList.remove('winner');}document.getElementById('winner-banner').style.display='none';}
+</script>
+</body>
+</html>

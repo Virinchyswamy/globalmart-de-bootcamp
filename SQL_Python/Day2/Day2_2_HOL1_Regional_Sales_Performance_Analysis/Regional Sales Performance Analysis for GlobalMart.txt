@@ -1,0 +1,604 @@
+# Regional Sales Performance Analysis for GlobalMart
+## Content Type
+Scenario
+
+## Overview
+**GlobalMart** operates across multiple regions, each contributing differently to overall sales performance. While the company has access to detailed order and transaction data, the leadership team lacks visibility into:
+
+- How sales are trending regionally over time
+- Which marketing campaigns are driving regional growth
+- Whether campaign performance is translating into actual revenue
+
+To solve this, the data team is building a **Regional Sales & Marketing Performance Report** using SQL.
+
+This report will:
+
+- Track **regional sales trends (daily, MTD, YTD)** using delivered orders
+- Measure **campaign performance across regions** using impressions, clicks, and conversions
+- Connect campaigns to actual sales to evaluate **true business impact**
+
+Using SQL, joins, aggregations, CTEs, and window functions, you will build a unified report that combines **sales performance with marketing effectiveness**.
+
+By the end, stakeholders will be able to:
+
+- Identify high-performing regions
+- Understand which campaigns are driving growth
+- Optimize marketing spend and regional strategy
+
+## Learning Objectives
+- Demonstrate use of JOIN, GROUP BY, and WHERE clause to ensure accurate filtering and calculations.
+- Demonstrate knowledge of common table expressions (CTEs) to structure and simplify complex queries.
+- Implement window functions to calculate cumulative totals, percentages, and rankings.
+
+## Prerequisites
+- Knowledge of basic SQL concepts like SELECT, WHERE, GROUP BY, HAVING, ORDER BY, and JOIN.
+- Understand common SQL functions like `COUNT`, `SUM`, and `DATEDIFF`.
+- Know the purpose and use of joins (e.g., INNER JOIN, LEFT JOIN).
+- Knowledge of window functions like RANK(), DENSE_RANK(), ROW_NUMBER(), and SUM() OVER().
+
+## Duration of Completion
+30 minutes
+
+## Level
+Advanced
+
+## Industries
+- e-commerce
+
+## Tags
+- approach (skill)
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+**GlobalMart** operates across multiple regions, each contributing differently to overall sales performance. While the company has access to detailed order and transaction data, the leadership team lacks visibility into:
+
+- How sales are trending regionally over time
+- Which marketing campaigns are driving regional growth
+- Whether campaign performance is translating into actual revenue
+
+To solve this, the data team is building a **Regional Sales & Marketing Performance Report** using SQL.
+
+This report will:
+
+- Track **regional sales trends (daily, MTD, YTD)** using delivered orders
+- Measure **campaign performance across regions** using impressions, clicks, and conversions
+- Connect campaigns to actual sales to evaluate **true business impact**
+
+Using SQL, joins, aggregations, CTEs, and window functions, you will build a unified report that combines **sales performance with marketing effectiveness**.
+
+By the end, stakeholders will be able to:
+
+- Identify high-performing regions
+- Understand which campaigns are driving growth
+- Optimize marketing spend and regional strategy
+
+#### Level
+advanced
+
+#### Industries
+- e-commerce
+
+#### Tags
+- approach (skill)
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+GlobalMart wants to move beyond just tracking sales — they want to understand **what is driving those sales**.
+
+The Data Intelligence team has been tasked with building a **Regional Sales & Campaign Performance Report**.
+
+This report should help answer:
+
+- How are sales trending across regions over time?
+- Which campaigns are performing well in each region?
+- Are high-performing campaigns actually generating revenue?
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+>[!NOTE] 
+> Open SQL Server Management Studio and Connect to the Server using below credentials
+
+>[!IMPORTANT] 
+
+Server name : mentorskool.database.windows.net
+Username : mskllearnlogin
+Password : !@#sw2aq1
+
+- Use the **mskl-masterclass** database
+- [Here](https://cdn.enqurious.com/others/30134a54-509f-4772-938c-73845f26e4c0_newERdatadict.xlsx) is the data dictionary and ER diagram for the tables you'll be working with.
+
+**Tags**
+
+
+##### Input 3
+**Type:** Code
+
+**Question:** ### **Task 1 – Regional Sales Performance**
+
+
+Track how sales are growing across regions over time using **MTD and YTD analysis**.
+
+
+ **Expected Output**
+
+|Region|Order Date|Year|Month Name|Sales|MTD|YTD|
+|---|---|---|---|---|---|---|
+|East|2023-01-05|2023|January|1720.98|1720.98|1720.98|
+|East|2023-01-10|2023|January|1529.16|3250.14|3250.14|
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+## Understanding the Problem
+
+
+GlobalMart wants to monitor **regional sales trends** to improve inventory and marketing decisions.  
+Your task is to generate a **Regional Sales Performance Report** showing **daily, monthly, and year-to-date (YTD)** sales performance for **delivered orders**.
+
+The report should include:
+
+- **Region**
+    
+- **Order Date**
+    
+- **Year**
+    
+- **Month Name**
+    
+- **Sales** (daily total)
+    
+- **MTD (Month-to-Date)** cumulative sales
+    
+- **YTD (Year-to-Date)** cumulative sales
+    
+
+---
+
+## Step 1: What data do we need?
+
+
+|Data Point|Description|Source Table|
+|---|---|---|
+|Region|Geographic region of the customer|`locations_01`|
+|Order Date|Date when the order was placed|`ex_orders`|
+|Sales Amount|Total sales value per order|`ex_transactions`|
+|Year, Month, Month Name|Extracted from order date|Derived columns|
+
+---
+
+## Step 2: Which SQL concepts do we need?
+
+
+- **Date functions:** `YEAR()`, `MONTH()`, `DATENAME()`
+    
+- **Aggregations:** `SUM()` for total daily sales
+    
+- **Window functions:**
+    
+    - `SUM() OVER (...)` for cumulative totals (MTD and YTD)
+        
+- **Filters:** Only include orders where `order_status = 'delivered'`
+    
+
+---
+
+## Step 3: Build the Solution Step-by-Step
+
+<BR>
+
+### Phase 1 – Extract Delivered Orders with Region and Sales
+
+We begin by collecting all **delivered orders** and linking them with **region** and **sales** information.
+
+```sql
+WITH DeliveredOrders AS 
+(     
+SELECT          
+   l.region,           
+   CAST(o.order_purchase_date AS DATE) AS order_date,           
+    t.sales_amount       
+FROM ex_orders o     
+JOIN ex_customers c         
+   ON o.customer_id = c.customer_id     
+JOIN locations_01 l         
+   ON l.postal_code = c.postal_code     
+JOIN ex_transactions t         
+   ON t.order_id = o.order_id     
+WHERE o.order_status = 'delivered' )`
+```
+
+---
+
+### Phase 2 – Aggregate Daily Sales and Extract Date Components
+
+Now, we calculate **daily total sales** for each region and derive the **year**, **month**, and **month name** for reporting.
+
+```sql
+, 
+AggregatedSales AS 
+(     
+SELECT         
+   region,          
+   order_date,         
+   YEAR(order_date) AS sales_year,         
+   MONTH(order_date) AS sales_month,         
+   DATENAME(MONTH, order_date) AS month_name,         
+   ROUND(SUM(sales_amount), 2) AS total_sales     
+FROM DeliveredOrders     
+GROUP BY          
+   region, order_date,          
+   YEAR(order_date),          
+   MONTH(order_date),          
+   DATENAME(MONTH, order_date) 
+)
+```
+
+---
+
+### Phase 3 – Calculate MTD (Month-to-Date) and YTD (Year-to-Date) Sales
+
+Using **window functions**, we calculate:
+
+- **MTD:** Running total of sales within the same month.
+    
+- **YTD:** Running total of sales from the start of the year to that date.
+    
+
+```sql
+SELECT      
+   region,     
+   order_date,     
+   sales_year AS Year,     
+   sales_month AS Month,     
+   month_name AS Month_name,     
+   total_sales AS Sales,     
+ -- Month-to-Date cumulative sales     
+   SUM(total_sales) OVER (  PARTITION BY region, sales_year, sales_month  ORDER BY order_date ) AS MTD,     
+ -- Year-to-Date cumulative sales     
+   SUM(total_sales) OVER (  PARTITION BY region, sales_year  ORDER BY order_date ) AS YTD  
+FROM AggregatedSales 
+ORDER BY region, order_date;
+```
+
+---
+
+## ✅ Final Working Solution (SSMS)
+
+```sql
+-- Step 1: Extract relevant order data with delivered status and map to regions 
+WITH DeliveredOrders AS 
+(  
+SELECT          
+   l.region,           
+   CAST(o.order_purchase_date AS DATE) AS order_date,           
+   t.sales_amount       
+FROM ex_orders o     
+JOIN ex_customers c         
+   ON o.customer_id = c.customer_id     
+JOIN locations_01 l         
+   ON l.postal_code = c.postal_code     
+JOIN ex_transactions t         
+   ON t.order_id = o.order_id     
+WHERE o.order_status = 'delivered' 
+),  
+ -- Step 2: Aggregate daily sales and extract date components 
+AggregatedSales AS 
+(     
+SELECT         
+   region,          
+   order_date,         
+   YEAR(order_date) AS sales_year,         
+   MONTH(order_date) AS sales_month,         
+   DATENAME(MONTH, order_date) AS month_name,         
+   ROUND(SUM(sales_amount), 2) AS total_sales     
+FROM DeliveredOrders     
+GROUP BY          
+   region, order_date,          
+   YEAR(order_date),          
+   MONTH(order_date),          
+   DATENAME(MONTH, order_date) 
+)  
+-- Step 3: Calculate Month-to-Date (MTD) and Year-to-Date (YTD) sales 
+SELECT      
+   region,     
+   order_date,     
+   sales_year AS Year,     
+   sales_month AS Month,      
+   month_name AS Month_name,     
+   total_sales AS Sales,      
+   SUM(total_sales) OVER ( PARTITION BY region, sales_year, sales_month  ORDER BY order_date ) AS MTD,
+   SUM(total_sales) OVER (   PARTITION BY region, sales_year   ORDER BY order_date ) AS YTD  
+FROM AggregatedSales 
+ORDER BY region, order_date;
+```
+
+---
+
+## Common Student Mistakes & Point Deductions
+
+|Mistake|Deduct Points?|Explanation|
+|---|---|---|
+|Missing `WHERE o.order_status = 'delivered'`|✅|Includes incomplete orders|
+|Using `SUM()` without window clause for MTD/YTD|✅|Fails to compute cumulative totals|
+|Ordering MTD/YTD by `month_name` instead of `order_date`|✅|Wrong order of accumulation|
+|Forgetting to group by all date components in `AggregatedSales`|✅|Causes grouping errors|
+|Not rounding total sales|❌|Still works, but less consistent|
+
+**Tags**
+- data-wrangling / sort (skill)
+- data-wrangling / date-processing (skill)
+- data-wrangling / group (skill)
+- data-wrangling / filter (skill)
+- data-wrangling / join (skill)
+- data-wrangling / text-processing (skill)
+- data-wrangling / derived-column (skill)
+- data-wrangling / window / sql-window-running-totals (skill)
+- data-wrangling / aggregate (skill)
+
+##### Input 4
+**Type:** Code
+
+**Question:** ### **Task 2 – Campaign Performance Analysis**
+
+
+Analyze how marketing campaigns are performing across different channels.
+
+
+**Expected Output**
+
+|Campaign ID|Channel Name|Impressions|Clicks|Conversions|
+|---|---|---|---|---|
+|CMP001|Email|50000|4200|320|
+|CMP002|Social Media|75000|6800|540|
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+## **Understanding the Problem**
+
+
+GlobalMart wants to evaluate **how campaigns are performing across channels**.
+
+The goal is to measure:
+
+- Impressions
+- Clicks
+- Conversions
+
+This helps understand **engagement effectiveness**.
+
+---
+
+## **Step 1: What data do we need?**
+
+
+|Data Point|Description|Source|
+|---|---|---|
+|campaign_id|Campaign|ex_campaigns|
+|channel_name|Channel|ex_channel|
+|impressions, clicks, conversions|Performance|ex_campaign_metrics|
+
+---
+
+## **Step 2: SQL Concepts**
+
+- Joins
+- Aggregation (`SUM`)
+- Grouping
+
+---
+
+## **Step 3: Build the Solution**
+
+
+```sql
+SELECT   
+    c.campaign_id,  
+    ch.channel_name,  
+    SUM(cm.impressions) AS impressions,  
+    SUM(cm.clicks) AS clicks,  
+    SUM(cm.conversions) AS conversions  
+FROM ex_campaigns c  
+JOIN ex_campaign_metrics cm   
+    ON c.campaign_id = cm.campaign_id  
+JOIN ex_channel ch   
+    ON c.channel_id = ch.channel_id  
+GROUP BY   
+    c.campaign_id,  
+    ch.channel_name;
+```
+
+---
+
+## ✅ **Final Working Solution**
+
+```sql
+SELECT   
+    c.campaign_id,  
+    ch.channel_name,  
+    SUM(cm.impressions) AS impressions,  
+    SUM(cm.clicks) AS clicks,  
+    SUM(cm.conversions) AS conversions  
+FROM ex_campaigns c  
+JOIN ex_campaign_metrics cm   
+    ON c.campaign_id = cm.campaign_id  
+JOIN ex_channel ch   
+    ON c.channel_id = ch.channel_id  
+GROUP BY   
+    c.campaign_id,  
+    ch.channel_name;
+```
+
+**Tags**
+- data-wrangling / aggregate (skill)
+- data-wrangling / join (skill)
+- data-wrangling / group (skill)
+
+##### Input 5
+**Type:** Code
+
+**Question:** ### **Task 3 – Campaign Impact on Regional Sales**
+
+
+Understand how campaigns contribute to **regional revenue and customer acquisition**.
+
+
+**Expected Output**
+
+|Region|Campaign ID|Customers Acquired|Total Revenue|
+|---|---|---|---|
+|East|CMP001|120|15400.75|
+|West|CMP002|95|11230.40|
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+## **Understanding the Problem**
+
+
+GlobalMart now wants to understand:
+
+- Which campaigns bring customers
+- Which regions they impact
+- How much revenue they generate
+
+There is **no direct link between campaign and region**, so we must derive it.
+
+---
+
+## **Step 1: What data do we need?**
+
+
+|Data Point|Source|
+|---|---|
+|campaign_id|ex_campaigns|
+|product_id|ex_campaigns|
+|transactions|ex_transactions|
+|orders|ex_orders|
+|customers|ex_customers|
+|region|locations_01|
+
+---
+
+## **Step 2: Key Logic**
+
+
+We connect data like this:
+
+Campaign → Product → Transactions → Orders → Customers → Region
+
+---
+
+## **Step 3: Build the Solution Step-by-Step**
+
+---
+
+### **Phase 1 – Map Campaign to Transactions**
+
+```sql
+WITH campaign_sales AS (  
+SELECT   
+    c.campaign_id,  
+    t.order_id,  
+    t.sales_amount  
+FROM ex_campaigns c  
+JOIN ex_transactions t   
+    ON c.product_id = t.product_id  
+)
+```
+
+---
+
+### **Phase 2 – Map to Region**
+
+```sql
+, campaign_region AS (  
+SELECT   
+    cs.campaign_id,  
+    o.customer_id,  
+    l.region,  
+    cs.sales_amount  
+FROM campaign_sales cs  
+JOIN ex_orders o   
+    ON cs.order_id = o.order_id  
+   AND o.order_status = 'delivered'  
+JOIN ex_customers c   
+    ON o.customer_id = c.customer_id  
+JOIN locations_01 l   
+    ON l.postal_code = c.postal_code  
+)
+```
+
+---
+
+### **Phase 3 – Final Aggregation**
+
+```sql
+SELECT   
+    region,  
+    campaign_id,  
+    COUNT(DISTINCT customer_id) AS customers_acquired,  
+    ROUND(SUM(sales_amount), 2) AS total_revenue  
+FROM campaign_region  
+GROUP BY region, campaign_id;
+```
+
+---
+
+## ✅ **Final Working Solution**
+
+```sql
+WITH campaign_sales AS (  
+SELECT   
+    c.campaign_id,  
+    t.order_id,  
+    t.sales_amount  
+FROM ex_campaigns c  
+JOIN ex_transactions t   
+    ON c.product_id = t.product_id  
+),  
+campaign_region AS (  
+SELECT   
+    cs.campaign_id,  
+    o.customer_id,  
+    l.region,  
+    cs.sales_amount  
+FROM campaign_sales cs  
+JOIN ex_orders o   
+    ON cs.order_id = o.order_id  
+   AND o.order_status = 'delivered'  
+JOIN ex_customers c   
+    ON o.customer_id = c.customer_id  
+JOIN locations_01 l   
+    ON l.postal_code = c.postal_code  
+)  
+SELECT   
+    region,  
+    campaign_id,  
+    COUNT(DISTINCT customer_id) AS customers_acquired,  
+    ROUND(SUM(sales_amount), 2) AS total_revenue  
+FROM campaign_region  
+GROUP BY region, campaign_id;
+```
+
+**Tags**
+- data-wrangling / join (skill)
+- data-wrangling / filter (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / derived-column (skill)
+- data-wrangling / group (skill)

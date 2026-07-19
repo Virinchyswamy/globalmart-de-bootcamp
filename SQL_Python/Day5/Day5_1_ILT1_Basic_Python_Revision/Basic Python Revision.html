@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 5 – Basic Python Revision</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;--orange:#f97316}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
+.nav-title{font-size:12px;color:var(--muted);font-weight:500}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nav-btn:hover{background:var(--a);color:#fff;border-color:var(--a)}
+.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
+.deck{padding-top:52px;height:100vh}
+.slide{display:none;height:calc(100vh - 52px);padding:32px 52px;flex-direction:column;justify-content:flex-start;gap:16px;overflow:hidden;animation:fadein .25s ease}
+.slide.active{display:flex}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:2.2rem;font-weight:900;color:var(--a);line-height:1.1}
+h2{font-size:1.55rem;font-weight:800;color:var(--a);line-height:1.2}
+h3{font-size:1rem;font-weight:700;color:var(--a2);margin-bottom:6px}
+p,li{font-size:.88rem;color:#c9d1d9;line-height:1.7}
+ul{padding-left:18px}li{margin-bottom:4px}
+.sub{font-size:.88rem;color:var(--muted);margin-top:4px}
+.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.hl{background:rgba(59,130,246,.06);border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:11px 15px}
+.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
+.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
+.hl.yl{background:rgba(245,158,11,.06);border-color:var(--yellow)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.85;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.8rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
+.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.nm{color:#ffa657}.var{color:#79c0ff}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:rgba(59,130,246,.12);color:var(--a2);padding:7px 11px;text-align:left;border-bottom:2px solid var(--border);font-size:.76rem;letter-spacing:.5px}
+td{padding:6px 11px;border-bottom:1px solid var(--border);color:#c9d1d9}
+tr:hover td{background:rgba(255,255,255,.02)}
+.ok{color:var(--green);font-weight:600}.no{color:var(--red)}
+.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:12px 16px}
+.quiz p{font-size:.86rem;font-weight:600;color:var(--text);margin-bottom:10px}
+.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:5px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700}
+.ans{display:none;margin-top:10px;padding:10px 13px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.83rem;color:#86efac;line-height:1.7}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:4px 13px;font-size:.76rem;font-weight:600;color:var(--muted)}
+
+/* ── MCQ CHECKPOINT STYLES ── */
+.checkpoint-header{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px}
+.cp-badge{font-size:.65rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--a);color:#000;padding:3px 10px;border-radius:100px}
+.cp-title{font-size:1rem;font-weight:800;color:var(--text)}
+.cp-sub{font-size:.78rem;color:var(--muted);margin-top:1px}
+.mcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mcq-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:13px 15px;display:flex;flex-direction:column;gap:10px}
+.mcq-q{font-size:.84rem;font-weight:700;color:var(--text);line-height:1.5}
+.mcq-q code{font-size:.78rem}
+.opts{display:flex;flex-direction:column;gap:5px}
+.opt{display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:all .15s;font-size:.78rem;color:#c9d1d9;background:transparent;font-family:'Inter',sans-serif;text-align:left;width:100%}
+.opt:hover:not(.disabled){background:rgba(255,255,255,.04);border-color:#30363d}
+.opt.correct{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.5);color:var(--green);pointer-events:none}
+.opt.wrong{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);color:#f87171;pointer-events:none}
+.opt.disabled{pointer-events:none;opacity:.6}
+.opt-key{font-weight:800;font-size:.72rem;color:var(--muted);min-width:16px;flex-shrink:0;margin-top:1px}
+.opt.correct .opt-key{color:var(--green)}
+.opt.wrong .opt-key{color:#f87171}
+.mcq-exp{display:none;margin-top:4px;padding:8px 11px;background:rgba(34,197,94,.07);border-left:2px solid var(--green);border-radius:0 6px 6px 0;font-size:.76rem;color:#86efac;line-height:1.65;animation:fadein .2s}
+.mcq-score{font-size:.82rem;font-weight:700;color:var(--muted);text-align:center;margin-top:6px}
+.mcq-score span{color:var(--a);font-size:1.1rem}
+
+/* ── PRACTICE SLIDE STYLES ── */
+.practice-header{background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.28);border-radius:12px;padding:11px 18px;display:flex;align-items:center;gap:12px}
+.pr-badge{font-size:.65rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--orange);color:#000;padding:3px 10px;border-radius:100px}
+.pr-title{font-size:1rem;font-weight:800;color:var(--text)}
+.pr-sub{font-size:.78rem;color:var(--muted);margin-top:1px}
+.task-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.task-box h3{color:var(--orange);font-size:.88rem;margin-bottom:10px}
+.task-steps{display:flex;flex-direction:column;gap:7px;counter-reset:step}
+.task-step{display:flex;gap:10px;align-items:flex-start;font-size:.82rem;color:#c9d1d9;line-height:1.6}
+.step-num{min-width:22px;height:22px;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.35);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:var(--orange);flex-shrink:0;margin-top:1px}
+.vscode-note{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:9px 14px;font-size:.78rem;color:var(--a2);display:flex;align-items:center;gap:8px}
+.sol-btn{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.35);color:var(--orange);padding:6px 18px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700;transition:all .15s;margin-top:6px}
+.sol-btn:hover{background:rgba(249,115,22,.2)}
+.solution{display:none;animation:fadein .2s}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <span class="nav-badge">Day 5 · Module 1</span>
+    <span class="nav-title">Basic Python Revision</span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" onclick="go(-1)">← Prev</button>
+    <span class="nav-counter" id="ctr">1 / 15</span>
+    <button class="nav-btn" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <div class="tag">Day 5 · Module 1</div>
+    <h1>Basic Python<br>Revision</h1>
+    <p class="sub">A quick but thorough walkthrough of everything you need before diving into data analytics with Python</p>
+  </div>
+  <div class="three">
+    <div class="card"><h3>🔤 Data Types & Strings</h3><p>Variables, types, string indexing, slicing, and built-in string methods</p></div>
+    <div class="card"><h3>📦 Data Structures</h3><p>Lists, Tuples, Dictionaries — when to use which and how to work with each</p></div>
+    <div class="card"><h3>🔄 Control Flow</h3><p>Operators, if/elif/else conditionals, for and while loops, break and continue</p></div>
+  </div>
+  <div class="hl">
+    <p>This is a <strong style="color:var(--a)">revision session</strong>, not a beginner intro. We move fast. If something is unclear, flag it — don't let it pass.</p>
+  </div>
+  <div class="badge-row">
+    <div class="badge">Variables & Types</div>
+    <div class="badge">Strings</div>
+    <div class="badge">Lists · Tuples · Dicts</div>
+    <div class="badge">if/elif/else</div>
+    <div class="badge">for · while · break · continue</div>
+    <div class="badge">datetime</div>
+  </div>
+</div>
+
+<!-- SLIDE 2: VARIABLES & DATA TYPES -->
+<div class="slide">
+  <h2>Variables and Data Types</h2>
+  <p class="sub" style="margin-bottom:12px">Python figures out the type automatically — no need to declare it like in Java or C.</p>
+  <div class="two">
+    <div>
+      <pre><span class="cm"># No type declaration needed</span>
+<span class="var">name</span>    = <span class="st">"Ravi"</span>          <span class="cm"># str</span>
+<span class="var">age</span>     = <span class="nm">28</span>              <span class="cm"># int</span>
+<span class="var">salary</span>  = <span class="nm">75000.50</span>        <span class="cm"># float</span>
+<span class="var">active</span>  = <span class="kw">True</span>            <span class="cm"># bool</span>
+<span class="var">city</span>    = <span class="kw">None</span>            <span class="cm"># NoneType (no value)</span>
+
+<span class="cm"># Check the type of any variable</span>
+<span class="fn">print</span>(<span class="fn">type</span>(<span class="var">salary</span>))       <span class="cm"># &lt;class 'float'&gt;</span>
+
+<span class="cm"># Convert between types</span>
+<span class="fn">int</span>(<span class="st">"42"</span>)                <span class="cm"># "42" → 42</span>
+<span class="fn">str</span>(<span class="nm">42</span>)                  <span class="cm"># 42 → "42"</span>
+<span class="fn">float</span>(<span class="nm">5</span>)                 <span class="cm"># 5 → 5.0</span></pre>
+      <div class="hl yl" style="margin-top:12px">
+        <h3 style="font-size:.84rem;color:var(--yellow);margin-bottom:6px">f-strings — the clean way to format output</h3>
+        <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="var">name</span> = <span class="st">"Priya"</span>; <span class="var">score</span> = <span class="nm">95</span>
+<span class="fn">print</span>(<span class="st">f"</span><span class="var">{name}</span><span class="st"> scored </span><span class="var">{score}</span><span class="st">%"</span>)
+<span class="cm"># Output: Priya scored 95%</span></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <h3>Operators quick reference</h3>
+        <table style="margin-top:8px">
+          <tr><th>Type</th><th>Operators</th><th>Example</th></tr>
+          <tr><td>Arithmetic</td><td><code>+ - * / // % **</code></td><td style="font-size:.78rem">10 // 3 = 3, 10 % 3 = 1</td></tr>
+          <tr><td>Comparison</td><td><code>== != > < >= <=</code></td><td style="font-size:.78rem">10 == 10 → True</td></tr>
+          <tr><td>Logical</td><td><code>and or not</code></td><td style="font-size:.78rem">True and False → False</td></tr>
+          <tr><td>Assignment</td><td><code>= += -= *= /=</code></td><td style="font-size:.78rem">x += 5 same as x = x+5</td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>❓ What does <code>10 // 3</code> return? And what does <code>10 % 3</code> return?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <code>10 // 3</code> = <strong>3</strong> (floor division, drops the remainder). <code>10 % 3</code> = <strong>1</strong> (modulo, gives only the remainder). Together: 10 = 3×3 + 1.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: STRINGS -->
+<div class="slide">
+  <h2>Strings — Indexing, Slicing, Methods</h2>
+  <p class="sub" style="margin-bottom:12px">Strings are sequences. Every character has a position (index). Python also supports negative indexing from the end.</p>
+  <div class="two">
+    <div>
+      <pre><span class="var">lang</span> = <span class="st">"Python"</span>
+<span class="cm">#  P  y  t  h  o  n</span>
+<span class="cm">#  0  1  2  3  4  5   ← positive</span>
+<span class="cm"># -6 -5 -4 -3 -2 -1   ← negative</span>
+
+<span class="var">lang</span>[<span class="nm">0</span>]          <span class="cm"># 'P'</span>
+<span class="var">lang</span>[<span class="nm">-1</span>]         <span class="cm"># 'n'</span>
+
+<span class="cm"># Slicing: [start : stop : step]</span>
+<span class="cm"># stop is EXCLUDED</span>
+<span class="var">b</span> = <span class="st">"Hello World!"</span>
+<span class="var">b</span>[<span class="nm">2</span>:<span class="nm">5</span>]            <span class="cm"># 'llo'</span>
+<span class="var">b</span>[:<span class="nm">5</span>]             <span class="cm"># 'Hello'</span>
+<span class="var">b</span>[<span class="nm">6</span>:]             <span class="cm"># 'World!'</span>
+<span class="var">b</span>[::<span class="nm">2</span>]            <span class="cm"># every 2nd char</span>
+<span class="var">b</span>[::<span class="nm">-1</span>]           <span class="cm"># reversed string!</span>
+
+<span class="cm"># Quotes — mix to avoid escaping</span>
+<span class="fn">print</span>(<span class="st">"My name is 'Soumya'"</span>)  <span class="cm"># ✅</span>
+<span class="fn">print</span>(<span class="st">'He said "hello"'</span>)      <span class="cm"># ✅</span></pre>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <h3>Built-in String Methods</h3>
+        <table style="margin-top:8px">
+          <tr><th>Method</th><th>What it does</th></tr>
+          <tr><td><code>.upper()</code></td><td style="font-size:.8rem">All caps: "hello" → "HELLO"</td></tr>
+          <tr><td><code>.lower()</code></td><td style="font-size:.8rem">All lowercase</td></tr>
+          <tr><td><code>.title()</code></td><td style="font-size:.8rem">Title Case: "hello world" → "Hello World"</td></tr>
+          <tr><td><code>.strip()</code></td><td style="font-size:.8rem">Remove leading/trailing spaces</td></tr>
+          <tr><td><code>.split()</code></td><td style="font-size:.8rem">"a b c".split() → ['a','b','c']</td></tr>
+          <tr><td><code>.replace(a,b)</code></td><td style="font-size:.8rem">Replace all occurrences of a with b</td></tr>
+          <tr><td><code>.startswith()</code></td><td style="font-size:.8rem">Returns True/False</td></tr>
+          <tr><td><code>len(s)</code></td><td style="font-size:.8rem">Number of characters</td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>❓ What does <code>"Data Analytics"[:4]</code> return?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <strong>"Data"</strong> — slicing from index 0 up to (but not including) index 4. Remember: stop index is always excluded.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: CHECKPOINT QUIZ 1 — Variables, Strings, Operators -->
+<div class="slide">
+  <div class="checkpoint-header" style="margin-bottom:14px">
+    <span class="cp-badge">Checkpoint 1</span>
+    <div>
+      <div class="cp-title">Quick Quiz — Variables · Strings · Operators</div>
+      <div class="cp-sub">Click an option. Get instant feedback.</div>
+    </div>
+  </div>
+  <div class="mcq-grid" id="cp1">
+    <!-- Q1 -->
+    <div class="mcq-card">
+      <div class="mcq-q">What does <code>"Python"[1:4]</code> return?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-q1')"><span class="opt-key">A</span>"Pyt"</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-q1')"><span class="opt-key">B</span>"yth"</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q1')"><span class="opt-key">C</span>"tho"</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q1')"><span class="opt-key">D</span>"hon"</button>
+      </div>
+      <div class="mcq-exp" id="exp-q1">Index 1='y', 2='t', 3='h' — stop index 4 is excluded. Result: <strong>"yth"</strong></div>
+    </div>
+    <!-- Q2 -->
+    <div class="mcq-card">
+      <div class="mcq-q">What is the output of <code>print(len("Hello!"))</code>?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-q2')"><span class="opt-key">A</span>5</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-q2')"><span class="opt-key">B</span>6</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q2')"><span class="opt-key">C</span>7</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q2')"><span class="opt-key">D</span>Error</button>
+      </div>
+      <div class="mcq-exp" id="exp-q2">"Hello!" has 6 characters: H-e-l-l-o-! → <strong>6</strong></div>
+    </div>
+    <!-- Q3 -->
+    <div class="mcq-card">
+      <div class="mcq-q">What type is the variable <code>score = "95"</code>?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-q3')"><span class="opt-key">A</span>int</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q3')"><span class="opt-key">B</span>float</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-q3')"><span class="opt-key">C</span>str</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q3')"><span class="opt-key">D</span>bool</button>
+      </div>
+      <div class="mcq-exp" id="exp-q3">Quotes around 95 make it a string. Use <code>int("95")</code> to convert it to an integer.</div>
+    </div>
+    <!-- Q4 -->
+    <div class="mcq-card">
+      <div class="mcq-q">What does <code>"hello world".title()</code> return?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-q4')"><span class="opt-key">A</span>"HELLO WORLD"</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-q4')"><span class="opt-key">B</span>"Hello World"</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q4')"><span class="opt-key">C</span>"hello world"</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q4')"><span class="opt-key">D</span>"Hello world"</button>
+      </div>
+      <div class="mcq-exp" id="exp-q4"><code>.title()</code> capitalises the first letter of every word. <code>.upper()</code> would give ALL CAPS. <code>.capitalize()</code> would give option D.</div>
+    </div>
+  </div>
+  <div class="mcq-score" id="cp1-score">Score: <span id="cp1-s">0</span> / 4</div>
+</div>
+
+<!-- SLIDE 5: LISTS -->
+<div class="slide">
+  <h2>Lists — The Most Used Data Structure</h2>
+  <p class="sub" style="margin-bottom:12px">Lists are ordered, mutable (changeable), and allow duplicates. They can hold any mix of data types.</p>
+  <div class="two">
+    <div>
+      <pre><span class="var">cities</span> = [<span class="st">"Delhi"</span>, <span class="st">"Mumbai"</span>, <span class="st">"Chennai"</span>]
+
+<span class="cm"># Indexing (same as strings)</span>
+<span class="var">cities</span>[<span class="nm">0</span>]           <span class="cm"># 'Delhi'</span>
+<span class="var">cities</span>[<span class="nm">-1</span>]          <span class="cm"># 'Chennai'</span>
+<span class="var">cities</span>[<span class="nm">0</span>:<span class="nm">2</span>]          <span class="cm"># ['Delhi', 'Mumbai']</span>
+
+<span class="cm"># Adding</span>
+<span class="var">cities</span>.<span class="fn">append</span>(<span class="st">"Kolkata"</span>)    <span class="cm"># add to end</span>
+<span class="var">cities</span>.<span class="fn">insert</span>(<span class="nm">1</span>, <span class="st">"Pune"</span>)  <span class="cm"># insert at index 1</span>
+
+<span class="cm"># Removing</span>
+<span class="var">cities</span>.<span class="fn">remove</span>(<span class="st">"Pune"</span>)       <span class="cm"># remove by value</span>
+<span class="var">cities</span>.<span class="fn">pop</span>()              <span class="cm"># remove last item</span>
+<span class="var">cities</span>.<span class="fn">pop</span>(<span class="nm">0</span>)             <span class="cm"># remove at index 0</span>
+
+<span class="cm"># Combining</span>
+<span class="var">more</span> = [<span class="st">"Bengaluru"</span>, <span class="st">"Jaipur"</span>]
+<span class="var">cities</span>.<span class="fn">extend</span>(<span class="var">more</span>)       <span class="cm"># add all items</span>
+
+<span class="cm"># Sorting</span>
+<span class="var">cities</span>.<span class="fn">sort</span>()              <span class="cm"># A-Z in place</span>
+<span class="var">cities</span>.<span class="fn">sort</span>(<span class="var">reverse</span>=<span class="kw">True</span>) <span class="cm"># Z-A</span>
+<span class="fn">len</span>(<span class="var">cities</span>)               <span class="cm"># count of items</span></pre>
+    </div>
+    <div>
+      <div class="hl" style="margin-bottom:12px">
+        <h3 style="font-size:.86rem;margin-bottom:6px">Iterating over a list</h3>
+        <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="kw">for</span> <span class="var">city</span> <span class="kw">in</span> <span class="var">cities</span>:
+    <span class="fn">print</span>(<span class="var">city</span>)
+
+<span class="cm"># With index using enumerate</span>
+<span class="kw">for</span> <span class="var">i</span>, <span class="var">city</span> <span class="kw">in</span> <span class="fn">enumerate</span>(<span class="var">cities</span>):
+    <span class="fn">print</span>(<span class="var">i</span>, <span class="var">city</span>)</pre>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <h3 style="font-size:.84rem;margin-bottom:6px">append vs extend vs insert</h3>
+        <table>
+          <tr><th>Method</th><th>What it adds</th></tr>
+          <tr><td><code>.append(x)</code></td><td style="font-size:.8rem">Adds x as a single item at the end</td></tr>
+          <tr><td><code>.extend([a,b])</code></td><td style="font-size:.8rem">Adds each item from the list individually</td></tr>
+          <tr><td><code>.insert(i,x)</code></td><td style="font-size:.8rem">Adds x at position i, shifts rest right</td></tr>
+        </table>
+      </div>
+      <div class="quiz">
+        <p>❓ <code>x = [1, 2, 3]; x.append([4, 5]); print(len(x))</code> — what is printed?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <strong>4</strong> — append adds [4,5] as a single item (a nested list), so x = [1, 2, 3, [4, 5]]. Use .extend([4, 5]) if you want 5 separate items.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: CODING PRACTICE 1 — LISTS -->
+<div class="slide">
+  <div class="practice-header" style="margin-bottom:14px">
+    <span class="pr-badge">Practice 1</span>
+    <div>
+      <div class="pr-title">Coding Practice — Lists</div>
+      <div class="pr-sub">Open VS Code · Create a new file · Try each task before looking at the solution</div>
+    </div>
+  </div>
+  <div class="two">
+    <div class="task-box">
+      <h3>Your Task</h3>
+      <p style="font-size:.81rem;color:var(--muted);margin-bottom:10px">You have a list of exam scores from your batch:</p>
+      <pre style="margin-bottom:12px;font-size:.76rem"><span class="var">scores</span> = [<span class="nm">85</span>, <span class="nm">92</span>, <span class="nm">78</span>, <span class="nm">65</span>, <span class="nm">90</span>, <span class="nm">55</span>, <span class="nm">73</span>]</pre>
+      <div class="task-steps">
+        <div class="task-step"><span class="step-num">1</span>Print the first score and the last score</div>
+        <div class="task-step"><span class="step-num">2</span>Add score <code>88</code> to the end of the list</div>
+        <div class="task-step"><span class="step-num">3</span>Remove score <code>55</code> from the list</div>
+        <div class="task-step"><span class="step-num">4</span>Sort the list from highest to lowest and print it</div>
+        <div class="task-step"><span class="step-num">5</span>Use a loop to count and print how many scores are above 80</div>
+        <div class="task-step"><span class="step-num">★</span>BONUS: Print the average of all scores in the list</div>
+      </div>
+      <div class="vscode-note" style="margin-top:14px">
+        💡 Try it yourself first. Reveal the solution only after you've attempted it.
+      </div>
+    </div>
+    <div>
+      <button class="sol-btn" onclick="toggleSol(this, 'sol1')">▶ Show Solution</button>
+      <div class="solution" id="sol1">
+        <pre style="font-size:.72rem"><span class="var">scores</span> = [<span class="nm">85</span>, <span class="nm">92</span>, <span class="nm">78</span>, <span class="nm">65</span>, <span class="nm">90</span>, <span class="nm">55</span>, <span class="nm">73</span>]
+
+<span class="cm"># 1. First and last</span>
+<span class="fn">print</span>(<span class="var">scores</span>[<span class="nm">0</span>], <span class="var">scores</span>[<span class="nm">-1</span>])   <span class="cm"># 85  73</span>
+
+<span class="cm"># 2. Add 88</span>
+<span class="var">scores</span>.<span class="fn">append</span>(<span class="nm">88</span>)
+
+<span class="cm"># 3. Remove 55</span>
+<span class="var">scores</span>.<span class="fn">remove</span>(<span class="nm">55</span>)
+
+<span class="cm"># 4. Sort highest to lowest</span>
+<span class="var">scores</span>.<span class="fn">sort</span>(<span class="var">reverse</span>=<span class="kw">True</span>)
+<span class="fn">print</span>(<span class="var">scores</span>)  <span class="cm"># [92, 90, 88, 85, 78, 73, 65]</span>
+
+<span class="cm"># 5. Count scores above 80</span>
+<span class="var">count</span> = <span class="nm">0</span>
+<span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">scores</span>:
+    <span class="kw">if</span> <span class="var">s</span> > <span class="nm">80</span>:
+        <span class="var">count</span> += <span class="nm">1</span>
+<span class="fn">print</span>(<span class="st">f"</span><span class="var">{count}</span><span class="st"> students scored above 80"</span>)
+
+<span class="cm"># ★ BONUS: Average</span>
+<span class="var">avg</span> = <span class="fn">sum</span>(<span class="var">scores</span>) / <span class="fn">len</span>(<span class="var">scores</span>)
+<span class="fn">print</span>(<span class="st">f"Average: </span><span class="var">{avg:.1f}</span><span class="st">"</span>)   <span class="cm"># 81.6</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: TUPLES & DICTS -->
+<div class="slide">
+  <h2>Tuples and Dictionaries</h2>
+  <div class="two">
+    <div>
+      <div class="hl" style="margin-bottom:12px">
+        <h3 style="font-size:.88rem;margin-bottom:6px">Tuple — ordered, immutable (read-only)</h3>
+        <p style="font-size:.82rem;margin-bottom:10px">Use tuples when data should NOT be changed — coordinates, RGB values, database rows.</p>
+      </div>
+      <pre><span class="var">state</span> = (<span class="st">'Karnataka'</span>, <span class="st">'Odisha'</span>, <span class="st">'Punjab'</span>)
+<span class="var">state</span>[<span class="nm">0</span>]            <span class="cm"># 'Karnataka'</span>
+<span class="var">state</span>.<span class="fn">count</span>(<span class="st">'Odisha'</span>) <span class="cm"># 1</span>
+<span class="var">state</span>.<span class="fn">index</span>(<span class="st">'Punjab'</span>) <span class="cm"># 2</span>
+
+<span class="cm"># Convert tuple → list to modify, then back</span>
+<span class="var">lst</span> = <span class="fn">list</span>(<span class="var">state</span>)
+<span class="var">lst</span>.<span class="fn">append</span>(<span class="st">"Goa"</span>)
+<span class="var">state</span> = <span class="fn">tuple</span>(<span class="var">lst</span>)</pre>
+      <div class="card" style="margin-top:12px">
+        <h3 style="font-size:.84rem;margin-bottom:6px">List vs Tuple</h3>
+        <table>
+          <tr><th></th><th>List []</th><th>Tuple ()</th></tr>
+          <tr><td style="font-size:.78rem">Mutable?</td><td class="ok">Yes</td><td class="no">No</td></tr>
+          <tr><td style="font-size:.78rem">Faster?</td><td class="no">Slower</td><td class="ok">Faster</td></tr>
+          <tr><td style="font-size:.78rem">Use when</td><td style="font-size:.78rem">Data changes</td><td style="font-size:.78rem">Data is fixed</td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="hl" style="margin-bottom:10px">
+        <h3 style="font-size:.88rem;margin-bottom:6px">Dictionary — key:value pairs, unordered</h3>
+        <p style="font-size:.82rem">Keys must be unique. Values can be anything — including another dict (nested).</p>
+      </div>
+      <pre><span class="var">customer</span> = {
+    <span class="st">"name"</span>:   <span class="st">"Anjali"</span>,
+    <span class="st">"city"</span>:   <span class="st">"Chennai"</span>,
+    <span class="st">"orders"</span>: <span class="nm">14</span>
+}
+<span class="var">customer</span>[<span class="st">"name"</span>]           <span class="cm"># 'Anjali'</span>
+<span class="var">customer</span>.<span class="fn">get</span>(<span class="st">"orders"</span>)    <span class="cm"># 14 (safe — no KeyError)</span>
+<span class="var">customer</span>.<span class="fn">keys</span>()            <span class="cm"># dict_keys([...])</span>
+<span class="var">customer</span>.<span class="fn">values</span>()          <span class="cm"># dict_values([...])</span>
+<span class="var">customer</span>.<span class="fn">items</span>()           <span class="cm"># key-value pairs</span>
+<span class="var">customer</span>.<span class="fn">update</span>({<span class="st">"tier"</span>:<span class="st">"Gold"</span>}) <span class="cm"># add/update key</span>
+<span class="var">customer</span>.<span class="fn">pop</span>(<span class="st">"city"</span>)       <span class="cm"># remove key</span>
+
+<span class="cm"># Loop over key-value pairs</span>
+<span class="kw">for</span> <span class="var">key</span>, <span class="var">val</span> <span class="kw">in</span> <span class="var">customer</span>.<span class="fn">items</span>():
+    <span class="fn">print</span>(<span class="var">key</span>, <span class="st">"→"</span>, <span class="var">val</span>)</pre>
+      <div class="quiz" style="margin-top:10px">
+        <p>❓ What's the difference between <code>d["key"]</code> and <code>d.get("key")</code>?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <code>d["key"]</code> raises a <strong>KeyError</strong> if the key doesn't exist. <code>d.get("key")</code> returns <strong>None</strong> (or a default you specify) — safer for data you're not sure about.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: CONDITIONALS -->
+<div class="slide">
+  <h2>Conditionals — if / elif / else</h2>
+  <p class="sub" style="margin-bottom:12px">Python uses <strong>indentation</strong> (4 spaces) to define code blocks. There are no curly braces like in other languages.</p>
+  <div class="two">
+    <div>
+      <pre><span class="cm"># Simple if</span>
+<span class="var">score</span> = <span class="nm">60</span>
+<span class="kw">if</span> <span class="var">score</span> > <span class="nm">40</span>:
+    <span class="fn">print</span>(<span class="st">"Pass"</span>)
+
+<span class="cm"># if-else</span>
+<span class="kw">if</span> <span class="var">score</span> >= <span class="nm">40</span>:
+    <span class="fn">print</span>(<span class="st">"Pass"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="st">"Fail"</span>)
+
+<span class="cm"># if-elif-else (multiple conditions)</span>
+<span class="var">score</span> = <span class="nm">86</span>
+<span class="kw">if</span> <span class="var">score</span> >= <span class="nm">90</span>:
+    <span class="fn">print</span>(<span class="st">"Grade A"</span>)
+<span class="kw">elif</span> <span class="var">score</span> >= <span class="nm">80</span>:
+    <span class="fn">print</span>(<span class="st">"Grade B"</span>)   <span class="cm"># ← this prints</span>
+<span class="kw">elif</span> <span class="var">score</span> >= <span class="nm">70</span>:
+    <span class="fn">print</span>(<span class="st">"Grade C"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="st">"Below 70"</span>)</pre>
+    </div>
+    <div>
+      <pre><span class="cm"># Nested if — check outer condition first,
+# then inner conditions inside</span>
+<span class="var">score</span> = <span class="nm">68</span>
+<span class="kw">if</span> <span class="var">score</span> >= <span class="nm">40</span>:
+    <span class="kw">if</span> <span class="var">score</span> >= <span class="nm">70</span>:
+        <span class="fn">print</span>(<span class="st">"Grade C or above"</span>)
+    <span class="kw">elif</span> <span class="var">score</span> >= <span class="nm">60</span>:
+        <span class="fn">print</span>(<span class="st">"Grade D"</span>)       <span class="cm"># ← prints</span>
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="st">"Grade E"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="st">"Fail"</span>)
+
+<span class="cm"># One-liner (ternary) — use sparingly</span>
+<span class="var">result</span> = <span class="st">"Pass"</span> <span class="kw">if</span> <span class="var">score</span> >= <span class="nm">40</span> <span class="kw">else</span> <span class="st">"Fail"</span></pre>
+      <div class="hl rd" style="margin-top:12px">
+        <h3 style="color:var(--red);font-size:.84rem;margin-bottom:6px">Common indentation mistake</h3>
+        <p style="font-size:.82rem">Python raises an <code>IndentationError</code> if your code inside an if block is not consistently indented. Always use 4 spaces (not tabs mixed with spaces).</p>
+      </div>
+      <div class="quiz" style="margin-top:10px">
+        <p>❓ What prints for <code>score = 90</code> in the elif chain above?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <strong>"Grade A"</strong> — the first condition <code>score >= 90</code> is True (90 ≥ 90), so Python executes that block and skips the rest.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: LOOPS -->
+<div class="slide">
+  <h2>Loops — for and while</h2>
+  <div class="two">
+    <div>
+      <h3 style="margin-bottom:8px">for loop — iterate over a sequence</h3>
+      <pre><span class="cm"># Loop over a range</span>
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="nm">6</span>):     <span class="cm"># 1, 2, 3, 4, 5</span>
+    <span class="fn">print</span>(<span class="var">i</span>)
+
+<span class="cm"># Loop over a list</span>
+<span class="var">products</span> = [<span class="st">"Laptop"</span>, <span class="st">"Phone"</span>, <span class="st">"Tablet"</span>]
+<span class="kw">for</span> <span class="var">item</span> <span class="kw">in</span> <span class="var">products</span>:
+    <span class="fn">print</span>(<span class="var">item</span>)
+
+<span class="cm"># Loop over a string</span>
+<span class="kw">for</span> <span class="var">char</span> <span class="kw">in</span> <span class="st">"India"</span>:
+    <span class="fn">print</span>(<span class="var">char</span>)   <span class="cm"># I n d i a</span>
+
+<span class="cm"># range(start, stop, step)</span>
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">0</span>, <span class="nm">10</span>, <span class="nm">2</span>): <span class="cm"># 0,2,4,6,8</span>
+    <span class="fn">print</span>(<span class="var">i</span>)</pre>
+      <div class="hl" style="margin-top:10px">
+        <h3 style="font-size:.84rem;margin-bottom:4px">range() — 3 forms</h3>
+        <p style="font-size:.8rem"><code>range(5)</code> → 0,1,2,3,4<br><code>range(1,6)</code> → 1,2,3,4,5<br><code>range(0,10,2)</code> → 0,2,4,6,8</p>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:8px">while loop — repeat until condition is False</h3>
+      <pre><span class="var">x</span> = <span class="nm">1</span>
+<span class="kw">while</span> <span class="var">x</span> < <span class="nm">5</span>:
+    <span class="fn">print</span>(<span class="var">x</span>)
+    <span class="var">x</span> += <span class="nm">1</span>        <span class="cm"># ← must update x!</span>
+<span class="cm"># Output: 1 2 3 4</span>
+
+<span class="cm"># break — exit loop immediately</span>
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="nm">10</span>):
+    <span class="kw">if</span> <span class="var">i</span> == <span class="nm">5</span>:
+        <span class="kw">break</span>
+    <span class="fn">print</span>(<span class="var">i</span>)      <span class="cm"># prints 1 2 3 4</span>
+
+<span class="cm"># continue — skip this iteration, go next</span>
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="nm">10</span>):
+    <span class="kw">if</span> <span class="var">i</span> == <span class="nm">5</span>:
+        <span class="kw">continue</span>
+    <span class="fn">print</span>(<span class="var">i</span>)      <span class="cm"># prints 1 2 3 4 6 7 8 9</span>
+
+<span class="cm"># pass — placeholder, does nothing</span>
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">5</span>):
+    <span class="kw">pass</span>           <span class="cm"># valid but empty loop</span></pre>
+      <div class="quiz" style="margin-top:10px">
+        <p>❓ A while loop with no <code>x += 1</code> — what happens?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <strong>Infinite loop</strong> — the condition never becomes False so it runs forever. Always make sure the while condition will eventually be False. Press Ctrl+C to stop an infinite loop in the terminal.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: CHECKPOINT QUIZ 2 — Conditionals + Loops -->
+<div class="slide">
+  <div class="checkpoint-header" style="margin-bottom:14px">
+    <span class="cp-badge">Checkpoint 2</span>
+    <div>
+      <div class="cp-title">Quick Quiz — Conditionals · Loops</div>
+      <div class="cp-sub">Click an option. Get instant feedback.</div>
+    </div>
+  </div>
+  <div class="mcq-grid" id="cp2">
+    <!-- Q1 -->
+    <div class="mcq-card">
+      <div class="mcq-q">What is the output of this code?
+        <pre style="margin-top:6px;font-size:.72rem"><span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">3</span>):
+    <span class="fn">print</span>(<span class="var">i</span>)</pre>
+      </div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q1')"><span class="opt-key">A</span>1  2  3</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-c2q1')"><span class="opt-key">B</span>0  1  2</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q1')"><span class="opt-key">C</span>0  1  2  3</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q1')"><span class="opt-key">D</span>1  2</button>
+      </div>
+      <div class="mcq-exp" id="exp-c2q1"><code>range(3)</code> produces 0, 1, 2 — it starts at 0 and stops before 3.</div>
+    </div>
+    <!-- Q2 -->
+    <div class="mcq-card">
+      <div class="mcq-q">What does <code>continue</code> do inside a loop?</div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q2')"><span class="opt-key">A</span>Exits the loop completely</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-c2q2')"><span class="opt-key">B</span>Skips the rest of this iteration and goes to the next</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q2')"><span class="opt-key">C</span>Restarts the loop from the beginning</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q2')"><span class="opt-key">D</span>Does nothing</button>
+      </div>
+      <div class="mcq-exp" id="exp-c2q2"><code>continue</code> = skip rest of this loop body, go to next iteration. <code>break</code> = exit the loop entirely.</div>
+    </div>
+    <!-- Q3 -->
+    <div class="mcq-card">
+      <div class="mcq-q"><code>score = 65</code> — what does this print?
+        <pre style="margin-top:6px;font-size:.72rem"><span class="kw">if</span> <span class="var">score</span> >= <span class="nm">90</span>: <span class="fn">print</span>(<span class="st">"A"</span>)
+<span class="kw">elif</span> <span class="var">score</span> >= <span class="nm">70</span>: <span class="fn">print</span>(<span class="st">"B"</span>)
+<span class="kw">else</span>: <span class="fn">print</span>(<span class="st">"C"</span>)</pre>
+      </div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q3')"><span class="opt-key">A</span>"A"</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q3')"><span class="opt-key">B</span>"B"</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-c2q3')"><span class="opt-key">C</span>"C"</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q3')"><span class="opt-key">D</span>Nothing</button>
+      </div>
+      <div class="mcq-exp" id="exp-c2q3">65 &lt; 90 → skip A. 65 &lt; 70 → skip B. Falls through to <strong>else → "C"</strong>.</div>
+    </div>
+    <!-- Q4 -->
+    <div class="mcq-card">
+      <div class="mcq-q">How many times does this loop print?
+        <pre style="margin-top:6px;font-size:.72rem"><span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="nm">10</span>):
+    <span class="kw">if</span> <span class="var">i</span> == <span class="nm">5</span>:
+        <span class="kw">break</span>
+    <span class="fn">print</span>(<span class="var">i</span>)</pre>
+      </div>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'correct','exp-c2q4')"><span class="opt-key">A</span>4 times (prints 1, 2, 3, 4)</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q4')"><span class="opt-key">B</span>5 times (prints 1, 2, 3, 4, 5)</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q4')"><span class="opt-key">C</span>9 times</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q4')"><span class="opt-key">D</span>0 times</button>
+      </div>
+      <div class="mcq-exp" id="exp-c2q4">When i=5, <code>break</code> fires before <code>print</code>. So only 1, 2, 3, 4 are printed → <strong>4 times</strong>.</div>
+    </div>
+  </div>
+  <div class="mcq-score" id="cp2-score">Score: <span id="cp2-s">0</span> / 4</div>
+</div>
+
+<!-- SLIDE 11: CODING PRACTICE 2 — LOOPS + CONDITIONALS -->
+<div class="slide">
+  <div class="practice-header" style="margin-bottom:14px">
+    <span class="pr-badge">Practice 2</span>
+    <div>
+      <div class="pr-title">Coding Practice — Loops + Conditionals</div>
+      <div class="pr-sub">Open VS Code · Create <code>practice_loops.py</code> · Try before revealing</div>
+    </div>
+  </div>
+  <div class="two">
+    <div class="task-box">
+      <h3>Your Task</h3>
+      <p style="font-size:.81rem;color:var(--muted);margin-bottom:10px">Sales data from last week:</p>
+      <pre style="margin-bottom:12px;font-size:.76rem"><span class="var">sales</span> = [<span class="nm">1200</span>, <span class="nm">450</span>, <span class="nm">3000</span>, <span class="nm">750</span>, <span class="nm">8500</span>, <span class="nm">200</span>, <span class="nm">4200</span>]</pre>
+      <div class="task-steps">
+        <div class="task-step"><span class="step-num">1</span>Loop through and print each sale amount</div>
+        <div class="task-step"><span class="step-num">2</span>Print only sales amounts that are above ₹1000</div>
+        <div class="task-step"><span class="step-num">3</span>Count how many sales are above ₹1000 and print it</div>
+        <div class="task-step"><span class="step-num">4</span>Calculate and print the total of all sales using a loop</div>
+        <div class="task-step"><span class="step-num">★</span>BONUS: For each sale, print <code>"High Value"</code> if &gt; 5000, else <code>"Normal"</code></div>
+      </div>
+      <div class="vscode-note" style="margin-top:14px">
+        💡 Try it yourself first. Reveal the solution only after you've attempted it.
+      </div>
+    </div>
+    <div>
+      <button class="sol-btn" onclick="toggleSol(this, 'sol2')">▶ Show Solution</button>
+      <div class="solution" id="sol2">
+        <pre style="font-size:.72rem"><span class="var">sales</span> = [<span class="nm">1200</span>, <span class="nm">450</span>, <span class="nm">3000</span>, <span class="nm">750</span>, <span class="nm">8500</span>, <span class="nm">200</span>, <span class="nm">4200</span>]
+
+<span class="cm"># 1. Print each sale</span>
+<span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">sales</span>:
+    <span class="fn">print</span>(<span class="var">s</span>)
+
+<span class="cm"># 2. Only sales > 1000</span>
+<span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">sales</span>:
+    <span class="kw">if</span> <span class="var">s</span> > <span class="nm">1000</span>:
+        <span class="fn">print</span>(<span class="var">s</span>)
+
+<span class="cm"># 3. Count sales > 1000</span>
+<span class="var">count</span> = <span class="nm">0</span>
+<span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">sales</span>:
+    <span class="kw">if</span> <span class="var">s</span> > <span class="nm">1000</span>:
+        <span class="var">count</span> += <span class="nm">1</span>
+<span class="fn">print</span>(<span class="st">f"</span><span class="var">{count}</span><span class="st"> sales above 1000"</span>)   <span class="cm"># 4</span>
+
+<span class="cm"># 4. Total using loop</span>
+<span class="var">total</span> = <span class="nm">0</span>
+<span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">sales</span>:
+    <span class="var">total</span> += <span class="var">s</span>
+<span class="fn">print</span>(<span class="st">f"Total: ₹</span><span class="var">{total}</span><span class="st">"</span>)            <span class="cm"># ₹18300</span>
+
+<span class="cm"># ★ BONUS: Label each sale</span>
+<span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">sales</span>:
+    <span class="var">label</span> = <span class="st">"High Value"</span> <span class="kw">if</span> <span class="var">s</span> > <span class="nm">5000</span> <span class="kw">else</span> <span class="st">"Normal"</span>
+    <span class="fn">print</span>(<span class="st">f"</span><span class="var">{s}</span><span class="st"> → </span><span class="var">{label}</span><span class="st">"</span>)</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: DATETIME -->
+<div class="slide">
+  <h2>datetime Module — Working with Dates</h2>
+  <p class="sub" style="margin-bottom:12px">You'll use this constantly in data analytics — filtering by date ranges, calculating durations, extracting month/year.</p>
+  <div class="two">
+    <pre><span class="kw">import</span> datetime <span class="kw">as</span> dt
+
+<span class="cm"># Current date and time</span>
+<span class="var">now</span> = dt.datetime.<span class="fn">now</span>()
+<span class="fn">print</span>(<span class="var">now</span>)       <span class="cm"># 2026-07-01 09:30:00</span>
+
+<span class="cm"># Create a specific date</span>
+<span class="var">d</span> = dt.datetime(<span class="nm">2025</span>, <span class="nm">1</span>, <span class="nm">15</span>)
+
+<span class="cm"># Format output using strftime</span>
+<span class="var">now</span>.<span class="fn">strftime</span>(<span class="st">"%A"</span>)   <span class="cm"># "Tuesday" (day name)</span>
+<span class="var">now</span>.<span class="fn">strftime</span>(<span class="st">"%a"</span>)   <span class="cm"># "Tue"</span>
+<span class="var">now</span>.<span class="fn">strftime</span>(<span class="st">"%B"</span>)   <span class="cm"># "July" (month name)</span>
+<span class="var">now</span>.<span class="fn">strftime</span>(<span class="st">"%m"</span>)   <span class="cm"># "07" (month number)</span>
+<span class="var">now</span>.<span class="fn">strftime</span>(<span class="st">"%Y"</span>)   <span class="cm"># "2026" (4-digit year)</span>
+<span class="var">now</span>.<span class="fn">strftime</span>(<span class="st">"%d-%m-%Y"</span>)  <span class="cm"># "01-07-2026"</span>
+
+<span class="cm"># Parse a string to datetime</span>
+dt.datetime.<span class="fn">strptime</span>(<span class="st">"2025-01-15"</span>, <span class="st">"%Y-%m-%d"</span>)
+
+<span class="cm"># Date arithmetic — timedelta</span>
+<span class="var">six_months_ago</span> = <span class="var">now</span> - dt.timedelta(days=<span class="nm">180</span>)
+<span class="var">diff</span> = <span class="var">now</span> - dt.datetime(<span class="nm">2025</span>, <span class="nm">1</span>, <span class="nm">1</span>)
+<span class="fn">print</span>(<span class="var">diff</span>.days)          <span class="cm"># number of days</span></pre>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:8px">strftime format codes</h3>
+        <table>
+          <tr><th>Code</th><th>Meaning</th><th>Example</th></tr>
+          <tr><td><code>%Y</code></td><td style="font-size:.78rem">4-digit year</td><td style="font-size:.78rem">2026</td></tr>
+          <tr><td><code>%m</code></td><td style="font-size:.78rem">Month (01–12)</td><td style="font-size:.78rem">07</td></tr>
+          <tr><td><code>%d</code></td><td style="font-size:.78rem">Day (01–31)</td><td style="font-size:.78rem">01</td></tr>
+          <tr><td><code>%B</code></td><td style="font-size:.78rem">Full month name</td><td style="font-size:.78rem">July</td></tr>
+          <tr><td><code>%A</code></td><td style="font-size:.78rem">Full day name</td><td style="font-size:.78rem">Tuesday</td></tr>
+        </table>
+      </div>
+      <div class="hl">
+        <h3 style="font-size:.84rem;margin-bottom:6px">strftime vs strptime</h3>
+        <p style="font-size:.82rem"><strong>strftime</strong> = datetime <strong>→</strong> string ("format time")<br><strong>strptime</strong> = string <strong>→</strong> datetime ("parse time")</p>
+      </div>
+      <div class="quiz">
+        <p>❓ You have a date string "15/01/2025". How do you parse it to datetime?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <code>dt.datetime.strptime("15/01/2025", "%d/%m/%Y")</code> — the format string must match the exact pattern in the input string.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13: LIST COMPREHENSION -->
+<div class="slide">
+  <h2>List Comprehension — The Pythonic Way</h2>
+  <p class="sub" style="margin-bottom:12px">List comprehension is a concise one-liner to build a new list from an existing one. It replaces a for-loop + append pattern.</p>
+  <div class="two">
+    <div>
+      <h3 style="margin-bottom:8px">The old way vs the Pythonic way</h3>
+      <pre><span class="cm"># ❌ Old way — 4 lines, verbose</span>
+<span class="var">squares</span> = []
+<span class="kw">for</span> <span class="var">x</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="nm">6</span>):
+    <span class="var">squares</span>.<span class="fn">append</span>(<span class="var">x</span> ** <span class="nm">2</span>)
+<span class="fn">print</span>(<span class="var">squares</span>)   <span class="cm"># [1, 4, 9, 16, 25]</span>
+
+<span class="cm"># ✅ List comprehension — 1 line</span>
+<span class="var">squares</span> = [<span class="var">x</span>**<span class="nm">2</span> <span class="kw">for</span> <span class="var">x</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="nm">6</span>)]
+
+<span class="cm"># Syntax: [expression  for item in iterable]</span>
+<span class="cm">#                       ↑ loops through each</span>
+<span class="cm">#          ↑ applied to each item</span></pre>
+      <div class="hl" style="margin-top:12px">
+        <h3 style="font-size:.84rem;margin-bottom:6px">With a filter condition</h3>
+        <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="cm"># [expression for item in list IF condition]</span>
+<span class="var">evens</span> = [<span class="var">x</span> <span class="kw">for</span> <span class="var">x</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">10</span>) <span class="kw">if</span> <span class="var">x</span>%<span class="nm">2</span>==<span class="nm">0</span>]
+<span class="cm"># [0, 2, 4, 6, 8]
+
+# GlobalMart example: names starting with 'Alan'</span>
+<span class="var">alan_names</span> = [
+    <span class="var">name</span> <span class="kw">for</span> <span class="var">name</span> <span class="kw">in</span> <span class="var">customer_names</span>
+    <span class="kw">if</span> <span class="var">name</span>.<span class="fn">startswith</span>(<span class="st">"Alan"</span>)
+]</pre>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <h3 style="font-size:.84rem;margin-bottom:8px">3 parts of list comprehension</h3>
+        <pre style="background:var(--code);border:1px solid var(--border);font-size:.78rem;">[  <span style="color:var(--green)">expression</span>  <span style="color:var(--a)">for item in iterable</span>  <span style="color:var(--purple)">if condition</span>  ]
+    ↑                  ↑                        ↑
+ What to             Loop                  Filter
+ produce             source                (optional)</pre>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <h3 style="font-size:.84rem;margin-bottom:8px">Real examples</h3>
+        <pre style="font-size:.75rem;"><span class="cm"># Uppercase all customer names</span>
+[<span class="var">n</span>.<span class="fn">upper</span>() <span class="kw">for</span> <span class="var">n</span> <span class="kw">in</span> <span class="var">names</span>]
+
+<span class="cm"># Sales > 500 in Electronics only</span>
+[<span class="var">s</span>[<span class="st">"product"</span>] <span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">sales</span>
+ <span class="kw">if</span> <span class="var">s</span>[<span class="st">"amt"</span>] > <span class="nm">500</span>
+ <span class="kw">and</span> <span class="var">s</span>[<span class="st">"cat"</span>] == <span class="st">"Electronics"</span>]</pre>
+      </div>
+      <div class="quiz">
+        <p>❓ What does <code>[x*2 for x in [1,2,3] if x > 1]</code> return?</p>
+        <button class="reveal" onclick="rev(this)">Reveal</button>
+        <div class="ans">✅ <strong>[4, 6]</strong> — filter keeps only x=2 and x=3 (both > 1), then multiplies each by 2: 2×2=4, 3×2=6.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: CODING PRACTICE 3 — LIST COMPREHENSION -->
+<div class="slide">
+  <div class="practice-header" style="margin-bottom:14px">
+    <span class="pr-badge">Practice 3</span>
+    <div>
+      <div class="pr-title">Coding Practice — List Comprehension</div>
+      <div class="pr-sub">Open VS Code · Create <code>practice_comprehension.py</code> · No loops allowed — comprehension only!</div>
+    </div>
+  </div>
+  <div class="two">
+    <div class="task-box">
+      <h3>Your Task</h3>
+      <p style="font-size:.81rem;color:var(--muted);margin-bottom:10px">Batch quiz results:</p>
+      <pre style="margin-bottom:12px;font-size:.74rem"><span class="var">names</span>  = [<span class="st">"Yogesh"</span>, <span class="st">"Hritin"</span>, <span class="st">"Prishita"</span>,
+           <span class="st">"Raj"</span>, <span class="st">"Ganadeep"</span>, <span class="st">"Amardeep"</span>]
+<span class="var">scores</span> = [<span class="nm">63</span>, <span class="nm">94</span>, <span class="nm">91</span>, <span class="nm">85</span>, <span class="nm">14</span>, <span class="nm">79</span>]</pre>
+      <div class="task-steps">
+        <div class="task-step"><span class="step-num">1</span>Create a list of all names in UPPERCASE using comprehension</div>
+        <div class="task-step"><span class="step-num">2</span>Create a list of only the scores that are 75 or above</div>
+        <div class="task-step"><span class="step-num">3</span>Create a list of names whose length is more than 5 characters</div>
+        <div class="task-step"><span class="step-num">4</span>Create a list of scores doubled for everyone who passed (score ≥ 50) — to show their "potential"</div>
+        <div class="task-step"><span class="step-num">★</span>BONUS: Use <code>zip(names, scores)</code> to get a list of names of students who scored above 80</div>
+      </div>
+    </div>
+    <div>
+      <button class="sol-btn" onclick="toggleSol(this, 'sol3')">▶ Show Solution</button>
+      <div class="solution" id="sol3">
+        <pre style="font-size:.72rem"><span class="var">names</span>  = [<span class="st">"Yogesh"</span>, <span class="st">"Hritin"</span>, <span class="st">"Prishita"</span>,
+           <span class="st">"Raj"</span>, <span class="st">"Ganadeep"</span>, <span class="st">"Amardeep"</span>]
+<span class="var">scores</span> = [<span class="nm">63</span>, <span class="nm">94</span>, <span class="nm">91</span>, <span class="nm">85</span>, <span class="nm">14</span>, <span class="nm">79</span>]
+
+<span class="cm"># 1. UPPERCASE names</span>
+<span class="var">upper_names</span> = [<span class="var">n</span>.<span class="fn">upper</span>() <span class="kw">for</span> <span class="var">n</span> <span class="kw">in</span> <span class="var">names</span>]
+<span class="fn">print</span>(<span class="var">upper_names</span>)
+<span class="cm"># ['YOGESH', 'HRITIN', 'PRISHITA', ...]</span>
+
+<span class="cm"># 2. Scores >= 75</span>
+<span class="var">high_scores</span> = [<span class="var">s</span> <span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">scores</span> <span class="kw">if</span> <span class="var">s</span> >= <span class="nm">75</span>]
+<span class="fn">print</span>(<span class="var">high_scores</span>)    <span class="cm"># [94, 91, 85, 79]</span>
+
+<span class="cm"># 3. Names longer than 5 chars</span>
+<span class="var">long_names</span> = [<span class="var">n</span> <span class="kw">for</span> <span class="var">n</span> <span class="kw">in</span> <span class="var">names</span> <span class="kw">if</span> <span class="fn">len</span>(<span class="var">n</span>) > <span class="nm">5</span>]
+<span class="fn">print</span>(<span class="var">long_names</span>)
+<span class="cm"># ['Yogesh', 'Hritin', 'Prishita', 'Ganadeep', 'Amardeep']</span>
+
+<span class="cm"># 4. Doubled scores for passed students</span>
+<span class="var">potential</span> = [<span class="var">s</span>*<span class="nm">2</span> <span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">scores</span> <span class="kw">if</span> <span class="var">s</span> >= <span class="nm">50</span>]
+<span class="fn">print</span>(<span class="var">potential</span>)  <span class="cm"># [126, 188, 182, 170, 158]</span>
+
+<span class="cm"># ★ BONUS: Names who scored above 80</span>
+<span class="var">toppers</span> = [<span class="var">n</span> <span class="kw">for</span> <span class="var">n</span>, <span class="var">s</span> <span class="kw">in</span> <span class="fn">zip</span>(<span class="var">names</span>, <span class="var">scores</span>)
+            <span class="kw">if</span> <span class="var">s</span> > <span class="nm">80</span>]
+<span class="fn">print</span>(<span class="var">toppers</span>)   <span class="cm"># ['Hritin', 'Prishita', 'Raj']</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15: CHEAT SHEET -->
+<div class="slide">
+  <h2>Quick Reference — Everything in One Place</h2>
+  <div class="two">
+    <div>
+      <table style="margin-bottom:12px">
+        <tr><th colspan="2">Data Structures</th></tr>
+        <tr><td style="font-size:.78rem"><code>[]</code> List</td><td style="font-size:.78rem">Ordered, mutable, allows duplicates</td></tr>
+        <tr><td style="font-size:.78rem"><code>()</code> Tuple</td><td style="font-size:.78rem">Ordered, immutable (read-only)</td></tr>
+        <tr><td style="font-size:.78rem"><code>{k:v}</code> Dict</td><td style="font-size:.78rem">Key-value pairs, keys unique</td></tr>
+        <tr><td style="font-size:.78rem"><code>{}</code> Set</td><td style="font-size:.78rem">Unordered, no duplicates</td></tr>
+      </table>
+      <table style="margin-bottom:12px">
+        <tr><th colspan="2">Useful Built-ins</th></tr>
+        <tr><td><code>len(x)</code></td><td style="font-size:.78rem">Length / count of items</td></tr>
+        <tr><td><code>range(a,b)</code></td><td style="font-size:.78rem">Numbers from a to b-1</td></tr>
+        <tr><td><code>type(x)</code></td><td style="font-size:.78rem">Data type of x</td></tr>
+        <tr><td><code>int() float() str()</code></td><td style="font-size:.78rem">Type conversion</td></tr>
+        <tr><td><code>enumerate(lst)</code></td><td style="font-size:.78rem">Loop with index + value</td></tr>
+        <tr><td><code>zip(a, b)</code></td><td style="font-size:.78rem">Pair up two lists element by element</td></tr>
+        <tr><td><code>sorted(lst)</code></td><td style="font-size:.78rem">Returns sorted copy (doesn't modify)</td></tr>
+      </table>
+    </div>
+    <div>
+      <table style="margin-bottom:12px">
+        <tr><th colspan="2">Control Flow</th></tr>
+        <tr><td><code>if / elif / else</code></td><td style="font-size:.78rem">Conditional branching</td></tr>
+        <tr><td><code>for x in lst</code></td><td style="font-size:.78rem">Iterate over a sequence</td></tr>
+        <tr><td><code>while condition</code></td><td style="font-size:.78rem">Repeat until False</td></tr>
+        <tr><td><code>break</code></td><td style="font-size:.78rem">Exit loop immediately</td></tr>
+        <tr><td><code>continue</code></td><td style="font-size:.78rem">Skip to next iteration</td></tr>
+        <tr><td><code>pass</code></td><td style="font-size:.78rem">Do nothing (placeholder)</td></tr>
+      </table>
+      <table>
+        <tr><th colspan="2">Operators — Edge Cases</th></tr>
+        <tr><td><code>//</code></td><td style="font-size:.78rem">Floor division (drops decimal)</td></tr>
+        <tr><td><code>%</code></td><td style="font-size:.78rem">Modulo (remainder only)</td></tr>
+        <tr><td><code>**</code></td><td style="font-size:.78rem">Power (2**3 = 8)</td></tr>
+        <tr><td><code>is</code> vs <code>==</code></td><td style="font-size:.78rem">Identity vs equality</td></tr>
+        <tr><td><code>in</code></td><td style="font-size:.78rem">"Chennai" in cities → True/False</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const total=slides.length;
+const ctr=document.getElementById('ctr');
+function show(n){slides[cur].classList.remove('active');cur=(n+total)%total;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+total;}
+function go(d){show(cur+d)}
+function rev(btn){btn.nextElementSibling.style.display='block';btn.style.display='none';}
+function toggleSol(btn, id){
+  const sol=document.getElementById(id);
+  const open=sol.style.display==='block';
+  sol.style.display=open?'none':'block';
+  btn.textContent=open?'▶ Show Solution':'▼ Hide Solution';
+}
+const cp1scores={}, cp2scores={};
+function mcq(el, verdict, expId){
+  const opts=el.closest('.opts').querySelectorAll('.opt');
+  if(el.classList.contains('correct')||el.classList.contains('wrong')) return;
+  opts.forEach(o=>o.classList.add('disabled'));
+  el.classList.add(verdict);
+  opts.forEach(o=>{
+    if(o!==el && o.onclick && o.onclick.toString().includes("'correct'")) o.classList.add('correct');
+  });
+  document.getElementById(expId).style.display='block';
+  // track scores
+  const card=el.closest('.mcq-card');
+  const grid=el.closest('[id^="cp"]');
+  if(grid){
+    const gid=grid.id;
+    if(!cp1scores[gid]) cp1scores[gid]=0;
+    if(verdict==='correct') cp1scores[gid]++;
+    const scoreEl=document.getElementById(gid.replace('cp','cp')+'-s') ||
+                  document.getElementById(gid+'-s');
+    const total=grid.querySelectorAll('.mcq-card').length;
+    const answered=grid.querySelectorAll('.opt.correct,.opt.wrong').length;
+    // count only one answered opt per card
+    const cards=grid.querySelectorAll('.mcq-card');
+    let correct=0;
+    cards.forEach(c=>{if(c.querySelector('.opt.correct')) correct++;});
+    const sid=gid==='cp1'?'cp1-s':'cp2-s';
+    document.getElementById(sid).textContent=correct;
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+ctr.textContent='1 / '+total;
+</script>
+</body>
+</html>

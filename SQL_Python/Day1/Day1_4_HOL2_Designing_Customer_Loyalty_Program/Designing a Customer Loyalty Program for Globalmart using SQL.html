@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4 – Customer Loyalty Program | Day 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #f59e0b; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #f59e0b; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 48px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #2d1b00 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 40px; font-weight: 800; color: #f59e0b; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 17px; color: #94a3b8; max-width: 660px; }
+  .slide-cover .badge { margin-top: 20px; background: #78350f; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 34px; font-weight: 700; color: #f59e0b; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 24px; font-weight: 700; color: #f8fafc; margin-bottom: 18px; }
+
+  .slide-demo { background: #0a1428; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 4px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 18px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px 24px; }
+  .card h4 { color: #f59e0b; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul { padding-left: 16px; }
+
+  .highlight-box { background: #2d1b0e; border: 1px solid #f59e0b; border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box.info { background: #1a2e4a; border-color: #3b82f6; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box.purple { background: #1e1040; border-color: #a78bfa; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.8; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .rfm-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .rfm-card { border-radius: 10px; padding: 18px; border: 1px solid; }
+  .rfm-r { background: #1a2e4a; border-color: #3b82f6; }
+  .rfm-r h5 { color: #60a5fa; font-size: 18px; margin-bottom: 6px; }
+  .rfm-f { background: #0d2d1a; border-color: #22c55e; }
+  .rfm-f h5 { color: #4ade80; font-size: 18px; margin-bottom: 6px; }
+  .rfm-m { background: #2d1b0e; border-color: #f59e0b; }
+  .rfm-m h5 { color: #fbbf24; font-size: 18px; margin-bottom: 6px; }
+  .rfm-card p { font-size: 13px; color: #94a3b8; line-height: 1.6; }
+  .rfm-card .thresholds { margin-top:10px; font-size:12px; line-height:2; }
+  .rfm-card .thresholds span { display:block; }
+  .rfm-card .th-high { color: #4ade80; }
+  .rfm-card .th-med  { color: #fbbf24; }
+  .rfm-card .th-low  { color: #f87171; }
+
+  .metric-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  .metric-table th { background: #78350f; color: #fff; padding: 8px 12px; text-align: left; }
+  .metric-table td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  .metric-table tr:nth-child(even) td { background: #0f172a; }
+
+  .seg-box { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+  .seg-pill { border-radius: 8px; padding: 14px 18px; flex: 1; min-width: 160px; border: 1px solid; }
+  .seg-promoter { background: #0d2d1a; border-color: #22c55e; }
+  .seg-promoter h5 { color: #4ade80; margin-bottom: 4px; }
+  .seg-potential { background: #1a2e4a; border-color: #3b82f6; }
+  .seg-potential h5 { color: #60a5fa; margin-bottom: 4px; }
+  .seg-detractor { background: #2d1010; border-color: #ef4444; }
+  .seg-detractor h5 { color: #f87171; margin-bottom: 4px; }
+  .seg-pill p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+
+  .common-mistakes { list-style: none; padding: 0; }
+  .common-mistakes li { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+  .common-mistakes li::before { content: '⚠'; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 1 · MODULE 4 — Customer Loyalty Program</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 13</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Designing a Customer<br>Loyalty Program</h1>
+    <p class="subtitle">Build the SQL backbone for GlobalMart's first-ever loyalty program — from raw data to RFM segmentation</p>
+    <div class="badge">Module 4 &nbsp;·&nbsp; Day 1 &nbsp;·&nbsp; Intermediate &nbsp;·&nbsp; 60 min self-paced</div>
+    <div class="seg-box" style="margin-top:32px; max-width:600px;">
+      <div class="seg-pill seg-promoter"><h5>Promoters</h5><p>Loyal, high-value advocates</p></div>
+      <div class="seg-pill seg-potential"><h5>Potentials</h5><p>Occasional buyers with growth room</p></div>
+      <div class="seg-pill seg-detractor"><h5>Detractors</h5><p>At-risk, need immediate attention</p></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: BUSINESS CONTEXT -->
+  <div class="slide slide-section">
+    <div class="section-tag">The Mission</div>
+    <h2>GlobalMart's Challenge</h2>
+    <div class="two-col" style="margin-top:24px;">
+      <div>
+        <div class="card">
+          <h4>The Problem</h4>
+          <p>GlobalMart has thousands of customers but doesn't truly <em>know</em> them. They treat every customer the same — same promotions, same communication, same offers.</p>
+          <p style="margin-top:10px;">But a customer who spends ₹15,000/year and buys every month deserves a very different experience than one who bought once in 2016.</p>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4>Your Role as Data Analyst</h4>
+          <p>Build a <strong>customer-level summary table</strong> by joining data from 4 tables: customers, orders, transactions, returns.</p>
+          <p style="margin-top:10px;">Compute behavioural metrics and classify each customer into an RFM segment so the marketing team can target them correctly.</p>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box info">
+          <p><strong style="color:#60a5fa;">Database Credentials (SSMS)</strong></p>
+          <table class="metric-table" style="margin-top:10px;">
+            <tr><td>Server</td><td>mentorskool.database.windows.net</td></tr>
+            <tr><td>Username</td><td>mskllearnlogin</td></tr>
+            <tr><td>Password</td><td>!@#sw2aq1</td></tr>
+            <tr><td>Database</td><td>mskl-masterclass</td></tr>
+            <tr><td>Tables</td><td>ex_customers, ex_orders, ex_transactions, ex_returns</td></tr>
+          </table>
+        </div>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">Business rule:</strong> Only consider orders with <code>order_status = 'delivered'</code> for all metrics.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: MARKETING STRATEGY (SHORT ANSWER ACTIVITY) -->
+  <div class="slide slide-content">
+    <h3>Before We Code — Business Thinking First</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:16px;">The self-paced content asks learners to think through marketing strategy before touching SQL. Let's do this together.</p>
+    <div style="margin-top:20px; overflow-x:auto;">
+      <table class="metric-table" style="min-width:700px;">
+        <tr>
+          <th>Segment</th>
+          <th>Core Goal</th>
+          <th>Recommended Action</th>
+          <th>Why it works</th>
+        </tr>
+        <tr>
+          <td style="color:#4ade80; font-weight:600;">Promoters</td>
+          <td>Retention &amp; Advocacy</td>
+          <td>Exclusive VIP rewards, early product access</td>
+          <td>They already buy — deep discounts erode margin. Status rewards feel valuable without cutting profits.</td>
+        </tr>
+        <tr>
+          <td style="color:#60a5fa; font-weight:600;">Potentials</td>
+          <td>Frequency &amp; Growth</td>
+          <td>Targeted cashbacks or coupons ("₹100 off ₹500")</td>
+          <td>Most receptive to monetary incentives. A nudge drives the next purchase sooner.</td>
+        </tr>
+        <tr>
+          <td style="color:#f87171; font-weight:600;">Detractors</td>
+          <td>Recovery &amp; Feedback</td>
+          <td>Post-purchase survey, personal check-in (no sales pitch)</td>
+          <td>Coupons to unhappy customers feel spammy. Recovery needs relationship repair first.</td>
+        </tr>
+      </table>
+    </div>
+    <div class="highlight-box purple" style="margin-top:16px;">
+      <p><strong style="color:#a78bfa;">Key insight:</strong> Same budget, 3× better outcomes — because the action matches the customer's behaviour. This is why RFM segmentation exists.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: RFM EXPLAINED -->
+  <div class="slide slide-content">
+    <h3>The RFM Framework</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:4px;">Every loyalty/segmentation model starts with these three dimensions:</p>
+    <div class="rfm-grid">
+      <div class="rfm-card rfm-r">
+        <h5>R — Recency</h5>
+        <p>How recently did the customer last buy? A recent buyer is engaged; a stale buyer may have churned.</p>
+        <div class="thresholds">
+          <span class="th-high">High ≤ 18 days (very recent)</span>
+          <span class="th-med">Medium 19–31 days</span>
+          <span class="th-low">Low ≥ 32 days (stale)</span>
+        </div>
+      </div>
+      <div class="rfm-card rfm-f">
+        <h5>F — Frequency</h5>
+        <p>How often do they buy? Measured as avg days between orders — lower = more frequent.</p>
+        <div class="thresholds">
+          <span class="th-high">High ≤ 30 days between orders</span>
+          <span class="th-med">Medium 31–38 days</span>
+          <span class="th-low">Low > 38 days between orders</span>
+        </div>
+      </div>
+      <div class="rfm-card rfm-m">
+        <h5>M — Monetary</h5>
+        <p>How much do they spend? Total order value from all delivered orders.</p>
+        <div class="thresholds">
+          <span class="th-high">High > ₹6,900 total spend</span>
+          <span class="th-med">Medium ₹4,300–₹6,900</span>
+          <span class="th-low">Low &lt; ₹4,300 total spend</span>
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#f59e0b;">Fixed analysis date: 2018-09-01</strong> — treat this as "today" for all recency calculations. This ensures everyone in the class gets the same result when they run the query.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: THE OUTPUT TABLE -->
+  <div class="slide slide-content">
+    <h3>The Customer Summary Table We're Building</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">One row per customer — here's every column and what it means:</p>
+    <table class="metric-table">
+      <tr>
+        <th>Column</th>
+        <th>How calculated</th>
+        <th>Notes</th>
+      </tr>
+      <tr><td>customer_name</td><td>Direct from ex_customers</td><td></td></tr>
+      <tr><td>tot_orders</td><td>COUNT(DISTINCT order_id)</td><td>DISTINCT because transactions has multiple rows per order</td></tr>
+      <tr><td>tot_returns</td><td>COUNT(DISTINCT return order_id)</td><td>LEFT JOIN ex_returns — some customers have no returns</td></tr>
+      <tr><td>order_value</td><td>SUM(sales_amount)</td><td>Total monetary value of delivered orders</td></tr>
+      <tr><td>avg_basket_size</td><td>FLOOR(SUM(quantity) / COUNT(DISTINCT order_id))</td><td>FLOOR rounds DOWN (as specified)</td></tr>
+      <tr><td>avg_basket_value</td><td>'$ ' + ROUND(order_value / tot_orders, 2)</td><td>Format: "$ 250.00"</td></tr>
+      <tr><td>length_of_stay_days</td><td>DATEDIFF(day, MIN(date), MAX(date))</td><td>Days between first and last order</td></tr>
+      <tr><td>order_purchase_frequency</td><td>length_of_stay / tot_orders</td><td>Avg days between two orders</td></tr>
+      <tr><td>recency_days</td><td>DATEDIFF(day, MAX(date), '2018-09-01')</td><td>Days since last order as of analysis date</td></tr>
+      <tr><td>recency_segment</td><td>CASE WHEN on recency_days</td><td>High / Medium / Low</td></tr>
+      <tr><td>frequency_segment</td><td>CASE WHEN on order_purchase_frequency</td><td>High / Medium / Low</td></tr>
+      <tr><td>monetary_segment</td><td>CASE WHEN on order_value</td><td>High / Medium / Low</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 6: TABLE JOINS NEEDED -->
+  <div class="slide slide-content">
+    <h3>How the 4 Tables Connect</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>Join Logic</h4>
+          <p><code>ex_customers</code> → joined to <code>ex_orders</code> via <code>customer_id</code></p>
+          <p style="margin-top:8px;"><code>ex_orders</code> → joined to <code>ex_transactions</code> via <code>order_id</code></p>
+          <p style="margin-top:8px;"><code>ex_orders</code> → LEFT JOIN <code>ex_returns</code> via <code>order_id</code> (some orders won't have returns)</p>
+          <p style="margin-top:8px;">Filter: <code>order_status = 'delivered'</code> applied on the orders join</p>
+        </div>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">Why LEFT JOIN for returns?</strong><br>
+          If we use INNER JOIN, customers with zero returns disappear from the result entirely. We want all customers — even those who never returned anything. LEFT JOIN preserves them (with NULL for return columns).</p>
+        </div>
+      </div>
+      <div>
+        <pre>
+<span class="cm">-- The join structure (simplified view)</span>
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+
+<span class="cm">-- INNER JOIN: we only want customers who placed
+-- at least one delivered order</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+   <span class="kw">AND</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+
+<span class="cm">-- INNER JOIN: link each order to its transaction lines</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+    <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+
+<span class="cm">-- LEFT JOIN: keep all orders, even those without returns
+-- Returns will show as NULL for non-returned orders</span>
+<span class="kw">LEFT JOIN</span> <span class="tbl">ex_returns</span> <span class="tbl">r</span>
+    <span class="kw">ON</span> <span class="tbl">r</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+
+<span class="cm">-- Group to customer level (one row per customer)</span>
+<span class="kw">GROUP BY</span>
+    <span class="tbl">c</span>.<span class="col">customer_id</span>,
+    <span class="tbl">c</span>.<span class="col">customer_name</span>
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: DEMO - CUSTOMER BASE CTE -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — Building the customer_base CTE</h3>
+    <div class="demo-label">The core CTE: all metrics computed here | mskl-masterclass</div>
+    <pre style="font-size:12.5px; line-height:1.75;">
+<span class="kw">WITH</span> customer_base <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">c</span>.<span class="col">customer_id</span>,
+        <span class="tbl">c</span>.<span class="col">customer_name</span>,
+
+        <span class="cm">-- DISTINCT because ex_transactions has multiple rows per order
+        -- Without DISTINCT, we'd count the same order multiple times</span>
+        <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>)  <span class="kw">AS</span> tot_orders,
+
+        <span class="cm">-- LEFT JOIN means r.order_id is NULL for non-returned orders
+        -- COUNT(DISTINCT NULL) = 0, so this still works correctly</span>
+        <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">r</span>.<span class="col">order_id</span>)  <span class="kw">AS</span> tot_returns,
+
+        <span class="cm">-- Total revenue from this customer's delivered orders</span>
+        <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>)         <span class="kw">AS</span> order_value,
+
+        <span class="cm">-- FLOOR rounds DOWN: avg units per order basket
+        -- FLOOR(7.9) = 7, not 8</span>
+        <span class="fn">FLOOR</span>(<span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">quantity</span>) / <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>))
+                                    <span class="kw">AS</span> avg_basket_size,
+
+        <span class="cm">-- CONCAT to format as "$ 250.50"</span>
+        <span class="fn">CONCAT</span>(<span class="str">'$ '</span>, <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>) / <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>), <span class="str">2</span>))
+                                    <span class="kw">AS</span> avg_basket_value,
+
+        <span class="cm">-- Days between first-ever and last-ever delivered order</span>
+        <span class="fn">DATEDIFF</span>(day, <span class="fn">MIN</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>), <span class="fn">MAX</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>))
+                                    <span class="kw">AS</span> length_of_stay_days,
+
+        <span class="cm">-- Avg days between two orders = length_of_stay / total_orders
+        -- Lower number = more frequent buyer</span>
+        <span class="fn">DATEDIFF</span>(day, <span class="fn">MIN</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>), <span class="fn">MAX</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>))
+            / <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>)
+                                    <span class="kw">AS</span> order_purchase_frequency,
+
+        <span class="cm">-- Days since last purchase as of our fixed analysis date 2018-09-01
+        -- Lower number = more recent (active) customer</span>
+        <span class="fn">DATEDIFF</span>(day, <span class="fn">MAX</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>), <span class="str">'2018-09-01'</span>)
+                                    <span class="kw">AS</span> recency_days
+
+    <span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+        <span class="kw">ON</span>  <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+       <span class="kw">AND</span>  <span class="tbl">o</span>.<span class="col">order_status</span>  = <span class="str">'delivered'</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+        <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    <span class="kw">LEFT JOIN</span> <span class="tbl">ex_returns</span> <span class="tbl">r</span>
+        <span class="kw">ON</span> <span class="tbl">r</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    <span class="kw">GROUP BY</span>
+        <span class="tbl">c</span>.<span class="col">customer_id</span>,
+        <span class="tbl">c</span>.<span class="col">customer_name</span>
+)
+
+<span class="cm">-- Check the CTE output before adding segments</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> customer_base;
+    </pre>
+  </div>
+
+  <!-- SLIDE 8: DEMO - FINAL SELECT WITH RFM -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — Final SELECT: Adding RFM Segments</h3>
+    <div class="demo-label">CASE WHEN on top of the CTE | The segmentation logic</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- ... WITH customer_base AS (...) above ...
+
+-- Now use CASE WHEN to classify each customer
+-- into High / Medium / Low for each RFM dimension</span>
+
+<span class="kw">SELECT</span>
+    customer_id,
+    customer_name,
+    tot_orders,
+    tot_returns,
+    order_value,
+    avg_basket_size,
+    avg_basket_value,
+    length_of_stay_days,
+    order_purchase_frequency,
+    recency_days,
+
+    <span class="cm">-- R: How recently did they buy?
+    -- Lower recency_days = more recent buyer = High</span>
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> recency_days &lt;= <span class="str">18</span>              <span class="kw">THEN</span> <span class="str">'High'</span>
+        <span class="kw">WHEN</span> recency_days <span class="kw">BETWEEN</span> <span class="str">19</span> <span class="kw">AND</span> <span class="str">31</span> <span class="kw">THEN</span> <span class="str">'Medium'</span>
+        <span class="kw">ELSE</span>                                       <span class="str">'Low'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> recency_segment,
+
+    <span class="cm">-- F: How often do they buy?
+    -- Lower frequency (fewer days between orders) = High</span>
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> order_purchase_frequency &lt;= <span class="str">30</span>              <span class="kw">THEN</span> <span class="str">'High'</span>
+        <span class="kw">WHEN</span> order_purchase_frequency <span class="kw">BETWEEN</span> <span class="str">31</span> <span class="kw">AND</span> <span class="str">38</span> <span class="kw">THEN</span> <span class="str">'Medium'</span>
+        <span class="kw">ELSE</span>                                                    <span class="str">'Low'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> frequency_segment,
+
+    <span class="cm">-- M: How much do they spend?
+    -- Higher order_value = High monetary</span>
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> order_value &gt; <span class="str">6900</span>             <span class="kw">THEN</span> <span class="str">'High'</span>
+        <span class="kw">WHEN</span> order_value <span class="kw">BETWEEN</span> <span class="str">4300</span> <span class="kw">AND</span> <span class="str">6900</span> <span class="kw">THEN</span> <span class="str">'Medium'</span>
+        <span class="kw">ELSE</span>                                       <span class="str">'Low'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> monetary_segment
+
+<span class="kw">FROM</span> customer_base;
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Reading RFM results</h4>
+          <p>A customer with <code>recency_segment = High</code>, <code>frequency_segment = High</code>, <code>monetary_segment = High</code> is your best customer — a Promoter. Target with VIP perks.</p>
+          <p style="margin-top:10px;">A customer with all <code>Low</code> is a Detractor — focus on understanding why, not pushing more sales.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">Pro tip:</strong> Because these CASE WHEN statements reference columns from <code>customer_base</code> (not from raw tables), the logic is completely clean. This is the power of building on a CTE.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: FULL QUERY -->
+  <div class="slide slide-demo">
+    <h3>Full Solution Query</h3>
+    <div class="demo-label">Complete working query — run this end-to-end in SSMS</div>
+    <pre style="font-size:11.5px; line-height:1.7;">
+<span class="kw">WITH</span> customer_base <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">c</span>.<span class="col">customer_id</span>,  <span class="tbl">c</span>.<span class="col">customer_name</span>,
+        <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>)  <span class="kw">AS</span> tot_orders,
+        <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">r</span>.<span class="col">order_id</span>)  <span class="kw">AS</span> tot_returns,
+        <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>)          <span class="kw">AS</span> order_value,
+        <span class="fn">FLOOR</span>(<span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">quantity</span>) / <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>))   <span class="kw">AS</span> avg_basket_size,
+        <span class="fn">CONCAT</span>(<span class="str">'$ '</span>, <span class="fn">ROUND</span>(<span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>) / <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>), <span class="str">2</span>))
+                                       <span class="kw">AS</span> avg_basket_value,
+        <span class="fn">DATEDIFF</span>(day, <span class="fn">MIN</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>), <span class="fn">MAX</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>))
+                                       <span class="kw">AS</span> length_of_stay_days,
+        <span class="fn">DATEDIFF</span>(day, <span class="fn">MIN</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>), <span class="fn">MAX</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>))
+            / <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>) <span class="kw">AS</span> order_purchase_frequency,
+        <span class="fn">DATEDIFF</span>(day, <span class="fn">MAX</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>), <span class="str">'2018-09-01'</span>)
+                                       <span class="kw">AS</span> recency_days
+    <span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+    <span class="kw">JOIN</span>      <span class="tbl">ex_orders</span>       <span class="tbl">o</span> <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span> <span class="kw">AND</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+    <span class="kw">JOIN</span>      <span class="tbl">ex_transactions</span> <span class="tbl">t</span> <span class="kw">ON</span> <span class="tbl">t</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    <span class="kw">LEFT JOIN</span> <span class="tbl">ex_returns</span>      <span class="tbl">r</span> <span class="kw">ON</span> <span class="tbl">r</span>.<span class="col">order_id</span> = <span class="tbl">o</span>.<span class="col">order_id</span>
+    <span class="kw">GROUP BY</span> <span class="tbl">c</span>.<span class="col">customer_id</span>, <span class="tbl">c</span>.<span class="col">customer_name</span>
+)
+<span class="kw">SELECT</span>
+    customer_id, customer_name, tot_orders, tot_returns, order_value,
+    avg_basket_size, avg_basket_value, length_of_stay_days,
+    order_purchase_frequency, recency_days,
+    <span class="kw">CASE WHEN</span> recency_days &lt;= <span class="str">18</span> <span class="kw">THEN</span> <span class="str">'High'</span> <span class="kw">WHEN</span> recency_days <span class="kw">BETWEEN</span> <span class="str">19</span> <span class="kw">AND</span> <span class="str">31</span> <span class="kw">THEN</span> <span class="str">'Medium'</span> <span class="kw">ELSE</span> <span class="str">'Low'</span> <span class="kw">END</span> <span class="kw">AS</span> recency_segment,
+    <span class="kw">CASE WHEN</span> order_purchase_frequency &lt;= <span class="str">30</span> <span class="kw">THEN</span> <span class="str">'High'</span> <span class="kw">WHEN</span> order_purchase_frequency <span class="kw">BETWEEN</span> <span class="str">31</span> <span class="kw">AND</span> <span class="str">38</span> <span class="kw">THEN</span> <span class="str">'Medium'</span> <span class="kw">ELSE</span> <span class="str">'Low'</span> <span class="kw">END</span> <span class="kw">AS</span> frequency_segment,
+    <span class="kw">CASE WHEN</span> order_value &gt; <span class="str">6900</span> <span class="kw">THEN</span> <span class="str">'High'</span> <span class="kw">WHEN</span> order_value <span class="kw">BETWEEN</span> <span class="str">4300</span> <span class="kw">AND</span> <span class="str">6900</span> <span class="kw">THEN</span> <span class="str">'Medium'</span> <span class="kw">ELSE</span> <span class="str">'Low'</span> <span class="kw">END</span> <span class="kw">AS</span> monetary_segment
+<span class="kw">FROM</span> customer_base;
+    </pre>
+  </div>
+
+  <!-- SLIDE 10: COMMON MISTAKES -->
+  <div class="slide slide-content">
+    <h3>Common Mistakes to Warn Your Class About</h3>
+    <ul class="common-mistakes">
+      <li>
+        <div>
+          <strong>Not using DISTINCT for order count.</strong> <code>ex_transactions</code> has multiple rows per order. <code>COUNT(order_id)</code> inflates the count. Always use <code>COUNT(DISTINCT order_id)</code>.
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Using INNER JOIN for returns.</strong> Customers with zero returns disappear. Use <code>LEFT JOIN ex_returns</code> to keep all customers.
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Forgetting FLOOR for avg_basket_size.</strong> The problem says "round down to lower integer." Without FLOOR, you get decimals.
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Wrong DATEDIFF order for recency.</strong> Recency = days since last order. Formula: <code>DATEDIFF(day, MAX(date), '2018-09-01')</code> — NOT the other way around.
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Using GETDATE() for recency instead of '2018-09-01'.</strong> The problem specifies a fixed reference date so everyone gets the same answer.
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Missing the delivered filter.</strong> Not adding <code>order_status = 'delivered'</code> includes cancelled/pending orders and distorts all metrics.
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Integer division for frequency.</strong> <code>length_of_stay / tot_orders</code> — if both are integers, SQL truncates. Fine here because the requirement says "round to nearest integer" — but be aware.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- SLIDE 11: DISCUSSION -->
+  <div class="slide slide-content">
+    <h3>Class Discussion — Deepening the Thinking</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>Discussion Q1</h4>
+          <p>"A customer placed 1 order 2 years ago worth ₹50,000. What is their RFM segment? Should they be a Promoter?"</p>
+          <p style="margin-top:10px; color:#94a3b8; font-size:13px;">→ High Monetary, but Low Recency + Low Frequency. This shows why you need ALL THREE dimensions — one metric alone can mislead.</p>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4>Discussion Q2</h4>
+          <p>"What might cause a customer to have very high <code>tot_returns</code>? Should we give them loyalty rewards?"</p>
+          <p style="margin-top:10px; color:#94a3b8; font-size:13px;">→ Maybe quality issues, buyer's remorse, or fraud. High returns despite high spend is a risk signal, not a loyalty signal.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>Discussion Q3</h4>
+          <p>"Why is the analysis date fixed at <code>2018-09-01</code> and not <code>GETDATE()</code>?"</p>
+          <p style="margin-top:10px; color:#94a3b8; font-size:13px;">→ The data is historical. Using GETDATE() would make everyone look like a stale, inactive customer since the data is from 2016–2018. A fixed reference date gives meaningful RFM values.</p>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4>Extension Challenge</h4>
+          <p>"Can you modify the query to show only <strong>Promoters</strong>? (Customers with all three segments = High)"</p>
+          <pre style="font-size:12px; margin-top:10px;">
+<span class="cm">-- Hint: wrap the full query in a CTE
+-- then filter the outer SELECT</span>
+<span class="kw">WHERE</span> recency_segment   = <span class="str">'High'</span>
+  <span class="kw">AND</span> frequency_segment = <span class="str">'High'</span>
+  <span class="kw">AND</span> monetary_segment  = <span class="str">'High'</span>
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: SELF-PACED OVERVIEW -->
+  <div class="slide slide-content">
+    <h3>What the Self-Paced Scenario Covers</h3>
+    <div class="three-col">
+      <div class="card">
+        <h4>Part 1 — Business Framing</h4>
+        <p>Introduction video from Lead Analyst. Short answer question on marketing strategy for each segment.</p>
+        <p style="margin-top:10px; color:#64748b; font-size:12px;">Builds business context before any coding</p>
+      </div>
+      <div class="card">
+        <h4>Part 2 — SSMS Setup</h4>
+        <p>Connect to the server, select the database, explore the 4 tables using the ER diagram and data dictionary.</p>
+        <p style="margin-top:10px; color:#64748b; font-size:12px;">60 minutes to complete the full SQL challenge</p>
+      </div>
+      <div class="card">
+        <h4>Part 3 — Build the Query</h4>
+        <p>Write the full customer summary table from scratch. Guided with step-by-step hints on each metric.</p>
+        <p style="margin-top:10px; color:#64748b; font-size:12px;">Submit SQL code + compare against solution</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:20px;">
+      <p><strong style="color:#f59e0b;">Skills applied:</strong> GROUP BY · Aggregate functions · INNER JOIN · LEFT JOIN · DATEDIFF · FLOOR · CONCAT · CASE WHEN · CTEs · Filtering with WHERE</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: DAY 1 WRAP UP -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Day 1 Complete</div>
+    <h2>What You've Covered Today</h2>
+    <div class="three-col" style="margin-top:28px; max-width:900px; text-align:left;">
+      <div class="card">
+        <h4>Module 1</h4>
+        <p>Basic SQL Revision — SELECT, WHERE, text/date/math functions, CASE WHEN, SQL order of execution</p>
+      </div>
+      <div class="card">
+        <h4>Module 2</h4>
+        <p>Joins, CTEs, Subqueries — All 6 JOIN types, GROUP BY, WHERE vs HAVING, subqueries, CTEs</p>
+      </div>
+      <div class="card">
+        <h4>Module 3</h4>
+        <p>Product Performance — 3-CTE pattern, CASE WHEN flags, FORMAT, granularity thinking</p>
+      </div>
+      <div class="card">
+        <h4>Module 4</h4>
+        <p>Loyalty Program — 4-table joins, RFM framework, DATEDIFF metrics, customer segmentation</p>
+      </div>
+      <div class="card">
+        <h4>Self-Paced Work</h4>
+        <p>Learners will go deeper on each topic with interactive scenarios on the MentorSkool platform</p>
+      </div>
+      <div class="card">
+        <h4>Key Theme</h4>
+        <p>Everything builds toward answering real business questions — not just SQL syntax, but analytical thinking</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

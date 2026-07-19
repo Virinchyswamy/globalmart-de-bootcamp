@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Day 7 Coding Activity — Type the Code</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
+  --green:#3fb950;--red:#f85149;--yellow:#d29922;--purple:#bc8cff;
+  --editor:#010409;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+  min-height:100vh;padding:2rem 1rem}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:2rem}
+
+/* header */
+.header{text-align:center}
+.header h1{font-size:1.65rem;font-weight:700;color:var(--accent)}
+.header p{color:var(--muted);margin-top:.35rem;font-size:.92rem}
+.score-row{display:flex;align-items:center;justify-content:center;gap:1.2rem;margin-top:.9rem}
+#score-display{font-family:'JetBrains Mono',monospace;font-size:1rem;
+  color:var(--accent);font-weight:700}
+.track{flex:1;max-width:280px;height:5px;background:var(--border);
+  border-radius:3px;overflow:hidden}
+#fill{height:100%;background:var(--accent);width:0%;transition:width .4s;border-radius:3px}
+
+/* section */
+.section-label{display:flex;align-items:center;gap:.8rem}
+.section-label h2{font-size:.95rem;font-weight:700;color:var(--yellow);white-space:nowrap}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* task card */
+.task{background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:1.4rem 1.6rem;display:flex;flex-direction:column;gap:1rem}
+.task.solved{border-color:var(--green)}
+
+.task-meta{display:flex;align-items:center;gap:.6rem}
+.task-num{font-size:.72rem;font-weight:700;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.05em}
+.lang-tag{font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;
+  font-family:'JetBrains Mono',monospace}
+.lang-tag.py{background:#1e3a2f;color:var(--green)}
+.lang-tag.sql{background:#3a1f4a;color:var(--purple)}
+
+.task-text{font-size:.93rem;line-height:1.65}
+.task-text code{font-family:'JetBrains Mono',monospace;font-size:.82rem;
+  background:#1c2128;padding:.1rem .35rem;border-radius:3px}
+
+pre.context{background:var(--editor);border:1px solid var(--border);border-radius:6px;
+  padding:.7rem 1rem;font-family:'JetBrains Mono',monospace;font-size:.79rem;
+  line-height:1.65;overflow-x:auto;white-space:pre}
+.kw{color:#ff7b72}.fn{color:#d2a8ff}.st{color:#a5d6ff}
+.cm{color:#8b949e;font-style:italic}.nm{color:#79c0ff}
+
+/* editor */
+.editor-wrap{position:relative}
+.editor-label{font-size:.72rem;font-weight:700;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;margin-bottom:.35rem;
+  text-transform:uppercase;letter-spacing:.05em}
+textarea.editor{width:100%;background:var(--editor);color:var(--text);
+  border:1px solid var(--border);border-radius:6px;
+  font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.65;
+  padding:.75rem 1rem;resize:vertical;min-height:64px;outline:none;
+  transition:border-color .15s;tab-size:2}
+textarea.editor:focus{border-color:var(--accent)}
+textarea.editor.ok{border-color:var(--green)}
+textarea.editor.partial{border-color:var(--yellow)}
+
+/* action row */
+.actions{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+button.btn{border:1px solid var(--border);background:none;color:var(--text);
+  padding:.4rem 1rem;border-radius:6px;cursor:pointer;font-size:.85rem;
+  font-family:inherit;transition:background .15s}
+button.btn:hover{background:#1c2128}
+button.btn.primary{background:#1a3a5f;border-color:var(--accent);color:var(--accent)}
+button.btn.primary:hover{background:#1e4a7a}
+button.btn.reveal-btn{color:var(--muted)}
+.hint-text{font-size:.8rem;color:var(--muted)}
+
+/* checklist */
+.checklist{display:flex;flex-wrap:wrap;gap:.4rem}
+.check-item{display:flex;align-items:center;gap:.3rem;font-size:.8rem;
+  font-family:'JetBrains Mono',monospace;padding:.2rem .55rem;
+  border-radius:4px;border:1px solid var(--border)}
+.check-item.found{background:#0d2318;border-color:var(--green);color:var(--green)}
+.check-item.missing{background:#2a0d0d;border-color:var(--red);color:var(--red)}
+.check-item.pending{background:var(--surface);color:var(--muted)}
+
+/* answer reveal */
+.answer-box{background:var(--editor);border:1px solid var(--green);border-radius:6px;
+  padding:.75rem 1rem;display:none}
+.answer-box.show{display:block}
+.answer-box .answer-label{font-size:.72rem;font-weight:700;color:var(--green);
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;
+  letter-spacing:.05em;margin-bottom:.4rem}
+.answer-box pre{font-family:'JetBrains Mono',monospace;font-size:.8rem;
+  line-height:1.65;color:var(--text);white-space:pre-wrap}
+
+/* final */
+#final{display:none;text-align:center;padding:1.5rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px}
+#final h2{font-size:1.25rem;color:var(--accent);margin-bottom:.4rem}
+#final p{color:var(--muted);font-size:.92rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="header">
+  <h1>Day 7 Coding Activity</h1>
+  <p>Type the actual code — SQL or Python. Your answer is checked token by token.</p>
+  <div class="score-row">
+    <span id="score-display">0 / 8</span>
+    <div class="track"><div id="fill"></div></div>
+    <span style="color:var(--muted);font-size:.82rem" id="done-label">0 solved</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<div class="section-label"><h2>Section 1 — Python (write from scratch)</h2></div>
+
+<!-- TASK 1 -->
+<div class="task" id="t1">
+  <div class="task-meta">
+    <span class="task-num">Task 1 of 8</span>
+    <span class="lang-tag py">Python</span>
+  </div>
+  <div class="task-text">
+    You have two DataFrames: <code>transactions</code> (with column <code>Product_ID</code>)
+    and <code>products</code> (with column <code>product_id</code>, plus <code>category</code> and <code>sub_category</code>).
+    <br/><br/>
+    Write the pandas line that joins them — keep <strong>all transaction rows</strong> even if no product match is found.
+    Select only <code>category</code> and <code>sub_category</code> from products.
+  </div>
+  <div class="editor-label">Your answer</div>
+  <textarea class="editor" id="i1" rows="2"
+    placeholder="transactions.merge(...)"></textarea>
+  <div class="actions">
+    <button class="btn primary" onclick="check('t1')">Check</button>
+    <button class="btn reveal-btn" onclick="reveal('t1')">Show Answer</button>
+    <span class="hint-text">Hint: left_on, right_on, how</span>
+  </div>
+  <div class="checklist" id="cl1"></div>
+  <div class="answer-box" id="ans1">
+    <div class="answer-label">Model answer</div>
+    <pre>transactions.merge(
+    products[['product_id', 'category', 'sub_category']],
+    left_on='Product_ID',
+    right_on='product_id',
+    how='left'
+)</pre>
+  </div>
+</div>
+
+<!-- TASK 2 -->
+<div class="task" id="t2">
+  <div class="task-meta">
+    <span class="task-num">Task 2 of 8</span>
+    <span class="lang-tag py">Python</span>
+  </div>
+  <div class="task-text">
+    In the merged DataFrame <code>df</code>, <code>Sales_Amount</code> is total revenue,
+    <code>Quantity</code> is units sold, and <code>Discount</code> is stored as a decimal
+    (e.g. <code>0.45</code> = 45% off).<br/><br/>
+    Write a single pandas expression to compute <code>discounted_price</code> per row.
+    Guard against division by zero using <code>np.where</code>.
+  </div>
+  <pre class="context"><span class="cm"># np.where(condition, value_if_true, value_if_false)</span>
+<span class="cm"># discounted_price = unit_price × (1 − discount)</span></pre>
+  <div class="editor-label">Your answer</div>
+  <textarea class="editor" id="i2" rows="3"
+    placeholder="df['discounted_price'] = ..."></textarea>
+  <div class="actions">
+    <button class="btn primary" onclick="check('t2')">Check</button>
+    <button class="btn reveal-btn" onclick="reveal('t2')">Show Answer</button>
+    <span class="hint-text">Hint: np.where, Quantity == 0, np.nan</span>
+  </div>
+  <div class="checklist" id="cl2"></div>
+  <div class="answer-box" id="ans2">
+    <div class="answer-label">Model answer</div>
+    <pre>df['discounted_price'] = (
+    np.where(df['Quantity'] == 0, np.nan,
+             df['Sales_Amount'] / df['Quantity'])
+    * (1 - df['Discount'])
+)</pre>
+  </div>
+</div>
+
+<!-- TASK 3 -->
+<div class="task" id="t3">
+  <div class="task-meta">
+    <span class="task-num">Task 3 of 8</span>
+    <span class="lang-tag py">Python</span>
+  </div>
+  <div class="task-text">
+    Write the pandas <code>groupby</code> + <code>agg</code> to produce this summary — one row per category,
+    two columns: <code>avg_original_price</code> (mean of <code>price</code>) and
+    <code>avg_discounted_price</code> (mean of <code>discounted_price</code>). Reset the index.
+  </div>
+  <div class="editor-label">Your answer</div>
+  <textarea class="editor" id="i3" rows="4"
+    placeholder="summary = df.groupby(...).agg(...)..."></textarea>
+  <div class="actions">
+    <button class="btn primary" onclick="check('t3')">Check</button>
+    <button class="btn reveal-btn" onclick="reveal('t3')">Show Answer</button>
+    <span class="hint-text">Hint: named agg syntax — col=(source, func)</span>
+  </div>
+  <div class="checklist" id="cl3"></div>
+  <div class="answer-box" id="ans3">
+    <div class="answer-label">Model answer</div>
+    <pre>summary = (
+    df.groupby('category')
+    .agg(
+        avg_original_price   = ('price',            'mean'),
+        avg_discounted_price = ('discounted_price', 'mean')
+    )
+    .reset_index()
+)</pre>
+  </div>
+</div>
+
+<!-- TASK 4 -->
+<div class="task" id="t4">
+  <div class="task-meta">
+    <span class="task-num">Task 4 of 8</span>
+    <span class="lang-tag py">Python</span>
+  </div>
+  <div class="task-text">
+    You have a DataFrame <code>monthly_sales</code> with columns
+    <code>month</code>, <code>category</code>, <code>sales_amt</code> — one row per month per category (long format).<br/><br/>
+    Write the code to pivot it: <code>month</code> as rows, <code>category</code> as columns, total <code>sales_amt</code> in each cell.
+  </div>
+  <div class="editor-label">Your answer</div>
+  <textarea class="editor" id="i4" rows="3"
+    placeholder="pivot = monthly_sales.pivot_table(...)"></textarea>
+  <div class="actions">
+    <button class="btn primary" onclick="check('t4')">Check</button>
+    <button class="btn reveal-btn" onclick="reveal('t4')">Show Answer</button>
+    <span class="hint-text">Hint: index, columns, values, aggfunc</span>
+  </div>
+  <div class="checklist" id="cl4"></div>
+  <div class="answer-box" id="ans4">
+    <div class="answer-label">Model answer</div>
+    <pre>pivot = monthly_sales.pivot_table(
+    index   = 'month',
+    columns = 'category',
+    values  = 'sales_amt',
+    aggfunc = 'sum'
+)</pre>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<div class="section-label"><h2>Section 2 — SQL (translate from Python)</h2></div>
+
+<!-- TASK 5 -->
+<div class="task" id="t5">
+  <div class="task-meta">
+    <span class="task-num">Task 5 of 8</span>
+    <span class="lang-tag sql">SQL</span>
+  </div>
+  <div class="task-text">
+    Translate this Python price-tier classification into a SQL <code>CASE WHEN</code> expression.
+    The output column should be called <code>price_category</code>.
+  </div>
+  <pre class="context">[<span class="st">'Premium'</span>    <span class="kw">if</span> p > <span class="nm">200</span>
+ <span class="kw">else</span> <span class="st">'Mid-range'</span> <span class="kw">if</span> p > <span class="nm">100</span>
+ <span class="kw">else</span> <span class="st">'Budget'</span>
+ <span class="kw">for</span> p <span class="kw">in</span> df[<span class="st">'discounted_price'</span>]]</pre>
+  <div class="editor-label">Your SQL expression</div>
+  <textarea class="editor" id="i5" rows="5"
+    placeholder="CASE WHEN ..."></textarea>
+  <div class="actions">
+    <button class="btn primary" onclick="check('t5')">Check</button>
+    <button class="btn reveal-btn" onclick="reveal('t5')">Show Answer</button>
+    <span class="hint-text">Hint: CASE WHEN … THEN … WHEN … THEN … ELSE … END AS price_category</span>
+  </div>
+  <div class="checklist" id="cl5"></div>
+  <div class="answer-box" id="ans5">
+    <div class="answer-label">Model answer</div>
+    <pre>CASE
+  WHEN discounted_price > 200 THEN 'Premium'
+  WHEN discounted_price > 100 THEN 'Mid-range'
+  ELSE 'Budget'
+END AS price_category</pre>
+  </div>
+</div>
+
+<!-- TASK 6 -->
+<div class="task" id="t6">
+  <div class="task-meta">
+    <span class="task-num">Task 6 of 8</span>
+    <span class="lang-tag sql">SQL</span>
+  </div>
+  <div class="task-text">
+    Translate this Python into the equivalent SQL <code>SELECT</code> statement.
+    Table is called <code>transactions</code>. Output column: <code>avg_orig</code> and <code>avg_disc</code>.
+  </div>
+  <pre class="context">df.<span class="fn">groupby</span>(<span class="st">'category'</span>).<span class="fn">agg</span>(
+    avg_orig = (<span class="st">'price'</span>,            <span class="st">'mean'</span>),
+    avg_disc = (<span class="st">'discounted_price'</span>, <span class="st">'mean'</span>)
+).<span class="fn">reset_index</span>()</pre>
+  <div class="editor-label">Your SQL</div>
+  <textarea class="editor" id="i6" rows="5"
+    placeholder="SELECT ..."></textarea>
+  <div class="actions">
+    <button class="btn primary" onclick="check('t6')">Check</button>
+    <button class="btn reveal-btn" onclick="reveal('t6')">Show Answer</button>
+    <span class="hint-text">Hint: SELECT, AVG(), AS, FROM, GROUP BY</span>
+  </div>
+  <div class="checklist" id="cl6"></div>
+  <div class="answer-box" id="ans6">
+    <div class="answer-label">Model answer</div>
+    <pre>SELECT
+  category,
+  AVG(price)             AS avg_orig,
+  AVG(discounted_price)  AS avg_disc
+FROM transactions
+GROUP BY category;</pre>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<div class="section-label"><h2>Section 3 — Translate the Other Way (SQL → Python)</h2></div>
+
+<!-- TASK 7 -->
+<div class="task" id="t7">
+  <div class="task-meta">
+    <span class="task-num">Task 7 of 8</span>
+    <span class="lang-tag py">Python</span>
+  </div>
+  <div class="task-text">
+    Translate this SQL into Python. Store the result in <code>df['joining_cohort']</code>.
+    The output should look like <code>"Jan-2021"</code>.
+  </div>
+  <pre class="context"><span class="kw">SELECT</span> <span class="fn">TO_CHAR</span>(joining_date, <span class="st">'Mon-YYYY'</span>) <span class="kw">AS</span> joining_cohort
+<span class="kw">FROM</span> customers;</pre>
+  <div class="editor-label">Your Python</div>
+  <textarea class="editor" id="i7" rows="2"
+    placeholder="df['joining_cohort'] = ..."></textarea>
+  <div class="actions">
+    <button class="btn primary" onclick="check('t7')">Check</button>
+    <button class="btn reveal-btn" onclick="reveal('t7')">Show Answer</button>
+    <span class="hint-text">Hint: .dt.strftime() — what format code gives "Jan"?</span>
+  </div>
+  <div class="checklist" id="cl7"></div>
+  <div class="answer-box" id="ans7">
+    <div class="answer-label">Model answer</div>
+    <pre>df['joining_cohort'] = df['joining_date'].dt.strftime('%b-%Y')
+# 'Mon' (abbreviated) → %b   |   'YYYY' → %Y</pre>
+  </div>
+</div>
+
+<!-- TASK 8 -->
+<div class="task" id="t8">
+  <div class="task-meta">
+    <span class="task-num">Task 8 of 8</span>
+    <span class="lang-tag py">Python</span>
+  </div>
+  <div class="task-text">
+    Translate this SQL window function into Python.
+    Add the result as a new column <code>delay_rank</code> in <code>df</code>.
+    Ties should share the same rank with no gaps.
+  </div>
+  <pre class="context"><span class="kw">SELECT</span> vendor_id,
+  <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> avg_delay <span class="kw">ASC</span>) <span class="kw">AS</span> delay_rank
+<span class="kw">FROM</span> vendor_summary;</pre>
+  <div class="editor-label">Your Python</div>
+  <textarea class="editor" id="i8" rows="2"
+    placeholder="df['delay_rank'] = ..."></textarea>
+  <div class="actions">
+    <button class="btn primary" onclick="check('t8')">Check</button>
+    <button class="btn reveal-btn" onclick="reveal('t8')">Show Answer</button>
+    <span class="hint-text">Hint: .rank(method=...) — which method = DENSE_RANK?</span>
+  </div>
+  <div class="checklist" id="cl8"></div>
+  <div class="answer-box" id="ans8">
+    <div class="answer-label">Model answer</div>
+    <pre>df['delay_rank'] = df['avg_delay'].rank(method='dense').astype(int)
+# DENSE_RANK() → method='dense'
+# ORDER BY ASC  → ascending=True (pandas default)</pre>
+  </div>
+</div>
+
+<!-- FINAL -->
+<div id="final">
+  <h2 id="final-title"></h2>
+  <p id="final-msg"></p>
+</div>
+
+</div><!-- end wrap -->
+
+<script>
+// ── Question definitions ─────────────────────────────────────────────────────
+// checks: array of {label, match} — match is tested against normalized input
+// All matches are lowercased. Quote style normalized (' == ").
+const questions = {
+  t1: {
+    checks: [
+      { label: 'merge()',            match: 'merge(' },
+      { label: "left_on='Product_ID'", match: "left_on='product_id'" },
+      { label: "right_on='product_id'", match: "right_on='product_id'" },
+      { label: "how='left'",        match: "how='left'" },
+      { label: "['category','sub_category'] selected", match: "'sub_category'" },
+    ]
+  },
+  t2: {
+    checks: [
+      { label: 'np.where(...)',      match: 'np.where(' },
+      { label: 'Quantity == 0',      match: 'quantity' },
+      { label: 'np.nan fallback',    match: 'np.nan' },
+      { label: 'Sales_Amount / Quantity', match: 'sales_amount' },
+      { label: '(1 - discount)',     match: '1 -' },
+    ]
+  },
+  t3: {
+    checks: [
+      { label: "groupby('category')", match: "groupby('category')" },
+      { label: '.agg(...)',           match: '.agg(' },
+      { label: "mean of price",       match: "'mean'" },
+      { label: 'avg_original_price column', match: 'avg_original_price' },
+      { label: '.reset_index()',      match: '.reset_index()' },
+    ]
+  },
+  t4: {
+    checks: [
+      { label: '.pivot_table()',     match: 'pivot_table(' },
+      { label: "index='month'",      match: "index='month'" },
+      { label: "columns='category'", match: "columns='category'" },
+      { label: "values='sales_amt'", match: "values='sales_amt'" },
+      { label: "aggfunc='sum'",      match: "aggfunc='sum'" },
+    ]
+  },
+  t5: {
+    checks: [
+      { label: 'CASE WHEN',          match: 'case when' },
+      { label: '> 200 → Premium',    match: '200' },
+      { label: 'THEN \'Premium\'',   match: "'premium'" },
+      { label: '> 100 → Mid-range',  match: '100' },
+      { label: 'ELSE Budget',        match: "'budget'" },
+      { label: 'END',                match: 'end' },
+    ]
+  },
+  t6: {
+    checks: [
+      { label: 'SELECT',             match: 'select' },
+      { label: 'AVG(price)',         match: 'avg(price)' },
+      { label: 'AVG(discounted_price)', match: 'avg(discounted_price)' },
+      { label: 'AS avg_orig',        match: 'avg_orig' },
+      { label: 'FROM transactions',  match: 'from transactions' },
+      { label: 'GROUP BY category',  match: 'group by category' },
+    ]
+  },
+  t7: {
+    checks: [
+      { label: ".dt.strftime()",     match: 'strftime(' },
+      { label: "'%b' (abbreviated month)", match: '%b' },
+      { label: "'%Y' (4-digit year)", match: '%y' },
+      { label: "joining_cohort column", match: 'joining_cohort' },
+    ]
+  },
+  t8: {
+    checks: [
+      { label: ".rank()",            match: '.rank(' },
+      { label: "method='dense'",     match: "method='dense'" },
+      { label: ".astype(int)",       match: '.astype(int)' },
+      { label: "delay_rank column",  match: 'delay_rank' },
+    ]
+  }
+};
+
+// ── State ────────────────────────────────────────────────────────────────────
+const solved = {};
+const TOTAL = 8;
+
+// ── Normalize ────────────────────────────────────────────────────────────────
+function norm(s) {
+  return s.toLowerCase()
+    .replace(/"/g, "'")         // unify quotes
+    .replace(/\s+/g, ' ')      // collapse whitespace
+    .trim();
+}
+
+// ── Check ────────────────────────────────────────────────────────────────────
+function check(tid) {
+  const input = norm(document.getElementById('i' + tid.slice(1)).value);
+  const q = questions[tid];
+  const results = q.checks.map(c => ({ label: c.label, found: input.includes(c.match) }));
+  const allFound = results.every(r => r.found);
+
+  renderChecklist(tid, results, true);
+
+  const ta = document.getElementById('i' + tid.slice(1));
+  ta.classList.remove('ok', 'partial');
+  ta.classList.add(allFound ? 'ok' : 'partial');
+
+  if (allFound && !solved[tid]) {
+    solved[tid] = true;
+    document.getElementById(tid).classList.add('solved');
+    updateScore();
+  }
+
+  if (allFound) {
+    reveal(tid); // auto-show model answer on full correct
+  }
+}
+
+// ── Render checklist ─────────────────────────────────────────────────────────
+function renderChecklist(tid, results, checked) {
+  const cl = document.getElementById('cl' + tid.slice(1));
+  cl.innerHTML = results.map(r => {
+    const cls = !checked ? 'pending' : r.found ? 'found' : 'missing';
+    const icon = !checked ? '·' : r.found ? '✓' : '✗';
+    return `<span class="check-item ${cls}">${icon} ${r.label}</span>`;
+  }).join('');
+}
+
+// ── Reveal answer ────────────────────────────────────────────────────────────
+function reveal(tid) {
+  document.getElementById('ans' + tid.slice(1)).classList.add('show');
+}
+
+// ── Score ────────────────────────────────────────────────────────────────────
+function updateScore() {
+  const n = Object.keys(solved).length;
+  document.getElementById('score-display').textContent = n + ' / ' + TOTAL;
+  document.getElementById('done-label').textContent = n + ' solved';
+  document.getElementById('fill').style.width = (n / TOTAL * 100) + '%';
+
+  if (n === TOTAL) {
+    const el = document.getElementById('final');
+    el.style.display = 'block';
+    document.getElementById('final-title').textContent = '8 / 8 — All done!';
+    document.getElementById('final-msg').textContent =
+      'You can write both SQL and Python for the full Day 7 pipeline. Ship it.';
+    el.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+// ── Tab key in textareas ─────────────────────────────────────────────────────
+document.querySelectorAll('textarea.editor').forEach(ta => {
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = ta.selectionStart, end = ta.selectionEnd;
+      ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = s + 2;
+    }
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5 – Window Functions in SQL</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--border:#21262d;
+  --a:#f59e0b;--a2:#fbbf24;
+  --text:#e6edf3;--muted:#8b949e;--code:#090d1a;
+  --green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a78bfa;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
+.nav-title{font-size:12px;color:var(--muted);font-weight:500}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nav-btn:hover{background:var(--a);color:#0d1117;border-color:var(--a)}
+.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
+.deck{padding-top:52px;height:100vh}
+.slide{display:none;height:calc(100vh - 52px);padding:32px 52px;flex-direction:column;justify-content:flex-start;gap:16px;overflow:hidden;animation:fadein .25s ease}
+.slide.active{display:flex}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:2.1rem;font-weight:900;color:var(--a);line-height:1.1}
+h2{font-size:1.5rem;font-weight:800;color:var(--a);line-height:1.2}
+h3{font-size:1rem;font-weight:700;color:var(--a2);margin-bottom:6px}
+p,li{font-size:.88rem;color:#c9d1d9;line-height:1.7}
+ul{padding-left:18px}li{margin-bottom:4px}
+.sub{font-size:.88rem;color:var(--muted);margin-top:4px}
+.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.card h3{color:var(--a2);margin-bottom:8px}
+.hl{background:rgba(245,158,11,.06);border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:11px 15px}
+.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
+.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
+.hl.bl{background:rgba(59,130,246,.06);border-color:var(--blue)}
+.hl.pu{background:rgba(167,139,250,.06);border-color:var(--purple)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:.74rem;line-height:1.85;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:#7dd3fc}
+.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.str{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.col{color:#79c0ff}.tbl{color:#ffa657}.ov{color:var(--a2);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:.81rem}
+th{background:rgba(245,158,11,.12);color:var(--a2);padding:7px 11px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;letter-spacing:.5px}
+td{padding:6px 11px;border-bottom:1px solid var(--border);color:#c9d1d9}
+tr:hover td{background:rgba(255,255,255,.02)}
+.ok-cell{color:var(--green);font-weight:600}.no-cell{color:var(--red)}
+.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:14px 16px}
+.quiz p{font-size:.86rem;font-weight:600;color:var(--text);margin-bottom:10px}
+.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:5px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700;transition:all .15s}
+.reveal:hover{background:rgba(34,197,94,.25)}
+.ans{display:none;margin-top:10px;padding:10px 13px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.83rem;color:#86efac;line-height:1.7}
+.rows-demo{display:flex;gap:14px;align-items:flex-start}
+.rows-demo .side{flex:1}
+.rows-demo .arrow{font-size:1.4rem;color:var(--a);flex-shrink:0;font-weight:900;padding-top:40px}
+.mini-table{border-radius:8px;overflow:hidden;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:.76rem}
+.mt-head{background:rgba(245,158,11,.15);padding:6px 11px;color:var(--a2);font-weight:700;font-size:.7rem;letter-spacing:1px}
+.mt-row{padding:5px 11px;border-bottom:1px solid var(--border);color:#c9d1d9;display:flex;gap:8px}
+.mt-row:last-child{border-bottom:none}
+.mt-row.hi{background:rgba(245,158,11,.08);color:var(--a2);font-weight:600}
+.mt-row.gone{opacity:.25;text-decoration:line-through}
+.mt-row.nc{background:rgba(34,197,94,.07)}
+.mt-row.lag-hi{background:rgba(245,158,11,.1);border-left:3px solid var(--a)}
+.new-tag{display:inline-block;background:rgba(34,197,94,.2);color:var(--green);font-size:.62rem;padding:1px 5px;border-radius:4px;margin-left:4px}
+.step-num{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--a);color:#0d1117;font-size:.72rem;font-weight:900;align-items:center;justify-content:center;flex-shrink:0;margin-right:6px}
+.step-row{display:flex;align-items:flex-start;gap:6px;margin-bottom:8px}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:4px 13px;font-size:.76rem;font-weight:600;color:var(--muted)}
+.rank-grid{display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1.2fr;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border);font-size:.78rem}
+.rg-head{background:rgba(245,158,11,.12);padding:7px 11px;font-weight:700;color:var(--a2);font-size:.72rem;letter-spacing:.5px}
+.rg-cell{padding:6px 11px;border-bottom:1px solid var(--border);color:#c9d1d9;border-right:1px solid var(--border)}
+.rg-cell:last-child{border-right:none}
+.tie-cell{color:#fbbf24;font-weight:700}
+.gap-cell{color:var(--red)}
+.nogap-cell{color:var(--green);font-weight:700}
+
+/* FRAME VISUALIZATION */
+.frame-vis{display:flex;flex-direction:column;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:.76rem}
+.fv-head{display:grid;grid-template-columns:80px 90px 90px 1fr;background:rgba(245,158,11,.12);padding:7px 12px;color:var(--a2);font-weight:700;font-size:.7rem;gap:8px}
+.fv-row{display:grid;grid-template-columns:80px 90px 90px 1fr;padding:6px 12px;border-top:1px solid var(--border);gap:8px;align-items:center;color:#c9d1d9}
+.fv-row.active-row{background:rgba(245,158,11,.06);border-left:3px solid var(--a)}
+.fv-frame{display:flex;gap:3px;flex-wrap:wrap}
+.fv-block{padding:2px 6px;border-radius:4px;font-size:.7rem;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#93c5fd}
+.fv-block.curr{background:rgba(245,158,11,.2);border-color:var(--a);color:var(--a2);font-weight:700}
+.fv-total{color:var(--green);font-weight:700}
+
+/* THINK FRAMEWORK */
+.think-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.think-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.think-q{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.think-body h4{font-size:.82rem;font-weight:700;color:var(--a2);margin-bottom:4px}
+.think-body p{font-size:.78rem;color:#c9d1d9;line-height:1.6}
+.think-body .ans-pill{display:inline-block;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);border-radius:6px;padding:2px 9px;font-size:.74rem;color:var(--a2);font-family:'JetBrains Mono',monospace;margin-top:5px}
+.lag-syntax{display:flex;flex-direction:column;gap:8px;font-family:'JetBrains Mono',monospace;font-size:.79rem}
+.ls-row{display:flex;align-items:center;gap:10px}
+.ls-param{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:3px 10px;color:var(--a2);min-width:180px}
+.ls-desc{color:#c9d1d9;font-family:'Inter',sans-serif;font-size:.8rem}
+.ls-opt{color:var(--muted);font-size:.72rem;font-family:'Inter',sans-serif;margin-left:4px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <span class="nav-badge">Day 2 · Module 5</span>
+    <span class="nav-title">Window Functions in SQL</span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" onclick="go(-1)">← Prev</button>
+    <span class="nav-counter" id="ctr">1 / 17</span>
+    <button class="nav-btn" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- ═══ SLIDE 1: TITLE ═══ -->
+<div class="slide active">
+  <div>
+    <div class="tag">Day 2 · Module 5</div>
+    <h1>Window Functions<br>in SQL</h1>
+    <p class="sub">When GROUP BY is not enough — Rajiv gets reports that need a completely different approach</p>
+  </div>
+  <div class="three" style="margin-top:4px">
+    <div class="card">
+      <h3>📦 Reports 1–3</h3>
+      <p>Sub-category %, vendor rank per region, top 3 customers per region</p>
+      <p style="margin-top:6px;font-size:.78rem;color:var(--muted)">Uses SUM(), RANK(), DENSE_RANK(), ROW_NUMBER()</p>
+    </div>
+    <div class="card">
+      <h3>📅 Month-on-Month</h3>
+      <p>How much did orders change vs last month — in %?</p>
+      <p style="margin-top:6px;font-size:.78rem;color:var(--muted)">Uses LAG() — brings previous row's value alongside current</p>
+    </div>
+    <div class="card">
+      <h3>📈 Year-to-Date</h3>
+      <p>Running total from January 1st to each month — cumulative revenue</p>
+      <p style="margin-top:6px;font-size:.78rem;color:var(--muted)">Uses SUM() with frame clause — ROWS BETWEEN</p>
+    </div>
+  </div>
+  <div class="hl">
+    <p><strong style="color:var(--a)">The real skill:</strong> Not memorising these functions. It's learning to read a business question and figure out — which window function solves this, what does PARTITION BY need to be, what are the edge cases? That's what this session builds.</p>
+  </div>
+  <div class="badge-row">
+    <div class="badge">OVER(PARTITION BY)</div>
+    <div class="badge">RANK / DENSE_RANK / ROW_NUMBER</div>
+    <div class="badge">LAG / LEAD</div>
+    <div class="badge">Frame Clause (ROWS BETWEEN)</div>
+    <div class="badge">MoM · YTD</div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 2: GROUP BY VS WINDOW ═══ -->
+<div class="slide">
+  <h2>The Core Problem — GROUP BY Collapses Rows</h2>
+  <p class="sub" style="margin-bottom:12px">Rajiv needs the category total beside every sub-category row. GROUP BY can't do that — it collapses all rows into one.</p>
+  <div class="rows-demo">
+    <div class="side">
+      <div style="font-size:.78rem;color:var(--red);font-weight:700;margin-bottom:8px">❌ GROUP BY (collapses)</div>
+      <div class="mini-table">
+        <div class="mt-head">GROUP BY category → all sub-cat rows disappear</div>
+        <div class="mt-row"><span style="color:var(--a2)">Furniture</span><span style="margin-left:auto">→ 1 row</span></div>
+        <div class="mt-row gone"><span>Bookcases</span><span style="margin-left:auto">52</span></div>
+        <div class="mt-row gone"><span>Chairs</span><span style="margin-left:auto">107</span></div>
+        <div class="mt-row gone"><span>Tables</span><span style="margin-left:auto">33</span></div>
+        <div class="mt-row hi"><span>Furniture TOTAL</span><span style="margin-left:auto">192</span></div>
+      </div>
+      <div class="hl rd" style="margin-top:10px;font-size:.82rem">The sub-category rows are gone. You have 192 but you lost 52, 107, 33. Can't compute % because those numbers no longer exist in the result.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="side">
+      <div style="font-size:.78rem;color:var(--green);font-weight:700;margin-bottom:8px">✅ Window Function (keeps all rows)</div>
+      <div class="mini-table">
+        <div class="mt-head">SUM() OVER(PARTITION BY category) → new column added</div>
+        <div class="mt-row nc"><span>Bookcases</span><span style="margin-left:8px">52</span><span style="margin-left:auto;color:var(--green)">192 <span class="new-tag">added</span></span></div>
+        <div class="mt-row nc"><span>Chairs</span><span style="margin-left:8px">107</span><span style="margin-left:auto;color:var(--green)">192 <span class="new-tag">added</span></span></div>
+        <div class="mt-row nc"><span>Tables</span><span style="margin-left:8px">33</span><span style="margin-left:auto;color:var(--green)">192 <span class="new-tag">added</span></span></div>
+      </div>
+      <div class="hl gr" style="margin-top:10px;font-size:.82rem">All 3 rows kept. Category total (192) sits beside every row. Now: 52/192 = 27.1%, 107/192 = 55.7%, 33/192 = 17.2% — all computable.</div>
+    </div>
+  </div>
+  <div class="hl" style="margin-top:4px">
+    <p>🎯 <strong style="color:var(--a)">Golden rule:</strong> A window function <strong>adds a new column</strong> to your existing rows. It never removes or collapses rows. Your row count stays exactly the same.</p>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 3: OVER() SYNTAX ═══ -->
+<div class="slide">
+  <h2>The OVER() Clause — What Each Part Does</h2>
+  <div class="two">
+    <div>
+      <pre><span class="cm">-- Every window function follows this pattern:</span>
+
+<span class="fn">function_name</span>(<span class="col">column</span>) <span class="ov">OVER</span> (
+    <span class="kw">PARTITION BY</span> <span class="col">group_column</span>   <span class="cm">-- optional</span>
+    <span class="kw">ORDER BY</span>     <span class="col">sort_column</span>     <span class="cm">-- optional*</span>
+    <span class="kw">ROWS BETWEEN</span> ...              <span class="cm">-- optional</span>
+)</pre>
+      <div style="display:grid;gap:10px;margin-top:12px">
+        <div class="card" style="padding:11px 14px">
+          <h3 style="font-size:.82rem;margin-bottom:5px">PARTITION BY — the non-collapsing GROUP BY</h3>
+          <p style="font-size:.8rem">Splits rows into windows. The function resets and runs independently inside each window. Omit it → function runs across all rows globally.</p>
+        </div>
+        <div class="card" style="padding:11px 14px">
+          <h3 style="font-size:.82rem;margin-bottom:5px">ORDER BY — defines row order inside each window</h3>
+          <p style="font-size:.8rem">Required for RANK(), LAG(), LEAD(). Tells SQL which row comes "before" or "after" for ranking and lookback calculations.</p>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <h3>🏫 The Classroom Analogy</h3>
+        <p style="font-size:.83rem">500 students split into 4 regional classrooms. <code>PARTITION BY region</code> = each classroom is its own independent window. Rank is computed within each classroom, not across all 500 students.</p>
+        <p style="font-size:.83rem;margin-top:8px">Remove PARTITION BY → one global rank for all 500 students merged together.</p>
+      </div>
+      <div class="card">
+        <h3>📍 Where can it appear?</h3>
+        <table>
+          <tr><th>Clause</th><th>Allowed?</th></tr>
+          <tr><td>SELECT</td><td class="ok-cell">✅ Yes — main place</td></tr>
+          <tr><td>ORDER BY</td><td class="ok-cell">✅ Yes</td></tr>
+          <tr><td>WHERE</td><td class="no-cell">❌ No — runs before SELECT</td></tr>
+          <tr><td>GROUP BY / HAVING</td><td class="no-cell">❌ No</td></tr>
+        </table>
+        <p style="font-size:.76rem;color:var(--muted);margin-top:7px">To filter by a window result → compute in CTE first, then filter outside (Slide 8)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 4: REPORT 1 ═══ -->
+<div class="slide">
+  <h2>Report 1 — Sub-Category Contribution % (Step by Step)</h2>
+  <div class="two">
+    <div>
+      <div class="step-row"><span class="step-num">1</span><strong style="font-size:.85rem">Group to get count per sub-category</strong></div>
+      <pre style="font-size:.72rem;"><span class="kw">WITH</span> product_count <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> <span class="col">category</span>, <span class="col">sub_category</span>,
+           <span class="fn">COUNT</span>(*) <span class="kw">AS</span> product_count
+    <span class="kw">FROM</span> <span class="tbl">ex_products</span>
+    <span class="kw">GROUP BY</span> <span class="col">category</span>, <span class="col">sub_category</span>
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> product_count;
+<span class="cm">-- ✋ Pause here. We have sub-cat counts
+--    but no category total in the same row yet.</span></pre>
+      <div class="step-row" style="margin-top:10px"><span class="step-num">2</span><strong style="font-size:.85rem">Add category total with SUM() OVER()</strong></div>
+      <pre style="font-size:.72rem;"><span class="kw">WITH</span> product_count <span class="kw">AS</span> ( <span class="cm">...same above...</span> ),
+product_summary <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> *,
+        <span class="fn">SUM</span>(<span class="col">product_count</span>)
+            <span class="ov">OVER</span>(<span class="kw">PARTITION BY</span> <span class="col">category</span>)
+            <span class="kw">AS</span> category_total
+    <span class="kw">FROM</span> product_count
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> product_summary;
+<span class="cm">-- Every sub-cat row now has category_total beside it ✅</span></pre>
+    </div>
+    <div>
+      <div class="step-row"><span class="step-num">3</span><strong style="font-size:.85rem">Divide — and watch out for integer division</strong></div>
+      <pre style="font-size:.72rem;"><span class="kw">SELECT</span>
+    <span class="col">category</span>, <span class="col">sub_category</span>, <span class="col">product_count</span>,
+    <span class="fn">FORMAT</span>(
+        <span class="col">product_count</span> * <span class="str">1.0</span>  <span class="cm">-- ⚠️ critical (next slide)</span>
+        / <span class="col">category_total</span>, <span class="str">'P2'</span>
+    ) <span class="kw">AS</span> contribution
+<span class="kw">FROM</span> product_summary
+<span class="kw">ORDER BY</span> <span class="col">category</span>,
+    <span class="col">product_count</span> * <span class="str">1.0</span> / <span class="col">category_total</span> <span class="kw">DESC</span>;</pre>
+      <div class="hl" style="margin-top:10px">
+        <h3 style="font-size:.84rem;margin-bottom:6px">⚡ PARTITION BY changes the denominator</h3>
+        <table>
+          <tr><th>PARTITION BY</th><th>Denominator becomes</th></tr>
+          <tr><td><code style="font-size:.74rem">PARTITION BY category</code></td><td style="font-size:.8rem">Category total (Furniture=192)</td></tr>
+          <tr><td><code style="font-size:.74rem">OVER()</code> no partition</td><td style="font-size:.8rem">Grand total (all products)</td></tr>
+        </table>
+      </div>
+      <div class="quiz" style="margin-top:10px">
+        <p>❓ After running this — what % does Phones contribute to Technology?</p>
+        <button class="reveal" onclick="rev(this)">Reveal Answer</button>
+        <div class="ans">✅ <strong>47.31%</strong> — largest sub-category in Technology. If you see a wrong number, confirm PARTITION BY is on <code>category</code>, not <code>sub_category</code>.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 5: PITFALLS ═══ -->
+<div class="slide">
+  <h2>⚠️ Two Pitfalls in Every Percentage Calculation</h2>
+  <div class="two">
+    <div>
+      <div class="hl rd" style="margin-bottom:12px">
+        <h3 style="color:var(--red);margin-bottom:7px">Pitfall 1 — Integer Division Returns 0 Silently</h3>
+        <p style="font-size:.83rem">SQL Server sees two integers and divides as integers. Decimal is dropped. <strong>No error is raised.</strong> The result is just wrong.</p>
+      </div>
+      <pre style="font-size:.8rem;"><span class="cm">-- ❌ Both integers → SQL drops the decimal</span>
+<span class="kw">SELECT</span> <span class="str">57</span> / <span class="str">250</span>          <span class="cm">-- returns: 0 ❌</span>
+<span class="kw">SELECT</span> <span class="str">100</span> / <span class="str">300</span>        <span class="cm">-- returns: 0 ❌</span>
+
+<span class="cm">-- ✅ Multiply by 1.0 first → forces decimal</span>
+<span class="kw">SELECT</span> <span class="str">57</span> * <span class="str">1.0</span> / <span class="str">250</span>  <span class="cm">-- returns: 0.228 ✅</span>
+<span class="kw">SELECT</span> <span class="str">100</span> * <span class="str">1.0</span> / <span class="str">300</span> <span class="cm">-- returns: 0.333 ✅</span></pre>
+      <div class="card" style="margin-top:10px">
+        <p style="font-size:.82rem">Your contribution column would silently show <strong>0.00%</strong> for every single row. No error message. You'd only catch it if you double-check the math manually. Always add <code>* 1.0</code>.</p>
+      </div>
+    </div>
+    <div>
+      <div class="hl rd" style="margin-bottom:12px">
+        <h3 style="color:var(--red);margin-bottom:7px">Pitfall 2 — Division by Zero Crashes the Query</h3>
+        <p style="font-size:.83rem">If the previous month had 0 orders, the entire query crashes with a runtime error. Happens silently in production.</p>
+      </div>
+      <pre style="font-size:.8rem;"><span class="cm">-- ❌ If prev_month = 0 → crash!</span>
+(<span class="col">curr</span> - <span class="col">prev</span>) * <span class="str">1.0</span> / <span class="col">prev</span>
+
+<span class="cm">-- ✅ NULLIF converts 0 to NULL
+-- number ÷ NULL = NULL (no crash)</span>
+(<span class="col">curr</span> - <span class="col">prev</span>) * <span class="str">1.0</span>
+/ <span class="fn">NULLIF</span>(<span class="col">prev</span>, <span class="str">0</span>)</pre>
+      <div class="card" style="margin-top:10px">
+        <h3 style="font-size:.83rem;margin-bottom:5px">How NULLIF works</h3>
+        <p style="font-size:.82rem"><code>NULLIF(a, b)</code> — returns <strong>NULL</strong> when a equals b, otherwise returns a unchanged.</p>
+        <p style="font-size:.82rem;margin-top:6px">So <code>NULLIF(prev, 0)</code>: if prev=0 → NULL → result is NULL. If prev=500 → 500 → normal division continues.</p>
+      </div>
+    </div>
+  </div>
+  <div class="quiz">
+    <p>❓ What does <code>SELECT 75 / 100</code> return in SQL Server?</p>
+    <button class="reveal" onclick="rev(this)">Reveal Answer</button>
+    <div class="ans">✅ Returns <strong>0</strong> — not 0.75. Integer division. Write <code>75 * 1.0 / 100</code> to get 0.75.</div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 6: RANK TYPES ═══ -->
+<div class="slide">
+  <h2>ROW_NUMBER vs RANK vs DENSE_RANK</h2>
+  <p class="sub" style="margin-bottom:12px">All three rank rows. The difference only shows up when there are <strong>ties</strong>.</p>
+  <div class="rank-grid" style="margin-bottom:14px">
+    <div class="rg-head">Player / Score</div><div class="rg-head">ROW_NUMBER()</div><div class="rg-head">RANK()</div><div class="rg-head">DENSE_RANK()</div>
+    <div class="rg-cell">A — score 100</div><div class="rg-cell">1</div><div class="rg-cell">1</div><div class="rg-cell">1</div>
+    <div class="rg-cell" style="color:#fbbf24">B — score 90 ← TIE</div><div class="rg-cell tie-cell">2</div><div class="rg-cell tie-cell">2</div><div class="rg-cell tie-cell">2</div>
+    <div class="rg-cell" style="color:#fbbf24">C — score 90 ← TIE</div><div class="rg-cell tie-cell">3 (unique)</div><div class="rg-cell tie-cell">2 (same)</div><div class="rg-cell tie-cell">2 (same)</div>
+    <div class="rg-cell">D — score 80</div><div class="rg-cell">4</div><div class="rg-cell gap-cell">4 ← GAP!</div><div class="rg-cell nogap-cell">3 ← no gap</div>
+  </div>
+  <div class="three">
+    <div class="card">
+      <h3>ROW_NUMBER()</h3>
+      <p style="font-size:.82rem">Unique number for every row. Ties get different numbers — which one gets which is arbitrary (depends on SQL's internal order).</p>
+      <p style="font-size:.82rem;margin-top:7px"><strong>Use when:</strong> pagination, deduplication, each row needs a unique ID.</p>
+    </div>
+    <div class="card">
+      <h3>RANK()</h3>
+      <p style="font-size:.82rem">Tied rows share the same rank. After a tie, the next rank is skipped — gap appears. B=2, C=2, then D=<span style="color:var(--red)">4</span> (3 is skipped).</p>
+      <p style="font-size:.82rem;margin-top:7px"><strong>Use when:</strong> Olympics-style — ties share rank, stakeholders expect gaps.</p>
+    </div>
+    <div class="card">
+      <h3>DENSE_RANK()</h3>
+      <p style="font-size:.82rem">Tied rows share rank. No gaps — next distinct value gets next consecutive number. B=2, C=2, D=<span style="color:var(--green)">3</span>.</p>
+      <p style="font-size:.82rem;margin-top:7px"><strong>Use when:</strong> ties share rank AND gaps would confuse the business report.</p>
+    </div>
+  </div>
+  <div class="quiz" style="margin-top:6px">
+    <p>❓ You use RANK() and 3 customers tie for 2nd place. What rank does the next customer get?</p>
+    <button class="reveal" onclick="rev(this)">Reveal Answer</button>
+    <div class="ans">✅ Rank <strong>5</strong> — three customers share rank 2, so ranks 3 and 4 are both skipped. Sequence: 1, 2, 2, 2, 5. With DENSE_RANK() it would be: 1, 2, 2, 2, 3.</div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 7: REPORT 2 ═══ -->
+<div class="slide">
+  <h2>Report 2 — Vendor Rank Within Each Region</h2>
+  <div class="two">
+    <pre style="font-size:.71rem;"><span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="tbl">o</span>.<span class="col">order_id</span>,
+        <span class="tbl">lp</span>.<span class="col">partner_name</span>,
+        <span class="tbl">l</span>.<span class="col">region</span>
+    <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_logistics_partners</span> <span class="tbl">lp</span>
+        <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">partner_id</span> = <span class="tbl">lp</span>.<span class="col">partner_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+        <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_locations</span> <span class="tbl">l</span>
+        <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">postal_code</span> = <span class="tbl">l</span>.<span class="col">postal_code</span>
+    <span class="kw">WHERE</span> <span class="tbl">o</span>.<span class="col">order_delivered_date</span> <span class="kw">IS NOT NULL</span>
+),
+delivery_summary <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> <span class="col">region</span>, <span class="col">partner_name</span>,
+           <span class="fn">COUNT</span>(<span class="col">order_id</span>) <span class="kw">AS</span> delivery_count
+    <span class="kw">FROM</span> base_data
+    <span class="kw">GROUP BY</span> <span class="col">region</span>, <span class="col">partner_name</span>
+)
+<span class="kw">SELECT</span> *,
+    <span class="fn">FORMAT</span>(
+        <span class="col">delivery_count</span> * <span class="str">1.0</span>
+        / <span class="fn">SUM</span>(<span class="col">delivery_count</span>)
+          <span class="ov">OVER</span>(<span class="kw">PARTITION BY</span> <span class="col">region</span>), <span class="str">'P2'</span>
+    ) <span class="kw">AS</span> delivery_share,
+    <span class="fn">RANK</span>() <span class="ov">OVER</span>(
+        <span class="kw">PARTITION BY</span> <span class="col">region</span>
+        <span class="kw">ORDER BY</span> <span class="col">delivery_count</span> <span class="kw">DESC</span>
+    ) <span class="kw">AS</span> vendor_rank
+<span class="kw">FROM</span> delivery_summary;</pre>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="hl">
+        <h3 style="font-size:.86rem;margin-bottom:8px">⚡ PARTITION BY changes the entire question</h3>
+        <table>
+          <tr><th>Business Question</th><th>PARTITION BY</th></tr>
+          <tr><td style="font-size:.79rem">Vendor share <em>within each region</em></td><td><code style="font-size:.74rem">PARTITION BY region</code></td></tr>
+          <tr><td style="font-size:.79rem">Region share <em>within each vendor</em></td><td><code style="font-size:.74rem">PARTITION BY partner_name</code></td></tr>
+          <tr><td style="font-size:.79rem">Share across <em>all regions globally</em></td><td><code style="font-size:.74rem">OVER()</code> — no partition</td></tr>
+        </table>
+        <p style="font-size:.79rem;margin-top:8px">Same raw data, same COUNT. Only PARTITION BY changes. But the % results are completely different because the denominator changes.</p>
+      </div>
+      <div class="quiz">
+        <p>❓ If you remove PARTITION BY from RANK(), what happens to vendor_rank?</p>
+        <button class="reveal" onclick="rev(this)">Reveal Answer</button>
+        <div class="ans">✅ Rank becomes global across all regions combined. Vendor A might be rank 1 in East and rank 5 overall. The region-level leaderboard completely disappears.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 8: WHERE FAILS ═══ -->
+<div class="slide">
+  <h2>🚨 Report 3 — Why WHERE Fails + The CTE Fix</h2>
+  <div class="two">
+    <div>
+      <pre style="font-size:.79rem;"><span class="cm">-- ❌ FAILS — do not run this</span>
+<span class="kw">SELECT</span> *,
+    <span class="fn">RANK</span>() <span class="ov">OVER</span>(
+        <span class="kw">PARTITION BY</span> <span class="col">region</span>
+        <span class="kw">ORDER BY</span> <span class="col">order_amount</span> <span class="kw">DESC</span>
+    ) <span class="kw">AS</span> ranking
+<span class="kw">FROM</span> order_summary
+<span class="kw">WHERE</span>
+    <span class="fn">RANK</span>() <span class="ov">OVER</span>(        <span class="cm">← ERROR HERE</span>
+        <span class="kw">PARTITION BY</span> <span class="col">region</span>
+        <span class="kw">ORDER BY</span> <span class="col">order_amount</span> <span class="kw">DESC</span>
+    ) &lt;= <span class="str">3</span>;
+<span class="cm">-- "Windowed functions can only appear
+--  in the SELECT or ORDER BY clauses"</span></pre>
+      <div class="hl rd" style="margin-top:10px">
+        <h3 style="color:var(--red);font-size:.86rem;margin-bottom:7px">Why? — SQL execution order</h3>
+        <p style="font-size:.82rem;font-family:'JetBrains Mono',monospace;line-height:2.2">
+          <span style="color:var(--red)">① FROM / JOIN</span><br>
+          <span style="color:var(--red)">② WHERE</span> ← runs here<br>
+          <span style="color:var(--muted)">③ GROUP BY</span><br>
+          <span style="color:var(--muted)">④ HAVING</span><br>
+          <span style="color:var(--green)">⑤ SELECT</span> ← window computed here<br>
+          <span style="color:var(--muted)">⑥ ORDER BY</span>
+        </p>
+        <p style="font-size:.82rem;margin-top:6px">WHERE runs at step ②. Window functions run at step ⑤. The rank column doesn't exist yet when WHERE tries to filter it.</p>
+      </div>
+    </div>
+    <div>
+      <div class="hl gr" style="margin-bottom:10px">
+        <h3 style="color:var(--green);font-size:.86rem;margin-bottom:6px">✅ Fix — compute in CTE, filter outside</h3>
+        <p style="font-size:.82rem">Once ranking sits inside a CTE, it's a plain integer column. The outer WHERE can filter integers.</p>
+      </div>
+      <pre style="font-size:.79rem;"><span class="kw">WITH</span> rank_table <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> *,
+        <span class="fn">RANK</span>() <span class="ov">OVER</span>(
+            <span class="kw">PARTITION BY</span> <span class="col">region</span>
+            <span class="kw">ORDER BY</span> <span class="col">order_amount</span> <span class="kw">DESC</span>
+        ) <span class="kw">AS</span> ranking
+    <span class="kw">FROM</span> sales_summary
+)
+<span class="cm">-- Now "ranking" is just a number column
+-- WHERE can filter any number column ✅</span>
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span> rank_table
+<span class="kw">WHERE</span> ranking &lt;= <span class="str">3</span>;</pre>
+      <div class="quiz" style="margin-top:10px">
+        <p>❓ Why does <code>WHERE ranking &lt;= 3</code> work in the outer query but <code>WHERE RANK() OVER(...) &lt;= 3</code> doesn't?</p>
+        <button class="reveal" onclick="rev(this)">Reveal Answer</button>
+        <div class="ans">✅ After the CTE, <code>ranking</code> is already computed — it's a stored integer. SQL can filter integers in WHERE. But <code>RANK() OVER(...)</code> is a function call — it needs to be evaluated in SELECT first, and WHERE runs before SELECT.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 9: REPORT 3 FULL ═══ -->
+<div class="slide">
+  <h2>Report 3 — Top 3 Customers Per Region (Full Query)</h2>
+  <p class="sub" style="margin-bottom:8px">3-CTE pattern: Base data → Aggregate → Window + Filter</p>
+  <div class="two">
+    <pre style="font-size:.7rem;"><span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> <span class="tbl">l</span>.<span class="col">region</span>, <span class="tbl">c</span>.<span class="col">customer_name</span>,
+           <span class="tbl">t</span>.<span class="col">Sales_Amount</span>
+    <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span> <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">order_id</span> = <span class="tbl">t</span>.<span class="col">Order_ID</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>  <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">customer_id</span> = <span class="tbl">c</span>.<span class="col">customer_id</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_locations</span> <span class="tbl">l</span>  <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">postal_code</span> = <span class="tbl">l</span>.<span class="col">postal_code</span>
+    <span class="kw">WHERE</span> <span class="tbl">o</span>.<span class="col">order_status</span> <span class="kw">NOT IN</span> (<span class="str">'canceled'</span>, <span class="str">'unavailable'</span>)
+),
+sales_summary <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> <span class="col">region</span>, <span class="col">customer_name</span>,
+           <span class="fn">SUM</span>(<span class="col">Sales_Amount</span>) <span class="kw">AS</span> order_amount
+    <span class="kw">FROM</span> base_data
+    <span class="kw">GROUP BY</span> <span class="col">region</span>, <span class="col">customer_name</span>
+),
+rank_table <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> <span class="col">region</span>, <span class="col">customer_name</span>, <span class="col">order_amount</span>,
+        <span class="fn">FORMAT</span>(
+            <span class="col">order_amount</span> * <span class="str">1.0</span>
+            / <span class="fn">SUM</span>(<span class="col">order_amount</span>)
+                <span class="ov">OVER</span>(<span class="kw">PARTITION BY</span> <span class="col">region</span>),
+            <span class="str">'P2'</span>
+        ) <span class="kw">AS</span> contribution,
+        <span class="fn">RANK</span>() <span class="ov">OVER</span>(
+            <span class="kw">PARTITION BY</span> <span class="col">region</span>
+            <span class="kw">ORDER BY</span> <span class="col">order_amount</span> <span class="kw">DESC</span>
+        ) <span class="kw">AS</span> ranking
+    <span class="kw">FROM</span> sales_summary
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> rank_table
+<span class="kw">WHERE</span> ranking &lt;= <span class="str">3</span>
+<span class="kw">ORDER BY</span> <span class="col">region</span>, <span class="col">ranking</span>;</pre>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:7px">💡 Try these variations</h3>
+        <p style="font-size:.81rem"><code>WHERE ranking = 1</code> → only #1 per region</p>
+        <p style="font-size:.81rem;margin-top:5px">Swap <code>RANK()</code> → <code>DENSE_RANK()</code> → no gaps when two customers tie 2nd</p>
+        <p style="font-size:.81rem;margin-top:5px">Remove <code>PARTITION BY region</code> → global top 3, not per region</p>
+      </div>
+      <div class="quiz">
+        <p>❓ Two customers tie for rank 2 using RANK(). You filter <code>WHERE ranking &lt;= 3</code>. How many rows do you get per region?</p>
+        <button class="reveal" onclick="rev(this)">Reveal Answer</button>
+        <div class="ans">✅ <strong>4 rows</strong> — rank 1 (1 customer), rank 2 (2 customers, tied), rank 4 (1 customer — rank 3 is skipped). Use DENSE_RANK() if you want exactly 3 rows.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 10: LAG & LEAD DEEP DIVE ═══ -->
+<div class="slide">
+  <h2>LAG() and LEAD() — The Full Picture</h2>
+  <p class="sub" style="margin-bottom:12px">Both functions bring a value from a different row into the current row. LAG looks back. LEAD looks forward.</p>
+  <div class="two">
+    <div>
+      <h3 style="margin-bottom:10px">Full syntax — 3 parameters</h3>
+      <div class="lag-syntax">
+        <div class="ls-row">
+          <div class="ls-param"><span class="fn" style="color:#d2a8ff">LAG</span>(<span class="col" style="color:#79c0ff">column</span>, <span style="color:var(--a2)">offset</span>, <span style="color:var(--green)">default</span>)</div>
+        </div>
+        <div style="display:grid;gap:7px;margin-top:6px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="color:#79c0ff;font-family:'JetBrains Mono',monospace;font-size:.78rem;min-width:60px">column</span>
+            <span class="ls-desc">Which column's value you want from the other row <span class="ls-opt">(required)</span></span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="color:var(--a2);font-family:'JetBrains Mono',monospace;font-size:.78rem;min-width:60px">offset</span>
+            <span class="ls-desc">How many rows back. Default = 1. LAG(col, 2) = 2 rows back <span class="ls-opt">(optional)</span></span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-size:.78rem;min-width:60px">default</span>
+            <span class="ls-desc">What to return instead of NULL when no previous row exists. LAG(col, 1, 0) returns 0 for first row <span class="ls-opt">(optional)</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="mini-table" style="margin-top:14px">
+        <div class="mt-head">What LAG and LEAD produce — one row per month</div>
+        <div class="mt-row"><span style="min-width:50px">Jan</span><span>256 orders</span><span style="margin-left:auto;color:var(--muted)">LAG = NULL</span><span style="margin-left:12px;color:var(--blue)">LEAD = 384</span></div>
+        <div class="mt-row lag-hi"><span style="min-width:50px">Feb</span><span>384 orders</span><span style="margin-left:auto;color:var(--a)">LAG = 256 ← Jan</span><span style="margin-left:12px;color:var(--blue)">LEAD = 579</span></div>
+        <div class="mt-row lag-hi"><span style="min-width:50px">Mar</span><span>579 orders</span><span style="margin-left:auto;color:var(--a)">LAG = 384 ← Feb</span><span style="margin-left:12px;color:var(--muted)">LEAD = NULL</span></div>
+      </div>
+      <p style="font-size:.8rem;margin-top:8px;color:#c9d1d9">Feb row now has both Feb's count (384) AND Jan's count (256) in the same row → MoM = (384−256)/256 = 50%</p>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px">
+        <h3 style="font-size:.84rem;margin-bottom:7px">When to use which</h3>
+        <table>
+          <tr><th>Function</th><th>Direction</th><th>Use Case</th></tr>
+          <tr><td><code>LAG()</code></td><td style="color:var(--a)">⬆ backward</td><td style="font-size:.79rem">MoM, YoY, compare with prior period</td></tr>
+          <tr><td><code>LEAD()</code></td><td style="color:var(--blue)">⬇ forward</td><td style="font-size:.79rem">Days until next event, forecast vs actual</td></tr>
+        </table>
+      </div>
+      <div class="hl rd">
+        <h3 style="color:var(--red);font-size:.84rem;margin-bottom:8px">⚠️ Year Boundary Trap</h3>
+        <p style="font-size:.81rem">Without <code>PARTITION BY order_year</code> — the window spans all years. January 2018 looks at December 2017 as its "previous row":</p>
+        <div class="mini-table" style="margin:8px 0">
+          <div class="mt-row"><span style="color:var(--muted)">Dec 2017</span><span style="margin-left:auto">900 orders</span></div>
+          <div class="mt-row" style="border-left:3px solid var(--red)"><span style="color:var(--red)">Jan 2018</span><span style="margin-left:auto">→ LAG = Dec 2017 ❌</span></div>
+        </div>
+        <p style="font-size:.81rem">January should have LAG = NULL (no previous month in 2018). But without the partition it bleeds across years.</p>
+        <pre style="font-size:.76rem;margin-top:8px;"><span class="cm">-- ✅ Always add PARTITION BY order_year</span>
+<span class="fn">LAG</span>(<span class="col">order_count</span>)
+  <span class="ov">OVER</span>(<span class="kw">PARTITION BY</span> <span class="col">order_year</span>
+       <span class="kw">ORDER BY</span> <span class="col">month_seq</span>)</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 11: MOM THINKING FRAMEWORK ═══ -->
+<div class="slide">
+  <h2>MoM Analysis — Think Before You Type</h2>
+  <p class="sub" style="margin-bottom:12px">Robert asks: <em>"Show me month-on-month % change in total orders for 2017 and 2018."</em> — Before writing any SQL, answer these 5 questions.</p>
+  <div class="think-grid">
+    <div class="think-card">
+      <div class="think-q">①</div>
+      <div class="think-body">
+        <h4>What is one row in my result?</h4>
+        <p>Each row = one month of one year. So the grain is: year + month.</p>
+        <div class="ans-pill">GROUP BY year, month</div>
+      </div>
+    </div>
+    <div class="think-card">
+      <div class="think-q">②</div>
+      <div class="think-body">
+        <h4>What columns does each row need?</h4>
+        <p>Year, month name (to display), orders this month, orders last month, % change.</p>
+        <div class="ans-pill">5 columns needed</div>
+      </div>
+    </div>
+    <div class="think-card">
+      <div class="think-q">③</div>
+      <div class="think-body">
+        <h4>Where does "orders last month" come from?</h4>
+        <p>It's not in raw data. It's this month's row shifted by one. That is exactly what LAG() does.</p>
+        <div class="ans-pill">LAG(order_count)</div>
+      </div>
+    </div>
+    <div class="think-card">
+      <div class="think-q">④</div>
+      <div class="think-body">
+        <h4>What defines "previous month" — ORDER BY what?</h4>
+        <p>Month NUMBER (1–12), not month NAME. "April" sorts before "August" alphabetically — completely wrong chronological order.</p>
+        <div class="ans-pill">ORDER BY MONTH(date)</div>
+      </div>
+    </div>
+    <div class="think-card">
+      <div class="think-q">⑤</div>
+      <div class="think-body">
+        <h4>What resets the window — PARTITION BY what?</h4>
+        <p>January should not look at December of the prior year. The LAG window must restart for each new year.</p>
+        <div class="ans-pill">PARTITION BY order_year</div>
+      </div>
+    </div>
+    <div class="think-card">
+      <div class="think-q">⑥</div>
+      <div class="think-body">
+        <h4>What can go wrong in the division?</h4>
+        <p>Integer division → add * 1.0. Previous month could be 0 → wrap with NULLIF(prev, 0).</p>
+        <div class="ans-pill">* 1.0 + NULLIF(prev, 0)</div>
+      </div>
+    </div>
+  </div>
+  <div class="hl" style="margin-top:8px">
+    <p>🧠 <strong style="color:var(--a)">The habit:</strong> Every time you get a time-series business question, run through these 6 questions first. The answers map directly to the SQL clauses. You write better queries faster when the thinking happens before the typing.</p>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 12: MOM FULL QUERY ═══ -->
+<div class="slide">
+  <h2>MoM — Full Query Annotated Line by Line</h2>
+  <div class="two">
+    <pre style="font-size:.7rem;"><span class="kw">WITH</span> base_data <span class="kw">AS</span> (
+    <span class="cm">-- Extract year, month number, month name from date
+    -- month number (1-12) for ORDER BY → correct chronology
+    -- month name (January, February…) for display only</span>
+    <span class="kw">SELECT</span>
+        <span class="tbl">o</span>.<span class="col">order_id</span>,
+        <span class="fn">DATENAME</span>(month, <span class="tbl">o</span>.<span class="col">order_purchase_date</span>) <span class="kw">AS</span> month_name,
+        <span class="fn">MONTH</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>)            <span class="kw">AS</span> month_seq,
+        <span class="fn">YEAR</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>)             <span class="kw">AS</span> order_year
+    <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">WHERE</span> <span class="fn">YEAR</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>) &lt;&gt; <span class="str">2016</span>
+    <span class="cm">-- 2016 data is partial — removing it avoids a
+    -- misleading spike in the first row of each year</span>
+),
+order_summary <span class="kw">AS</span> (
+    <span class="cm">-- One row per month per year — our base for LAG</span>
+    <span class="kw">SELECT</span>
+        <span class="col">month_name</span>, <span class="col">month_seq</span>, <span class="col">order_year</span>,
+        <span class="fn">COUNT</span>(<span class="col">order_id</span>) <span class="kw">AS</span> order_placed
+    <span class="kw">FROM</span> base_data
+    <span class="kw">GROUP BY</span> <span class="col">month_name</span>, <span class="col">month_seq</span>, <span class="col">order_year</span>
+),
+order_lag <span class="kw">AS</span> (
+    <span class="cm">-- LAG shifts order_placed DOWN by 1 row
+    -- So Feb sees Jan's count, Mar sees Feb's count
+    -- PARTITION BY year → window resets at Jan ✅
+    -- ORDER BY month_seq → 1,2,3…12 (not Jan,Feb… alphabetically)</span>
+    <span class="kw">SELECT</span> *,
+        <span class="fn">LAG</span>(<span class="col">order_placed</span>)
+            <span class="ov">OVER</span>(<span class="kw">PARTITION BY</span> <span class="col">order_year</span>
+                 <span class="kw">ORDER BY</span> <span class="col">month_seq</span>)
+            <span class="kw">AS</span> prev_month_orders
+    <span class="kw">FROM</span> order_summary
+)
+<span class="kw">SELECT</span>
+    <span class="col">order_year</span>, <span class="col">month_name</span>,
+    <span class="col">order_placed</span>, <span class="col">prev_month_orders</span>,
+    <span class="fn">FORMAT</span>(
+        (<span class="col">order_placed</span> - <span class="col">prev_month_orders</span>) * <span class="str">1.0</span>
+        / <span class="fn">NULLIF</span>(<span class="col">prev_month_orders</span>, <span class="str">0</span>), <span class="str">'P2'</span>
+    ) <span class="kw">AS</span> MoM_change
+<span class="kw">FROM</span> order_lag
+<span class="kw">ORDER BY</span> <span class="col">order_year</span>, <span class="col">month_seq</span>;</pre>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:7px">Expected result (sample)</h3>
+        <table>
+          <tr><th>year</th><th>month</th><th>orders</th><th>prev</th><th>MoM %</th></tr>
+          <tr><td>2017</td><td>January</td><td>256</td><td style="color:var(--muted)">NULL</td><td style="color:var(--muted)">NULL</td></tr>
+          <tr><td>2017</td><td>February</td><td>384</td><td>256</td><td style="color:var(--green)">+50.00%</td></tr>
+          <tr><td>2017</td><td>March</td><td>579</td><td>384</td><td style="color:var(--green)">+50.78%</td></tr>
+        </table>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:7px">January always returns NULL — no previous month in that year's window. Expected and correct.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:6px">Common mistake to check</h3>
+        <p style="font-size:.81rem">If your Feb MoM looks right but Jan shows a number instead of NULL — you forgot <code>PARTITION BY order_year</code>. January is pulling December from the prior year.</p>
+      </div>
+      <div class="quiz">
+        <p>❓ Feb→Mar 2017 MoM % change?</p>
+        <button class="reveal" onclick="rev(this)">Reveal Answer</button>
+        <div class="ans">✅ <strong>50.78%</strong> — March had significantly more orders. If you see ~40% or a negative, check PARTITION BY year is present in your LAG() clause.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 13: WHAT IS YTD ═══ -->
+<div class="slide">
+  <h2>Year-to-Date (YTD) — What Is It and Why?</h2>
+  <p class="sub" style="margin-bottom:12px">Robert asks: <em>"Show monthly revenue for 2017 AND the running total from January to that month."</em></p>
+  <div class="two">
+    <div>
+      <div class="hl" style="margin-bottom:12px">
+        <h3 style="font-size:.88rem;margin-bottom:7px">YTD = a running odometer</h3>
+        <p style="font-size:.83rem">Your car odometer never resets mid-year. January adds to 0. February adds to January. March adds to January + February. It keeps accumulating.</p>
+        <p style="font-size:.83rem;margin-top:7px">YTD revenue in March = January revenue + February revenue + March revenue.</p>
+        <p style="font-size:.83rem;margin-top:7px">It resets to 0 on January 1st of each new year.</p>
+      </div>
+      <div class="mini-table">
+        <div class="mt-head">Monthly vs YTD — see the difference</div>
+        <div class="mt-row"><span style="min-width:60px">Jan</span><span>₹10L</span><span style="margin-left:auto;color:var(--green)">YTD: ₹10L</span></div>
+        <div class="mt-row"><span style="min-width:60px">Feb</span><span>₹15L</span><span style="margin-left:auto;color:var(--green)">YTD: ₹25L</span></div>
+        <div class="mt-row"><span style="min-width:60px">Mar</span><span>₹12L</span><span style="margin-left:auto;color:var(--green)">YTD: ₹37L</span></div>
+        <div class="mt-row"><span style="min-width:60px">Apr</span><span>₹18L</span><span style="margin-left:auto;color:var(--green)">YTD: ₹55L</span></div>
+        <div class="mt-row"><span style="min-width:60px">May</span><span>₹9L</span><span style="margin-left:auto;color:var(--green)">YTD: ₹64L</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px">
+        <h3 style="font-size:.84rem;margin-bottom:7px">MoM vs YTD — what each answers</h3>
+        <table>
+          <tr><th>Question</th><th>Use</th></tr>
+          <tr><td style="font-size:.79rem">Did this month do better than last month?</td><td style="font-size:.79rem;color:var(--a2)">MoM (LAG)</td></tr>
+          <tr><td style="font-size:.79rem">How much have we made so far this year?</td><td style="font-size:.79rem;color:var(--green)">YTD (running SUM)</td></tr>
+          <tr><td style="font-size:.79rem">Are we on track vs last year's annual target?</td><td style="font-size:.79rem;color:var(--green)">YTD comparison</td></tr>
+          <tr><td style="font-size:.79rem">How did August perform standalone?</td><td style="font-size:.79rem;color:var(--a2)">Monthly revenue (simple GROUP BY)</td></tr>
+        </table>
+      </div>
+      <div class="hl rd">
+        <h3 style="color:var(--red);font-size:.84rem;margin-bottom:7px">Why can't we just use SUM with GROUP BY?</h3>
+        <p style="font-size:.82rem">GROUP BY would give us the monthly total per row — but that collapses. We'd lose other months.</p>
+        <p style="font-size:.82rem;margin-top:6px"><code>SUM() OVER(PARTITION BY year)</code> gives the full year total on every row — also wrong. That's ₹64L on every row, not accumulating.</p>
+        <p style="font-size:.82rem;margin-top:6px">We need something that sums <em>up to and including</em> each row. That requires a <strong>frame clause</strong> — next slide.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 14: FRAME CLAUSE ═══ -->
+<div class="slide">
+  <h2>The Frame Clause — How ROWS BETWEEN Works</h2>
+  <p class="sub" style="margin-bottom:12px">The frame clause tells SQL: <em>"when computing this window function, which rows should be included in the calculation for this current row?"</em></p>
+  <div class="two">
+    <div>
+      <pre style="font-size:.77rem;"><span class="cm">-- Full syntax with frame clause:</span>
+<span class="fn">SUM</span>(<span class="col">monthly_revenue</span>) <span class="ov">OVER</span>(
+    <span class="kw">PARTITION BY</span> <span class="col">order_year</span>
+    <span class="kw">ORDER BY</span>     <span class="col">month_seq</span>
+    <span class="kw">ROWS BETWEEN</span>
+        <span class="ov">UNBOUNDED PRECEDING</span>  <span class="cm">-- start of partition</span>
+        <span class="kw">AND</span>
+        <span class="ov">CURRENT ROW</span>          <span class="cm">-- this row</span>
+)</pre>
+      <div style="display:grid;gap:8px;margin-top:10px">
+        <div class="card" style="padding:10px 13px">
+          <h3 style="font-size:.82rem;margin-bottom:4px">UNBOUNDED PRECEDING</h3>
+          <p style="font-size:.8rem">Start from the very first row of the current partition (January of this year). "Unbounded" = no limit going backward.</p>
+        </div>
+        <div class="card" style="padding:10px 13px">
+          <h3 style="font-size:.82rem;margin-bottom:4px">CURRENT ROW</h3>
+          <p style="font-size:.8rem">Stop at the row being computed right now. So for March, the frame is Jan + Feb + Mar only.</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:10px;font-size:.88rem">Visual — watch the frame expand row by row</h3>
+      <div class="frame-vis">
+        <div class="fv-head"><span>Month</span><span>Monthly</span><span>YTD</span><span>Frame (rows included)</span></div>
+        <div class="fv-row active-row">
+          <span style="color:var(--a2)">January</span><span>₹10L</span><span class="fv-total">₹10L</span>
+          <div class="fv-frame"><span class="fv-block curr">Jan ←</span></div>
+        </div>
+        <div class="fv-row active-row">
+          <span style="color:var(--a2)">February</span><span>₹15L</span><span class="fv-total">₹25L</span>
+          <div class="fv-frame"><span class="fv-block">Jan</span><span class="fv-block curr">Feb ←</span></div>
+        </div>
+        <div class="fv-row active-row">
+          <span style="color:var(--a2)">March</span><span>₹12L</span><span class="fv-total">₹37L</span>
+          <div class="fv-frame"><span class="fv-block">Jan</span><span class="fv-block">Feb</span><span class="fv-block curr">Mar ←</span></div>
+        </div>
+        <div class="fv-row active-row">
+          <span style="color:var(--a2)">April</span><span>₹18L</span><span class="fv-total">₹55L</span>
+          <div class="fv-frame"><span class="fv-block">Jan</span><span class="fv-block">Feb</span><span class="fv-block">Mar</span><span class="fv-block curr">Apr ←</span></div>
+        </div>
+      </div>
+      <div class="hl" style="margin-top:10px">
+        <p style="font-size:.82rem">← (current row) shows which row is being computed. The gold block is the CURRENT ROW. All blue blocks before it = UNBOUNDED PRECEDING. Sum of all blocks in the frame = YTD for that row.</p>
+      </div>
+      <div class="quiz" style="margin-top:8px">
+        <p>❓ What's the difference between <code>SUM(rev) OVER(PARTITION BY year)</code> and <code>SUM(rev) OVER(PARTITION BY year ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)</code>?</p>
+        <button class="reveal" onclick="rev(this)">Reveal Answer</button>
+        <div class="ans">✅ The first puts the <strong>full year total</strong> on every row (same number repeated). The second <strong>accumulates</strong> — January gets Jan's total, February gets Jan+Feb, March gets Jan+Feb+Mar. That's the YTD running total.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 15: YTD FULL QUERY ═══ -->
+<div class="slide">
+  <h2>YTD Revenue — Full Query Annotated</h2>
+  <p class="sub" style="margin-bottom:8px">Using the same 6-question thinking framework — then writing the SQL that follows from the answers</p>
+  <div class="two">
+    <pre style="font-size:.7rem;"><span class="kw">WITH</span> monthly_sales <span class="kw">AS</span> (
+    <span class="cm">-- Grain: one row per month per year
+    -- Need both month_seq (for ORDER BY) and
+    -- month_name (for display)</span>
+    <span class="kw">SELECT</span>
+        <span class="fn">YEAR</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>)             <span class="kw">AS</span> order_year,
+        <span class="fn">MONTH</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>)            <span class="kw">AS</span> month_seq,
+        <span class="fn">DATENAME</span>(month, <span class="tbl">o</span>.<span class="col">order_purchase_date</span>) <span class="kw">AS</span> month_name,
+        <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">Sales_Amount</span>)                    <span class="kw">AS</span> monthly_revenue
+    <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">JOIN</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+        <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">order_id</span> = <span class="tbl">t</span>.<span class="col">Order_ID</span>
+    <span class="kw">WHERE</span> <span class="fn">YEAR</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>) &lt;&gt; <span class="str">2016</span>
+    <span class="kw">GROUP BY</span>
+        <span class="fn">YEAR</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>),
+        <span class="fn">MONTH</span>(<span class="tbl">o</span>.<span class="col">order_purchase_date</span>),
+        <span class="fn">DATENAME</span>(month, <span class="tbl">o</span>.<span class="col">order_purchase_date</span>)
+)
+<span class="kw">SELECT</span>
+    <span class="col">order_year</span>,
+    <span class="col">month_name</span>,
+    <span class="fn">FORMAT</span>(<span class="col">monthly_revenue</span>, <span class="str">'N0'</span>)  <span class="kw">AS</span> monthly_revenue,
+    <span class="cm">-- YTD: sum from Jan (UNBOUNDED PRECEDING)
+    -- up to this month (CURRENT ROW)
+    -- resets at start of each year (PARTITION BY year)</span>
+    <span class="fn">FORMAT</span>(
+        <span class="fn">SUM</span>(<span class="col">monthly_revenue</span>) <span class="ov">OVER</span>(
+            <span class="kw">PARTITION BY</span> <span class="col">order_year</span>
+            <span class="kw">ORDER BY</span>     <span class="col">month_seq</span>
+            <span class="kw">ROWS BETWEEN</span> <span class="ov">UNBOUNDED PRECEDING</span>
+                         <span class="kw">AND</span> <span class="ov">CURRENT ROW</span>
+        ), <span class="str">'N0'</span>
+    ) <span class="kw">AS</span> ytd_revenue
+<span class="kw">FROM</span> monthly_sales
+<span class="kw">ORDER BY</span> <span class="col">order_year</span>, <span class="col">month_seq</span>;</pre>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:7px">Expected result structure</h3>
+        <table>
+          <tr><th>year</th><th>month</th><th>monthly</th><th>YTD</th></tr>
+          <tr><td>2017</td><td>January</td><td>₹X</td><td style="color:var(--green)">₹X</td></tr>
+          <tr><td>2017</td><td>February</td><td>₹Y</td><td style="color:var(--green)">₹X+Y</td></tr>
+          <tr><td>2017</td><td>March</td><td>₹Z</td><td style="color:var(--green)">₹X+Y+Z</td></tr>
+          <tr><td>2018</td><td>January</td><td>₹A</td><td style="color:var(--green)">₹A ← resets!</td></tr>
+        </table>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:7px">January 2018 YTD resets to January 2018's own value — PARTITION BY year ensures this.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.84rem;margin-bottom:6px">Try combining MoM + YTD</h3>
+        <p style="font-size:.82rem">Add a LAG() column for MoM and a ROWS BETWEEN for YTD in the same SELECT. Both window functions can coexist in a single query — each has its own OVER() clause defining its own window independently.</p>
+      </div>
+      <div class="quiz">
+        <p>❓ What happens to the YTD column if you remove <code>PARTITION BY order_year</code> from the SUM OVER?</p>
+        <button class="reveal" onclick="rev(this)">Reveal Answer</button>
+        <div class="ans">✅ YTD never resets. January 2018 would continue accumulating from December 2017. By December 2018, the YTD would include all of 2017 AND 2018 combined — completely wrong. Always partition by year.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 16: PROBLEM FRAMEWORK ═══ -->
+<div class="slide">
+  <h2>The Universal Framework — Any Time Series Question</h2>
+  <p class="sub" style="margin-bottom:12px">A business question comes in. Here's how to break it down into SQL — before writing a single line of code.</p>
+  <div class="two">
+    <div>
+      <div style="display:grid;gap:8px">
+        <div class="hl">
+          <h3 style="font-size:.84rem;margin-bottom:4px">① What is the grain?</h3>
+          <p style="font-size:.81rem">One row in my result represents: one [month/region/customer/product]?<br>This tells you your GROUP BY columns.</p>
+        </div>
+        <div class="hl">
+          <h3 style="font-size:.84rem;margin-bottom:4px">② What does each row need to show?</h3>
+          <p style="font-size:.81rem">List the output columns. For each one — does this come from raw data, GROUP BY, or a window function?</p>
+        </div>
+        <div class="hl">
+          <h3 style="font-size:.84rem;margin-bottom:4px">③ Which window function solves each column?</h3>
+          <table style="margin-top:6px;font-size:.78rem">
+            <tr><th>Need</th><th>Function</th></tr>
+            <tr><td>Total within a group, beside each row</td><td><code style="font-size:.72rem">SUM OVER(PARTITION BY)</code></td></tr>
+            <tr><td>Rank within a group</td><td><code style="font-size:.72rem">RANK / DENSE_RANK</code></td></tr>
+            <tr><td>Compare with prior period</td><td><code style="font-size:.72rem">LAG()</code></td></tr>
+            <tr><td>Compare with future period</td><td><code style="font-size:.72rem">LEAD()</code></td></tr>
+            <tr><td>Running/cumulative total</td><td><code style="font-size:.72rem">SUM + ROWS BETWEEN</code></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="display:grid;gap:8px">
+        <div class="hl">
+          <h3 style="font-size:.84rem;margin-bottom:4px">④ What resets the calculation? → PARTITION BY</h3>
+          <p style="font-size:.81rem">Each region has its own ranking? → PARTITION BY region<br>Each year has its own MoM cycle? → PARTITION BY year<br>Global calculation? → no PARTITION BY</p>
+        </div>
+        <div class="hl">
+          <h3 style="font-size:.84rem;margin-bottom:4px">⑤ What defines order within the window? → ORDER BY</h3>
+          <p style="font-size:.81rem">Ranking by sales? → ORDER BY sales DESC<br>Month sequence? → ORDER BY MONTH(date) — not DATENAME!<br>Time series? → ORDER BY date column</p>
+        </div>
+        <div class="hl">
+          <h3 style="font-size:.84rem;margin-bottom:4px">⑥ What are the edge cases?</h3>
+          <p style="font-size:.81rem">First row of window → LAG returns NULL — handle it?<br>Year boundary → need PARTITION BY year<br>Division → * 1.0 for integers, NULLIF for zero denominator<br>Filtering on window result → CTE first, then WHERE</p>
+        </div>
+        <div class="hl gr">
+          <p style="font-size:.82rem">🎯 <strong style="color:var(--green)">The pattern:</strong> Questions ①② define your CTEs. Questions ③④⑤ define your OVER() clauses. Question ⑥ defines your guardrails. Write SQL after all six are answered.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 17: MISTAKES + CHEAT SHEET ═══ -->
+<div class="slide">
+  <h2>Common Mistakes + Quick Reference</h2>
+  <div class="two">
+    <div>
+      <h3 style="margin-bottom:8px">🚫 Mistakes to avoid</h3>
+      <table>
+        <tr><th>Mistake</th><th>Fix</th></tr>
+        <tr><td style="font-size:.76rem">Window fn in WHERE</td><td style="font-size:.76rem">CTE → filter outside</td></tr>
+        <tr><td style="font-size:.76rem">No ORDER BY in RANK / LAG</td><td style="font-size:.76rem">Always add ORDER BY inside OVER()</td></tr>
+        <tr><td style="font-size:.76rem">Integer division (57/250 = 0)</td><td style="font-size:.76rem">Multiply by 1.0 first</td></tr>
+        <tr><td style="font-size:.76rem">LAG crosses year boundary</td><td style="font-size:.76rem">PARTITION BY order_year</td></tr>
+        <tr><td style="font-size:.76rem">ORDER BY month name (alphabetical)</td><td style="font-size:.76rem">ORDER BY MONTH(date) — number not name</td></tr>
+        <tr><td style="font-size:.76rem">RANK when gaps confuse stakeholders</td><td style="font-size:.76rem">Use DENSE_RANK()</td></tr>
+        <tr><td style="font-size:.76rem">PARTITION BY omitted → global calc</td><td style="font-size:.76rem">Add PARTITION BY group column</td></tr>
+        <tr><td style="font-size:.76rem">SUM OVER without frame → full total</td><td style="font-size:.76rem">Add ORDER BY + ROWS BETWEEN for running total</td></tr>
+        <tr><td style="font-size:.76rem">Division by zero in MoM formula</td><td style="font-size:.76rem">NULLIF(denominator, 0)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3 style="margin-bottom:8px">📋 Full Cheat Sheet</h3>
+      <table>
+        <tr><th>Need</th><th>Pattern</th></tr>
+        <tr><td style="font-size:.74rem">Group total beside each row</td><td><code style="font-size:.68rem">SUM(v) OVER(PARTITION BY g)</code></td></tr>
+        <tr><td style="font-size:.74rem">Rank (gaps ok)</td><td><code style="font-size:.68rem">RANK() OVER(PARTITION BY g ORDER BY v DESC)</code></td></tr>
+        <tr><td style="font-size:.74rem">Rank (no gaps)</td><td><code style="font-size:.68rem">DENSE_RANK() OVER(PARTITION BY g ORDER BY v DESC)</code></td></tr>
+        <tr><td style="font-size:.74rem">Unique row number</td><td><code style="font-size:.68rem">ROW_NUMBER() OVER(ORDER BY v)</code></td></tr>
+        <tr><td style="font-size:.74rem">Previous row's value (MoM)</td><td><code style="font-size:.68rem">LAG(v) OVER(PARTITION BY yr ORDER BY m)</code></td></tr>
+        <tr><td style="font-size:.74rem">Next row's value</td><td><code style="font-size:.68rem">LEAD(v) OVER(PARTITION BY yr ORDER BY m)</code></td></tr>
+        <tr><td style="font-size:.74rem">Running YTD total</td><td><code style="font-size:.68rem">SUM(v) OVER(PARTITION BY yr ORDER BY m ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)</code></td></tr>
+        <tr><td style="font-size:.74rem">Filter by window result</td><td style="font-size:.74rem">CTE → <code style="font-size:.68rem">WHERE rank_col &lt;= N</code></td></tr>
+        <tr><td style="font-size:.74rem">Force decimal division</td><td><code style="font-size:.68rem">numerator * 1.0 / denominator</code></td></tr>
+        <tr><td style="font-size:.74rem">Prevent ÷ zero</td><td><code style="font-size:.68rem">NULLIF(denominator, 0)</code></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const total=slides.length;
+const ctr=document.getElementById('ctr');
+function show(n){
+  slides[cur].classList.remove('active');
+  cur=(n+total)%total;
+  slides[cur].classList.add('active');
+  ctr.textContent=(cur+1)+' / '+total;
+}
+function go(d){show(cur+d)}
+function rev(btn){
+  btn.nextElementSibling.style.display='block';
+  btn.style.display='none';
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);
+});
+ctr.textContent='1 / '+total;
+</script>
+</body>
+</html>

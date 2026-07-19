@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Flexible Filtering and Analysis of Sales with Functions</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
+  --green:#3fb950;--yellow:#d29922;--red:#f85149;--purple:#bc8cff;
+  --kw:#ff7b72;--fn:#d2a8ff;--st:#a5d6ff;--cm:#8b949e;--nm:#79c0ff;
+  --var:#ffa657;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+  height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.deck{flex:1;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;padding:2.5rem 3rem;
+  display:flex;flex-direction:column;gap:1.2rem;
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.slide.active{opacity:1;pointer-events:all}
+h1{font-size:2rem;font-weight:700;color:var(--accent)}
+h2{font-size:1.4rem;font-weight:600;color:var(--accent);margin-bottom:.4rem}
+h3{font-size:1.05rem;font-weight:600;color:var(--yellow);margin-bottom:.3rem}
+p,li{font-size:.95rem;line-height:1.6;color:var(--text)}
+ul{padding-left:1.2rem}
+li{margin-bottom:.3rem}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.8rem;
+  font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag.mod{background:#1f3a5f;color:var(--accent)}
+.tag.py{background:#1e3a2f;color:var(--green)}
+.tag.sql{background:#3a1f4a;color:var(--purple)}
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:12px;font-size:.78rem;
+  font-weight:600;margin-right:.4rem}
+.badge.new{background:#1e3a2f;color:var(--green)}
+.badge.concept{background:#1f2a3f;color:var(--accent)}
+pre{background:#010409;border:1px solid var(--border);border-radius:8px;
+  padding:1rem 1.2rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;
+  line-height:1.7;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.85rem}
+.kw{color:var(--kw)}
+.fn{color:var(--fn)}
+.st{color:var(--st)}
+.cm{color:var(--cm);font-style:italic}
+.nm{color:var(--nm)}
+.var{color:var(--var)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:1rem 1.2rem}
+.card h3{margin-bottom:.5rem}
+.callout{background:#1a2332;border-left:3px solid var(--accent);
+  border-radius:0 6px 6px 0;padding:.7rem 1rem;font-size:.88rem}
+.callout.green{background:#0d2318;border-color:var(--green)}
+.callout.yellow{background:#2a1f0d;border-color:var(--yellow)}
+.callout.purple{background:#1e1030;border-color:var(--purple)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#1f2937;color:var(--accent);padding:.5rem .8rem;text-align:left;
+  border:1px solid var(--border)}
+td{padding:.45rem .8rem;border:1px solid var(--border);vertical-align:top}
+tr:nth-child(even) td{background:#0f1117}
+td code{font-size:.8rem}
+.nav{display:flex;align-items:center;gap:1rem;padding:.6rem 3rem;
+  background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.nav button{background:none;border:1px solid var(--border);color:var(--text);
+  padding:.35rem .9rem;border-radius:6px;cursor:pointer;font-size:.85rem}
+.nav button:hover{background:var(--border)}
+#counter{margin-left:auto;color:var(--muted);font-size:.85rem;
+  font-family:'JetBrains Mono',monospace}
+.subtitle{color:var(--muted);font-size:1rem;margin-top:.3rem}
+.step-num{display:inline-block;width:22px;height:22px;border-radius:50%;
+  background:var(--accent);color:#000;font-size:.72rem;font-weight:700;
+  text-align:center;line-height:22px;margin-right:.4rem;flex-shrink:0}
+.step-row{display:flex;align-items:flex-start;gap:.3rem;margin-bottom:.45rem}
+.anatomy-box{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.ann{font-size:.8rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.ann span{color:var(--yellow)}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active">
+  <div>
+    <span class="tag mod">Day 8 · Module 2</span>
+    <h1 style="margin-top:.5rem">Flexible Filtering and Analysis of Sales with Functions</h1>
+    <p class="subtitle">Build a reusable function library that wraps pandas logic — making analysis parameterizable instead of copy-paste.</p>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>Dataset: 3 merged tables</h3>
+      <table>
+        <tr><th>Table</th><th>Key columns</th></tr>
+        <tr><td><code>transactions</code></td><td>TransactionID, Order_ID, Product_ID, Sales_Amount, Quantity, Discount</td></tr>
+        <tr><td><code>orders</code></td><td>order_id, ship_mode, order_status</td></tr>
+        <tr><td><code>products</code></td><td>product_id, product_name, category, sub_category</td></tr>
+      </table>
+      <p style="margin-top:.6rem;font-size:.85rem;color:var(--muted)">Merged into <code>trans</code> DataFrame: transactions + product name/category + order ship_mode &amp; status</p>
+    </div>
+    <div class="card">
+      <h3>Function library you'll build</h3>
+      <div class="step-row"><span class="step-num">1</span><p><strong>get_category_summary(df, category, min_discount)</strong> — category revenue/qty/discount summary</p></div>
+      <div class="step-row"><span class="step-num">2</span><p><strong>+ status=None</strong> — extend T1 with optional order status filter</p></div>
+      <div class="step-row"><span class="step-num">3</span><p><strong>filter_by_ship_mode(df, ship_mode, min_sales)</strong> — filtered transaction rows</p></div>
+      <div class="step-row"><span class="step-num">4</span><p><strong>get_top_products(df, category, top_n)</strong> — revenue leaderboard with rank column</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: SQL MENTAL MODEL -->
+<div class="slide">
+  <div>
+    <span class="tag sql">SQL Mental Model</span>
+    <h1 style="margin-top:.5rem">Functions = Parameterized SQL Queries</h1>
+    <p class="subtitle">A Python function is a named, reusable block with variable inputs — exactly like a SQL query you can call with different <code>WHERE</code> values.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>What you'd write in SQL (every time)</h3>
+      <pre><span class="cm">-- Task 1: Category summary (hardcoded each time)</span>
+<span class="kw">SELECT</span> category,
+  <span class="fn">SUM</span>(sales_amount)  <span class="kw">AS</span> total_revenue,
+  <span class="fn">SUM</span>(quantity)      <span class="kw">AS</span> total_quantity,
+  <span class="fn">AVG</span>(discount)      <span class="kw">AS</span> avg_discount
+<span class="kw">FROM</span>   trans
+<span class="kw">WHERE</span>  category     = <span class="st">'Electronics'</span>   <span class="cm">-- ← parameter</span>
+  <span class="kw">AND</span>  discount    >= <span class="nm">0.0</span>             <span class="cm">-- ← parameter</span>
+<span class="kw">GROUP BY</span> category;
+
+<span class="cm">-- Task 2: Add optional status (nullable param)</span>
+<span class="kw">WHERE</span>  category  = <span class="st">'Furniture'</span>
+  <span class="kw">AND</span>  discount >= <span class="nm">0.1</span>
+  <span class="kw">AND</span>  order_status = <span class="st">'delivered'</span>;  <span class="cm">-- ← optional</span>
+
+<span class="cm">-- Task 4: Top-N products with ranking</span>
+<span class="kw">SELECT</span> <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> total_revenue <span class="kw">DESC</span>)
+         <span class="kw">AS</span> rank, product_name, category, ...
+<span class="kw">FROM</span> (...aggregate...) <span class="kw">LIMIT</span> <span class="nm">5</span>;</pre>
+    </div>
+    <div>
+      <h3>Python function = reusable parameterized query</h3>
+      <pre><span class="cm"># Define once — call with any parameters</span>
+<span class="kw">def</span> <span class="fn">get_category_summary</span>(df, category,
+                          min_discount=<span class="nm">0.0</span>, status=<span class="kw">None</span>):
+    <span class="cm"># WHERE category = ? AND discount >= ?</span>
+    filtered = df[
+        (df[<span class="st">'category'</span>]  == category) &
+        (df[<span class="st">'Discount'</span>]  >= min_discount)
+    ]
+    <span class="cm"># AND order_status = ? (only if status provided)</span>
+    <span class="kw">if</span> status <span class="kw">is not None</span>:
+        filtered = filtered[filtered[<span class="st">'order_status'</span>] == status]
+    <span class="cm"># GROUP BY category + aggregations</span>
+    <span class="kw">return</span> pd.<span class="fn">DataFrame</span>([{
+        <span class="st">'total_revenue'</span>  : filtered[<span class="st">'Sales_Amount'</span>].<span class="fn">sum</span>(),
+        <span class="st">'total_quantity'</span> : filtered[<span class="st">'Quantity'</span>].<span class="fn">sum</span>(),
+        <span class="st">'avg_discount'</span>   : filtered[<span class="st">'Discount'</span>].<span class="fn">mean</span>()
+    }])</pre>
+    </div>
+  </div>
+  <div class="callout purple">
+    <strong>Mental model:</strong> Every Python function in this module maps directly to a SQL query. <code>def</code> = stored procedure name. Parameters = <code>WHERE</code> clauses. Default values = optional filters. <code>return</code> = result set.
+  </div>
+</div>
+
+<!-- SLIDE 3: FUNCTION ANATOMY -->
+<div class="slide">
+  <div>
+    <span class="tag py">Concept</span>
+    <h1 style="margin-top:.5rem">Function Anatomy</h1>
+    <p class="subtitle">Every part of a function definition has a precise role. Learn these once and you can read any function.</p>
+  </div>
+  <div class="two">
+    <div>
+      <pre style="font-size:.85rem"><span class="kw">def</span> <span class="fn">get_category_summary</span>(    <span class="cm"># ① function name</span>
+        df,                      <span class="cm"># ② required param — no default</span>
+        category,                <span class="cm"># ② required param — no default</span>
+        min_discount=<span class="nm">0.0</span>,        <span class="cm"># ③ default param</span>
+        status=<span class="kw">None</span>              <span class="cm"># ④ optional sentinel</span>
+):
+    <span class="st">"""                          # ⑤ docstring — explains purpose
+    Returns one-row summary.
+    """</span>
+    filtered = df[...]           <span class="cm"># ⑥ function body</span>
+    <span class="kw">return</span> pd.<span class="fn">DataFrame</span>([...])  <span class="cm"># ⑦ return value</span></pre>
+      <div class="callout green" style="margin-top:.6rem;font-size:.83rem">
+        <strong>return vs print:</strong>
+        <code>print()</code> shows on screen — gone after display.
+        <code>return</code> passes a value back to the caller — you can assign it, chain it, save it.
+        Functions that analyze data should <strong>always return</strong>.
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>Calling the function — 3 ways</h3>
+        <pre style="font-size:.82rem"><span class="cm"># ① Positional only (order matters)</span>
+<span class="fn">get_category_summary</span>(trans, <span class="st">"Electronics"</span>)
+
+<span class="cm"># ② Positional + keyword (override one default)</span>
+<span class="fn">get_category_summary</span>(trans, <span class="st">"Electronics"</span>,
+                     min_discount=<span class="nm">0.2</span>)
+
+<span class="cm"># ③ All keyword (order-independent)</span>
+<span class="fn">get_category_summary</span>(
+    df=trans,
+    category=<span class="st">"Furniture"</span>,
+    min_discount=<span class="nm">0.1</span>,
+    status=<span class="st">"delivered"</span>
+)</pre>
+      </div>
+      <div class="callout yellow" style="margin-top:.6rem;font-size:.83rem">
+        <strong>None as sentinel:</strong>
+        Use <code>status=None</code> (not <code>status=""</code>) as the "no filter" default.
+        An empty string <code>""</code> would actually filter rows where status is empty.
+        <code>None</code> means "not provided at all" — the <code>if status is not None</code> guard distinguishes these.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: TASK 1 — get_category_summary -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 1</span>
+    <h1 style="margin-top:.5rem">get_category_summary — Basic Version</h1>
+    <p class="subtitle">Two required params, one default param. Returns a single-row DataFrame — the result of filtering + aggregation.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>SQL equivalent</h3>
+      <pre><span class="cm">-- Parameterized query → maps to function args</span>
+<span class="kw">SELECT</span>
+  <span class="st">'Electronics'</span>       <span class="kw">AS</span> category,
+  <span class="fn">SUM</span>(sales_amount)   <span class="kw">AS</span> total_revenue,
+  <span class="fn">SUM</span>(quantity)       <span class="kw">AS</span> total_quantity,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(discount),<span class="nm">2</span>) <span class="kw">AS</span> avg_discount
+<span class="kw">FROM</span>  trans
+<span class="kw">WHERE</span> category = <span class="st">'Electronics'</span>   <span class="cm">-- arg: category</span>
+  <span class="kw">AND</span> discount >= <span class="nm">0.0</span>;           <span class="cm">-- arg: min_discount</span>
+
+<span class="cm">-- Calling with different params = running
+-- different WHERE values from one function</span></pre>
+    </div>
+    <div>
+      <h3>Python</h3>
+      <pre><span class="kw">def</span> <span class="fn">get_category_summary</span>(df, category, min_discount=<span class="nm">0.0</span>):
+    <span class="st">"""Returns one-row summary for a product category."""</span>
+
+    <span class="cm"># Boolean mask: BOTH conditions must be True (&amp;)
+    # df["category"] == category  → WHERE category = ?
+    # df["Discount"] >= min_discount → AND discount >= ?</span>
+    filtered = df[
+        (df[<span class="st">"category"</span>]  == category) &
+        (df[<span class="st">"Discount"</span>]  >= min_discount)
+    ]
+
+    <span class="cm"># pd.DataFrame([{...}]) builds a 1-row DataFrame
+    # from a list containing one dictionary</span>
+    summary = pd.<span class="fn">DataFrame</span>([{
+        <span class="st">"category"</span>       : category,
+        <span class="st">"total_revenue"</span>  : filtered[<span class="st">"Sales_Amount"</span>].<span class="fn">sum</span>(),
+        <span class="st">"total_quantity"</span> : filtered[<span class="st">"Quantity"</span>].<span class="fn">sum</span>(),
+        <span class="st">"avg_discount"</span>   : <span class="fn">round</span>(filtered[<span class="st">"Discount"</span>].<span class="fn">mean</span>(), <span class="nm">2</span>)
+    }])
+    <span class="kw">return</span> summary
+
+<span class="cm"># Call 1: default min_discount=0.0 (all discounts)</span>
+<span class="fn">get_category_summary</span>(trans, <span class="st">"Electronics"</span>)
+
+<span class="cm"># Call 2: keyword arg — override default</span>
+<span class="fn">get_category_summary</span>(trans, <span class="st">"Electronics"</span>, min_discount=<span class="nm">0.2</span>)</pre>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>pd.DataFrame([{key: val, ...}])</strong> — wrapping one dict in a list creates a 1-row DataFrame.
+    Each dict key becomes a column header. This is the standard way to return a summary row from a function.
+  </div>
+</div>
+
+<!-- SLIDE 5: TASK 2 — status=None extension -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 2</span>
+    <h1 style="margin-top:.5rem">get_category_summary — Add Optional Status</h1>
+    <p class="subtitle">Extend the function with a <code>status=None</code> parameter and a guard that applies the filter only when a value is passed.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>SQL equivalent</h3>
+      <pre><span class="cm">-- Without status filter</span>
+<span class="kw">SELECT</span> ... <span class="kw">FROM</span> trans
+<span class="kw">WHERE</span> category = <span class="st">'Furniture'</span>
+  <span class="kw">AND</span> discount >= <span class="nm">0.0</span>;
+
+<span class="cm">-- With optional status (dynamic WHERE clause)</span>
+<span class="kw">SELECT</span> ... <span class="kw">FROM</span> trans
+<span class="kw">WHERE</span> category     = <span class="st">'Furniture'</span>
+  <span class="kw">AND</span> discount    >= <span class="nm">0.1</span>
+  <span class="kw">AND</span> order_status = <span class="st">'delivered'</span>;  <span class="cm">-- only when provided</span>
+
+<span class="cm">-- In SQL you'd use a stored procedure or
+-- dynamic SQL to make this condition optional.
+-- Python default parameters handle it cleanly.</span></pre>
+    </div>
+    <div>
+      <h3>Python — the None sentinel pattern</h3>
+      <pre><span class="kw">def</span> <span class="fn">get_category_summary</span>(df, category,
+                          min_discount=<span class="nm">0.0</span>, status=<span class="kw">None</span>):
+    <span class="st">"""status=None means 'no filter' — include all statuses."""</span>
+
+    <span class="cm"># Always apply category + discount filter</span>
+    filtered = df[
+        (df[<span class="st">"category"</span>] == category) &
+        (df[<span class="st">"Discount"</span>] >= min_discount)
+    ]
+
+    <span class="cm"># Guard: only filter by status when caller passed a value
+    # 'is not None' distinguishes: "not provided" vs ""</span>
+    <span class="kw">if</span> status <span class="kw">is not None</span>:
+        filtered = filtered[filtered[<span class="st">"order_status"</span>] == status]
+
+    <span class="kw">return</span> pd.<span class="fn">DataFrame</span>([{
+        <span class="st">"category"</span>       : category,
+        <span class="st">"total_revenue"</span>  : filtered[<span class="st">"Sales_Amount"</span>].<span class="fn">sum</span>(),
+        <span class="st">"total_quantity"</span> : filtered[<span class="st">"Quantity"</span>].<span class="fn">sum</span>(),
+        <span class="st">"avg_discount"</span>   : <span class="fn">round</span>(filtered[<span class="st">"Discount"</span>].<span class="fn">mean</span>(), <span class="nm">2</span>)
+    }])
+
+<span class="cm"># Backward-compatible — existing calls still work</span>
+<span class="fn">get_category_summary</span>(trans, <span class="st">"Furniture"</span>)
+
+<span class="cm"># New usage — add both optional params</span>
+<span class="fn">get_category_summary</span>(trans, <span class="st">"Furniture"</span>,
+                     min_discount=<span class="nm">0.1</span>, status=<span class="st">"delivered"</span>)</pre>
+    </div>
+  </div>
+  <div class="callout yellow">
+    <strong>Backward compatibility:</strong> Adding <code>status=None</code> doesn't break existing calls — they still work unchanged.
+    This is how you extend functions without breaking callers. Never change the meaning of existing parameters.
+  </div>
+</div>
+
+<!-- SLIDE 6: TASK 3 — filter_by_ship_mode -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 3</span>
+    <h1 style="margin-top:.5rem">filter_by_ship_mode — Returning Rows</h1>
+    <p class="subtitle">This function returns filtered rows (not aggregated), showing the difference between <em>filtering</em> and <em>summarizing</em>.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>SQL equivalent</h3>
+      <pre><span class="cm">-- Returns rows, not aggregates</span>
+<span class="kw">SELECT</span> TransactionID, Order_ID, product_name,
+       category, Sales_Amount, Quantity,
+       Discount, ship_mode
+<span class="kw">FROM</span>   trans
+<span class="kw">WHERE</span>  ship_mode    = <span class="st">'Premium'</span>
+  <span class="kw">AND</span>  Sales_Amount >= <span class="nm">0</span>;
+
+<span class="cm">-- Keyword arg example:
+-- ship_mode='Standard', min_sales=3000</span>
+<span class="kw">WHERE</span>  ship_mode    = <span class="st">'Standard'</span>
+  <span class="kw">AND</span>  Sales_Amount >= <span class="nm">3000</span>;</pre>
+    </div>
+    <div>
+      <h3>Python — positional vs keyword args demo</h3>
+      <pre><span class="kw">def</span> <span class="fn">filter_by_ship_mode</span>(df, ship_mode, min_sales=<span class="nm">0</span>):
+    <span class="st">"""Returns filtered rows for a given ship mode."""</span>
+
+    filtered = df[
+        (df[<span class="st">"ship_mode"</span>]    == ship_mode) &
+        (df[<span class="st">"Sales_Amount"</span>] >= min_sales)
+    ]
+
+    <span class="cm"># Return a clean column subset with fresh index</span>
+    <span class="kw">return</span> filtered[[
+        <span class="st">"TransactionID"</span>, <span class="st">"Order_ID"</span>, <span class="st">"product_name"</span>,
+        <span class="st">"category"</span>, <span class="st">"Sales_Amount"</span>, <span class="st">"Quantity"</span>,
+        <span class="st">"Discount"</span>, <span class="st">"ship_mode"</span>
+    ]].<span class="fn">reset_index</span>(drop=<span class="kw">True</span>)
+
+<span class="cm"># ① Positional only — min_sales defaults to 0</span>
+<span class="fn">filter_by_ship_mode</span>(trans, <span class="st">"Premium"</span>)
+
+<span class="cm"># ② Positional + keyword — override one default</span>
+<span class="fn">filter_by_ship_mode</span>(trans, <span class="st">"Standard"</span>, min_sales=<span class="nm">3000</span>)
+
+<span class="cm"># ③ All keyword — order-independent</span>
+<span class="fn">filter_by_ship_mode</span>(df=trans, ship_mode=<span class="st">"Fastrack"</span>,
+                    min_sales=<span class="nm">1500</span>)</pre>
+    </div>
+  </div>
+  <div class="callout green">
+    <strong>Positional vs keyword:</strong>
+    Positional = match by order. Keyword = match by name, order-independent.
+    Keyword args make calls self-documenting: <code>min_sales=3000</code> is clearer than a bare <code>3000</code>.
+  </div>
+</div>
+
+<!-- SLIDE 7: TASK 4 — get_top_products -->
+<div class="slide">
+  <div>
+    <span class="tag py">Task 4</span>
+    <h1 style="margin-top:.5rem">get_top_products — Ranked Leaderboard</h1>
+    <p class="subtitle">Chain 5 pandas methods to build a ranked product leaderboard. <code>.insert()</code> adds columns at a specific position.</p>
+  </div>
+  <div class="two">
+    <div>
+      <h3>SQL equivalent</h3>
+      <pre><span class="cm">-- Aggregate → sort → limit → add rank</span>
+<span class="kw">WITH</span> agg <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> product_name,
+    <span class="fn">SUM</span>(Sales_Amount) <span class="kw">AS</span> total_revenue,
+    <span class="fn">SUM</span>(Quantity)     <span class="kw">AS</span> total_quantity
+  <span class="kw">FROM</span>  trans
+  <span class="kw">WHERE</span> category = <span class="st">'Furniture'</span>
+  <span class="kw">GROUP BY</span> product_name
+  <span class="kw">ORDER BY</span> total_revenue <span class="kw">DESC</span>
+  <span class="kw">LIMIT</span> <span class="nm">3</span>           <span class="cm">-- top_n parameter</span>
+)
+<span class="kw">SELECT</span>
+  <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> total_revenue <span class="kw">DESC</span>)
+    <span class="kw">AS</span> rank,
+  <span class="st">'Furniture'</span> <span class="kw">AS</span> category,
+  product_name, total_revenue, total_quantity
+<span class="kw">FROM</span> agg;</pre>
+    </div>
+    <div>
+      <h3>Python — method chain + <code>.insert()</code></h3>
+      <pre><span class="kw">def</span> <span class="fn">get_top_products</span>(df, category, top_n=<span class="nm">5</span>):
+    <span class="st">"""Ranked top-N products by revenue in a category."""</span>
+
+    <span class="cm"># Filter → aggregate → sort → take top N</span>
+    leaderboard = (
+        df[df[<span class="st">"category"</span>] == category]
+        .<span class="fn">groupby</span>(<span class="st">"product_name"</span>)
+        .<span class="fn">agg</span>(
+            total_revenue  = (<span class="st">"Sales_Amount"</span>, <span class="st">"sum"</span>),
+            total_quantity = (<span class="st">"Quantity"</span>,     <span class="st">"sum"</span>)
+        )
+        .<span class="fn">reset_index</span>()
+        .<span class="fn">sort_values</span>(<span class="st">"total_revenue"</span>, ascending=<span class="kw">False</span>)
+        .<span class="fn">head</span>(top_n)           <span class="cm"># LIMIT top_n</span>
+        .<span class="fn">reset_index</span>(drop=<span class="kw">True</span>)  <span class="cm"># clean 0-based index</span>
+    )
+
+    <span class="cm"># .insert(pos, col, values) adds column at position pos
+    # range(1, n+1) → [1, 2, 3, ...] for rank numbers</span>
+    leaderboard.<span class="fn">insert</span>(<span class="nm">0</span>, <span class="st">"rank"</span>,     <span class="fn">range</span>(<span class="nm">1</span>, <span class="fn">len</span>(leaderboard)+<span class="nm">1</span>))
+    leaderboard.<span class="fn">insert</span>(<span class="nm">2</span>, <span class="st">"category"</span>, category)
+    <span class="kw">return</span> leaderboard</pre>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>df.insert(position, column_name, values):</strong>
+    Adds a column at a specific index position (0 = leftmost).
+    Unlike <code>df['col'] = ...</code> which appends to the right, <code>.insert()</code> lets you place rank first.
+  </div>
+</div>
+
+<!-- SLIDE 8: FULL CODE -->
+<div class="slide">
+  <div>
+    <span class="tag py">Full Code</span>
+    <h1 style="margin-top:.5rem">Complete Function Library</h1>
+  </div>
+  <div class="two" style="flex:1;min-height:0">
+    <pre style="overflow-y:auto;font-size:.74rem"><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="cm"># ── Load &amp; merge tables ─────────────────────────────────</span>
+trans = transactions.<span class="fn">merge</span>(
+    products[[<span class="st">"product_id"</span>,<span class="st">"product_name"</span>,<span class="st">"category"</span>,<span class="st">"sub_category"</span>]],
+    left_on=<span class="st">"Product_ID"</span>, right_on=<span class="st">"product_id"</span>, how=<span class="st">"left"</span>
+).<span class="fn">merge</span>(
+    orders[[<span class="st">"order_id"</span>,<span class="st">"ship_mode"</span>,<span class="st">"order_status"</span>]],
+    left_on=<span class="st">"Order_ID"</span>, right_on=<span class="st">"order_id"</span>, how=<span class="st">"left"</span>
+)
+
+<span class="cm"># ── Task 1 + 2: Category summary ────────────────────────</span>
+<span class="kw">def</span> <span class="fn">get_category_summary</span>(df, category,
+                          min_discount=<span class="nm">0.0</span>, status=<span class="kw">None</span>):
+    filtered = df[(df[<span class="st">"category"</span>]==category) & (df[<span class="st">"Discount"</span>]>=min_discount)]
+    <span class="kw">if</span> status <span class="kw">is not None</span>:          <span class="cm"># None sentinel guard</span>
+        filtered = filtered[filtered[<span class="st">"order_status"</span>]==status]
+    <span class="kw">return</span> pd.<span class="fn">DataFrame</span>([{
+        <span class="st">"category"</span>      : category,
+        <span class="st">"total_revenue"</span> : filtered[<span class="st">"Sales_Amount"</span>].<span class="fn">sum</span>(),
+        <span class="st">"total_quantity"</span>: filtered[<span class="st">"Quantity"</span>].<span class="fn">sum</span>(),
+        <span class="st">"avg_discount"</span>  : <span class="fn">round</span>(filtered[<span class="st">"Discount"</span>].<span class="fn">mean</span>(), <span class="nm">2</span>)
+    }])
+
+<span class="cm"># ── Task 3: Filter by ship mode ─────────────────────────</span>
+<span class="kw">def</span> <span class="fn">filter_by_ship_mode</span>(df, ship_mode, min_sales=<span class="nm">0</span>):
+    filtered = df[(df[<span class="st">"ship_mode"</span>]==ship_mode) & (df[<span class="st">"Sales_Amount"</span>]>=min_sales)]
+    <span class="kw">return</span> filtered[[<span class="st">"TransactionID"</span>,<span class="st">"Order_ID"</span>,<span class="st">"product_name"</span>,
+                      <span class="st">"category"</span>,<span class="st">"Sales_Amount"</span>,<span class="st">"Quantity"</span>,
+                      <span class="st">"Discount"</span>,<span class="st">"ship_mode"</span>]].<span class="fn">reset_index</span>(drop=<span class="kw">True</span>)
+
+<span class="cm"># ── Task 4: Top products leaderboard ────────────────────</span>
+<span class="kw">def</span> <span class="fn">get_top_products</span>(df, category, top_n=<span class="nm">5</span>):
+    lb = (df[df[<span class="st">"category"</span>]==category]
+          .<span class="fn">groupby</span>(<span class="st">"product_name"</span>)
+          .<span class="fn">agg</span>(total_revenue=(<span class="st">"Sales_Amount"</span>,<span class="st">"sum"</span>),
+               total_quantity=(<span class="st">"Quantity"</span>,<span class="st">"sum"</span>))
+          .<span class="fn">reset_index</span>()
+          .<span class="fn">sort_values</span>(<span class="st">"total_revenue"</span>, ascending=<span class="kw">False</span>)
+          .<span class="fn">head</span>(top_n).<span class="fn">reset_index</span>(drop=<span class="kw">True</span>))
+    lb.<span class="fn">insert</span>(<span class="nm">0</span>, <span class="st">"rank"</span>,     <span class="fn">range</span>(<span class="nm">1</span>, <span class="fn">len</span>(lb)+<span class="nm">1</span>))
+    lb.<span class="fn">insert</span>(<span class="nm">2</span>, <span class="st">"category"</span>, category)
+    <span class="kw">return</span> lb</pre>
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      <h3>SQL ↔ Python comparison</h3>
+      <table style="font-size:.78rem">
+        <tr><th>Concept</th><th>SQL</th><th>Python</th></tr>
+        <tr><td>Named reusable query</td><td>Stored procedure / view</td><td><code>def function_name(params):</code></td></tr>
+        <tr><td>Optional WHERE clause</td><td>Dynamic SQL / CASE in WHERE</td><td><code>if param is not None:</code></td></tr>
+        <tr><td>Default parameter</td><td>Default proc argument</td><td><code>min_discount=0.0</code></td></tr>
+        <tr><td>GROUP BY + agg</td><td><code>GROUP BY col + SUM/AVG</code></td><td><code>.groupby().agg(col=('src','func'))</code></td></tr>
+        <tr><td>TOP N with rank</td><td><code>ROW_NUMBER() OVER(...) LIMIT N</code></td><td><code>.sort_values().head(N) + .insert(0,'rank',range(...))</code></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- end deck -->
+
+<div class="nav">
+  <button onclick="go(-1)">← Prev</button>
+  <button onclick="go(1)">Next →</button>
+  <span id="counter"></span>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+function show(n){
+  slides[cur].classList.remove('active');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  document.getElementById('counter').textContent = (cur+1)+' / '+slides.length;
+}
+function go(d){ show(cur+d); }
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') go(-1);
+});
+show(0);
+</script>
+</body>
+</html>

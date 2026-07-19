@@ -1,0 +1,290 @@
+# Aircraft Journey Mapper using Recursive CTE in SQL
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to use Recursive Common Table Expressions (CTEs) to query hierarchical and sequential data. You will master the base case and recursive case pattern to solve real-world problems like flight path tracking, organizational charts, and bill of materials.
+
+## Learning Objectives
+- Understand the structure of a Recursive CTE with Base Case and Recursive Case
+- Write recursive queries to traverse organizational hierarchies
+- Build connected paths from sequential data such as flight routes or supply chains
+- Implement termination conditions to prevent infinite recursion
+- Use string concatenation to build hierarchical paths
+- Apply level tracking to understand position in a hierarchy
+
+## Prerequisites
+- Basic SQL syntax including SELECT, FROM, WHERE, JOIN, and ORDER BY
+- Understanding of Common Table Expressions (CTEs) using the WITH clause
+- String concatenation operators for your database system
+- Understanding of table relationships and foreign keys
+
+## Duration of Completion
+60 minutes
+
+## Level
+Advanced
+
+## Industries
+- airline
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+In this scenario you will learn how to use Recursive Common Table Expressions (CTEs) to query hierarchical and sequential data. You will master the base case and recursive case pattern to solve real-world problems like flight path tracking, organizational charts, and bill of materials.
+
+#### Level
+advanced
+
+#### Industries
+- airline
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+A leading airline, **SkyConnect Airways**, operates multiple aircraft across different routes daily. Each aircraft may make multiple **hops** in a single day, stopping at various airports before reaching its final destination. The airline's **Operations Control Center (OCC)** needs to track and optimize aircraft routes to **improve fuel efficiency, reduce delays, and maximize aircraft utilization**.
+
+The airline management wants to **analyze the longest operational route** covered by each aircraft in a single day. This is crucial for:
+
+- **Optimizing aircraft maintenance scheduling** (longer routes require scheduled inspections).
+- **Fuel planning** (longest routes consume more fuel and require refueling stops).
+- **Flight crew scheduling** (crew working long-haul hops need proper break assignments).
+- **Passenger experience optimization** (ensuring seamless connectivity between cities).
+
+**Your task is to write an SQL query to fetch the longest day path for a given aircraft on a given date.** This will help the airline's **Operations Team** visualize aircraft movement and plan better.
+
+- A flight is considered **connected** if the `Source_Airport` of a flight matches the `Destination_Airport` of the previous flight.
+- The longest sequence of flights should be reported as a **single travel path** in the format :
+
+        Source_Airport > Next_Airport > Next_Airport > Final_Destination
+- You need to generate the report for **a given aircraft** (`AircraftCode`) on **a specific date** (`Date`).
+
+
+>[!IMPORTANT] 
+
+>[!NOTE]
+- Server name : mentorskool.database.windows.net
+  Username : mskllearnlogin
+  Password : !@#sw2aq1
+- Use the table `FlightTrips` to write your query
+
+![Image-image.png](https://cdn.enqurious.com/images/eb5ea253-b28b-42f1-be52-57cda8223353_image.webp)
+
+Note : The numbers in the report are for representation purposes only.
+
+
+**Tags**
+
+
+##### Input 2
+**Type:** Choice
+
+**Question:** On 2025-01-16, which aircraft's longest connected flight path ended at LGA?
+
+**Options:** 
+- CRJ700
+
+- B757
+
+- B737
+
+- A380
+
+**Correct Options:** 
+- B737
+
+**Solution:** 
+```sql
+-- ============================================
+-- Goal: Find the longest connected flight path 
+--       taken by each aircraft on 2025-01-16 
+--       that ends specifically at LGA airport.
+-- 
+-- A connected path means:
+--       Destination of one flight = Source of next
+-- 
+-- Format required: 
+--       Source_Airport > Mid_Airport > Final_Destination
+-- ============================================
+
+-- Step 1: Use a Recursive CTE to build all possible connected flight paths
+WITH flightpath AS (
+
+   -- Base Case: Select individual flights for each aircraft on 2025-01-16
+   --            These are the starting points of the flight sequences
+   SELECT 
+       date,                                            -- The flight's scheduled date
+       aircraftcode,                                    -- The aircraft making the flight
+       source_airport,                                  -- Starting airport for the flight
+       destination_airport,                             -- Ending airport for the flight
+       CAST(source_airport AS VARCHAR(MAX)) + ' > ' + CAST(destination_airport AS VARCHAR(MAX)) AS path, -- Begin path as string: SRC > DEST
+       destination_airport AS last_airport,             -- Track the last stop to match future hops
+       1 AS hop_count                                   -- Count of connected flights (starts at 1)
+   FROM FlightTrips
+   WHERE date = '2025-01-16'
+
+   UNION ALL
+
+   -- Recursive Case: Add next connected flight (if source of new = destination of previous)
+   SELECT 
+       f.date,                                          -- Carry forward the same date
+       f.aircraftcode,                                  -- Same aircraft as before
+       fp.source_airport,                               -- Keep the original source of the full path
+       f.destination_airport,                           -- New destination as we extend the path
+       fp.path + ' > ' + CAST(f.destination_airport AS VARCHAR(MAX)), -- Append to existing path string
+       f.destination_airport AS last_airport,           -- Update last stop after this leg
+       fp.hop_count + 1 AS hop_count                    -- Increase hop count for each added flight
+   FROM FlightTrips f
+   INNER JOIN flightpath fp 
+       ON f.source_airport = fp.destination_airport     -- Ensure connection: new flight starts where previous ended
+       AND f.aircraftcode = fp.aircraftcode             -- Must be the same aircraft
+       AND f.date = fp.date                             -- Must be on the same day
+   WHERE fp.hop_count < 100                             -- Prevent infinite recursion
+)
+
+-- Step 2: From all built paths, get the longest one per aircraft that ends at LGA
+SELECT 
+    aircraftcode,                                       -- The aircraft identifier
+    longest_day_path                                    -- The full travel sequence in format: SRC > > DEST
+FROM (
+    SELECT 
+        aircraftcode,
+        path AS longest_day_path,
+        ROW_NUMBER() OVER (PARTITION BY aircraftcode ORDER BY hop_count DESC) AS rn
+    FROM flightpath
+    WHERE date = '2025-01-16'                           -- Filter only for flights on this date
+      AND last_airport = 'LGA'                          -- We only want paths that end at LGA
+) ranked
+WHERE rn = 1;                                           -- Pick the longest path per aircraft
+```
+
+**Tags**
+- data-wrangling / recursive-cte (skill)
+
+##### Input 3
+**Type:** Choice
+
+**Question:** What are the two mandatory parts of a Recursive CTE?
+
+**Options:** 
+- WHERE clause and HAVING clause
+
+- SELECT clause and FROM clause
+
+- Base Case (Anchor Member) and Recursive Case (Recursive Member)
+
+- JOIN clause and UNION clause
+
+**Correct Options:** 
+- Base Case (Anchor Member) and Recursive Case (Recursive Member)
+
+**Solution:** 
+- A Recursive CTE must have a **Base Case (Anchor Member)** which provides the starting rows, and a **Recursive Case (Recursive Member)** which references the CTE itself to generate new rows.
+- These two parts are combined with `UNION ALL`.
+- The Base Case does not reference the CTE, while the Recursive Case does.
+- Without both parts, the recursion cannot start or continue.
+
+**Tags**
+- data-wrangling / recursive-cte (skill)
+
+##### Input 4
+**Type:** Choice
+
+**Question:** Which of the following are essential components to prevent infinite recursion in a Recursive CTE? (Select 2)
+
+**Options:** 
+- Using ORDER BY to sort the results
+
+- Ensuring the recursive case progresses toward the termination condition (e.g., level + 1)
+
+- Using DISTINCT in the SELECT clause
+
+- Including a termination condition in the WHERE clause of the recursive case
+
+**Correct Options:** 
+- Ensuring the recursive case progresses toward the termination condition (e.g., level + 1)
+
+- Including a termination condition in the WHERE clause of the recursive case
+
+**Solution:** 
+- To prevent infinite recursion, you must include a **termination condition** in the WHERE clause (e.g., `WHERE level < 10`) that eventually stops the recursion.
+- The recursive case must also **progress toward termination** (e.g., `level + 1`) so that the termination condition is eventually met.
+- DISTINCT and ORDER BY do not prevent infinite recursion; they only affect output formatting.
+
+**Tags**
+- data-wrangling / recursive-cte (skill)
+
+##### Input 5
+**Type:** Choice
+
+**Question:** On 2025-01-15, which aircraft had the flight path starting from PHX?
+
+**Options:** 
+- A320
+
+- CRJ700
+
+- B757
+
+- B737
+
+**Correct Options:** 
+- A320
+
+**Solution:** 
+-- Using a Recursive Common Table Expression (CTE) to find the longest connected flight path per aircraft per day
+WITH flightpath AS (
+
+    -- Step 1: Base Case - Start with each aircraft's first flight on a given day
+    SELECT 
+        date,                                 -- The date of the flight
+        aircraftcode,                         -- Unique identifier for the aircraft (e.g., A320, B737)
+        source_airport,                       -- Departure airport for the flight
+        destination_airport,                  -- Arrival airport for the flight
+        CAST(source_airport + ' > ' + destination_airport AS VARCHAR(MAX)) AS path,  -- Initialize the flight path in "SRC > DEST" format
+        1 AS hop_count                         -- This is the first hop in the sequence
+    FROM FlightTrips                           -- Table containing flight records
+
+    UNION ALL
+
+    -- Step 2: Recursive Case - Extend the flight path by connecting flights for the same aircraft and date
+    SELECT 
+        f.date,                                -- Keep the date fixed to ensure all hops are from the same day
+        f.aircraftcode,                        -- Aircraft should remain the same for a continuous journey
+        fp.source_airport,                     -- Preserve the original source airport from the base case
+        f.destination_airport,                 -- New destination from the current flight
+        CAST(fp.path + ' > ' + f.destination_airport AS VARCHAR(MAX)) AS path,  -- Extend the flight path string with the new destination
+        fp.hop_count + 1 AS hop_count          -- Increment the hop count to reflect additional flight segments
+    FROM FlightTrips f                         -- The next potential flight in the sequence
+    INNER JOIN flightpath fp                   -- Join with the previously built flight path
+        ON f.source_airport = fp.destination_airport  -- Ensure continuity: the new flight starts where the last one ended
+        AND f.aircraftcode = fp.aircraftcode           -- Flights must be from the same aircraft
+        AND f.date = fp.date                            -- All flights must occur on the same date
+)
+
+-- Step 3: Get the longest path per aircraft on 2025-01-15 starting from PHX
+SELECT 
+    date,                                     -- Date of operation
+    aircraftcode,                             -- Aircraft that operated the flight sequence
+    longest_day_path                          -- The full connected path
+FROM (
+    SELECT 
+        date,
+        aircraftcode,
+        path AS longest_day_path,
+        ROW_NUMBER() OVER (PARTITION BY date, aircraftcode ORDER BY hop_count DESC) AS rn
+    FROM flightpath
+    WHERE date = '2025-01-15'
+      AND source_airport = 'PHX'
+) ranked
+WHERE rn = 1;                                 -- Pick the longest path per aircraft
+
+**Tags**
+- data-wrangling / recursive-cte (skill)

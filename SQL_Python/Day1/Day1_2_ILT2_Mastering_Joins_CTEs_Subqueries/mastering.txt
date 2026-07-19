@@ -1,0 +1,979 @@
+# Mastering Joins, CTEs, and Subqueries in SQL
+## Content Type
+Masterclass
+
+## Overview
+As GlobalMart’s data ecosystem grows, analysts like **Rahul** are finding that simple SELECT and WHERE  statements are no longer enough. The challenge lies in efficiently processing massive datasets, combining information across siloed tables, and producing increasingly complex, summarized reports under tight deadlines. Without mastering intermediate SQL concepts like complex joins and query structuring, data analysis quickly becomes slow, messy, and error-prone.
+
+This self-paced, hands-on masterclass solves this problem by moving you from foundational SQL to **Intermediate data wrangling**. You will follow **Rahul**’s journey through interactive scenarios, learning to build robust and scalable queries using industry best practices.
+
+### **What You'll Learn:**
+
+**Data Retrieval and Organization**
+
+- Understand the **SQL Order of Operations** to predict how your queries execute.
+    
+- Master the use of ORDER BY for effective **multi-column sorting** using both column names and index positions.
+    
+- Explore methods for limiting result sets, including TOP N and the OFFSET FETCH clauses.
+    
+
+**Merging and Summarizing Data**
+
+- Learn how to use **INNER, LEFT, RIGHT, FULL OUTER, CROSS, and SELF JOINs** to combine data from multiple sources efficiently.
+    
+- Grasp the power of GROUP BY with **aggregate functions** SUM, COUNT, AVG to generate powerful summary metrics.
+    
+- Compare the purpose of the **WHERE** clause versus the **HAVING** clause for filtering rows before and after aggregation.
+    
+
+**Advanced Query Structuring**
+
+- Explore the use of a **sub-query** to modularize and simplify complex logic within the FROM clause.
+    
+- Learn the primary benefit of using **Common Table Expressions (CTEs)**, created with the WITH clause, to improve query readability and maintainability.
+    
+
+By the end, you'll understand how to integrate **JOINS**, **GROUP BY**, and **CTEs**—so you can quickly merge customer and order data, summarize sales performance by region, and write streamlined, complex analytical queries. Test your knowledge throughout with scenario-based questions.
+
+## Learning Objectives
+- Understand the functionality of the ORDER BY clause for single and multi-column data sorting.
+- Learn how to perform different types of JOINs (Inner, Left, Right, Full, Cross) to combine data from multiple tables.
+- Grasp the use of aggregate functions (SUM, COUNT, AVG) with the GROUP BY clause for data summarization.
+- Understand the conceptual difference and order of execution between the WHERE and HAVING clauses for filtering data.
+- Explore the concept of a sub-query to simplify complex logic within a main query.
+- Compare the structure and primary benefit of using a Common Table Expression (CTE) over a traditional sub-query.
+
+## Prerequisites
+- Familiarity with the structure of a database including tables, rows, and columns.
+- Knowledge of writing basic SQL SELECT, FROM, and WHERE statements.
+- Understanding of using ORDER BY to sort data in ascending or descending sequence.
+- Capability to perform fundamental text, date, and math processing using SQL functions.
+
+## Duration of Completion
+180 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+## Scenarios
+### Data Sorting
+#### Overview
+Data Sorting
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+At GlobalMart, Rahul has started analyzing the company’s growing orders database. The data looks all over the place — thousands of rows of customers, vendors, and delivery dates.  
+
+ He wants a way to **organize** his query results — maybe by customer, maybe by date, or even by the fastest deliveries.
+ 
+
+
+So, the question is — _how can he arrange the rows to make sense of them?_
+
+
+That’s where the **ORDER BY** clause comes into play — it helps present your results in a clean, logical order.
+
+
+**Rahul:** I want to look at GlobalMart’s orders — maybe sort them by the customer, or by the latest purchase date. Can SQL help me do that?
+
+**Sharon:** Absolutely! SQL gives you full control over how your results appear.
+You use the ORDER BY keyword to sort your data.
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+### **Understanding ORDER BY**
+
+
+The `ORDER BY` keyword is used to sort the result-set in ascending or descending order.
+
+The `ORDER BY` keyword sorts the records in ascending order by default. To sort the records in descending order, use the `DESC` keyword.
+
+
+**Sharon:** Think of it like sorting data in Excel — you can sort alphabetically, numerically, or by date.  
+
+
+In SQL, the `ORDER BY` clause works the same way.
+
+
+By default, SQL sorts in **ascending order** —
+
+- Smallest to largest (for numbers)
+    
+- A to Z (for text)
+    
+- Oldest to newest (for dates)
+    
+
+If you want to reverse the order, use **DESC** for _descending_.
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+Consider a simple format with a request for re-ordering : 
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/23c14483-497f-4355-be40-393625fb4b1e_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+Note the following : 
+
+*   The report should be first sorted by **customer\_id** : The customer would like to check order details for one customer at a time.
+    
+*   Once sorted by **customer\_id**, the report should be sorted by **order purchase date** but latest order first.
+
+**Tags**
+
+
+##### Input 4
+**Type:** Text
+
+Here's a quick code to sort orders data by order purchase date :
+
+    select * from orders
+    order by order_purchase_date
+
+Similarly we can sort the data with customer\_id too :
+
+    select * from orders
+    order by customer_id
+
+However, how to bring both together, by customer\_id the sorting should be ascending while within each customer\_id, the sorting should be latest date first( descending).
+
+**Tags**
+
+
+##### Input 5
+**Type:** Text
+
+Let's Google it:
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/2386e9a5-1cf2-4eed-944e-fbb3fcdb9d49_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+Check the below example at [w3schools.com](https://www.w3schools.com/sql/sql_orderby.asp) link :
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/23baa3f9-d68d-42b8-8ab0-7212c55b415d_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+Here we are telling the database to first sort the Customers table by Country in ascending order and then by CustomerName in descending order.
+
+This is the beauty of SQL. It understands this problem very well. That's why the sorting follows an order from left to right. It will first sort by Country, then within each country it will sort by CustomerName.
+
+In this case, in Excel if you order by customer\_id first, it would look like this : 
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/9ee1a643-ab38-45f0-ae77-8593cbe86fba_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+Now, if you order by order purchase date, it would look like this : 
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/54616ed8-b434-4e80-b17f-7de5d68e7a13_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+If you see, the ordering of customer\_id got disturbed. 
+
+But, with SQL, it's just the query shown below : 
+
+    -- orders data sorted by customer_id first and then by order_purchase_date
+    select
+    order_id,
+    customer_id,
+    vendor_id,
+    ship_mode,
+    order_status,
+    order_purchase_date,
+    order_delivered_customer_date
+    from orders
+    order by customer_id asc, order_purchase_date desc
+    
+    -- Remember asc clause is optional. If nothing provided, the given column by default sorts in ascending order
+    -- Let's remove asc and then check
+    
+    select
+    order_id,
+    customer_id,
+    vendor_id,
+    ship_mode,
+    order_status,
+    order_purchase_date,
+    order_delivered_customer_date
+    from orders
+    order by customer_id, order_purchase_date desc
+    
+    -- Finally, you can save some effort typing the full column name in the order by clause. You can simply provide the column index (Just like you give in VLOOKUP in Excel)
+    
+    select
+    order_id,
+    customer_id,
+    vendor_id,
+    ship_mode,
+    order_status,
+    order_purchase_date,
+    order_delivered_customer_date
+    from orders
+    order by 2,6 desc
+    
+    -- Here 2 is the column index (position of customer_id) and 6 is the position of order_purchase_date
+
+Click [here](https://www.w3schools.com/sql/sql_top.asp) to learn about the TOP keyword in SQL.
+
+    
+    -- Top 3 orders by quickest delivery
+    
+    
+    select top 3
+    order_id,
+    order_purchase_date,
+    order_delivered_customer_date,
+    cast(order_delivered_customer_date - order_purchase_date as float) as delivery_duration
+    from orders
+    where order_status = 'delivered'
+    order by 4
+    
+    -- Top 5 orders by slowest delivery
+    
+    select top 5
+    order_id,
+    order_purchase_date,
+    order_delivered_customer_date,
+    cast(order_delivered_customer_date - order_purchase_date as float) as delivery_duration
+    from orders
+    where order_status = 'delivered'
+    order by 4 desc
+
+Check the idea of OFFSET, FETCH from [here](https://www.sqlservertutorial.net/sql-server-basics/sql-server-offset-fetch/).
+
+    -- Top 3 quickest delivery after 10th record from top
+    
+    select
+    order_id,
+    order_purchase_date,
+    order_delivered_customer_date,
+    cast(order_delivered_customer_date - order_purchase_date as float) as delivery_duration
+    from orders
+    where order_status = 'delivered'
+    order by 4
+    offset 10 rows
+    fetch next 3 rows only
+    
+    -- -- Top 5 slowest delivery after 10th record from top
+    
+    select
+    order_id,
+    order_purchase_date,
+    order_delivered_customer_date,
+    cast(order_delivered_customer_date - order_purchase_date as float) as delivery_duration
+    from orders
+    where order_status = 'delivered'
+    order by 4 desc
+    offset 10 rows
+    fetch next 5 rows only
+    
+    --
+
+**Tags**
+
+
+##### Input 6
+**Type:** Text
+
+### Order of Operations.
+
+
+In SQL, there is something called **Order of Operations**. It's an extremely important concept.  Even though we _write_ SQL from top to bottom, SQL doesn’t _execute_ it that way.
+
+Here’s the actual flow:
+
+1. **FROM** – Find the table(s)
+    
+2. **WHERE** – Filter the rows
+    
+3. **GROUP BY** – Group the data
+    
+4. **HAVING** – Filter the groups
+    
+5. **SELECT** – Pick the columns
+    
+6. **ORDER BY** – Finally, sort the results
+
+
+The following diagram will be super helpful to understand how a typical SQL query works:
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/730dfb9a-4108-496a-818d-030128359e16_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+Read more about it from [here](https://learnsql.com/blog/sql-order-of-operations/).    
+
+
+>[!NOTE] 
+
+That’s why you can’t use an alias (from SELECT) inside WHERE — because the WHERE part executes _before_ SELECT.
+
+**Tags**
+
+
+##### Input 7
+**Type:** Choice
+
+**Question:** Given the table employees with a column salary, how would you sort the employees by their salary in descending order?
+
+**Options:** 
+- SELECT * FROM employees ORDER BY salary DESC;
+
+- SELECT * FROM employees SORT BY salary;
+
+- SELECT * FROM employees ORDER salary;
+
+- SELECT * FROM employees SORT salary ASC;
+
+**Correct Options:** 
+- SELECT * FROM employees ORDER BY salary DESC;
+
+**Tags**
+- data-wrangling / sort (skill)
+
+##### Input 8
+**Type:** Choice
+
+**Question:** What is the default sorting order when using ORDER BY without specifying any order ?
+
+**Options:** 
+- No specific order
+
+- Ascending order
+
+- Random order
+
+- Descending order
+
+**Correct Options:** 
+- Ascending order
+
+**Tags**
+- data-wrangling / sort (skill)
+
+##### Input 9
+**Type:** Choice
+
+**Question:** Given the table products with columns name and price, which query will sort the products first by price in ascending order and then by name in descending order?
+
+**Options:** 
+- SELECT * FROM products SORT BY price DESC, name ASC;
+
+- SELECT * FROM products SORT BY price, name;
+
+- SELECT * FROM products ORDER BY price DOWN, name UP;
+
+- SELECT * FROM products ORDER BY price ASC, name DESC;
+
+**Correct Options:** 
+- SELECT * FROM products ORDER BY price ASC, name DESC;
+
+**Tags**
+- data-wrangling / sort (skill)
+
+### Merging and Summarizing Data
+#### Overview
+Merging and Summarizing Data
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+As Rahul dives deeper into GlobalMart’s growing database, he realizes that not all the information he needs sits in one place.  
+
+Customer details are in one table, orders in another, and products in yet another.  
+To generate meaningful insights — like “Top 5 customers by total spend” — he needs to bring data together.
+
+
+This is where **JOINs** and **aggregations** come into play.
+
+
+**Rahul:** I see separate tables for customers, orders, and products. How do I bring them together into one complete view?
+
+**Mentor:** Great question. In SQL, we use **JOINs** to combine data from multiple tables based on a related column — often a key like `customer_id` or `product_id`.
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+### **Understanding JOINs**
+
+
+**Mentor:**  Think of JOINs as connecting puzzle pieces. Each table has part of the picture, and the right type of JOIN helps you complete it.
+
+Let’s look at the main types:
+
+
+#### **1. INNER JOIN**
+
+
+Returns only the matching rows from both tables.  
+If a customer has no order, that customer won’t appear in the result.
+
+```sql
+SELECT    
+   c.customer_id,    
+   c.customer_name,    
+   o.order_id,    
+   o.order_purchase_date 
+FROM customers c 
+INNER JOIN orders o    
+   ON c.customer_id = o.customer_id;
+```
+
+**Result:**  
+Only customers who placed at least one order appear here.
+
+---
+
+#### **2. LEFT JOIN**
+
+
+Returns **all records from the left table** (even if there’s no match in the right table).
+
+```sql
+SELECT    
+   c.customer_id,    
+   c.customer_name,    
+   o.order_id 
+FROM customers c 
+LEFT JOIN orders o    
+   ON c.customer_id = o.customer_id;
+```
+
+**Result:**  
+All customers are listed, and if a customer hasn’t made any purchase, the order details show as **NULL**.
+
+This is especially useful when you want to find customers _who haven’t yet ordered_.
+
+---
+
+#### **3. RIGHT JOIN**
+
+
+The mirror of LEFT JOIN — it returns all rows from the **right table**, and matching ones from the left.
+
+```sql
+SELECT    
+   d.department_id,    
+   d.department_name,    
+   e.employee_name 
+FROM employees e 
+RIGHT JOIN departments d    
+  ON e.department_id = d.department_id;
+```
+
+**Result:**  
+All departments appear — even if no employee is assigned.
+
+---
+
+#### **4. FULL OUTER JOIN**
+
+
+Combines all records from both tables — even when there’s no match on either side.
+
+```sql
+SELECT    
+   c.customer_id,    
+   o.order_id 
+FROM customers c 
+FULL OUTER JOIN orders o    
+   ON c.customer_id = o.customer_id;
+```
+
+**Result:**  
+You’ll see every customer and every order — even if some have no link between them.
+
+---
+
+#### **5. CROSS JOIN**
+
+
+Creates every possible combination of the two tables — known as the **Cartesian product**.
+
+
+If GlobalMart has 5 employees and 4 departments:  
+A `CROSS JOIN` gives **5 × 4 = 20** combinations.
+
+```sql
+SELECT *  
+FROM employees  
+CROSS JOIN departments;
+```
+
+---
+
+#### **6. SELF JOIN**
+
+
+When you join a table with itself — for example, finding employees who report to another employee in the same table.
+
+```sql
+SELECT    
+   e1.employee_name AS Employee,    
+   e2.employee_name AS Manager 
+FROM employees e1 
+JOIN employees e2    
+   ON e1.manager_id = e2.employee_id;
+```
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+
+**Rahul:** That’s interesting — I can now merge data across tables. But what about summarizing it? Like getting total sales per customer?
+
+**Mentor:** That’s where **GROUP BY** and **aggregate functions** step in.
+
+**Tags**
+
+
+##### Input 4
+**Type:** Text
+
+### **Summarizing Data with GROUP BY**
+
+
+The **GROUP BY** clause groups rows that share the same value in one or more columns.  
+Then you can apply aggregate functions such as:
+
+- **COUNT()** – Count the number of records
+    
+- **SUM()** – Add up values
+    
+- **AVG()** – Calculate averages
+    
+- **MAX() / MIN()** – Find highest or lowest values
+    
+
+---
+
+#### **Example: Total Sales per Customer**
+
+
+```sql
+SELECT    
+   customer_id,    
+   SUM(sales_amount) AS total_sales 
+FROM orders 
+GROUP BY customer_id;
+```
+
+This query gives the total sales made by each customer.
+
+---
+
+#### **Example: Count of Orders per Region**
+
+```sql
+SELECT    
+   region,    
+   COUNT(order_id) AS total_orders 
+FROM orders 
+GROUP BY region;
+```
+
+---
+
+### **Filtering Groups with HAVING**
+
+
+**Rahul:**  I know WHERE filters data before grouping. What if I want to filter _after_ aggregation?
+
+**Sharon:** Exactly — that’s what **HAVING** does.
+
+
+Use **WHERE** to filter rows _before grouping_, and **HAVING** to filter _after grouping_.
+
+
+#### Example:
+
+```sql
+SELECT    
+   customer_id,    
+   SUM(sales_amount) AS total_sales 
+FROM orders 
+GROUP BY customer_id 
+HAVING SUM(sales_amount) > 5000;
+```
+
+This shows only those customers whose total sales exceed ₹5000.
+
+---
+
+ **Rahul:** Got it! So I can first merge the tables using JOINs, then summarize using GROUP BY and HAVING.
+
+**Sharon:** Exactly. That’s the foundation of SQL analytics — combining and summarizing data efficiently.
+
+**Tags**
+
+
+##### Input 5
+**Type:** Text
+
+Watch the video below to learn the concepts of JOINs and their different types. Then watch the following video to understand how GROUP BY and aggregations work and a related clause of HAVING.
+
+**Tags**
+
+
+##### Input 6
+**Type:** Text
+
+>[!TIP] 
+
+Learn about the following concepts from the video below
+
+What are joins in SQL?
+
+How to perform left, right, inner, full outer, self and cross joins in SQL?
+
+![Video](https://cdn.enqurious.com/videos/4ade546d-9d49-4296-8eb3-b9b5f1e1489a_joins_e03d891ae1.mp4)
+
+**Tags**
+
+
+##### Input 7
+**Type:** Choice
+
+**Question:** Which of the following statements about the LEFT JOIN in SQL is true?
+
+**Options:** 
+- LEFT JOIN returns only the matching records from both tables.
+
+- LEFT JOIN returns all records from the left table and the matching records from the right table.
+
+- LEFT JOIN returns the combined result set of both tables, excluding any matching records.
+
+- LEFT JOIN returns all records from the right table and the matching records from the left table.
+
+**Correct Options:** 
+- LEFT JOIN returns all records from the left table and the matching records from the right table.
+
+**Tags**
+- data-wrangling / join (skill)
+
+##### Input 8
+**Type:** Text
+
+Refer to the table and answer the below questions:
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/85308def-0830-49dc-b35c-102da283af4b_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+**Tags**
+
+
+##### Input 9
+**Type:** Choice
+
+**Question:** Consider the given tables "Employees" and "Departments". 
+
+You are tasked with retrieving a list of employees along with their corresponding department names. However, you only want to include employees who are currently assigned to a department.
+
+Which type of join would be most appropriate to achieve this task?
+
+**Options:** 
+- LEFT JOIN
+
+- CROSS JOIN
+
+- RIGHT JOIN
+
+- INNER JOIN
+
+**Correct Options:** 
+- INNER JOIN
+
+**Tags**
+- data-wrangling / join (skill)
+
+##### Input 10
+**Type:** Choice
+
+**Question:** Which of the following SQL queries given below will give the list of departments along with the names of employees assigned to them. However, you also want to include departments that currently do not have any employees assigned.
+
+**Options:** 
+- SELECT Departments.department_id, Departments.department_name, Employees.name FROM Departments INNER JOIN Employees ON Departments.department_id = Employees.department_id;
+
+- SELECT Departments.department_id, Departments.department_name, Employees.name FROM Departments LEFT JOIN Employees ON Departments.department_id = Employees.department_id;
+
+- SELECT Departments.department_id, Departments.department_name, Employees.name FROM Departments RIGHT JOIN Employees ON Departments.department_id = Employees.department_id;
+
+- SELECT Departments.department_id, Departments.department_name, Employees.name FROM Departments CROSS JOIN Employees ON Departments.department_id = Employees.department_id;
+
+- SELECT Departments.department_id, Departments.department_name, Employees.name FROM Employees RIGHT JOIN Departments ON Departments.department_id = Employees.department_id;
+
+**Correct Options:** 
+- SELECT Departments.department_id, Departments.department_name, Employees.name FROM Departments LEFT JOIN Employees ON Departments.department_id = Employees.department_id;
+
+- SELECT Departments.department_id, Departments.department_name, Employees.name FROM Employees RIGHT JOIN Departments ON Departments.department_id = Employees.department_id;
+
+**Tags**
+- data-wrangling / join (skill)
+
+##### Input 11
+**Type:** Choice
+
+**Question:** The Employees table have 5 records and Departments table has 4. What will be the total number of records returned if cross join operation is performed?
+
+**Options:** 
+- 9
+
+- 5
+
+- 4
+
+- 20
+
+**Correct Options:** 
+- 20
+
+**Tags**
+- data-wrangling / join (skill)
+
+##### Input 12
+**Type:** Choice
+
+**Question:** Which of the following aggregate functions can be used with the HAVING clause?
+
+**Options:** 
+- AVG
+
+- All of the above
+
+- SUM
+
+- COUNT
+
+**Correct Options:** 
+- All of the above
+
+**Tags**
+- data-wrangling / join (skill)
+
+##### Input 13
+**Type:** Choice
+
+**Question:** HAVING clause help filter the data ______group by aggregation
+
+**Options:** 
+- Before
+
+- After 
+
+**Correct Options:** 
+- After 
+
+**Tags**
+- data-wrangling / join (skill)
+
+### Sub-Querying Data
+#### Overview
+Sub-Querying Data
+
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+At GlobalMart, Rahul has been working on analyzing customer data — but this time, the queries are getting longer and harder to read. He realizes that he’s writing the same conditions again and again. It’s getting messy!
+
+
+**Rahul:**  “I wish there was a way to simplify this code — maybe by writing the complex logic once and using it again?”
+
+**Sharon:**  “You’re thinking in the right direction, Rahul! That’s where **subqueries** and **CTEs (Common Table Expressions)** come into play.”
+
+
+### Understanding Subqueries
+
+
+**A subquery is a query inside another query.**
+
+
+It helps simplify complex logic — you can perform calculations or filtering in one part and then use that result in your main query.
+
+Let’s look at an example. 
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+Check the snapshot below. The line numbers next to the code are also kept for easy understanding. 
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/c2e3b594-749a-4fbf-aaba-54156b2994b6_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+Now, recall the order of operations in SQL. Which operation should happen first? - From at line no. 4
+
+Now, let's name the entire code block from line 5 to 10 with some name **t**
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/173c541f-e86b-49c8-934f-9ec793472e03_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+So, effectively, the code becomes : 
+
+    select 
+    state_name,
+    count(*) as customer_count
+    from t
+    group by state_name
+    having state_name in ('California','Arizona','Texas')
+
+Here **t** is nothing but the sub-query which encapsulates the complex logic hence making the job of the outer query easier. The code should look easy to interpret now. 
+
+Sub-query helps simplify logic. I can write all my complex logic within the sub-query so that I don't have to repeat it again. 
+
+However, there is another way which is even easier to implement as well as interpret. The idea of Common Table Expressions or CTEs
+
+Check the below query :
+
+    with customer_list as(
+    	select 
+    	customer_id,
+    	case when trim(state) = 'calfornia' then upper('California')
+    	when trim(state) = 'masachusets' then upper('massachusetts')
+    	else upper(trim(state)) end as state_name
+    	from mskl_customers
+    	)
+    select 
+    state_name,
+    count(*) as customer_count
+    from customer_list
+    group by state_name
+    having state_name in ('California','Arizona','Texas')
+
+In the above code, we are simplifying our logic early where the sub-query now appears inside the WITH clause. Interpret the code as follows :
+
+![](https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/7029474b-1201-43b2-aba0-9306e097123f_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp)
+
+The block of code highlighted under Green box is the sub-query which gets a name called **customer\_list**. 
+
+Now, for the subsequent queries **customer\_list** acts just like a table (although this table doesn't exist physically)
+
+The complex part of code is written early and wrapped up in a convenient name which you can use just like a table later.
+
+**Tags**
+
+
+##### Input 3
+**Type:** Choice
+
+**Question:** WITH clause is used to create a ______________
+
+**Options:** 
+- Sub Query
+
+- Function
+
+- Common Table Expression
+
+- View
+
+**Correct Options:** 
+- Common Table Expression
+
+**Tags**
+- data-wrangling / sub-query (skill)
+
+##### Input 4
+**Type:** Choice
+
+**Question:** Outcome of WITH clause or Sub-Query gets stored in a physical table
+
+**Options:** 
+- True
+
+- False
+
+**Correct Options:** 
+- False
+
+**Tags**
+- data-wrangling / sub-query (skill)
+
+##### Input 5
+**Type:** Choice
+
+**Question:** What is the primary benefit of using CTE in SQL?
+
+**Options:** 
+- Simplified syntax for complex queries
+
+- Access to additional advanced SQL functions
+
+- Improved query performance
+
+- Automatic indexing of temporary tables
+
+**Correct Options:** 
+- Simplified syntax for complex queries
+
+**Tags**
+- data-wrangling / sub-query (skill)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** Mark all statements which are correct for a CTE
+
+**Options:** 
+- It works down up
+
+- It physically stores results of an SQL query
+
+- It temporarily stores results of an SQL query
+
+- It works top down
+
+**Correct Options:** 
+- It temporarily stores results of an SQL query
+
+- It works top down
+
+**Tags**
+- data-wrangling / sub-query (skill)

@@ -1,0 +1,250 @@
+# Tracking Retained Orders at GlobalMart in SQL
+## Content Type
+Scenario
+
+## Overview
+**GlobalMart's management has a million-dollar question:** What makes certain orders so perfect that customers never return them? As their analytics expert, you're about to uncover the hidden patterns behind exceptional customer satisfaction.
+
+This isn't ordinary e-commerce analysis—you're investigating the DNA of operational excellence. Your mission: identify every successfully delivered order that customers kept, revealing the secret formula that drives both customer loyalty and profitability across North America and Europe.
+
+**The stakes are high.** These insights will reshape how GlobalMart approaches product delivery, customer service, and operational strategy. You'll use advanced SQL techniques to dissect millions of transactions, uncovering correlations that could revolutionize their business model.
+
+Ready to decode the science of customer satisfaction?
+
+## Learning Objectives
+- Demonstrate use of JOIN, GROUP BY, and WHERE clause to ensure accurate filtering and calculations.
+- Demonstrate knowledge of common table expressions (CTEs) to structure and simplify complex queries.
+- Implement window functions to calculate cumulative totals, percentages, and rankings.
+- Demonstrate the ability to query data using correlated sub queries
+
+## Prerequisites
+- Knowledge of basic SQL concepts like SELECT, WHERE, GROUP BY, HAVING, ORDER BY, and JOIN.
+- Understand common SQL functions like `COUNT`, `SUM`, and `DATEDIFF`.
+- Know the purpose and use of joins (e.g., INNER JOIN, LEFT JOIN).
+- Knowledge of window functions like RANK(), DENSE_RANK(), ROW_NUMBER(), and SUM() OVER().
+- Knowledge of correlated sub queries in SQL.
+
+## Duration of Completion
+30 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+**GlobalMart's management has a million-dollar question:** What makes certain orders so perfect that customers never return them? As their analytics expert, you're about to uncover the hidden patterns behind exceptional customer satisfaction.
+
+This isn't ordinary e-commerce analysis—you're investigating the DNA of operational excellence. Your mission: identify every successfully delivered order that customers kept, revealing the secret formula that drives both customer loyalty and profitability across North America and Europe.
+
+**The stakes are high.** These insights will reshape how GlobalMart approaches product delivery, customer service, and operational strategy. You'll use advanced SQL techniques to dissect millions of transactions, uncovering correlations that could revolutionize their business model.
+
+Ready to decode the science of customer satisfaction?
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+GlobalMart, a fast-growing e-commerce giant specializing in Technology, Furniture, and Office Supplies, operates across North America and Europe, delivering millions of products annually. Known for its exceptional customer service, the company strives to minimize product returns, as they directly impact customer satisfaction and profitability.
+
+As a part of the analytics team, **you have been tasked to identify all orders that were successfully delivered and never returned.** The management is keen to understand patterns of customer satisfaction and operational efficiency by analyzing orders that customers have retained.
+
+You are required to generate the following report using **correlated subqueries** :           
+![Image-image.png](https://cdn.enqurious.com/images/e2266d59-261b-4a4c-aacd-87bcc446dfec_image.webp)
+>[!CAUTION] 
+> The numbers in the report are for representation purposes only
+
+
+<u>**Description**:</u>
+
+- **order_id**: Unique identifier for each order.
+- **customer_id**: Unique identifier for the customer who placed the order.
+- **order_date**: Date when the order was placed.
+- **order_status**: Current status of the order.
+
+>[!NOTE]
+- Server name : mentorskool.database.windows.net
+  Username : mskllearnlogin
+  Password : !@#sw2aq1
+- The data dictionary and the ER-diagram is shown below:
+
+![Image-ER-diagram.png](https://cdn.enqurious.com/images/751b06c3-2660-442d-b3d8-5170bd949c92_ER-diagram.webp)
+
+Use the **mskl-masterclass** database
+
+[Here](https://cdn.enqurious.com/others/a9ff4875-993a-412c-bad8-fffaef0b4426_globalmart-dd.xlsx) is the data dictionary and ER diagram for the tables you'll be working with.
+
+**Tags**
+
+
+##### Input 2
+**Type:** Choice
+
+**Question:** What is the total number of orders that were successfully delivered & never returned?
+
+**Options:** 
+- 4467
+
+- 5210
+
+- 4986
+
+- 3123
+
+**Correct Options:** 
+- 4467
+
+**Solution:** 
+```sql
+-- Here's how the query works:
+-- 1. The main query selects specific columns from the `ex_orders` table, including `order_id`, `customer_id`, and `order_purchase_date`, while also ensuring proper formatting of the purchase date as a `DATE`.
+-- 2. The `WHERE NOT EXISTS` clause is used to exclude orders that appear in the `ex_returns` table.
+-- 3. The subquery checks for any rows in `ex_returns` where the `order_id` matches the `order_id` from the outer query (main query). 
+--    - If such rows exist, it means the order has been returned, and the `NOT EXISTS` condition filters it out.
+-- 4. Since `NOT EXISTS` evaluates each row individually, it dynamically links the `order_id` in the outer query to the `order_id` in the subquery. 
+--    - For each row in the outer query, the subquery runs to check if a corresponding `order_id` exists in the `ex_returns` table.
+--    - If the subquery returns no rows (i.e., the order was not returned), the `NOT EXISTS` condition evaluates as `TRUE`, and the row is included in the result set.
+-- 5. The condition `AND o.order_status = 'delivered'`filters the results to include only those orders that were successfully delivered.
+
+
+with summary as ( 
+SELECT 
+    o.order_id,
+    o.customer_id,
+	CAST(o.order_purchase_date AS DATE) as order_purchase_date,
+    o.order_status
+FROM ex_orders o
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM ex_returns r
+    WHERE r.order_id = o.order_id
+) AND o.order_status = 'delivered')
+
+SELECT count (*) as order_count
+FROM summary;
+```
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sub-query (skill)
+- data-wrangling / date-processing (skill)
+- sql (tool)
+
+##### Input 3
+**Type:** Choice
+
+**Question:** Which is the earliest date of an order that was successfully delivered and not returned?
+
+**Options:** 
+- 2016-10-04
+
+- 2016-09-29
+
+- 2016-10-03
+
+- 2016-10-10
+
+**Correct Options:** 
+- 2016-10-03
+
+**Solution:** 
+```sql
+-- Here's how the query works:
+-- 1. The main query selects specific columns from the `ex_orders` table, including `order_id`, `customer_id`, and `order_purchase_date`, while also ensuring proper formatting of the purchase date as a `DATE`.
+-- 2. The `WHERE NOT EXISTS` clause is used to exclude orders that appear in the `ex_returns` table.
+-- 3. The subquery checks for any rows in `ex_returns` where the `order_id` matches the `order_id` from the outer query (main query). 
+--    - If such rows exist, it means the order has been returned, and the `NOT EXISTS` condition filters it out.
+-- 4. Since `NOT EXISTS` evaluates each row individually, it dynamically links the `order_id` in the outer query to the `order_id` in the subquery. 
+--    - For each row in the outer query, the subquery runs to check if a corresponding `order_id` exists in the `ex_returns` table.
+--    - If the subquery returns no rows (i.e., the order was not returned), the `NOT EXISTS` condition evaluates as `TRUE`, and the row is included in the result set.
+-- 5. The condition `AND o.order_status = 'delivered'`filters the results to include only those orders that were successfully delivered.
+-- 6. The `ORDER BY` clause ensures that the resulting orders are sorted in ascending order by their purchase date, making it easier to identify the earliest orders.
+
+SELECT 
+    o.order_id,
+    o.customer_id,
+	CAST(o.order_purchase_date AS DATE) as order_purchase_date,
+    o.order_status
+FROM ex_orders o
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM ex_returns r
+    WHERE r.order_id = o.order_id
+) AND o.order_status = 'delivered'
+ORDER BY order_purchase_date
+```
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sub-query (skill)
+- data-wrangling / date-processing (skill)
+- sql (tool)
+
+##### Input 4
+**Type:** Choice
+
+**Question:** Select all the orders that were successfully delivered & not returned
+
+**Options:** 
+- CA-2015-156524
+
+- CA-2015-154956
+
+- CA-2014-146500
+
+- CA-2017-140676
+
+**Correct Options:** 
+- CA-2015-156524
+
+- CA-2014-146500
+
+- CA-2017-140676
+
+**Solution:** 
+```sql
+-- Here's how the query works:
+-- 1. The main query selects specific columns from the `ex_orders` table, including `order_id`, `customer_id`, and `order_purchase_date`, while also ensuring proper formatting of the purchase date as a `DATE`.
+-- 2. The `WHERE NOT EXISTS` clause is used to exclude orders that appear in the `ex_returns` table.
+-- 3. The subquery checks for any rows in `ex_returns` where the `order_id` matches the `order_id` from the outer query (main query). 
+--    - If such rows exist, it means the order has been returned, and the `NOT EXISTS` condition filters it out.
+-- 4. Since `NOT EXISTS` evaluates each row individually, it dynamically links the `order_id` in the outer query to the `order_id` in the subquery. 
+--    - For each row in the outer query, the subquery runs to check if a corresponding `order_id` exists in the `ex_returns` table.
+--    - If the subquery returns no rows (i.e., the order was not returned), the `NOT EXISTS` condition evaluates as `TRUE`, and the row is included in the result set.
+-- 5. The condition `AND o.order_status = 'delivered'`filters the results to include only those orders that were successfully delivered.
+-- 6. The `ORDER BY` clause ensures that the resulting orders are sorted in ascending order by their purchase date, making it easier to identify the earliest orders.
+
+SELECT 
+    o.order_id,
+    o.customer_id,
+	CAST(o.order_purchase_date AS DATE) as order_purchase_date,
+    o.order_status
+FROM ex_orders o
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM ex_returns r
+    WHERE r.order_id = o.order_id
+) AND o.order_status = 'delivered'
+ORDER BY order_purchase_date
+```
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sub-query (skill)
+- data-wrangling / date-processing (skill)
+- sql (tool)

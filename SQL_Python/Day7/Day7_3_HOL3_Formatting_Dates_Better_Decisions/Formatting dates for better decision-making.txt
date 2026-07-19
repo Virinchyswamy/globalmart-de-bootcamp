@@ -1,0 +1,531 @@
+# Formatting dates for better decision-making
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to parse raw date strings from GlobalMart's orders, customers, and campaigns datasets into Python datetime objects using strptime(), and reformat them into business-ready labels using strftime() for operations digests, CRM cohort grouping, and marketing reports.
+
+## Learning Objectives
+- Parse date strings in various raw formats into Python datetime objects using datetime.strptime()
+- Format datetime objects into human-readable strings using datetime.strftime()
+- Apply common strftime and strptime format codes to produce diverse timestamp representations across reporting audiences
+- Build reusable date-parsing and formatting functions using apply() and helper functions in pandas
+- Identify and avoid common date-formatting mistakes such as swapping strptime and strftime, mismatched format strings, and locale-sensitive output
+
+## Prerequisites
+- Familiarity with Python basics including variables, functions, and loops
+- Basic experience with pandas DataFrames and pd.read_csv()
+- Understanding of what a datetime object is conceptually
+- Awareness of why date formatting matters in data pipelines
+
+## Duration of Completion
+60 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- approach (skill)
+- data-wrangling (skill)
+- quality (skill)
+- python (tool)
+
+#### Overview
+In this scenario you will learn how to parse raw date strings from GlobalMart's orders, customers, and campaigns datasets into Python datetime objects using strptime(), and reformat them into business-ready labels using strftime() for operations digests, CRM cohort grouping, and marketing reports.
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- approach (skill)
+- data-wrangling (skill)
+- quality (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## GlobalMart's date formatting challenge
+
+
+GlobalMart's data warehouse ingests date and timestamp fields from multiple upstream systems - the order management system, the CRM, the product catalogue, and the campaign management platform. Each system stores dates in its own format: some as `"2024-03-15 08:45:00"`, others as `"15/03/2024"`, and some as `"March 15, 2024"`. When these datasets land in the analytics layer, date columns are often stored as plain text strings, not typed datetime objects.
+
+
+**The Mission:** The Analytics team needs you to clean and standardise date fields before they can build dashboards and reports. Your job is to parse each raw date string into a Python `datetime` object and re-format it into the exact shape each business unit requires.
+
+
+| Business Question | Target Audience | Required Output Format |
+|---|---|---|
+| Format `order_purchase_date` as a readable label | Operations weekly digest | `"Tuesday, 15 March 2024"` |
+| Extract a month-year label from `joining_date` | CRM cohort grouping | `"Mar-2024"` |
+| Convert `start_date` and `end_date` to report format | Marketing report template | `"DD/MM/YYYY"` |
+
+> *"Every dashboard that broke last quarter broke because someone assumed a date column was already a date. Let's fix that assumption at source."*
+>  **Meera**, Senior Data Analyst, GlobalMart
+
+**Tables to use:** `ex_orders`, `ex_customers`, `ex_campaigns`
+
+>[!IMPORTANT]
+> The date columns in these CSVs are loaded as plain object (string) dtype by default do not pass parse_dates here. The goal of this scenario is to practice parsing them manually using `strptime` and `strftime`.
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Concept: Parsing and formatting dates with strptime and strftime
+
+
+Python's built-in `datetime` module gives you two core functions for working with dates stored as strings:
+
+- **`datetime.strptime(date_string, format)`** - reads a string and converts it into a `datetime` object ("string **p**arse **time**")
+- **`datetime.strftime(format)`** - takes a `datetime` object and converts it back into a string in the format you specify ("string **f**ormat **time**")
+
+**Analogy:** Think of a raw date string like `"15/03/2024"` as a handwritten note in someone else's shorthand. `strptime` is the translator who reads that shorthand and converts it into a universally understood concept - a `datetime` object. Once you have that universal concept, `strftime` is the publisher who can print it in whatever style each audience needs: formal reports, chart labels, SMS notifications.
+
+**Common format codes:**
+
+| Code | Meaning | Example Output |
+|---|---|---|
+| `%Y` | 4-digit year | `2024` |
+| `%y` | 2-digit year | `24` |
+| `%m` | Month as zero-padded number | `03` |
+| `%B` | Full month name | `March` |
+| `%b` | Abbreviated month name | `Mar` |
+| `%d` | Day as zero-padded number | `15` |
+| `%A` | Full weekday name | `Tuesday` |
+| `%a` | Abbreviated weekday name | `Tue` |
+| `%H` | Hour (24-hour clock) | `14` |
+| `%I` | Hour (12-hour clock) | `02` |
+| `%M` | Minutes | `45` |
+| `%S` | Seconds | `00` |
+| `%p` | AM or PM | `AM` |
+
+
+**When to use each function:**
+
+| Task | Function | Direction |
+|---|---|---|
+| Convert string → datetime | `strptime` | Parsing |
+| Convert datetime → string | `strftime` | Formatting |
+| Re-format one string into another | Both - parse first, then format | Parse → Format |
+
+>[!IMPORTANT]
+> strptime and strftime are never called in isolation when re-formatting. The correct sequence is always: raw string → strptime() → datetime object → strftime() → output string.
+
+>[!TIP]
+> To avoid errors, inspect a sample value with print(df["column"].iloc[0]) before writing your format string. Build your strptime pattern character-by-character to match the raw string exactly.
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+## Data Dictionary
+
+
+| Table | Column | Description |
+|---|---|---|
+| ex_orders | order_id | Unique identifier for each order |
+| ex_orders | order_purchase_date | Date and time when the order was placed - **primary date column for this scenario** |
+| ex_orders | order_approved_at | Date and time when the order was approved |
+| ex_orders | order_dispatched_date | Date and time when the order was dispatched |
+| ex_orders | order_delivered_date | Date and time when the order was delivered |
+| ex_orders | order_estimated_delivery_date | Expected delivery date |
+| ex_customers | customer_id | Unique identifier for each customer |
+| ex_customers | customer_name | Full name of the customer |
+| ex_customers | segment | Customer segment (Corporate, Consumer, etc.) |
+| ex_customers | joining_date | Date the customer registered on GlobalMart - **used for cohort labelling** |
+| ex_campaigns | campaign_id | Unique identifier for each marketing campaign |
+| ex_campaigns | campaign_type | Type of marketing campaign |
+| ex_campaigns | start_date | Date when the campaign starts - **reformatted for marketing report** |
+| ex_campaigns | end_date | Date when the campaign ends - **reformatted for marketing report** |
+| ex_campaigns | budget | Total budget allocated for the campaign |
+
+>[!NOTE]
+> Do not pass parse_dates when loading these tables. All date columns arrive as plain strings, and the goal of this scenario is to practise manual parsing with strptime and strftime.
+
+---
+
+**Tags**
+
+
+##### Input 4
+**Type:** Code
+
+**Question:** Using the `ex_orders` table, parse `order_purchase_date` and create a new column called `purchase_label` that formats the date as `"Tuesday, 15 March 2024"` for the operations weekly digest. 
+Your output should look like this:
+| order_id | order_purchase_date | purchase_label |
+|---|---|---|
+| ORD-1001 | 2024-03-15 08:45:00 | Tuesday, 15 March 2024 |
+| ORD-1002 | 2024-04-02 14:10:00 | Tuesday, 02 April 2024 |
+| ORD-1003 | 2024-04-22 09:00:00 | Monday, 22 April 2024 |
+
+**Column descriptions:**
+- `order_id` - unique order identifier (unchanged)
+- `order_purchase_date` - original raw date string (unchanged)
+- `purchase_label` - human-readable label formatted as `"Weekday, DD Month YYYY"`
+
+> [!TIP]
+> Use .apply() with a lambda that calls datetime.strptime() first to get a datetime object, then chains .strftime() to format it. Make sure your strptime pattern exactly matches the raw string format including the space and time portion.
+
+**Language:** python
+
+**Snippet:** import pandas as pd
+from datetime import datetime
+
+orders = pd.read_csv("https://cdn.enqurious.com/documents/ca1a31d6-b8c9-4f71-8346-36989a1de15f_exorders.csv")
+
+# Define the raw format and output format
+raw_fmt    = "?"
+output_fmt = "?"
+
+# Apply strptime → strftime to create purchase_label
+
+
+result = orders[["order_id", "order_purchase_date", "purchase_label"]]
+print(result.head())
+
+**Solution:** 
+**Parse first, format second** -`strptime` converts the raw string into a datetime object that Python can manipulate; `strftime` then renders it in the exact display format required.
+
+```python
+import pandas as pd
+from datetime import datetime
+
+# Load table
+orders = pd.read_csv("https://cdn.enqurious.com/documents/ca1a31d6-b8c9-4f71-8346-36989a1de15f_exorders.csv")
+
+# Define the raw format of order_purchase_date
+raw_fmt    = "%Y-%m-%d %H:%M:%S.%f"  # includes microseconds if present
+# Define the output format for the operations digest label
+output_fmt = "%A, %d %B %Y"
+
+# Parse the raw string → datetime, then format → label string
+orders["purchase_label"] = orders["order_purchase_date"].apply(
+    lambda val: datetime.strptime(val, raw_fmt).strftime(output_fmt)
+)
+
+# Select only the columns needed for the digest report
+result = orders[["order_id", "order_purchase_date", "purchase_label"]]
+
+print(result.head())
+```
+
+- **`raw_fmt = "%Y-%m-%d %H:%M:%S.%f"`**: Matches the raw string exactly — year, month, day, then a space, then hours, minutes, seconds, and optional microseconds (`.%f`). If the raw string does not have microseconds, use `"%Y-%m-%d %H:%M:%S"`. A mismatch raises `ValueError: time data does not match format`.
+- **`output_fmt = "%A, %d %B %Y"`**: `%A` gives the full weekday name, `%d` gives the zero-padded day, `%B` gives the full month name, `%Y` gives the four-digit year. No time codes are included — the time component is intentionally discarded in the output.
+- **`.apply(lambda val: ...)`**: `datetime.strptime()` only accepts a single string — it cannot be called directly on a pandas Series. `.apply()` iterates row by row, passing each value individually.
+- **Chaining `.strptime().strftime()`**: Doing both in a single lambda avoids creating an intermediate datetime column that would need to be dropped later.
+
+>[!NOTE]
+> `%A` (full weekday) and `%B` (full month) are locale-sensitive. In a non-English locale, they may return the weekday or month name in the system language (e.g., `"März"` instead of `"March"`). If your deployment environment may have a non-English locale, use numeric codes and map to English names manually.
+
+**Tags**
+- data-wrangling / date-processing (skill)
+
+##### Input 5
+**Type:** Code
+
+**Question:** The logistics team also wants to know whether each order was placed in the **morning (AM)** or **afternoon/evening (PM)**. Extend your result from Input 5 to add a new column called `time_of_day_label` showing the hour and AM/PM indicator in the format `"08:45 AM"`. 
+Your output should look like this:
+
+| order_id | order_purchase_date | purchase_label | time_of_day_label |
+|---|---|---|---|
+| ORD-1001 | 2024-03-15 08:45:00 | Tuesday, 15 March 2024 | 08:45 AM |
+| ORD-1002 | 2024-04-02 14:10:00 | Tuesday, 02 April 2024 | 02:10 PM |
+| ORD-1003 | 2024-04-22 09:00:00 | Monday, 22 April 2024 | 09:00 AM |
+
+**Language:** python
+
+**Snippet:** import pandas as pd
+from datetime import datetime
+
+orders = pd.read_csv("https://cdn.enqurious.com/documents/ca1a31d6-b8c9-4f71-8346-36989a1de15f_exorders.csv")
+
+raw_fmt        = "%Y-%m-%d %H:%M:%S.%f"
+digest_fmt     = "%A, %d %B %Y"
+time_label_fmt = "?"   # 12-hour clock with AM/PM
+
+# Write a helper function that parses once and returns both labels
+def build_labels(val):
+    dt = datetime.strptime(val, raw_fmt)
+    return pd.Series({
+        "purchase_label"    : dt.strftime(digest_fmt),
+        "time_of_day_label" : # your code here
+    })
+
+labels = orders["order_purchase_date"].apply(build_labels)
+result = pd.concat([orders[["order_id", "order_purchase_date"]], labels], axis=1)
+print(result.head())
+
+**Solution:** 
+**Parse once, format twice** — a helper function that returns a `pd.Series` lets you derive multiple label columns from a single `strptime` call, avoiding redundant parsing.
+
+```python
+import pandas as pd
+from datetime import datetime
+
+# Load table
+orders = pd.read_csv("https://cdn.enqurious.com/documents/ca1a31d6-b8c9-4f71-8346-36989a1de15f_exorders.csv")
+
+raw_fmt        = "%Y-%m-%d %H:%M:%S.%f"
+digest_fmt     = "%A, %d %B %Y"
+time_label_fmt = "%I:%M %p"   # 12-hour clock with AM/PM
+
+# Helper: parse once, produce both labels
+def build_labels(val):
+    dt = datetime.strptime(val, raw_fmt)
+    return pd.Series({
+        "purchase_label"    : dt.strftime(digest_fmt),
+        "time_of_day_label" : dt.strftime(time_label_fmt)
+    })
+
+labels = orders["order_purchase_date"].apply(build_labels)
+
+# Concatenate labels back to the original DataFrame
+result = pd.concat([orders[["order_id", "order_purchase_date"]], labels], axis=1)
+
+print(result.head())
+```
+
+- **`time_label_fmt = "%I:%M %p"`**: `%I` is the 12-hour clock hour (01–12), `%M` is minutes, and `%p` is the AM/PM indicator. Using `%H` here would produce 24-hour values like `"14:10"` instead of `"02:10 PM"`.
+- **`%I` vs `%H`**: The raw data stores hours in 24-hour format. `strptime` with `%H` correctly parses `"14"` as 2 PM. When outputting, switching to `%I` + `%p` converts it to 12-hour display format automatically.
+- **`pd.Series({...})` in helper function**: Returning a `pd.Series` with named keys from `.apply()` causes pandas to automatically expand it into two new columns. This is cleaner than running `.apply()` twice on the same column.
+- **`pd.concat(..., axis=1)`**: Joins the original identifier columns with the two new label columns horizontally. `axis=1` means column-wise concatenation, not row-wise.
+
+**Tags**
+- data-wrangling / date-processing (skill)
+
+##### Input 6
+**Type:** Code
+
+**Question:** Using the `ex_customers` table, parse `joining_date` and create a new column called `joining_cohort` that shows the joining month and year in the format `"Mar-2024"` for CRM cohort grouping. 
+Your output should look like this:
+
+| customer_id | customer_name | joining_date | joining_cohort |
+|---|---|---|---|
+| CUST-001 | Aman Sharma | 2023-11-05 | Nov-2023 |
+| CUST-002 | Riya Menon | 2024-01-18 | Jan-2024 |
+| CUST-003 | Ishan Das | 2024-03-30 | Mar-2024 |
+
+**Column descriptions:**
+- `customer_id` - unique customer identifier (unchanged)
+- `customer_name` -  customer's full name (unchanged)
+- `joining_date` -  original raw date string (unchanged)
+- `joining_cohort` -  abbreviated month + 4-digit year label (e.g., `"Mar-2024"`)
+
+> [!TIP]
+> The joining_date column is likely in "YYYY-MM-DD" format - no time component. Your strptime pattern should match exactly. The strftime output pattern for "Mar-2024"  uses %b (abbreviated month) and %Y (4-digit year) joined by a hyphen.
+
+**Language:** python
+
+**Snippet:** import pandas as pd
+from datetime import datetime
+
+customers = pd.read_csv("https://cdn.enqurious.com/documents/7b9c870b-6634-493a-8816-6e863c3505d0_excustomers.csv")
+
+# Define formats
+raw_fmt    = "?"
+output_fmt = "?"
+
+# Apply strptime → strftime to create joining_cohort
+customers["joining_cohort"] = customers["joining_date"].apply(
+    lambda val: # your code here
+)
+
+result = customers[["customer_id", "customer_name", "joining_date", "joining_cohort"]]
+print(result.head())
+
+**Solution:** 
+**Date-only strings have no time component** — the `strptime` pattern must match exactly, with no `%H:%M:%S` suffix; including one causes a `ValueError`.
+
+```python
+import pandas as pd
+from datetime import datetime
+
+# Load table
+customers = pd.read_csv("https://cdn.enqurious.com/documents/7b9c870b-6634-493a-8816-6e863c3505d0_excustomers.csv")
+
+# Define the raw format of joining_date (date only — no time component)
+raw_fmt    = "%Y-%m-%d"
+# Define the output format for the CRM cohort label
+output_fmt = "%b-%Y"
+
+# Parse and format in a single .apply() call
+customers["joining_cohort"] = customers["joining_date"].apply(
+    lambda val: datetime.strptime(val, raw_fmt).strftime(output_fmt)
+)
+
+# Select the relevant columns for the CRM report
+result = customers[["customer_id", "customer_name", "joining_date", "joining_cohort"]]
+
+print(result.head())
+```
+
+- **`raw_fmt = "%Y-%m-%d"`**: Matches a date-only string with no time component. Adding `%H:%M:%S` to the pattern when the raw string has no time portion causes `ValueError: unconverted data remains`.
+- **`output_fmt = "%b-%Y"`**: `%b` produces the three-letter abbreviated month name (e.g., `"Mar"`). Using `%B` instead would produce `"March-2024"`, which does not match the required format. The hyphen between `%b` and `%Y` is a literal character — it passes through unchanged.
+- **Cohort label use case**: The `joining_cohort` column is designed for `groupby("joining_cohort")` operations — all customers who joined in March 2024 will share the same label, enabling monthly acquisition trend analysis without additional date arithmetic.
+
+**Tags**
+- data-wrangling / date-processing (skill)
+- data-wrangling / derived-column (skill)
+
+##### Input 7
+**Type:** Code
+
+**Question:** Using the `ex_campaigns` table, create two new columns -`start_label` and `end_label` - that reformat `start_date` and `end_date` into `"DD/MM/YYYY"` format for the marketing report template. 
+Your output should look like this:
+
+| campaign_id | campaign_type | start_date | end_date | start_label | end_label |
+|---|---|---|---|---|---|
+| CAMP-201 | Seasonal | 2024-03-01 | 2024-03-31 | 01/03/2024 | 31/03/2024 |
+| CAMP-202 | Flash Sale | 2024-04-05 | 2024-04-07 | 05/04/2024 | 07/04/2024 |
+| CAMP-203 | Referral | 2024-05-10 | 2024-06-10 | 10/05/2024 | 10/06/2024 |
+
+**Column descriptions:**
+- `campaign_id` - unique campaign identifier (unchanged)
+- `campaign_type` - type of campaign (unchanged)
+- `start_date` - original raw start date string (unchanged)
+- `end_date` - original raw end date string (unchanged)
+- `start_label` - start date reformatted as `"DD/MM/YYYY"`
+- `end_label` - end date reformatted as `"DD/MM/YYYY"`
+
+> [!TIP]
+> Both start_date and end_date share the same raw format, so you can define your strptime and strftime patterns once and apply them to both columns. Consider writing a small helper function and calling it twice - once for start_date and once for end_date -  to keep your code DRY (Don't Repeat Yourself).
+
+**Language:** python
+
+**Snippet:** import pandas as pd
+from datetime import datetime
+
+campaigns = pd.read_csv("https://cdn.enqurious.com/documents/fb6f45f8-91cc-4b68-8de8-2e2e97734839_excampaigns.csv")
+
+# Define formats once
+raw_fmt    = "?"
+output_fmt = "?"
+
+# Write a reusable helper function
+def reformat_date(val):
+    # your code here
+    pass
+
+# Apply to both columns
+campaigns["start_label"] = campaigns["start_date"].apply(reformat_date)
+campaigns["end_label"]   = campaigns["end_date"].apply(reformat_date)
+
+result = campaigns[["campaign_id", "campaign_type", "start_date", "end_date",
+                     "start_label", "end_label"]]
+print(result.head())
+
+**Solution:** 
+**Define once, apply twice** — a reusable helper function avoids duplicating the format strings and ensures both date columns are transformed consistently.
+
+```python
+import pandas as pd
+from datetime import datetime
+
+# Load table
+campaigns = pd.read_csv("https://cdn.enqurious.com/documents/fb6f45f8-91cc-4b68-8de8-2e2e97734839_excampaigns.csv")
+
+# Define formats once — raw input and desired output
+raw_fmt    = "%Y-%m-%d"
+output_fmt = "%d/%m/%Y"
+
+# Reusable helper: parse then format
+def reformat_date(val):
+    return datetime.strptime(val, raw_fmt).strftime(output_fmt)
+
+# Apply to both campaign date columns
+campaigns["start_label"] = campaigns["start_date"].apply(reformat_date)
+campaigns["end_label"]   = campaigns["end_date"].apply(reformat_date)
+
+# Select columns for the marketing report
+result = campaigns[["campaign_id", "campaign_type", "start_date", "end_date",
+                     "start_label", "end_label"]]
+
+print(result.head())
+```
+
+- **`output_fmt = "%d/%m/%Y"`**: Produces day-first European format (e.g., `"01/03/2024"` = 1 March 2024). Using `%m/%d/%Y` instead would produce US format (`"03/01/2024"`), which is a silent error that reads as a different date entirely.
+- **Reusable `reformat_date()` function**: Defining the logic once in a named function rather than two separate lambdas means the format strings only need to be updated in one place if the raw format changes — a key principle of DRY (Don't Repeat Yourself) code.
+- **Applying to two columns**: `.apply(reformat_date)` is called separately on `start_date` and `end_date`. There is no need to write the parse-format logic twice — the function handles both.
+- **No intermediate datetime column**: The raw string goes in, a formatted string comes out. The `datetime` object exists only inside the function call and is never stored in the DataFrame, keeping the output clean.
+
+**Tags**
+- data-wrangling / date-processing (skill)
+- data-wrangling / conditional-logic (skill)
+
+##### Input 8
+**Type:** Choice
+
+**Question:** A colleague runs `datetime.strftime("2024-03-15", "%d %B %Y")` and gets an `AttributeError`. 
+What is the most likely cause?
+
+**Options:** 
+- The format string `"%d %B %Y"` is invalid and cannot be used with `strftime`
+
+- `strftime` was called directly on a plain string instead of a `datetime` object
+
+- `strptime` should have been used instead of `strftime` for this output format
+
+- The date string `"2024-03-15"` is too short to produce a full weekday name
+
+**Correct Options:** 
+- `strftime` was called directly on a plain string instead of a `datetime` object
+
+**Solution:** 
+**`strftime` is a method of `datetime` objects — not strings** — calling it on a raw string raises `AttributeError` because Python strings do not have a `strftime` method.
+
+- **`strftime` on a string ✅** — The error occurs because `"2024-03-15"` is a plain Python string, and strings have no `strftime` method. The correct sequence is: `datetime.strptime("2024-03-15", "%Y-%m-%d").strftime("%d %B %Y")` — parse first to get a `datetime` object, then format.
+- **Invalid format string ❌** — `"%d %B %Y"` is a perfectly valid `strftime` format string. `%d` is the zero-padded day, `%B` is the full month name, and `%Y` is the four-digit year. The format string is not the problem.
+- **`strptime` instead of `strftime` ❌** — `strptime` parses a string into a datetime object; it does not produce formatted output. The colleague's goal is to produce a formatted label, so `strftime` is the correct function — it is just being called on the wrong type.
+- **String too short ❌** — String length has no bearing on whether `strftime` can produce a weekday name. The weekday is derived from the parsed datetime object, not from the length of the raw string.
+
+**Tags**
+- data-wrangling / date-processing (skill)
+
+##### Input 9
+**Type:** Choice
+
+**Question:** Which of the following `strptime` patterns will correctly parse the raw string `"2024-03-15 14:30:00"` without raising a `ValueError`? (Select 2)
+
+**Options:** 
+- `"%Y-%m-%d %H:%M:%S"`
+
+- `"%Y/%m/%d %H:%M:%S"`
+
+- `"%Y-%m-%d %H:%M:%S.%f"`
+
+- `"%Y-%m-%d"`
+
+**Correct Options:** 
+- `"%Y-%m-%d %H:%M:%S"`
+
+- `"%Y-%m-%d %H:%M:%S.%f"`
+
+**Solution:** 
+**The `strptime` pattern must match the raw string character-for-character** — any separator mismatch or missing component raises `ValueError`.
+
+- **`"%Y-%m-%d %H:%M:%S"` ✅** — This pattern matches the raw string exactly: four-digit year, hyphen, two-digit month, hyphen, two-digit day, space, two-digit hour, colon, two-digit minute, colon, two-digit second. No `ValueError` is raised.
+- **`"%Y-%m-%d %H:%M:%S.%f"` ✅** — This pattern also parses correctly. `%f` matches microseconds, but when the raw string has no microseconds (`.000000`) the pattern still works — pandas and Python's `datetime` treat the absence of microseconds as `0` when `%f` is included. This makes it a safe default for timestamp columns that may or may not include microseconds.
+- **`"%Y/%m/%d %H:%M:%S"` ❌** — The separators between year, month, and day are forward slashes (`/`) in this pattern, but the raw string uses hyphens (`-`). This mismatch raises `ValueError: time data '2024-03-15 14:30:00' does not match format '%Y/%m/%d %H:%M:%S'`.
+- **`"%Y-%m-%d"` ❌** — This pattern only accounts for the date portion. After parsing `"2024-03-15"`, the remaining `" 14:30:00"` is left unconsumed, which raises `ValueError: unconverted data remains: 14:30:00`. When a time component is present in the raw string, the `strptime` pattern must include it.
+
+>[!NOTE]
+> Always inspect the raw string with `print(df["column"].iloc[0])` before writing your `strptime` pattern. The most common source of `ValueError` is a mismatch between the separator characters (hyphens vs slashes vs spaces) or a missing time component.
+
+**Tags**
+- data-wrangling / date-processing (skill)

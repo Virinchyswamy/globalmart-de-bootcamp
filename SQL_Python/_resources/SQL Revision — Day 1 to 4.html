@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Revision — Day 1 to 4 · Chennai Batch</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--pk:#f472b6;--pk2:#fbcfe8;--a:#38bdf8;--g:#22c55e;--y:#f59e0b;--p:#a78bfa;--text:#e6edf3;--muted:#8b949e}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100}
+.nbadge{font-size:.7rem;font-weight:800;letter-spacing:2px;color:var(--pk);text-transform:uppercase}
+.ntitle{font-size:.82rem;color:var(--muted);margin-left:10px}
+.nnav{display:flex;align-items:center;gap:6px}
+.nb{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nb:hover{background:var(--pk);color:#000;border-color:var(--pk)}
+.nc{font-size:12px;color:var(--muted);min-width:80px;text-align:center}
+.deck{padding-top:52px;height:100vh;overflow-y:auto}
+.slide{display:none;min-height:calc(100vh - 52px);padding:20px 52px 28px;flex-direction:column;gap:12px;animation:fi .2s ease}
+.slide.active{display:flex}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.badge{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.tbadge{display:inline-flex;align-items:center;border-radius:100px;padding:3px 12px;font-size:.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.tb-a{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);color:var(--a)}
+.tb-g{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--g)}
+.tb-p{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);color:var(--p)}
+.tb-y{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--y)}
+.tb-pk{background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.3);color:var(--pk)}
+.tb-r{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171}
+
+h1{font-size:2.1rem;font-weight:900;line-height:1.1}
+h2{font-size:1.35rem;font-weight:800;margin-bottom:2px}
+h3{font-size:.88rem;font-weight:700;margin-bottom:6px}
+.sub{font-size:.88rem;color:var(--muted);margin-top:3px}
+p{font-size:.85rem;color:#c9d1d9;line-height:1.7}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:13px 15px}
+
+.pink{background:rgba(244,114,182,.07);border:1px solid rgba(244,114,182,.28);border-radius:10px;padding:11px 15px}
+.blue{background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.28);border-radius:10px;padding:11px 15px}
+.green{background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.28);border-radius:10px;padding:11px 15px}
+.purple{background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.28);border-radius:10px;padding:11px 15px}
+.yellow{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.28);border-radius:10px;padding:11px 15px}
+.red{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.28);border-radius:10px;padding:11px 15px}
+
+pre{background:#090d1a;border:1px solid var(--border);border-radius:10px;padding:9px 15px;font-family:'JetBrains Mono',monospace;font-size:.73rem;line-height:1.85;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.76rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a)}
+.kw{color:#ff7b72;font-weight:700}
+.fn{color:#d2a8ff}
+.str{color:#a5d6ff}
+.cm{color:#6e7681;font-style:italic}
+.col{color:#79c0ff}
+.tbl{color:#ffa657}
+.hl-b{background:rgba(56,189,248,.2);border-radius:3px;padding:0 3px}
+.hl-p{background:rgba(167,139,250,.2);border-radius:3px;padding:0 3px}
+.hl-g{background:rgba(34,197,94,.2);border-radius:3px;padding:0 3px}
+.hl-y{background:rgba(245,158,11,.2);border-radius:3px;padding:0 3px}
+
+table{width:100%;border-collapse:collapse}
+th{background:rgba(244,114,182,.07);color:var(--pk2);padding:6px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.72rem;font-weight:700;white-space:nowrap}
+td{padding:5px 10px;border-bottom:1px solid var(--border);font-size:.78rem;color:#c9d1d9}
+td.null{color:var(--muted);font-style:italic}
+td.ok{color:var(--g);font-weight:600}
+td.warn{color:var(--y);font-weight:600}
+td.bad{color:#f87171;font-weight:600}
+td.hl{background:rgba(244,114,182,.08)}
+tr.highlight td{background:rgba(56,189,248,.05)}
+
+.tag{display:inline-block;font-size:.64rem;font-weight:800;padding:1px 7px;border-radius:100px;margin-left:5px;vertical-align:middle}
+.tg{background:rgba(34,197,94,.12);color:var(--g);border:1px solid rgba(34,197,94,.3)}
+.tr{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.tb{background:rgba(56,189,248,.1);color:var(--a);border:1px solid rgba(56,189,248,.3)}
+.tp{background:rgba(167,139,250,.1);color:var(--p);border:1px solid rgba(167,139,250,.3)}
+
+.note{font-size:.74rem;color:var(--muted);font-style:italic;margin-top:4px}
+.arrow{text-align:center;font-size:1.1rem;color:var(--muted);padding:4px 0}
+</style>
+</head>
+<body>
+<nav>
+  <div style="display:flex;align-items:center">
+    <span class="nbadge">Chennai Batch · SQL Masterclass</span>
+    <span class="ntitle">Full Revision — Day 1 to Day 4</span>
+  </div>
+  <div class="nnav">
+    <button class="nb" onclick="go(-1)">← Prev</button>
+    <span class="nc" id="ctr">1 / 13</span>
+    <button class="nb" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 0: TITLE -->
+<div class="slide active">
+  <div style="text-align:center;padding:12px 0 6px">
+    <div class="badge" style="display:block;text-align:center">Chennai Batch 2026</div>
+    <h1 style="color:var(--pk);font-size:2.5rem;margin:8px 0 6px">SQL Masterclass — Full Revision</h1>
+    <p style="font-size:.95rem;color:var(--muted)">Everything from Day 1 to Day 4. No SSMS needed. Different examples. Featuring your batchmates doing questionable things.</p>
+  </div>
+  <div class="three">
+    <div class="card">
+      <div class="tbadge tb-a" style="margin-bottom:8px">Day 1</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--a)">→</span> SELECT / WHERE / GROUP BY / HAVING</div>
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--a)">→</span> INNER JOIN · LEFT JOIN · RIGHT JOIN</div>
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--a)">→</span> Subqueries</div>
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--a)">→</span> CTEs (WITH clause)</div>
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--a)">→</span> CASE WHEN</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tbadge tb-pk" style="margin-bottom:8px">Day 2 + Day 3</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--pk)">→</span> ROW_NUMBER / RANK / DENSE_RANK</div>
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--pk)">→</span> LAG / LEAD / Running Total</div>
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--pk)">→</span> PIVOT / UNPIVOT</div>
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--pk)">→</span> SQL Optimization</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tbadge tb-p" style="margin-bottom:8px">Day 4</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--p)">→</span> ROLLUP / CUBE / GROUPING SETS</div>
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--p)">→</span> EXISTS / NOT EXISTS</div>
+        <div style="font-size:.8rem;color:#c9d1d9;display:flex;gap:6px;align-items:center"><span style="color:var(--p)">→</span> Recursive CTE</div>
+      </div>
+    </div>
+  </div>
+  <div class="yellow" style="text-align:center">
+    <p style="font-size:.83rem;color:#c9d1d9"><strong style="color:var(--y)">How to use:</strong> Arrow keys or buttons to navigate. Every slide has a SQL query + what it returns. No setup needed — just read, remember, and judge your batchmates.</p>
+  </div>
+</div>
+
+<!-- SLIDE 1: SELECT / WHERE / GROUP BY / HAVING / ORDER BY -->
+<div class="slide">
+  <div><div class="tbadge tb-a">Day 1 — Basic SQL</div>
+  <h2 style="color:var(--a)">SELECT · WHERE · GROUP BY · HAVING · ORDER BY</h2>
+  <p class="sub">Scenario: Instructor tracked how many chai cups each person consumed this week. Results are alarming.</p></div>
+  <div class="two">
+    <pre><span class="cm">-- Who has a chai problem? (threshold: &gt; 8 cups/week)</span>
+<span class="kw">SELECT</span>
+    <span class="col">name</span>,
+    <span class="fn">SUM</span>(<span class="col">cups</span>)              <span class="kw">AS</span> <span class="col">total_cups</span>,
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="col">cups</span>), 1)   <span class="kw">AS</span> <span class="col">avg_per_day</span>
+<span class="kw">FROM</span>   <span class="tbl">chai_log</span>
+<span class="kw">WHERE</span>  <span class="col">week</span> = <span class="str">'Week 1'</span>
+<span class="kw">GROUP BY</span> <span class="col">name</span>
+<span class="hl-y"><span class="kw">HAVING</span>   <span class="fn">SUM</span>(<span class="col">cups</span>) &gt; 8</span>        <span class="cm">-- HAVING filters AFTER grouping</span>
+<span class="kw">ORDER BY</span> <span class="col">total_cups</span> <span class="kw">DESC</span></pre>
+    <div>
+      <table>
+        <tr><th>name</th><th>total_cups</th><th>avg_per_day</th><th></th></tr>
+        <tr><td>Yogesh</td><td class="bad">17</td><td>3.4</td><td class="bad">intervention needed</td></tr>
+        <tr><td>Kumar Pratik</td><td class="warn">13</td><td>2.6</td><td class="warn">asks questions, needs fuel</td></tr>
+        <tr><td>Raj</td><td class="warn">11</td><td>2.2</td><td class="warn">above average in one thing</td></tr>
+        <tr><td>Heemansh</td><td class="warn">9</td><td>1.8</td><td class="warn">borderline</td></tr>
+      </table>
+      <div class="note" style="margin-top:8px">Ganadeep: 1 cup total. He was napping. Can't drink chai if asleep.</div>
+      <div class="blue" style="margin-top:10px">
+        <p style="font-size:.8rem"><strong style="color:var(--a)">Key distinction:</strong> <code>WHERE</code> filters <em>before</em> grouping (filters rows). <code>HAVING</code> filters <em>after</em> grouping (filters group results). You cannot use <code>SUM()</code> inside a <code>WHERE</code>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: JOINS -->
+<div class="slide">
+  <div><div class="tbadge tb-g">Day 1 — JOINs</div>
+  <h2 style="color:var(--g)">INNER JOIN · LEFT JOIN · RIGHT JOIN</h2>
+  <p class="sub">Scenario: Did everyone submit the Day 3 bonus assignment? Spoiler: no.</p></div>
+  <div class="two">
+    <div>
+      <pre style="font-size:.7rem"><span class="cm">-- INNER JOIN: only who submitted</span>
+<span class="kw">SELECT</span> s.<span class="col">name</span>, a.<span class="col">submitted_at</span>
+<span class="kw">FROM</span>   <span class="tbl">students</span> s
+<span class="hl-b"><span class="kw">INNER JOIN</span></span> <span class="tbl">assignments</span> a
+  <span class="kw">ON</span> s.<span class="col">name</span> = a.<span class="col">name</span>
+
+<span class="cm">-- Returns only matched rows (submitted students)</span></pre>
+      <table style="margin-top:8px;margin-bottom:10px">
+        <tr><th>name</th><th>submitted_at</th></tr>
+        <tr><td>Hritin</td><td class="ok">2026-06-28 09:02</td></tr>
+        <tr><td>Prishita</td><td class="ok">2026-06-28 09:15</td></tr>
+        <tr><td>Nikshitha</td><td class="ok">2026-06-28 11:30</td></tr>
+      </table>
+      <pre style="font-size:.7rem"><span class="cm">-- LEFT JOIN: everyone, NULL for non-submitters</span>
+<span class="kw">SELECT</span> s.<span class="col">name</span>, a.<span class="col">submitted_at</span>
+<span class="kw">FROM</span>   <span class="tbl">students</span> s
+<span class="hl-g"><span class="kw">LEFT JOIN</span></span> <span class="tbl">assignments</span> a
+  <span class="kw">ON</span> s.<span class="col">name</span> = a.<span class="col">name</span></pre>
+    </div>
+    <div>
+      <table>
+        <tr><th>name</th><th>submitted_at</th><th></th></tr>
+        <tr><td>Hritin</td><td class="ok">2026-06-28 09:02</td><td></td></tr>
+        <tr><td>Prishita</td><td class="ok">2026-06-28 09:15</td><td></td></tr>
+        <tr><td>Nikshitha</td><td class="ok">2026-06-28 11:30</td><td></td></tr>
+        <tr><td>Ganadeep</td><td class="null">NULL</td><td class="bad">asleep</td></tr>
+        <tr><td>Sushant</td><td class="null">NULL</td><td class="bad">forgot. again.</td></tr>
+        <tr><td>Shivam</td><td class="null">NULL</td><td class="bad">claimed WiFi issues</td></tr>
+      </table>
+      <div class="green" style="margin-top:10px">
+        <p style="font-size:.8rem"><strong style="color:var(--g)">JOIN rules of thumb:</strong><br>
+        <code>INNER JOIN</code> — only matching rows on both sides<br>
+        <code>LEFT JOIN</code> — all from left + matches from right (NULL if no match)<br>
+        <code>RIGHT JOIN</code> — all from right + matches from left (nobody uses this; just flip the tables and LEFT JOIN)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: SUBQUERIES -->
+<div class="slide">
+  <div><div class="tbadge tb-a">Day 1 — Subqueries</div>
+  <h2 style="color:var(--a)">Subqueries — A Query Inside a Query</h2>
+  <p class="sub">Scenario: Who scored above the batch average on the quiz? The query figures out the average itself.</p></div>
+  <div class="two">
+    <div>
+      <pre><span class="cm">-- The inner query runs FIRST</span>
+<span class="cm">-- Then the outer query uses that result</span>
+
+<span class="kw">SELECT</span> <span class="col">name</span>, <span class="col">score</span>
+<span class="kw">FROM</span>   <span class="tbl">quiz_scores</span>
+<span class="kw">WHERE</span>  <span class="col">score</span> &gt; <span class="hl-b">(<span class="kw">SELECT</span> <span class="fn">AVG</span>(<span class="col">score</span>) <span class="kw">FROM</span> <span class="tbl">quiz_scores</span>)</span>
+<span class="kw">ORDER BY</span> <span class="col">score</span> <span class="kw">DESC</span></pre>
+      <div class="blue" style="margin-top:10px">
+        <p style="font-size:.8rem"><strong style="color:var(--a)">Step 1 — inner query runs:</strong><br><code>SELECT AVG(score) FROM quiz_scores</code><br>Returns: <strong style="color:var(--text)">62.5</strong></p>
+        <p style="font-size:.8rem;margin-top:6px"><strong style="color:var(--a)">Step 2 — outer query uses it:</strong><br><code>WHERE score > 62.5</code></p>
+      </div>
+      <div class="yellow" style="margin-top:10px">
+        <p style="font-size:.8rem;color:#c9d1d9"><strong style="color:var(--y)">Subqueries can go in:</strong> WHERE · FROM · SELECT · HAVING</p>
+      </div>
+    </div>
+    <div>
+      <table>
+        <tr><th>name</th><th>score</th><th></th></tr>
+        <tr><td>Hritin</td><td class="ok">94</td><td class="ok">class topper (insufferable)</td></tr>
+        <tr><td>Prishita</td><td class="ok">91</td><td class="ok">close second</td></tr>
+        <tr><td>Harsh</td><td class="ok">85</td><td></td></tr>
+        <tr><td>Heemansh</td><td class="ok">85</td><td>tied with Harsh</td></tr>
+        <tr><td>Amardeep</td><td class="ok">79</td><td></td></tr>
+        <tr><td>Payal</td><td class="ok">75</td><td></td></tr>
+        <tr><td>Gaurav</td><td class="ok">71</td><td></td></tr>
+        <tr><td>Aman T</td><td class="ok">68</td><td>squeaked in</td></tr>
+        <tr style="opacity:.4"><td colspan="3" style="text-align:center;font-style:italic">12 students below avg — not shown</td></tr>
+      </table>
+      <div class="note" style="margin-top:6px">Ganadeep scored 14. The batch average would be higher but it felt wrong to exclude him.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: CTEs -->
+<div class="slide">
+  <div><div class="tbadge tb-p">Day 1 — CTEs</div>
+  <h2 style="color:var(--p)">CTEs — WITH clause</h2>
+  <p class="sub">Same result as the subquery. But now someone else can read your code without getting a headache.</p></div>
+  <div class="two">
+    <div>
+      <div class="red" style="margin-bottom:10px">
+        <h3 style="color:#f87171;margin-bottom:6px">Before (nested subquery — hard to read)</h3>
+        <pre style="font-size:.69rem"><span class="kw">SELECT</span> <span class="col">name</span>, <span class="col">score</span>
+<span class="kw">FROM</span> <span class="tbl">quiz_scores</span>
+<span class="kw">WHERE</span> <span class="col">score</span> &gt; (
+    <span class="kw">SELECT</span> <span class="fn">AVG</span>(<span class="col">score</span>)
+    <span class="kw">FROM</span> <span class="tbl">quiz_scores</span>
+    <span class="kw">WHERE</span> <span class="col">score</span> &gt; (
+        <span class="kw">SELECT</span> <span class="fn">MIN</span>(<span class="col">score</span>)
+        <span class="kw">FROM</span> <span class="tbl">quiz_scores</span>
+    )
+)</pre>
+        <p style="font-size:.74rem;margin-top:6px;color:#fca5a5">Nobody knows what this does. Including the person who wrote it.</p>
+      </div>
+    </div>
+    <div>
+      <div class="green" style="margin-bottom:10px">
+        <h3 style="color:var(--g);margin-bottom:6px">After (CTE — readable)</h3>
+        <pre style="font-size:.69rem"><span class="hl-p"><span class="kw">WITH</span> <span class="fn">valid_scores</span> <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">quiz_scores</span>
+    <span class="kw">WHERE</span>  <span class="col">score</span> &gt; (<span class="kw">SELECT</span> <span class="fn">MIN</span>(<span class="col">score</span>) <span class="kw">FROM</span> <span class="tbl">quiz_scores</span>)
+),</span>
+<span class="hl-g"><span class="fn">avg_score</span> <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> <span class="fn">AVG</span>(<span class="col">score</span>) <span class="kw">AS</span> <span class="col">avg_val</span>
+    <span class="kw">FROM</span> <span class="fn">valid_scores</span>
+)</span>
+<span class="kw">SELECT</span> v.<span class="col">name</span>, v.<span class="col">score</span>
+<span class="kw">FROM</span>   <span class="fn">valid_scores</span> v, <span class="fn">avg_score</span> a
+<span class="kw">WHERE</span>  v.<span class="col">score</span> &gt; a.<span class="col">avg_val</span>
+<span class="kw">ORDER BY</span> v.<span class="col">score</span> <span class="kw">DESC</span></pre>
+      </div>
+      <div class="blue">
+        <p style="font-size:.8rem"><strong style="color:var(--a)">CTE rules:</strong></p>
+        <ul style="font-size:.79rem;color:#c9d1d9;padding-left:16px;line-height:2">
+          <li>Starts with <code>WITH cte_name AS ( ... )</code></li>
+          <li>Multiple CTEs: separate with commas, only one <code>WITH</code></li>
+          <li>Each CTE can reference the ones above it</li>
+          <li>CTEs exist only for the duration of that query</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: CASE WHEN -->
+<div class="slide">
+  <div><div class="tbadge tb-y">Day 1 — CASE WHEN</div>
+  <h2 style="color:var(--y)">CASE WHEN — SQL's if-else</h2>
+  <p class="sub">Scenario: Instructor assigns grades. The labels are completely objective and not at all passive-aggressive.</p></div>
+  <div class="two">
+    <pre><span class="kw">SELECT</span>
+    <span class="col">name</span>,
+    <span class="col">score</span>,
+    <span class="hl-y"><span class="kw">CASE</span>
+        <span class="kw">WHEN</span> <span class="col">score</span> &gt;= 90 <span class="kw">THEN</span> <span class="str">'Dangerous'</span>
+        <span class="kw">WHEN</span> <span class="col">score</span> &gt;= 75 <span class="kw">THEN</span> <span class="str">'Solid'</span>
+        <span class="kw">WHEN</span> <span class="col">score</span> &gt;= 50 <span class="kw">THEN</span> <span class="str">'Getting There'</span>
+        <span class="kw">WHEN</span> <span class="col">score</span> &gt;= 30 <span class="kw">THEN</span> <span class="str">'We Need To Talk'</span>
+        <span class="kw">ELSE</span>                   <span class="str">'Please Come Tomorrow'</span>
+    <span class="kw">END</span></span>                    <span class="kw">AS</span> <span class="col">grade</span>
+<span class="kw">FROM</span>  <span class="tbl">quiz_scores</span>
+<span class="kw">ORDER BY</span> <span class="col">score</span> <span class="kw">DESC</span></pre>
+    <div>
+      <table>
+        <tr><th>name</th><th>score</th><th>grade</th></tr>
+        <tr><td>Hritin</td><td>94</td><td class="ok">Dangerous</td></tr>
+        <tr><td>Prishita</td><td>91</td><td class="ok">Dangerous</td></tr>
+        <tr><td>Harsh</td><td>85</td><td class="ok">Solid</td></tr>
+        <tr><td>Gaurav</td><td>76</td><td class="ok">Solid</td></tr>
+        <tr><td>Saket</td><td>63</td><td class="warn">Getting There</td></tr>
+        <tr><td>Shivam</td><td>55</td><td class="warn">Getting There</td></tr>
+        <tr><td>Sushant</td><td>38</td><td class="bad">We Need To Talk</td></tr>
+        <tr><td>Ganadeep</td><td>14</td><td class="bad">Please Come Tomorrow</td></tr>
+      </table>
+      <div class="pink" style="margin-top:10px">
+        <p style="font-size:.8rem"><strong style="color:var(--pk)">CASE WHEN can go anywhere:</strong> SELECT, WHERE, ORDER BY, GROUP BY, HAVING. SQL evaluates conditions top to bottom and stops at the first match.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: WINDOW FUNCTIONS — ROW_NUMBER / RANK / DENSE_RANK -->
+<div class="slide">
+  <div><div class="tbadge tb-pk">Day 2 — Window Functions</div>
+  <h2 style="color:var(--pk)">ROW_NUMBER · RANK · DENSE_RANK</h2>
+  <p class="sub">Scenario: Quiz leaderboard. Harsh and Raj both scored 85. How you handle the tie matters — pick the wrong function and someone files a complaint.</p></div>
+  <div class="two">
+    <pre><span class="kw">SELECT</span>
+    <span class="col">name</span>, <span class="col">score</span>,
+    <span class="hl-b"><span class="fn">ROW_NUMBER</span>()</span>  <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> <span class="col">score</span> <span class="kw">DESC</span>) <span class="kw">AS</span> <span class="col">row_num</span>,
+    <span class="hl-g"><span class="fn">RANK</span>()</span>        <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> <span class="col">score</span> <span class="kw">DESC</span>) <span class="kw">AS</span> <span class="col">rnk</span>,
+    <span class="hl-p"><span class="fn">DENSE_RANK</span>()</span>  <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> <span class="col">score</span> <span class="kw">DESC</span>) <span class="kw">AS</span> <span class="col">d_rnk</span>
+<span class="kw">FROM</span> <span class="tbl">quiz_scores</span></pre>
+    <div>
+      <table>
+        <tr><th>name</th><th>score</th><th class="hl-b" style="background:rgba(56,189,248,.15)">ROW_NUMBER</th><th class="hl-g" style="background:rgba(34,197,94,.15)">RANK</th><th class="hl-p" style="background:rgba(167,139,250,.15)">DENSE_RANK</th></tr>
+        <tr><td>Hritin</td><td>94</td><td>1</td><td>1</td><td>1</td></tr>
+        <tr><td>Prishita</td><td>91</td><td>2</td><td>2</td><td>2</td></tr>
+        <tr class="highlight"><td>Harsh</td><td>85</td><td class="tb">3</td><td class="tg">3</td><td class="tp">3</td></tr>
+        <tr class="highlight"><td>Raj</td><td>85</td><td class="tb">4</td><td class="tg">3</td><td class="tp">3</td></tr>
+        <tr><td>Amardeep</td><td>79</td><td>5</td><td class="warn">5 ← gap!</td><td>4 ← no gap</td></tr>
+      </table>
+      <div class="three" style="margin-top:10px">
+        <div class="blue" style="padding:9px 12px">
+          <p style="font-size:.76rem;font-weight:700;color:var(--a);margin-bottom:3px">ROW_NUMBER</p>
+          <p style="font-size:.74rem">Always unique. Ties get arbitrary order. 3, 4 — no debate.</p>
+        </div>
+        <div class="green" style="padding:9px 12px">
+          <p style="font-size:.76rem;font-weight:700;color:var(--g);margin-bottom:3px">RANK</p>
+          <p style="font-size:.74rem">Ties get same rank. Next rank skips. 3, 3, 5 — gap after tie.</p>
+        </div>
+        <div class="purple" style="padding:9px 12px">
+          <p style="font-size:.76rem;font-weight:700;color:var(--p);margin-bottom:3px">DENSE_RANK</p>
+          <p style="font-size:.74rem">Ties get same rank. No skip. 3, 3, 4 — continuous.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: WINDOW FUNCTIONS — LAG / LEAD / SUM OVER -->
+<div class="slide">
+  <div><div class="tbadge tb-pk">Day 2 — Window Functions</div>
+  <h2 style="color:var(--pk)">LAG · LEAD · Running Total (SUM OVER)</h2>
+  <p class="sub">Scenario: Tracking Yogesh's daily chai consumption. The running total is a cry for help.</p></div>
+  <div class="two">
+    <pre><span class="kw">SELECT</span>
+    <span class="col">day</span>, <span class="col">cups</span>,
+    <span class="hl-b"><span class="fn">LAG</span>(<span class="col">cups</span>)</span>  <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> <span class="col">day</span>) <span class="kw">AS</span> <span class="col">yesterday_cups</span>,
+    <span class="hl-g"><span class="fn">LEAD</span>(<span class="col">cups</span>)</span> <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> <span class="col">day</span>) <span class="kw">AS</span> <span class="col">tomorrow_cups</span>,
+    <span class="hl-p"><span class="fn">SUM</span>(<span class="col">cups</span>)</span>  <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> <span class="col">day</span>) <span class="kw">AS</span> <span class="col">running_total</span>
+<span class="kw">FROM</span>   <span class="tbl">chai_log</span>
+<span class="kw">WHERE</span>  <span class="col">name</span> = <span class="str">'Yogesh'</span>
+<span class="kw">ORDER BY</span> <span class="col">day</span></pre>
+    <div>
+      <table>
+        <tr><th>day</th><th>cups</th><th class="hl-b" style="background:rgba(56,189,248,.1)">yesterday</th><th class="hl-g" style="background:rgba(34,197,94,.1)">tomorrow</th><th class="hl-p" style="background:rgba(167,139,250,.1)">running_total</th></tr>
+        <tr><td>Mon</td><td>3</td><td class="null">NULL (no prev)</td><td>4</td><td>3</td></tr>
+        <tr><td>Tue</td><td>4</td><td>3</td><td>2</td><td>7</td></tr>
+        <tr><td>Wed</td><td>2</td><td>4</td><td>5</td><td>9</td></tr>
+        <tr><td>Thu</td><td>5</td><td>2</td><td>3</td><td>14</td></tr>
+        <tr><td>Fri</td><td>3</td><td>5</td><td class="null">NULL (no next)</td><td class="bad">17</td></tr>
+      </table>
+      <div class="three" style="margin-top:10px">
+        <div class="blue" style="padding:9px 12px">
+          <p style="font-size:.75rem;font-weight:700;color:var(--a);margin-bottom:3px">LAG</p>
+          <p style="font-size:.73rem">Looks back — brings the previous row's value into the current row.</p>
+        </div>
+        <div class="green" style="padding:9px 12px">
+          <p style="font-size:.75rem;font-weight:700;color:var(--g);margin-bottom:3px">LEAD</p>
+          <p style="font-size:.73rem">Looks forward — brings the next row's value into the current row.</p>
+        </div>
+        <div class="purple" style="padding:9px 12px">
+          <p style="font-size:.75rem;font-weight:700;color:var(--p);margin-bottom:3px">SUM OVER</p>
+          <p style="font-size:.73rem">Accumulates. Each row adds to the previous total. Use <code>PARTITION BY</code> to reset per group.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: PIVOT / UNPIVOT -->
+<div class="slide">
+  <div><div class="tbadge tb-y">Day 3 — PIVOT / UNPIVOT</div>
+  <h2 style="color:var(--y)">PIVOT · UNPIVOT</h2>
+  <p class="sub">Scenario: Daily nap tracker. Tracking which day each person checked out. PIVOT turns rows into columns.</p></div>
+  <div class="two">
+    <div>
+      <p style="font-weight:700;font-size:.82rem;color:var(--muted);margin-bottom:6px">BEFORE PIVOT — rows per day:</p>
+      <table style="margin-bottom:12px">
+        <tr><th>name</th><th>day</th><th>napped</th></tr>
+        <tr><td>Ganadeep</td><td>Monday</td><td class="bad">1</td></tr>
+        <tr><td>Ganadeep</td><td>Tuesday</td><td class="ok">0</td></tr>
+        <tr><td>Ganadeep</td><td>Wednesday</td><td class="bad">1</td></tr>
+        <tr><td>Sushant</td><td>Monday</td><td class="ok">0</td></tr>
+        <tr><td>Sushant</td><td>Wednesday</td><td class="bad">1</td></tr>
+        <tr><td style="color:var(--muted);font-style:italic" colspan="3">… many rows</td></tr>
+      </table>
+      <pre style="font-size:.68rem"><span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">nap_log</span>
+<span class="hl-y"><span class="kw">PIVOT</span> (
+    <span class="fn">MAX</span>(<span class="col">napped</span>)
+    <span class="kw">FOR</span> <span class="col">day</span> <span class="kw">IN</span> (
+        [Monday],[Tuesday],[Wednesday],[Thursday]
+    )
+) <span class="kw">AS</span> <span class="col">pvt</span></span></pre>
+    </div>
+    <div>
+      <p style="font-weight:700;font-size:.82rem;color:var(--muted);margin-bottom:6px">AFTER PIVOT — one row per person:</p>
+      <table style="margin-bottom:10px">
+        <tr><th>name</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th></tr>
+        <tr><td>Ganadeep</td><td class="bad">1</td><td class="ok">0</td><td class="bad">1</td><td class="bad">1</td></tr>
+        <tr><td>Sushant</td><td class="ok">0</td><td class="ok">0</td><td class="bad">1</td><td class="ok">0</td></tr>
+        <tr><td>Santosh</td><td class="bad">1</td><td class="bad">1</td><td class="ok">0</td><td class="ok">0</td></tr>
+        <tr><td>Hritin</td><td class="ok">0</td><td class="ok">0</td><td class="ok">0</td><td class="ok">0</td></tr>
+      </table>
+      <div class="yellow">
+        <p style="font-size:.79rem;line-height:1.75"><strong style="color:var(--y)">PIVOT:</strong> rows → columns. Columns must be listed explicitly.<br>
+        <strong style="color:var(--y)">UNPIVOT:</strong> columns → rows. Exact opposite. Use when data is "wide" but you need it "tall".<br>
+        <strong style="color:var(--y)">Ganadeep's row</strong> is a research paper in itself.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: SQL OPTIMIZATION -->
+<div class="slide">
+  <div><div class="tbadge tb-r">Day 3 — SQL Optimization</div>
+  <h2 style="color:#f87171">SQL Optimization — Stop Making the DBA Cry</h2>
+  <p class="sub">Three patterns that slow your query to a crawl, and how to fix them.</p></div>
+  <div class="three">
+    <div>
+      <div class="red" style="margin-bottom:8px">
+        <h3 style="color:#f87171">Pattern 1 — Function on column in WHERE</h3>
+        <pre style="font-size:.67rem"><span class="cm">-- BAD: index can't be used</span>
+<span class="kw">WHERE</span> <span class="fn">YEAR</span>(<span class="col">order_date</span>) = 2024
+<span class="kw">WHERE</span> <span class="fn">UPPER</span>(<span class="col">name</span>) = <span class="str">'YOGESH'</span></pre>
+      </div>
+      <div class="green">
+        <h3 style="color:var(--g)">Fix — filter on the value</h3>
+        <pre style="font-size:.67rem"><span class="cm">-- GOOD: index works</span>
+<span class="kw">WHERE</span> <span class="col">order_date</span> &gt;= <span class="str">'2024-01-01'</span>
+  <span class="kw">AND</span> <span class="col">order_date</span> &lt;  <span class="str">'2025-01-01'</span>
+<span class="kw">WHERE</span> <span class="col">name</span> = <span class="str">'Yogesh'</span></pre>
+      </div>
+      <p class="note" style="margin-top:6px">Wrapping a column in a function forces SQL to compute it for every row before filtering.</p>
+    </div>
+    <div>
+      <div class="red" style="margin-bottom:8px">
+        <h3 style="color:#f87171">Pattern 2 — SELECT *</h3>
+        <pre style="font-size:.67rem"><span class="cm">-- BAD: pulls all columns</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">ex_orders</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_customers</span> ...
+<span class="kw">JOIN</span> <span class="tbl">ex_locations</span> ...</pre>
+      </div>
+      <div class="green">
+        <h3 style="color:var(--g)">Fix — name your columns</h3>
+        <pre style="font-size:.67rem"><span class="cm">-- GOOD: only what you need</span>
+<span class="kw">SELECT</span>
+    o.<span class="col">order_id</span>,
+    c.<span class="col">customer_name</span>,
+    l.<span class="col">state</span>
+<span class="kw">FROM</span> <span class="tbl">ex_orders</span> o ...</pre>
+      </div>
+      <p class="note" style="margin-top:6px">SELECT * also breaks when someone adds or removes a column. Name your columns.</p>
+    </div>
+    <div>
+      <div class="red" style="margin-bottom:8px">
+        <h3 style="color:#f87171">Pattern 3 — Non-SARGable NULL check</h3>
+        <pre style="font-size:.67rem"><span class="cm">-- BAD: can't use index</span>
+<span class="kw">WHERE</span> <span class="fn">ISNULL</span>(<span class="col">discount</span>, 0) = 0
+
+<span class="cm">-- BAD: implicit conversion</span>
+<span class="kw">WHERE</span> <span class="col">customer_id</span> = <span class="str">'12345'</span>
+<span class="cm">-- (customer_id is INT)</span></pre>
+      </div>
+      <div class="green">
+        <h3 style="color:var(--g)">Fix — explicit conditions</h3>
+        <pre style="font-size:.67rem"><span class="cm">-- GOOD: sargable</span>
+<span class="kw">WHERE</span> (<span class="col">discount</span> <span class="kw">IS NULL</span>
+    <span class="kw">OR</span> <span class="col">discount</span> = 0)
+
+<span class="kw">WHERE</span> <span class="col">customer_id</span> = 12345
+<span class="cm">-- (matching data types)</span></pre>
+      </div>
+      <p class="note" style="margin-top:6px">SARGable = Search ARGument ABLE — the query engine can use an index on it.</p>
+    </div>
+  </div>
+  <div class="blue" style="margin-top:4px">
+    <p style="font-size:.8rem"><strong style="color:var(--a)">Also remember:</strong> Use <code>EXISTS</code> instead of <code>COUNT(*) > 0</code>. Avoid <code>DISTINCT</code> to fix a bad JOIN (fix the JOIN instead). Filter early — in WHERE, not HAVING.</p>
+  </div>
+</div>
+
+<!-- SLIDE 10: ROLLUP / CUBE / GROUPING SETS -->
+<div class="slide">
+  <div><div class="tbadge tb-p">Day 4 — ROLLUP · CUBE · GROUPING SETS</div>
+  <h2 style="color:var(--p)">ROLLUP · CUBE · GROUPING SETS</h2>
+  <p class="sub">Scenario: Class attendance by group and day. You want group totals, day totals, and a grand total — in one query.</p></div>
+  <div class="two">
+    <div>
+      <pre style="font-size:.71rem"><span class="cm">-- ROLLUP: subtotals in hierarchy order</span>
+<span class="kw">SELECT</span>
+    <span class="col">group_num</span>,
+    <span class="col">day</span>,
+    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">attended</span>
+<span class="kw">FROM</span>   <span class="tbl">attendance</span>
+<span class="kw">WHERE</span>  <span class="col">attended</span> = 1
+<span class="hl-p"><span class="kw">GROUP BY</span> <span class="fn">ROLLUP</span>(<span class="col">group_num</span>, <span class="col">day</span>)</span></pre>
+      <pre style="font-size:.71rem;margin-top:8px"><span class="cm">-- CUBE: every possible combination</span>
+<span class="hl-p"><span class="kw">GROUP BY</span> <span class="fn">CUBE</span>(<span class="col">group_num</span>, <span class="col">day</span>)</span>
+
+<span class="cm">-- GROUPING SETS: you choose exactly which</span>
+<span class="hl-p"><span class="kw">GROUP BY</span> <span class="fn">GROUPING SETS</span>(
+    (<span class="col">group_num</span>, <span class="col">day</span>),  <span class="cm">-- detail level</span>
+    (<span class="col">group_num</span>),       <span class="cm">-- group total only</span>
+    ()                 <span class="cm">-- grand total</span>
+)</span></pre>
+    </div>
+    <div>
+      <table>
+        <tr><th>group_num</th><th>day</th><th>attended</th><th></th></tr>
+        <tr><td>G1</td><td>Monday</td><td>5</td><td></td></tr>
+        <tr><td>G1</td><td>Tuesday</td><td>4</td><td></td></tr>
+        <tr><td style="color:var(--a);font-weight:700">G1</td><td class="null">NULL</td><td style="color:var(--a);font-weight:700">9</td><td style="color:var(--a);font-size:.72rem">← ROLLUP: G1 total</td></tr>
+        <tr><td>G2</td><td>Monday</td><td>5</td><td></td></tr>
+        <tr><td>G2</td><td>Tuesday</td><td>5</td><td></td></tr>
+        <tr><td style="color:var(--a);font-weight:700">G2</td><td class="null">NULL</td><td style="color:var(--a);font-weight:700">10</td><td style="color:var(--a);font-size:.72rem">← ROLLUP: G2 total</td></tr>
+        <tr><td class="null">NULL</td><td class="null">NULL</td><td style="color:var(--pk);font-weight:700">25</td><td style="color:var(--pk);font-size:.72rem">← grand total</td></tr>
+      </table>
+      <div class="purple" style="margin-top:10px">
+        <p style="font-size:.79rem;line-height:1.75">
+          <strong style="color:var(--p)">ROLLUP:</strong> Subtotals in hierarchy. (G1+Mon), then (G1 total), then grand total.<br>
+          <strong style="color:var(--p)">CUBE:</strong> Every combination — by day too, not just by group. Expensive. Only when you need all dimensions.<br>
+          <strong style="color:var(--p)">GROUPING SETS:</strong> Surgically precise. You say exactly which groupings you want.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: EXISTS / NOT EXISTS -->
+<div class="slide">
+  <div><div class="tbadge tb-a">Day 4 — Correlated Subqueries</div>
+  <h2 style="color:var(--a)">EXISTS · NOT EXISTS</h2>
+  <p class="sub">Scenario: Who attempted the bonus challenge? Who chickened out? And the classic NOT IN null trap.</p></div>
+  <div class="two">
+    <div>
+      <pre style="font-size:.71rem"><span class="cm">-- EXISTS: who submitted AND attempted bonus?</span>
+<span class="kw">SELECT</span> s.<span class="col">name</span>
+<span class="kw">FROM</span>   <span class="tbl">students</span> s
+<span class="kw">WHERE</span>  <span class="hl-g"><span class="kw">EXISTS</span> (
+    <span class="kw">SELECT</span> 1
+    <span class="kw">FROM</span>   <span class="tbl">bonus_attempts</span> b
+    <span class="kw">WHERE</span>  b.<span class="col">name</span> = s.<span class="col">name</span>  <span class="cm">← correlated</span>
+)</span></pre>
+      <table style="margin-top:8px;margin-bottom:12px">
+        <tr><th>name</th><th></th></tr>
+        <tr><td>Hritin</td><td class="ok">attempted (also scored 100)</td></tr>
+        <tr><td>Prishita</td><td class="ok">attempted</td></tr>
+        <tr><td>Raj</td><td class="ok">attempted</td></tr>
+      </table>
+      <pre style="font-size:.71rem"><span class="cm">-- NOT EXISTS: who has NOT attempted bonus?</span>
+<span class="kw">SELECT</span> s.<span class="col">name</span>
+<span class="kw">FROM</span>   <span class="tbl">students</span> s
+<span class="kw">WHERE</span>  <span class="hl-p"><span class="kw">NOT EXISTS</span> (
+    <span class="kw">SELECT</span> 1
+    <span class="kw">FROM</span>   <span class="tbl">bonus_attempts</span> b
+    <span class="kw">WHERE</span>  b.<span class="col">name</span> = s.<span class="col">name</span>
+)</span></pre>
+    </div>
+    <div>
+      <table style="margin-bottom:10px">
+        <tr><th>name</th><th></th></tr>
+        <tr><td>Ganadeep</td><td class="bad">was napping</td></tr>
+        <tr><td>Sushant</td><td class="bad">didn't even know there was a bonus</td></tr>
+        <tr><td>Shivam</td><td class="bad">claimed it wasn't in the syllabus</td></tr>
+        <tr><td>Kumar Pratik</td><td class="warn">asked 11 questions about it, never started</td></tr>
+      </table>
+      <div class="red">
+        <h3 style="color:#f87171;margin-bottom:6px">NOT IN vs NOT EXISTS — the NULL trap</h3>
+        <pre style="font-size:.68rem"><span class="cm">-- If bonus_attempts has even ONE NULL name:</span>
+<span class="kw">WHERE</span> <span class="col">name</span> <span class="kw">NOT IN</span> (
+    <span class="kw">SELECT</span> <span class="col">name</span> <span class="kw">FROM</span> <span class="tbl">bonus_attempts</span>
+<span class="cm">-- includes NULLs → returns 0 rows!</span>
+)</pre>
+        <p style="font-size:.76rem;color:#fca5a5;margin-top:6px">NOT IN with NULLs in the subquery = no rows returned. Ever. Silent and catastrophic. Use NOT EXISTS instead.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: RECURSIVE CTE -->
+<div class="slide">
+  <div><div class="tbadge tb-pk">Day 4 — Recursive CTE</div>
+  <h2 style="color:var(--pk)">Recursive CTE — The Self-Referencing Loop</h2>
+  <p class="sub">Scenario: Someone forwarded a meme in the class WhatsApp group. It spread. SQL traces the entire chain.</p></div>
+  <div class="two">
+    <pre style="font-size:.71rem"><span class="hl-b"><span class="kw">WITH</span> <span class="fn">meme_trail</span> <span class="kw">AS</span> (
+
+    <span class="cm">-- BASE CASE: who sent it first?</span>
+    <span class="kw">SELECT</span>
+        <span class="col">from_person</span>, <span class="col">to_person</span>,
+        <span class="fn">CAST</span>(<span class="col">from_person</span> + <span class="str">' → '</span> + <span class="col">to_person</span>
+             <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>))   <span class="kw">AS</span> <span class="col">chain</span>,
+        1                        <span class="kw">AS</span> <span class="col">hop</span>
+    <span class="kw">FROM</span>  <span class="tbl">meme_chain</span>
+    <span class="kw">WHERE</span> <span class="col">from_person</span> = <span class="str">'Raj'</span>  <span class="cm">← anchor</span></span>
+
+    <span class="kw">UNION ALL</span>
+
+    <span class="hl-p">    <span class="cm">-- RECURSIVE CASE: who did each person send to?</span>
+    <span class="kw">SELECT</span>
+        m.<span class="col">from_person</span>, m.<span class="col">to_person</span>,
+        <span class="fn">CAST</span>(mt.<span class="col">chain</span> + <span class="str">' → '</span> + m.<span class="col">to_person</span>
+             <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)),
+        mt.<span class="col">hop</span> + 1
+    <span class="kw">FROM</span>  <span class="tbl">meme_chain</span> m
+    <span class="kw">JOIN</span>  <span class="fn">meme_trail</span> mt
+        <span class="kw">ON</span>  <span class="hl-g">m.<span class="col">from_person</span> = mt.<span class="col">to_person</span></span>
+    <span class="kw">WHERE</span> mt.<span class="col">hop</span> &lt; 20</span>  <span class="cm">← safety guard</span>
+)
+<span class="kw">SELECT</span> <span class="col">to_person</span>, <span class="col">hop</span>, <span class="col">chain</span>
+<span class="kw">FROM</span>   <span class="fn">meme_trail</span>
+<span class="kw">ORDER BY</span> <span class="col">hop</span></pre>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <table>
+        <tr><th>to_person</th><th>hop</th><th>chain</th></tr>
+        <tr><td>Prishita</td><td>1</td><td style="font-size:.72rem">Raj → Prishita</td></tr>
+        <tr><td>Payal</td><td>2</td><td style="font-size:.72rem">Raj → Prishita → Payal</td></tr>
+        <tr><td>Ganadeep</td><td>3</td><td style="font-size:.72rem">Raj → … → Ganadeep</td></tr>
+        <tr><td class="ok">Gaurav ← STOP</td><td>4</td><td style="font-size:.72rem">Raj → … → Gaurav</td></tr>
+      </table>
+      <div class="three">
+        <div class="blue" style="padding:9px 12px">
+          <p style="font-size:.73rem;font-weight:700;color:var(--a);margin-bottom:3px">Base Case</p>
+          <p style="font-size:.72rem">Runs once. The starting row(s). The anchor.</p>
+        </div>
+        <div class="purple" style="padding:9px 12px">
+          <p style="font-size:.73rem;font-weight:700;color:var(--p);margin-bottom:3px">Recursive Case</p>
+          <p style="font-size:.72rem">Joins back to CTE. Runs until JOIN returns 0 rows.</p>
+        </div>
+        <div class="green" style="padding:9px 12px">
+          <p style="font-size:.73rem;font-weight:700;color:var(--g);margin-bottom:3px">Termination</p>
+          <p style="font-size:.72rem">Gaurav told nobody → no match → stops automatically.</p>
+        </div>
+      </div>
+      <div class="pink">
+        <p style="font-size:.8rem;font-style:italic;color:var(--pk2)">"Recursive CTE is just a loop with a memory. Each iteration knows what the previous one found."</p>
+        <p style="font-size:.74rem;color:var(--muted);margin-top:4px">Gaurav got the meme and did not forward it. We respect this boundary.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const N=slides.length;
+const ctr=document.getElementById('ctr');
+function show(n){
+  slides[cur].classList.remove('active');
+  cur=(n+N)%N;
+  slides[cur].classList.add('active');
+  ctr.textContent=(cur+1)+' / '+N;
+  document.querySelector('.deck').scrollTop=0;
+}
+function go(d){show(cur+d);}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);
+});
+</script>
+</body>
+</html>

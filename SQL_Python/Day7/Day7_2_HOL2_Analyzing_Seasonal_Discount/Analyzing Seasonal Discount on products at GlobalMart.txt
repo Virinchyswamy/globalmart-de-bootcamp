@@ -1,0 +1,178 @@
+# Copy of Analyzing Seasonal Discount on products at GlobalMart
+## Content Type
+Scenario
+
+## Overview
+The pricing team at GlobalMart aims to analyze the impact of seasonal discounts on their product prices. They plan to use two list comprehensions to achieve this:
+
+* Apply Discounts: Adjust the original prices of products by applying seasonal discounts.
+* Categorize Products: Classify products based on their discounted prices.
+
+GlobalMart conducts various seasonal discount campaigns to attract customers and boost sales. By analyzing the impact of these discounts on different product categories, the team can better plan future promotions and pricing strategies.
+
+## Learning Objectives
+- Understand and apply data transformation techniques to facilitate easier analysis
+- Apply list comprehension to process the data
+
+## Prerequisites
+- Familiarity with Pandas library for data manipulation and analysis.
+- Understanding of lambda functions and their application in data analysis.
+
+## Duration of Completion
+60 minutes
+
+## Level
+Advanced
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- python (tool)
+
+#### Overview
+The pricing team at GlobalMart aims to analyze the impact of seasonal discounts on their product prices. They plan to use two list comprehensions to achieve this:
+
+* Apply Discounts: Adjust the original prices of products by applying seasonal discounts.
+* Categorize Products: Classify products based on their discounted prices.
+
+GlobalMart conducts various seasonal discount campaigns to attract customers and boost sales. By analyzing the impact of these discounts on different product categories, the team can better plan future promotions and pricing strategies.
+
+#### Level
+advanced
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+>[!IMPORTANT] 
+> Download the following artifacts to solve the scenario below.
+
+Data Dictionary details: Download from [here](https://cdn.enqurious.com/others/9765efa2-d447-4892-854a-4301a16aa54e___Data_dictionary_globalmart.xlsx)
+
+Dataset details: Download from [here](https://cdn.enqurious.com/others/1600cfae-37f1-47d7-b2ce-9f4580ccd127__globalmart.xlsx)
+
+Python Notebook: Download from [here](https://cdn.enqurious.com/others/74499fa3-1e95-4c4f-955e-c03fcb4df4e9_9a3e4a59b6e84b48b200b30e62228f22Seasonaldiscountanalysis.ipynb)
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+**Goal:** 
+
+The objective is to apply discounts to product prices and categorize products based on their discounted prices using list comprehensions. This will involve:
+
+1.  **Applying Discounts**: Adjusting the original prices of products by applying the specified discounts.
+2.  **Categorizing Products**: Classifying products into categories based on their discounted prices. 
+    1.  Assign 'Premium' if the price is greater than 200 
+    2.  Assign 'Mid-range' if the price is greater than 100 but not more than 200 
+    3.  Otherwise, assign 'Budget'.
+
+This analysis will help in understanding the impact of discounts and aid in planning future promotions and pricing strategies.
+
+**Expected Outcome:** 
+
+_Seasonal Discount Impact Analysis_
+
+![](https://cdn.enqurious.com/images/05ea815b-2821-486d-9b27-9f73896da169_image.webp)
+
+_Discount Impact Summary Report_
+
+![](https://cdn.enqurious.com/images/7ea9ba9d-2e1b-46a1-add3-edcb0d12b96b_image.webp)
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+>[!NOTE]
+> The data shown above is for representation purposes only
+
+
+
+**Tags**
+
+
+##### Input 4
+**Type:** Choice
+
+**Question:** In the summary report, how many products belong to the premium category of furniture?
+
+**Options:** 
+- 345
+
+- 279
+
+- 170
+
+- 67
+
+**Correct Options:** 
+- 170
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / join (skill)
+- data-wrangling / list-processing (skill)
+- data-wrangling / derived-column (skill)
+
+##### Input 5
+**Type:** Choice
+
+**Question:** In the summary report, which product category has the highest average original price?
+
+**Options:** 
+- Electronics
+
+- Technology
+
+- Furniture
+
+- Groceries
+
+**Correct Options:** 
+- Technology
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / join (skill)
+- data-wrangling / list-processing (skill)
+- data-wrangling / derived-column (skill)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** What is the price category of the product "Self-Adhesive Address Labels for Typewriters"?
+
+**Options:** 
+- Mid-range
+
+- Budget
+
+- Premium
+
+- Economy
+
+**Correct Options:** 
+- Budget
+
+**Tags**
+- data-wrangling / derived-column (skill)
+- data-wrangling / filter (skill)
+- data-wrangling / join (skill)
+- data-wrangling / list-processing (skill)
+
+
+**Scenario Solution:** 
+Download the notebook from [here](https://cdn.enqurious.com/others/9a3e4a59-b6e8-4b48-b200-b30e62228f22_Seasonal_discount_analysis.ipynb)

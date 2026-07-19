@@ -1,0 +1,1401 @@
+# SQL Optimization Strategies for Scalable Analytics
+## Content Type
+Masterclass
+
+## Overview
+As GlobalMart’s data grows rapidly — with millions of transactions, expanding product lines, and increasing customer activity — their SQL queries are starting to slow down. Reports that once ran instantly now take minutes, making it harder for analysts to explore insights efficiently.
+
+To keep analytics fast and scalable, the data team is focusing on **SQL Optimization Strategies** — techniques that improve query performance without compromising data accuracy.
+
+By applying these strategies, GlobalMart can:
+
+- Reduce query execution time through efficient joins, indexing, and filtering.
+    
+- Minimize resource usage by avoiding unnecessary computations and data scans.
+    
+- Design queries that scale smoothly as data volumes continue to increase.
+    
+
+In this module, we’ll explore how thoughtful query design, indexing, and the use of optimized SQL constructs can transform performance. We’ll also look at practical examples of rewriting queries for speed and scalability — ensuring GlobalMart’s analytics stay efficient as their business continues to grow.
+
+## Learning Objectives
+- Build habits for cleaner, more maintainable SQL code in enterprise environments.
+- Apply practical techniques to speed up dashboards and reduce compute usage.
+- Understand cost implications of inefficient queries on cloud platforms.
+- Learn to write performance-optimized SQL queries for large-scale datasets.
+
+## Prerequisites
+- Basic knowledge of SQL syntax, familiarity with SQL JOIN, GROUP BY, and filtering techniques.
+- Awareness of cloud data platforms like Snowflake, BigQuery, or Databricks is helpful.
+- Understanding of tables and relationships in a transactional data model.
+- Some experience working with dashboards or large datasets in BI tools.
+
+## Duration of Completion
+180 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- approach (skill)
+- sql (tool)
+
+## Scenarios
+### How do Indexing work in Optimizing table scan
+#### Overview
+In this section, we will discuss two key types of indexing methods in SQL: **Clustered Indexing** and **Non-Clustered Indexing**. These methods help optimize data retrieval by improving query performance. A **clustered index** determines the physical order of rows in the table, while a **non-clustered index** creates a separate structure that stores pointers to the table’s data. Understanding when and how to use these indexes is crucial for speeding up query execution and ensuring efficient database management.
+
+#### Level
+advanced
+
+#### Industries
+- e-commerce
+
+#### Tags
+- approach (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## 📘 Final Best Practices to Supercharge SQL Performance
+
+As GlobalMart’s data grows, optimizing query logic is only half the story. How data is stored, indexed, and accessed plays a massive role in delivering fast, efficient reporting. The following best practices complement everything you've implemented so far, ensuring long-term performance and scalability.
+
+---
+
+### Define Primary Keys Thoughtfully
+
+Every table in your system should be built with a clearly defined primary key. These keys ensure each row is uniquely identifiable, prevent duplicate data, and allow SQL engines to make smarter decisions when joining tables or retrieving records. A well-set primary key forms the backbone of a relational database.
+
+---
+
+### Use Numeric Primary Keys Instead of Strings
+
+While it’s common to see IDs like `ORD_001` or `TXN2023A`, these string-based identifiers are not ideal for performance. Strings take up more space and are slower to compare, especially when used in joins or filters. Numeric keys — such as integers or bigints — are more efficient for indexing and searching.
+
+For instance, comparing `Customer_ID = 1002` is faster and cheaper than `Customer_ID = 'CUST_1002'`. Numeric keys also support natural ordering and clustering, which improves read operations significantly.
+
+---
+
+### Understand How Indexes Influence Performance
+
+Indexes are like maps that help SQL engines find information faster. Without them, queries often result in full table scans — meaning every row must be examined. That’s both time-consuming and resource-intensive.
+
+When indexes are present, the database can perform an **index seek** — jumping directly to relevant rows using pointers. This is significantly faster than scanning thousands (or millions) of rows. Columns frequently used in filters, joins, or sorting should be indexed to gain the most benefit.
+
+---
+
+### Indexing is Like Navigating a Library
+
+Think of your database like a massive library. Without an index, it’s like searching every shelf to find one book — exhausting and slow. With an index, it’s like walking directly to the correct aisle and grabbing the exact book from a labeled row.
+
+When designed well, indexing turns complex queries into quick lookups, drastically reducing load on the system — especially when dealing with large fact tables.
+
+**Tags**
+
+
+##### Input 2
+**Type:** Choice
+
+**Question:** How do **indexes** improve SQL query performance?
+
+**Options:** 
+- They allow the engine to perform an index seek, jumping directly to relevant data, instead of scanning the entire table
+
+- They allow the SQL engine to perform a full table scan for every query
+
+- They make data retrieval slower by introducing additional complexity in query execution
+
+- They reduce memory usage but increase storage requirements
+
+**Correct Options:** 
+- They allow the engine to perform an index seek, jumping directly to relevant data, instead of scanning the entire table
+
+**Solution:** 
+Indexes improve performance by allowing the SQL engine to skip directly to the relevant rows using pointers, rather than scanning the entire table. This reduces query execution time, especially for large tables.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 3
+**Type:** Text
+
+A **clustered index** determines the **physical order of rows** in a table. Think of it as the table being sorted by one column — the clustered index column.
+
+- Each table can have **only one clustered index**.
+- It’s automatically created on the **primary key** unless you specify otherwise.
+- Ideal for range-based queries and sorting.
+
+```sql
+CREATE CLUSTERED INDEX IX_Student_Score
+ON student(total_score DESC);
+
+```
+
+This ensures that the `student` table stores rows ordered by `total_score` in descending order.
+
+**Tags**
+
+
+##### Input 4
+**Type:** Choice
+
+**Question:** What is the primary function of a **clustered index** in SQL?
+
+**Options:** 
+- It determines the physical order of rows in a table, based on the indexed column
+
+- It speeds up the execution of aggregate functions like SUM() and COUNT()
+
+- It creates a separate structure for data storage, leaving the table unaffected
+
+- It reduces the memory usage of the database by removing unnecessary data
+
+**Correct Options:** 
+- It determines the physical order of rows in a table, based on the indexed column
+
+**Solution:** 
+A **clustered index** directly affects how data is stored in the table by sorting it according to the indexed column. Since each table can only have one clustered index, it is ideal for queries that involve sorting or range-based operations.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 5
+**Type:** Text
+
+### What is a Non-Clustered Index?
+
+A **non-clustered index** is a **separate structure** that maintains pointers to the actual rows in the table.
+
+- You can have **multiple non-clustered indexes** on a table.
+- Useful for columns frequently used in **filters, joins, or sorting** but not part of the main physical order.
+
+
+```sql
+CREATE NONCLUSTERED INDEX IX_Student_Name
+ON student(name ASC);
+```
+
+
+This index helps the database locate rows where `name = 'Alice'` without scanning the full table.
+
+```sql
+SELECT * FROM student WHERE name = 'Alice';
+```
+
+- **Without Indexes**: Full table scan — every row is checked.
+- **With a Non-Clustered Index on `name`**: The database jumps straight to rows where name is 'Alice' — **Index Seek** instead of **Table Scan**.
+
+**Tags**
+
+
+##### Input 6
+**Type:** Choice
+
+**Question:** Which of the following best describes a **non-clustered index**?
+
+**Options:** 
+- It is a separate structure that contains pointers to the actual rows in the table
+
+- It only allows one index per table
+
+- It alters the physical order of rows in a table
+
+- It creates a new table with the same structure as the original table
+
+**Correct Options:** 
+- It is a separate structure that contains pointers to the actual rows in the table
+
+**Solution:** 
+A **non-clustered index** is a separate data structure that stores pointers to the actual rows in the table. Unlike a clustered index, it does not change the physical order of data but helps improve query performance, especially on columns frequently used in filters or joins.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 7
+**Type:** Text
+
+### Final Best Practices for Indexing
+
+- Always define **primary keys** — they guide relational integrity and indexing.
+- Use **numeric keys** (e.g., INT, BIGINT) over strings for better performance.
+- Create **non-clustered indexes** on columns used in WHERE, JOIN, or ORDER BY clauses.
+- Avoid indexing rarely queried columns — indexes take space and need to be maintained.
+- Monitor query plans to ensure indexes are actually being used (look for *Index Seek* vs. *Table Scan*).
+
+**Tags**
+
+
+### 10 Steps to Optimize SQL for Speed and Scale
+#### Overview
+GlobalMart’s analytics team is facing slow dashboards and rising cloud costs due to inefficient SQL queries on large datasets. As a data analyst, your job is to optimize queries for speed and cost-efficiency. This module teaches 10 practical SQL best practices—like avoiding `SELECT *`, filtering early, smart joins, and using pre-aggregated views—to help you write cleaner, faster, and cheaper queries.
+
+#### Level
+advanced
+
+#### Industries
+- e-commerce
+
+#### Tags
+- sql (tool)
+- approach (skill)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## Best Practice  1 : Fetch Only Necessary Columns
+
+<BR>
+
+
+### **Common Pitfall: Using `SELECT *`**
+
+<BR>
+
+A common practice, especially among newer analysts or during exploratory analysis, is to use `SELECT *`. 
+
+<BR>
+
+#### For example:
+
+```sql
+SELECT *   FROM transactions   WHERE order_date >= '2025-05-01' AND order_date < '2025-06-01';
+```
+
+- This query retrieves **all columns** from the `transactions` table for the month of May 2025. While this might seem convenient during initial exploration, it can be very inefficient.
+
+Imagine that the `transactions` table at GlobalMart contains columns such as:
+
+- `transaction_id`
+    
+- `product_id`
+    
+- `quantity`
+    
+- `price`
+    
+- `discount`
+    
+- `order_date`
+    
+- `shipping_address`
+    
+- `billing_address`
+    
+- ...and more
+    
+
+If the business question is simply “what are the total sales per product for May 2025?”, fetching columns like `shipping_address`, `billing_address`, or `payment_method` is unnecessary and wasteful. The database engine has to read more data, increasing both execution time and resource usage.
+
+---
+
+### ✅ **The Right Way: Fetch Only What You Need**
+
+<BR>
+
+Instead of pulling everything, we should **target only the columns necessary for our business question**. For example:
+
+
+```sql
+SELECT     
+product_id,     
+SUM(quantity) AS total_quantity,     
+SUM(quantity * price - discount) AS total_sales   
+FROM transactions   
+WHERE order_date >= '2025-05-01' 
+AND order_date < '2025-06-01'   
+GROUP BY product_id;
+```
+
+This query only retrieves `product_id`, and the necessary aggregated sales numbers. It avoids loading irrelevant columns, making the query faster and cheaper to run.
+
+<BR>
+
+
+### Performance Comparison
+
+|Query Type|Data Processed|Cost Impact|Query Speed|
+|---|---|---|---|
+|`SELECT *`|Entire row (e.g. ~10 GB)|High|Slow|
+|Targeted SELECT|Only relevant columns (e.g. ~3 GB)|Lower|Faster|
+
+
+<BR>
+
+### 👉 TIP
+<BR>
+ By being deliberate about the columns we fetch, we not only improve performance, but we also make our queries cleaner and easier to maintain
+
+**Tags**
+
+
+##### Input 2
+**Type:** Choice
+
+**Question:** Why is it important to avoid using `SELECT *` in production queries?
+
+**Options:** 
+- It simplifies the query and makes it easier to write
+
+- It reduces the amount of data processed, improving performance and lowering costs
+
+- It ensures that no data is missed during the query
+
+- It guarantees faster query execution, regardless of the columns retrieved
+
+**Correct Options:** 
+- It reduces the amount of data processed, improving performance and lowering costs
+
+**Solution:** 
+Using `SELECT *` fetches all columns, even unnecessary ones, leading to higher memory usage, slower execution times, and increased resource costs. Instead, selecting only the required columns helps optimize performance and reduce unnecessary data processing.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 3
+**Type:** Choice
+
+**Question:** When querying large tables like GlobalMart's `transactions` table, it's crucial to fetch only the necessary columns to improve query speed and reduce costs.
+
+Which of the following queries is more efficient when calculating the total sales per product for May 2025?
+
+**Options:** 
+- SELECT transaction_id, shipping_address, billing_address, order_date FROM transactions WHERE order_date >= '2025-05-01' AND order_date < '2025-06-01';
+
+- SELECT * FROM transactions WHERE order_date >= '2025-05-01' AND order_date < '2025-06-01';
+
+- SELECT * FROM transactions WHERE order_date >= '2025-05-01';
+
+- SELECT product_id, SUM(quantity) AS total_quantity, SUM(quantity * price - discount) AS total_sales FROM transactions WHERE order_date >= '2025-05-01' AND order_date < '2025-06-01' GROUP BY product_id;
+
+**Correct Options:** 
+- SELECT product_id, SUM(quantity) AS total_quantity, SUM(quantity * price - discount) AS total_sales FROM transactions WHERE order_date >= '2025-05-01' AND order_date < '2025-06-01' GROUP BY product_id;
+
+**Solution:** 
+Target only the necessary columns (`product_id`, `quantity`, `price`, `discount`) and aggregates the required values, improving query efficiency. Fetching unnecessary columns or data may increases the processing time and resource usage.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 4
+**Type:** Text
+
+## Best Practice 2 :   Apply WHERE Conditions at the Start
+<BR>
+One of the most effective ways to optimize query performance is to apply filters as early as possible in your SQL statements. This means using `WHERE` conditions to restrict the data before it reaches costly operations like joins, grouping, or sorting.
+
+When the database filters data early:
+
+- It reduces the **number of rows** processed in later stages.
+    
+- It lowers the **memory and CPU usage** during query execution.
+    
+- It helps the query complete **faster** and more efficiently, especially when working with large datasets.
+    
+
+---
+
+### 💡 **What to Avoid**
+
+<BR>
+
+Consider this query, which delays filtering:
+
+
+```sql
+SELECT    
+state,    
+product_category,    
+SUM(quantity * price - discount) AS total_sales  
+FROM transactions 
+GROUP BY state, product_category 
+HAVING state = 'New York';
+```
+
+Here, the database:
+
+- Processes all rows.
+    
+- Groups them by `state` and `product_category`.
+    
+- Then applies the filter after grouping.
+    
+
+This approach wastes processing power on rows that are irrelevant to the final result.
+
+---
+
+### ✅ **The Optimized Way**
+<BR>
+Instead, apply the condition in the `WHERE` clause:
+
+```sql
+SELECT    product_category,    SUM(quantity * price - discount) AS total_sales  FROM transactions WHERE state = 'New York' GROUP BY product_category;
+```
+
+Here’s what happens:
+
+- The database filters out non-New York rows immediately.
+    
+- Only the relevant subset is grouped and aggregated.
+    
+- The query runs faster and uses fewer resources.
+    
+
+---
+
+###  Example
+<BR>
+Suppose your `transactions` table has **50 million rows** across all US states. If you filter early:
+
+- Only about **2 million rows** for New York are processed in the `GROUP BY`.
+    
+- This saves time and cost compared to processing all 50 million rows unnecessarily.
+
+**Tags**
+
+
+##### Input 5
+**Type:** Choice
+
+**Question:** What is the primary benefit of applying `WHERE` conditions before performing costly operations like grouping or sorting?
+
+**Options:** 
+- It guarantees that all data is processed, regardless of relevancy
+
+- It increases the number of rows to be processed, improving query accuracy
+
+- It ensures that all operations are performed in parallel, enhancing performance
+
+- It reduces the number of rows processed in later stages, improving query speed and efficiency
+
+**Correct Options:** 
+- It reduces the number of rows processed in later stages, improving query speed and efficiency
+
+**Solution:** 
+By applying filters early in the query (using `WHERE` conditions), you limit the number of rows that are processed in expensive operations like grouping or sorting, thus speeding up query execution and reducing resource usage.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** Which query is optimized for better performance by applying filters before grouping?
+
+**Options:** 
+- ```sql
+SELECT product_category, SUM(quantity * price - discount) AS total_sales  
+FROM transactions 
+GROUP BY state;
+```
+
+- ```sql
+SELECT * FROM transactions WHERE state = 'New York';
+```
+
+- ```sql
+SELECT state, product_category, SUM(quantity * price - discount) AS total_sales  
+FROM transactions 
+GROUP BY state, product_category 
+HAVING state = 'New York';
+```
+
+- ```sql
+SELECT product_category, SUM(quantity * price - discount) AS total_sales  
+FROM transactions 
+WHERE state = 'New York' 
+GROUP BY product_category;
+```
+
+**Correct Options:** 
+- ```sql
+SELECT product_category, SUM(quantity * price - discount) AS total_sales  
+FROM transactions 
+WHERE state = 'New York' 
+GROUP BY product_category;
+```
+
+**Solution:** 
+```sql
+SELECT product_category, SUM(quantity * price - discount) AS total_sales  
+FROM transactions 
+WHERE state = 'New York' 
+GROUP BY product_category;
+```
+
+This query applies the filter (`WHERE state = 'New York'`) before the `GROUP BY`, ensuring that only the relevant rows are processed. This avoids unnecessary processing of rows that do not meet the filter criteria, making the query faster and more efficient.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 7
+**Type:** Text
+
+## Best Practice 3: Start With the Table of Highest Granularity and Join Forwards
+
+When writing SQL queries that involve multiple joins, it’s important to **start from the table that has the most detailed data **(highest granularity)** and **join towards summary or lookup tables**.
+
+This approach helps:
+
+- Keep intermediate result sets smaller.
+    
+- Avoid unnecessary row expansion during joins.
+    
+- Improve query execution efficiency, especially when handling large datasets.
+    
+
+---
+
+### 💡 **What does "highest granularity" mean?**
+<BR>
+In the context of GlobalMart:
+
+- The `transactions` table records **each individual item sold** — this is high granularity.
+    
+- The `orders` table summarizes a customer's complete order.
+    
+- The `customers` table contains customer profiles — lower granularity.
+    
+- The `locations` table has region-level data — the lowest granularity.
+    
+
+---
+
+### ✅ **The Optimized Join Order**
+<BR>
+
+<BR>
+
+Let’s look at the better approach:
+
+```sql
+SELECT   
+t.transaction_id,   
+t.order_id,   c.customer_name,   
+l.state 
+FROM transactions t 
+INNER JOIN orders o 
+ON t.order_id = o.order_id 
+INNER JOIN customers c 
+ON o.customer_id = c.customer_id 
+INNER JOIN locations l 
+ON c.location_id = l.location_id;
+```
+
+Here:
+
+- We start with `transactions` (most rows, highest detail).
+    
+- Join progressively to `orders`, `customers`, and `locations`.
+    
+
+---
+
+### ⚠ **What to Avoid**
+<BR>
+If you start with a low-granularity table (e.g. `locations`) and join upwards:
+
+- The query engine may have to unnecessarily process and repeat data from larger tables early on.
+    
+- It increases intermediate data size and slows down performance.
+    
+
+---
+
+### Example
+<BR>
+
+Imagine:
+
+- `transactions`: 100 million rows
+    
+- `orders`: 20 million rows
+    
+- `customers`: 5 million rows
+    
+- `locations`: 500 rows
+    
+
+Starting with `transactions` means you join on the largest data chunk first, filtering and reducing rows as you go. This is much more efficient than starting with `locations` and exploding the data unnecessarily.
+
+
+**Tags**
+
+
+##### Input 8
+**Type:** Choice
+
+**Question:** Why is it important to start with the table that has the highest granularity when writing SQL queries with multiple joins?
+
+**Options:** 
+- To avoid unnecessary data filtering
+
+- To reduce intermediate result sets and improve query performance
+
+- To make the query more complex and comprehensive
+
+- To ensure that summary tables are processed first
+
+**Correct Options:** 
+- To reduce intermediate result sets and improve query performance
+
+**Solution:** 
+Starting with the table that has the highest granularity (e.g., `transactions`) reduces the number of rows processed in later stages, improving query performance by keeping intermediate results smaller and avoiding unnecessary row expansion during joins.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 9
+**Type:** Choice
+
+**Question:** Which of the following query orders is **optimized** for performance when joining multiple tables?
+
+**Options:** 
+- ```sql
+SELECT t.transaction_id, t.order_id, l.state
+FROM transactions t
+INNER JOIN locations l ON t.order_id = l.location_id;
+```
+
+- ```sql
+SELECT t.transaction_id, t.order_id, c.customer_name, l.state
+FROM transactions t
+INNER JOIN orders o ON t.order_id = o.order_id
+INNER JOIN customers c ON o.customer_id = c.customer_id
+INNER JOIN locations l ON c.location_id = l.location_id;
+```
+
+- ```sql
+SELECT t.transaction_id, t.order_id, c.customer_name, l.state
+FROM locations l
+INNER JOIN customers c ON l.location_id = c.location_id
+INNER JOIN orders o ON c.customer_id = o.customer_id
+INNER JOIN transactions t ON o.order_id = t.order_id;
+```
+
+- ```sql
+SELECT t.transaction_id, t.order_id, c.customer_name
+FROM locations l
+INNER JOIN transactions t ON l.location_id = t.order_id;
+```
+
+**Correct Options:** 
+- ```sql
+SELECT t.transaction_id, t.order_id, c.customer_name, l.state
+FROM transactions t
+INNER JOIN orders o ON t.order_id = o.order_id
+INNER JOIN customers c ON o.customer_id = c.customer_id
+INNER JOIN locations l ON c.location_id = l.location_id;
+```
+
+**Solution:** 
+Start with `transactions` (highest granularity) and progressively joins towards summary and lookup tables (`orders`, `customers`, `locations`). This approach ensures the query runs more efficiently by filtering and reducing rows as you join, avoiding unnecessary data duplication or processing.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 10
+**Type:** Text
+
+## Best Practice 4 : Apply Filters From High to Low Cardinality Columns
+
+<BR>
+
+When adding WHERE conditions or filters in your SQL queries, prioritize filtering on high-cardinality columns first — that is, columns with many unique values. This approach helps the database engine eliminate irrelevant rows early in the process, speeding up joins and other operations.
+
+<BR>
+
+### 💡 What is cardinality?
+
+- High cardinality = columns with many unique values (e.g., order_id, customer_id).
+
+- Low cardinality = columns with few unique values (e.g., state, product_category).
+
+
+### In GlobalMart:
+
+- customer_id (high cardinality: millions of customers)
+
+- state (low cardinality: ~50 states)
+
+## ✅ Why filter high-cardinality columns first?
+<BR>
+
+- Filtering on high-cardinality columns early:
+
+- Narrows down the dataset dramatically.
+
+- Reduces the number of rows the query engine needs to process in joins or aggregations.
+
+- Improves overall query performance.
+
+### Example
+<BR>
+Suppose you want sales data for office supplies purchased in New York:
+
+If you filter on state (low cardinality) first:
+
+You might get thousands of rows (e.g., all New York transactions).
+
+Then, filtering on product category trims it down further.
+
+If you filter on product category (high cardinality) first:
+
+You might unnecessarily process a larger intermediate dataset (e.g., all office supply transactions across all states) before narrowing down to New York.
+
+### 👉 TIP : 
+
+First filter on state (low cardinality) only if its filter will eliminate a lot of data. But generally, filtering on high-cardinality columns early gives better performance when both filters are selective.
+
+**Tags**
+
+
+##### Input 11
+**Type:** Choice
+
+**Question:** Why is it recommended to filter **high-cardinality columns first** when writing SQL queries?
+
+**Options:** 
+- It guarantees the query will execute faster regardless of the data set size.
+
+- It ensures that fewer rows are selected for the final output.
+
+- It reduces the size of the intermediate result set, speeding up joins and aggregations.
+
+- It automatically reduces the storage requirements for the query.
+
+**Correct Options:** 
+- It reduces the size of the intermediate result set, speeding up joins and aggregations.
+
+**Solution:** 
+Filtering on high-cardinality columns first helps narrow down the data early, reducing the number of rows processed in joins and aggregations. This speeds up the query and reduces resource usage.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 12
+**Type:** Text
+
+## **Best Practice 5: Choose Data Types of Attributes Wisely**
+
+When designing tables or optimizing queries, it's important to **assign the right data types** to your columns. This isn’t just a database design task—it directly affects **query performance**, **storage efficiency**, and **data integrity**.
+
+---
+
+### 🧠 Why It Matters
+
+Choosing the wrong data type can:
+
+- Consume unnecessary **storage** (e.g., using `VARCHAR(MAX)` for short strings).
+    
+- Slow down **queries**, especially those using `WHERE`, `JOIN`, or `GROUP BY` clauses.
+    
+- Make indexing and sorting **less efficient**, especially when dealing with text.
+    
+
+---
+
+### ✅ Best Practices at GlobalMart
+
+- Use **fixed-length types** like `INT`, `DATE`, or `DECIMAL` for structured data when possible.
+    
+- Avoid using `VARCHAR(MAX)` or `NVARCHAR(MAX)` unless the field truly needs it (e.g., product descriptions or customer feedback).
+    
+- Be mindful with string-based IDs (e.g., `TXN0012345`)—while they work, **numeric IDs** (`INT`, `BIGINT`) are much faster for joins and filtering.
+    
+
+---
+
+### 📌 Example
+
+Suppose you have a `customer_id` column stored as a long string like `'CUST_000001'`. Every time you join or filter using this column:
+
+- The database performs **string comparison** (slower).
+    
+- Indexes are **larger** and less efficient.
+    
+
+Instead, storing `customer_id` as a numeric type (e.g., `INT`) enables:
+
+- Faster **lookups**
+    
+- More efficient **indexing**
+    
+- Less **storage overhead**
+
+**Tags**
+
+
+##### Input 13
+**Type:** Choice
+
+**Question:** Why is it important to choose the appropriate **data type** for attributes in your SQL database?
+
+**Options:** 
+- It makes data entry faster
+
+- It ensures the data is more readable for users
+
+- It makes database backups more efficient
+
+- It reduces unnecessary storage usage, improves query performance, and optimizes indexing
+
+**Correct Options:** 
+- It reduces unnecessary storage usage, improves query performance, and optimizes indexing
+
+**Solution:** 
+Choosing the right data type ensures that storage is used efficiently, query performance is optimized, and indexing is faster. Incorrect types, like using `VARCHAR(MAX)` for small strings, can lead to higher resource consumption and slower operations.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 14
+**Type:** Choice
+
+**Question:** Which of the following is a **better practice** when designing a table for fast querying and indexing?
+
+**Options:** 
+- Using VARCHAR(MAX) for all IDs to handle large numbers
+
+- Using VARCHAR(50) for numeric IDs (e.g., CUST_000001)
+
+- Storing all IDs as text fields for flexibility
+
+- Using INT or BIGINT for numeric IDs (e.g., 1002)
+
+**Correct Options:** 
+- Using INT or BIGINT for numeric IDs (e.g., 1002)
+
+**Solution:** 
+Numeric data types like `INT` or `BIGINT` are much faster for joins, filtering, and indexing. Storing IDs as strings (`VARCHAR`) increases overhead due to slower string comparisons and larger index sizes, making queries less efficient.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 15
+**Type:** Text
+
+## Best Practice 6 :  Prefer `GROUP BY` Over `DISTINCT`
+
+In SQL, both `DISTINCT` and `GROUP BY` can be used to remove duplicate records. But when performance and scalability matter—especially with large datasets—**`GROUP BY` is generally more efficient**.
+
+---
+
+### 🧠 Why This Matters
+
+When you use `DISTINCT`, the database engine:
+
+1. Scans and **fetches all matching rows**.
+    
+2. Then performs **duplicate elimination** _after_ selection.
+    
+
+Whereas with `GROUP BY`, the engine:
+
+1. **Groups** rows during the scan itself.
+    
+2. Avoids fetching and holding unnecessary duplicates in memory.
+    
+
+This subtle difference makes `GROUP BY` faster and **less resource-intensive**, especially when working with millions of records.
+
+---
+
+### ✅ Best Practices at GlobalMart
+
+If your goal is just to **get unique values**, but you know the column has a limited number of groups—prefer `GROUP BY`.
+
+Also, when you're applying **aggregations** like `SUM`, `COUNT`, or `AVG`, `GROUP BY` is mandatory and more natural.
+
+---
+
+### 📌 Example
+
+Let’s say you're asked to get the list of unique `customer_id`s from a sales table.
+
+❌ Using `DISTINCT`:
+
+sql
+
+CopyEdit
+
+`SELECT DISTINCT customer_id FROM transactions;`
+
+✅ Using `GROUP BY`:
+
+sql
+
+CopyEdit
+
+`SELECT customer_id FROM transactions GROUP BY customer_id;`
+
+Both return the same output—but `GROUP BY` often performs better, especially if indexed.
+
+If you're aggregating:
+
+sql
+
+CopyEdit
+
+`SELECT customer_id, COUNT(*) AS order_count FROM transactions GROUP BY customer_id;`
+
+This is more efficient and provides more value than using `DISTINCT`.
+
+**Tags**
+
+
+##### Input 16
+**Type:** Choice
+
+**Question:** Why is **GROUP BY** preferred over **DISTINCT** in SQL queries, particularly for large datasets?
+
+**Options:** 
+- GROUP BY groups data during the scan itself, reducing unnecessary memory usage and improving query performance
+
+- DISTINCT requires fewer lines of code than GROUP BY
+
+- GROUP BY always returns fewer rows than DISTINCT
+
+- GROUP BY performs duplicate elimination after fetching all rows, making it more efficient
+
+**Correct Options:** 
+- GROUP BY groups data during the scan itself, reducing unnecessary memory usage and improving query performance
+
+**Solution:** 
+Unlike `DISTINCT`, which fetches all rows first and then eliminates duplicates, `GROUP BY` organizes data during the scan itself, which reduces memory usage and makes the query faster, especially with large datasets.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 17
+**Type:** Text
+
+## Best Practice 7 :  Pre-Aggregate Data Using Views or Temporary Tables
+When working with large datasets and running complex reports repeatedly, reducing repeated computation becomes essential. That’s where pre-aggregated data—via views or temporary tables—comes in.
+
+🧠 Why This Matters
+Suppose your team creates daily, weekly, and monthly performance dashboards at GlobalMart. Each of these reports pulls from the same base tables, performs the same joins and aggregations repeatedly. This not only wastes compute resources but also increases query time.
+
+By pre-aggregating commonly used calculations, you save processing time and avoid recalculating the same logic over and over again.
+
+✅ Best Practices at GlobalMart
+Identify queries or joins that are reused frequently across reports.
+
+Store their outputs as temporary tables or views.
+
+Base downstream queries on these lighter, aggregated sources.
+
+This technique is especially useful for:
+
+Filtering large fact tables by date, region, or product category.
+
+Reusing pre-joined customer or transaction metrics.
+
+📌 Example
+Let’s say you’re analyzing monthly sales trends by region.
+
+Instead of joining transactions, orders, and locations every single time:
+
+sql
+Copy
+Edit
+-- Step 1: Pre-aggregate into a view
+CREATE VIEW monthly_sales_summary AS
+SELECT
+    l.region,
+    FORMAT(o.order_date, 'yyyy-MM') AS month,
+    SUM(t.sales_amount) AS total_sales
+FROM transactions t
+JOIN orders o ON t.order_id = o.order_id
+JOIN locations l ON o.location_id = l.location_id
+GROUP BY l.region, FORMAT(o.order_date, 'yyyy-MM');
+
+-- Step 2: Use the view for reporting
+SELECT *
+FROM monthly_sales_summary
+WHERE region = 'East' AND month >= '2024-01';
+Now your actual reporting queries are faster and simpler—because the heavy lifting has already been done.
+
+
+
+**Tags**
+
+
+##### Input 18
+**Type:** Choice
+
+**Question:** Why is **pre-aggregating data** using views or temporary tables beneficial in SQL queries?
+
+**Options:** 
+- It simplifies SQL syntax but doesn’t impact performance
+
+- It increases storage requirements without any performance benefits
+
+- It only applies to non-aggregated data
+
+- It reduces the number of queries needed by storing final results, speeding up report generation
+
+**Correct Options:** 
+- It reduces the number of queries needed by storing final results, speeding up report generation
+
+**Solution:** 
+Pre-aggregating data with views or temporary tables eliminates the need for repeated complex joins and calculations, saving time and resources. By storing the results of frequently used queries, you improve query performance, especially when generating reports on large datasets.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 19
+**Type:** Text
+
+## Best Practice 8 :  Use Numeric Primary Keys and Clustered Indexes
+
+When designing or optimizing your database, one critical performance factor is how your **primary keys** are defined. While this might sound like a developer or DBA’s responsibility, understanding this helps analysts write faster queries and troubleshoot performance issues better.
+
+Let’s break it down.
+
+#### What’s the Problem?
+
+At GlobalMart, you often query tables like `Orders`, `Transactions`, or `Customers` using their primary keys — such as `Order_ID`, `Transaction_ID`, or `Customer_ID`. However, these IDs are often alphanumeric strings like `"ORD-2024-009872"`. While they’re useful for humans, they’re not the most efficient for query performance.
+
+Here’s why.
+
+#### Why Numeric Primary Keys Are Better
+
+1. **Faster Sorting and Comparison**  
+    Numeric fields are inherently easier and faster for the system to sort, compare, and search than strings. This helps especially in joins and filters using `WHERE`, `JOIN`, or `ORDER BY`.
+    
+2. **Reduced Storage Space**  
+    Integers consume less space (e.g., 4 bytes for an `INT` vs potentially dozens of bytes for a string), which leads to faster I/O operations, especially at scale.
+    
+3. **Improved Indexing**  
+    Indexes on numeric columns are more efficient and lead to **Clustered Index Seeks** (fast), whereas indexes on strings often result in **Clustered Index Scans** or even **Table Scans** (slow).
+    
+
+#### Clustered Index vs Non-Clustered vs Table Scan
+
+Think of a **Clustered Index** like a sorted address book — if it's sorted by customer ID (a number), finding an entry is instant. But if it's not sorted, or sorted by something less efficient (like long strings), the system takes longer.
+
+- **Clustered Index Seek** → Fast and direct access using sorted keys.
+    
+- **Clustered Index Scan** → Slower, scans through ranges of rows.
+    
+- **Table Scan** → Slowest, checks every row in the table.
+    
+
+---
+
+### ✅ Best Practice
+
+- Use **numeric-only primary keys** wherever possible.  
+    Example: Instead of `CUST-2023-ABX1789`, use `Customer_ID = 10298`.
+    
+- Make sure your tables have **Clustered Indexes** on the primary key (or any frequently filtered/joined column).
+    
+- Avoid wide-character types (like `NVARCHAR(MAX)`) as keys — they are not index-friendly.
+
+**Tags**
+
+
+##### Input 20
+**Type:** Choice
+
+**Question:** Why are **numeric primary keys** preferred over alphanumeric strings in database design?
+
+**Options:** 
+- Numeric keys consume less storage and are faster for sorting, comparisons, and indexing
+
+- Numeric keys automatically optimize query results
+
+- Numeric keys support faster data entry
+
+- Numeric keys are more readable for users
+
+**Correct Options:** 
+- Numeric keys consume less storage and are faster for sorting, comparisons, and indexing
+
+**Solution:** 
+Numeric primary keys are more efficient than alphanumeric ones because they take up less storage space, are faster to compare, and perform better in indexing and sorting, especially when used in joins or filtering.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 21
+**Type:** Text
+
+## Best Practice 9 :  Prefer GROUP BY Over DISTINCT for Better Performance
+In analytics at GlobalMart, summarizing or deduplicating data is common. You might want to count unique customers, summarize orders per month, or remove duplicate rows. Two commonly used SQL keywords for this are GROUP BY and DISTINCT.
+
+But here's the key:
+When both can be used, prefer GROUP BY over DISTINCT.
+
+What’s the Difference?
+DISTINCT removes duplicate rows after selecting the data.
+
+GROUP BY organizes the data into groups before selection.
+
+That difference in order has big performance implications.
+
+Why GROUP BY Performs Better
+Early Data Reduction
+GROUP BY allows the database engine to collapse data early in the execution plan — often during the scan phase — which reduces the workload downstream.
+
+Less Memory Usage
+Because GROUP BY aggregates as it goes, it needs to track fewer intermediate results than DISTINCT, which first pulls all the rows, then removes duplicates.
+
+Optimized Execution Plan
+The SQL engine can often use indexes better with GROUP BY than DISTINCT, especially when you're also calculating aggregates like SUM(), COUNT(), or AVG().
+
+Scenario at GlobalMart
+Let’s say you want to find how many orders were placed by each customer.
+
+You can do it in two ways:
+
+sql
+Copy
+Edit
+-- Using GROUP BY (preferred)
+SELECT customer_id, COUNT(order_id) AS total_orders
+FROM orders
+GROUP BY customer_id;
+sql
+Copy
+Edit
+-- Using DISTINCT (less efficient in this case)
+SELECT DISTINCT customer_id
+FROM orders;
+The GROUP BY query is not only more informative (it gives order counts), but also lets the engine optimize the process by grouping rows as they’re read — especially if an index exists on customer_id.
+
+✅ Best Practice
+Use GROUP BY when you're aggregating or summarizing — even if you only want unique rows.
+
+Avoid using DISTINCT on large tables unless absolutely necessary.
+
+Always prefer logic that reduces data earlier in the query pipeline.
+
+
+
+**Tags**
+
+
+##### Input 22
+**Type:** Text
+
+## Best Practice 10 :  Use Pre-Aggregated Views or Summary Tables (Cubes) Wherever Possible
+
+In large organizations like **GlobalMart**, repeated analytical queries often involve the same set of joins, filters, and groupings. If every dashboard or report recalculates everything from raw data, performance suffers — especially with high volumes of transaction data.
+
+That’s where **pre-aggregated views** and **summary tables (also called cubes)** come into play.
+
+---
+
+#### What Are Pre-Aggregated Views?
+
+A **pre-aggregated view** is a saved SQL query result — often containing summarized data like monthly sales by region or daily transaction counts — which is refreshed at scheduled intervals.
+
+These views:
+
+- Contain only the essential data for reporting
+    
+- Avoid repeating expensive operations (joins, groupings)
+    
+- Act like a cached result for commonly accessed metrics
+    
+
+---
+
+#### Why Are They Useful?
+
+1. **Significantly Faster Query Execution**  
+    Since data is already grouped or summarized, reports run on smaller datasets.
+    
+2. **Reduces Load on Raw Tables**  
+    Heavy joins and filters aren't run again and again, especially during peak usage times.
+    
+3. **Improves Report Stability**  
+    Pre-aggregated views are less prone to breaking due to schema changes in base tables.
+    
+4. **Enables Reuse Across Teams**  
+    Analysts and dashboard creators can use the same clean dataset with consistent logic.
+    
+
+---
+
+#### Application at GlobalMart
+
+Let’s say your team frequently builds weekly sales dashboards broken down by region and product category. Instead of running a full join and aggregation every time, create a view like this:
+
+sql
+
+CopyEdit
+
+`CREATE VIEW vw_weekly_sales_summary AS SELECT      region,     product_category,     DATEPART(week, order_date) AS week_num,     SUM(sales_amount) AS total_sales FROM orders o JOIN transactions t ON o.order_id = t.order_id JOIN products p ON o.product_id = p.product_id JOIN customers c ON o.customer_id = c.customer_id GROUP BY region, product_category, DATEPART(week, order_date);`
+
+Then, dashboards can query this lightweight view directly — making things much faster and consistent.
+
+---
+
+### ✅ Best Practice
+
+- Identify **repetitive logic** in dashboards and reports — candidates for views.
+    
+- Build **materialized views** or **temporary tables** when performance matters.
+    
+- Schedule **refreshes** of pre-aggregated views based on business frequency (daily, weekly, etc.).
+
+**Tags**
+
+
+##### Input 23
+**Type:** Choice
+
+**Question:** Which of the following approaches is **most efficient** for generating weekly sales reports by region and product category?
+
+**Options:** 
+- Creating a pre-aggregated view to summarize weekly sales and querying it for reports
+
+- Querying the raw data without any aggregation
+
+- Performing full joins and aggregations for every report
+
+- Running the same calculations manually in each report without any automation
+
+**Correct Options:** 
+- Creating a pre-aggregated view to summarize weekly sales and querying it for reports
+
+**Solution:** 
+Creating a pre-aggregated view, such as `vw_weekly_sales_summary`, ensures that complex joins and aggregations are done once. This makes querying the view much faster for dashboards, saving time and reducing resource consumption compared to recalculating data in every report.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+### A Data Analyst’s Mission to Optimize Insights
+#### Overview
+You're stepping into the shoes of a data analyst at GlobalMart, a fast-growing e-commerce company. As data volumes surge, dashboards slow down, reports lag, and cloud costs rise. The leadership expects the analytics team to fix this.
+
+Your goal? Optimize SQL queries to make dashboards faster, reduce compute costs, and improve overall efficiency—without sacrificing insight quality. This module shows you how query optimization can drive real-time decisions, cost savings, and better user experiences.
+
+#### Level
+advanced
+
+#### Industries
+- e-commerce
+
+#### Tags
+- approach (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+Imagine you’re a data analyst at **GlobalMart**, an emerging e-commerce company that is rapidly gaining market share and competing with industry giants like Amazon. With over **10 million customers**, **500,000+ products**, and operations across multiple countries, GlobalMart processes millions of transactions daily. As the company scales, its leadership team is starting to notice that dashboards are slowing down, reports take longer to generate, and cloud data processing costs are rising steadily.
+
+Recently, the **COO of GlobalMart** raised a concern in a team meeting:
+
+> _“Our cloud compute costs are increasing, and our BI dashboards have become sluggish. Can the analytics team help us optimize our queries so we can deliver faster insights without burning through our budget?”_
+
+As an analyst, your mission is to:
+
+- Speed up queries
+    
+- Reduce resource usage
+    
+- Ensure timely and cost-effective insights
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+### **Why Query Optimization Matters at Scale**
+
+<BR>
+
+When working with large datasets like GlobalMart’s, even small inefficiencies in queries add up quickly. Unoptimized queries lead to unnecessary data processing, longer query times, higher memory usage, and ultimately increased cost — especially in cloud platforms like Snowflake, BigQuery, or Databricks, where you often pay for data scanned or compute time used.
+
+By contrast, optimized queries help ensure that:
+
+- Reports run faster.
+    
+- Dashboards are more responsive.
+    
+- Compute resources are used efficiently.
+    
+- The company saves money on cloud costs.
+    
+
+Your mission is to make your queries lean and efficient, without compromising the quality of insights.
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+**Business Impact of Slow Queries**
+
+👉 Why should we care about optimizing queries?
+
+|❌ Slow Queries Mean|✅ Fast Queries Enable|
+|---|---|
+|Delayed decisions|Real-time insights|
+|Higher cloud costs (e.g. Snowflake/BigQuery costs per data scanned)|Lower compute/storage cost|
+|Frustrated stakeholders|Smoother dashboard & report performance|
+
+
+**Tags**
+
+
+##### Input 4
+**Type:** Choice
+
+**Question:** Why is **query optimization** important for GlobalMart as it scales?
+
+**Options:** 
+- To make reports more complex for better decision-making
+
+- To increase the size of the data being processed
+
+- To reduce cloud computing costs and ensure faster insights
+
+- To store more data in the cloud
+
+**Correct Options:** 
+- To reduce cloud computing costs and ensure faster insights
+
+**Solution:** 
+Optimizing queries is crucial as it directly impacts cloud costs and query performance. Well-optimized queries help in processing data faster, reduce unnecessary resource usage, and ensure the company delivers timely insights without increasing cloud compute costs.
+
+**Tags**
+- approach / concept-clarity (skill)
+
+##### Input 5
+**Type:** Choice
+
+**Question:** What is the **primary business impact** of slow queries at GlobalMart?
+
+**Options:** 
+- Lower memory usage and faster report generation
+
+- Faster decision-making and increased operational costs
+
+- Delayed decisions, higher cloud costs, and frustrated stakeholders
+
+- Real-time insights and smoother report performance
+
+**Correct Options:** 
+- Delayed decisions, higher cloud costs, and frustrated stakeholders
+
+**Solution:** 
+Slow queries lead to delayed decision-making, increased cloud costs (due to more data being processed), and frustrated stakeholders who rely on timely insights. Optimizing queries helps avoid these issues by ensuring faster, more efficient reporting and insights.
+
+**Tags**
+- approach / concept-clarity (skill)

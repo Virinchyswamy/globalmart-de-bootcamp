@@ -1,0 +1,700 @@
+# Understanding Correlated Queries with EXISTS and NOT EXISTS
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to use correlated subqueries with EXISTS and NOT EXISTS to filter records based on the existence or absence of related data. You will master NULL-safe filtering patterns and apply aggregate conditions within subqueries for real business problems.
+
+## Learning Objectives
+- Understand the difference between correlated and non-correlated subqueries
+- Use NOT EXISTS to find records with no related data
+- Use EXISTS to filter records that have related data
+- Combine EXISTS with GROUP BY and HAVING for aggregate conditions
+- Write correlated subqueries with JOINs inside the subquery
+- Choose EXISTS and NOT EXISTS over IN and NOT IN for NULL-safe filtering
+
+## Prerequisites
+- Basic SQL syntax including SELECT, FROM, WHERE, GROUP BY, HAVING, and ORDER BY
+- Aggregate functions such as COUNT, SUM, AVG, MIN, and MAX
+- JOIN operations including INNER JOIN and LEFT JOIN
+- Understanding of table relationships and foreign keys
+
+## Duration of Completion
+60 minutes
+
+## Level
+Intermediate
+
+## Industries
+- general
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+In this scenario you will learn how to use correlated subqueries with EXISTS and NOT EXISTS to filter records based on the existence or absence of related data. You will master NULL-safe filtering patterns and apply aggregate conditions within subqueries for real business problems.
+
+#### Level
+intermediate
+
+#### Industries
+- general
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## The Business Challenge: GlobalMart Customer and Product Intelligence
+
+Sarah, a Data Analyst intern at GlobalMart, received her first major assignment from the Chief Marketing Officer (CMO) and Chief Operations Officer (COO). The company was preparing for its annual strategic planning cycle, and leadership needed critical insights about customer behavior and product performance.
+
+GlobalMart operates a large e-commerce platform with thousands of customers, orders, and products. The leadership team needed answers to three specific questions:
+
+---
+
+### Analysis 1: Dormant Customer Re-engagement
+
+The marketing team was planning a **re-engagement email campaign** targeting customers who signed up but never purchased. These customers represented untapped revenue potential.
+
+**Business Question:** Which customers have never placed an order?
+
+**Why It Matters:**
+- Understanding dormant customer volume helps budget the campaign
+- These customers need different messaging than active customers
+- Re-engagement is often cheaper than acquiring new customers
+
+**Data Need:** Find all customers in `ex_customers` who have zero orders in `ex_orders`.
+
+---
+
+### Analysis 2: VIP Loyalty Program
+
+GlobalMart was launching a **VIP Loyalty Program** for high-value customers. Qualifying customers would receive exclusive benefits including early access, dedicated support, and special discounts.
+
+**Business Question:** Which customers have placed more than 20 successful orders?
+
+**Why It Matters:**
+- The program aims to retain the most valuable customer segment
+- High-volume customers drive disproportionate revenue
+- Personalized rewards increase customer lifetime value
+
+**Data Need:** Find all customers who have more than 20 orders with status = 'delivered'.
+
+---
+
+### Analysis 3: Dead Stock Identification
+
+The inventory team was conducting a **dead stock audit**. Products that have never sold are candidates for clearance pricing or discontinuation.
+
+**Business Question:** Which products have never been part of a successful sale?
+
+**Why It Matters:**
+- Removing dead stock frees up warehouse space and capital
+- Clearance pricing recovers some value from unsold inventory
+- Discontinuing poor performers improves overall product mix
+
+**Data Need:** Find all products in `ex_products` that have no record in a delivered transaction.
+
+---
+
+### The Data Structure
+
+| Table | Key Columns | Description |
+|-------|-------------|-------------|
+| `ex_customers` | customer_id, customer_name, postal_code | Customer master data |
+| `ex_orders` | order_id, customer_id, order_status | Order headers |
+| `ex_transactions` | order_id, product_id | Transaction line items |
+| `ex_products` | product_id, product_name, category, sub_category | Product catalog |
+
+### Entity Relationship
+
+```
+ex_customers
+    │
+    │ customer_id (1)
+    │
+    ▼
+ex_orders (N)
+    │
+    │ order_id (1)
+    │
+    ▼
+ex_transactions (N)
+    │
+    │ product_id (N)
+    │
+    ▼
+ex_products (1)
+```
+
+---
+
+### Why Standard Approaches Fall Short
+
+**Approach 1: LEFT JOIN with NULL Check**
+
+```sql
+-- Works for dormant customers, but verbose
+SELECT c.customer_id, c.customer_name
+FROM ex_customers c
+LEFT JOIN ex_orders o ON c.customer_id = o.customer_id
+WHERE o.order_id IS NULL;
+```
+
+**Approach 2: NOT IN (Problematic with NULLs)**
+
+```sql
+-- Dangerous: Fails if subquery returns any NULL
+SELECT c.customer_id, c.customer_name
+FROM ex_customers c
+WHERE c.customer_id NOT IN (
+    SELECT o.customer_id FROM ex_orders o
+);
+```
+
+**Problem:** If any `customer_id` in `ex_orders` is NULL, the entire query returns no results.
+
+**Approach 3: Aggregation with HAVING (Works but requires extra steps)**
+
+```sql
+-- Requires joining and grouping, then filtering
+SELECT c.customer_id, c.customer_name
+FROM ex_customers c
+LEFT JOIN ex_orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.customer_name
+HAVING COUNT(o.order_id) = 0;
+```
+
+---
+
+### Sarah's Task
+
+Sarah needed to learn **correlated subqueries with EXISTS and NOT EXISTS** — a powerful SQL feature that provides clean, NULL-safe filtering for existence checks.
+
+A correlated subquery is a query that **references a column from the outer query**. It executes once for each row in the outer query, checking a condition specific to that row.
+
+| Operator | What It Does |
+|----------|--------------|
+| **NOT EXISTS** | Returns TRUE if subquery finds zero matching rows |
+| **EXISTS** | Returns TRUE if subquery finds one or more matching rows |
+| **EXISTS with HAVING** | Filters based on aggregate conditions in related table |
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Concept 1: NOT EXISTS — Find Records with No Related Data
+
+### What Is NOT EXISTS?
+
+`NOT EXISTS` returns `TRUE` if the subquery finds **zero matching rows**. It is commonly used to find records in one table that have no related records in another table.
+
+### Syntax
+
+```sql
+SELECT columns
+FROM table_a a
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM table_b b
+    WHERE b.foreign_id = a.id
+);
+```
+
+### Example: Dormant Customers
+
+**Scenario:** Find all customers who have never placed an order.
+
+```sql
+SELECT
+    c.customer_id,
+    c.customer_name,
+    c.postal_code
+FROM ex_customers c
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM ex_orders o
+    WHERE o.customer_id = c.customer_id
+);
+```
+
+### Output
+
+| customer_id | customer_name | postal_code |
+|-------------|---------------|-------------|
+| CUST-0023 | Sarah Mitchell | 30301 |
+| CUST-0156 | James Nguyen | 85001 |
+| CUST-0289 | Emily Carter | 94105 |
+| CUST-0412 | Michael Brown | 02101 |
+
+### How It Works
+
+| Outer Row (Customer) | Subquery Result | NOT EXISTS | Included in Output? |
+|---------------------|-----------------|------------|---------------------|
+| CUST-0023 | 0 orders found | TRUE | Yes |
+| CUST-0100 | 5 orders found | FALSE | No |
+| CUST-0156 | 0 orders found | TRUE | Yes |
+| CUST-0200 | 12 orders found | FALSE | No |
+
+>[!TIP] 
+> This is success`SELECT 1` in the subquery is a convention. Since EXISTS only checks for row existence, the selected columns do not matter.
+
+---
+
+### Correlated vs Non-Correlated Subqueries
+
+**Non-Correlated Subquery (Executes Once):**
+
+```sql
+SELECT customer_id, customer_name
+FROM ex_customers
+WHERE customer_id IN (
+    SELECT customer_id FROM ex_orders
+);
+```
+
+The subquery executes once, and the result is used by the outer query.
+
+**Correlated Subquery (Executes Per Row):**
+
+```sql
+SELECT c.customer_id, c.customer_name
+FROM ex_customers c
+WHERE EXISTS (
+    SELECT 1 FROM ex_orders o
+    WHERE o.customer_id = c.customer_id
+);
+```
+
+The subquery executes once for each row in `ex_customers`, using that row's `customer_id`.
+
+### Comparison
+
+| Feature | Non-Correlated | Correlated |
+|---------|----------------|------------|
+| **Execution** | Once | Once per outer row |
+| **Reference to outer query** | No | Yes |
+| **Performance** | Generally faster | Can be slower on large datasets |
+| **Use case** | Simple filtering | Row-specific conditions |
+
+---
+
+### Why NOT EXISTS Is NULL-Safe
+
+Unlike `NOT IN`, the `NOT EXISTS` operator handles NULL values correctly:
+
+```sql
+-- NOT IN fails with NULLs
+WHERE customer_id NOT IN (SELECT customer_id FROM ex_orders)
+-- Returns no rows if any customer_id is NULL
+
+-- NOT EXISTS handles NULLs correctly
+WHERE NOT EXISTS (SELECT 1 FROM ex_orders o WHERE o.customer_id = c.customer_id)
+-- Always returns correct results
+```
+
+>[!IMPORTANT] 
+> This is importantAlways prefer `NOT EXISTS` over `NOT IN` when checking for missing related records. It is both NULL-safe and often more efficient.
+
+
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+## Concept 2: EXISTS with Aggregation — Filter by Aggregate Conditions
+
+### What Is This Pattern?
+
+Combine `EXISTS` with `GROUP BY` and `HAVING` inside the subquery to filter outer rows based on aggregate conditions in related tables.
+
+### Syntax
+
+```sql
+SELECT columns
+FROM table_a a
+WHERE EXISTS (
+    SELECT 1
+    FROM table_b b
+    WHERE b.foreign_id = a.id
+      AND <additional_conditions>
+    GROUP BY b.foreign_id
+    HAVING <aggregate_condition>
+);
+```
+
+### Key Rule
+
+>[!IMPORTANT] 
+> This is important The `GROUP BY` and `HAVING` clauses must be **inside the subquery**, not in the outer query. The outer table has no aggregate data — only the subquery does.
+
+### Example: VIP Customers
+
+**Scenario:** Find customers with more than 20 delivered orders.
+
+```sql
+SELECT
+    c.customer_id,
+    c.customer_name,
+    c.postal_code
+FROM ex_customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM ex_orders o
+    WHERE o.customer_id = c.customer_id
+      AND o.order_status = 'delivered'
+    GROUP BY o.customer_id
+    HAVING COUNT(o.order_id) > 20
+);
+```
+
+### Output
+
+| customer_id | customer_name | postal_code |
+|-------------|---------------|-------------|
+| CUST-0041 | Maria Gonzalez | 10001 |
+| CUST-0089 | David Thompson | 60601 |
+| CUST-0213 | Priya Sharma | 94102 |
+| CUST-0356 | Robert Chen | 33101 |
+
+### How It Works
+
+| Customer | Subquery Execution | Result |
+|----------|-------------------|--------|
+| CUST-0041 | Count delivered orders = 25 | 25 > 20 → TRUE → EXISTS → Include |
+| CUST-0100 | Count delivered orders = 15 | 15 > 20 → FALSE → NOT included |
+| CUST-0089 | Count delivered orders = 32 | 32 > 20 → TRUE → EXISTS → Include |
+
+### Step-by-Step Breakdown
+
+```
+For each customer in ex_customers:
+
+1. Subquery filters ex_orders:
+   - WHERE customer_id matches
+   - AND order_status = 'delivered'
+
+2. Subquery groups by customer_id:
+   - GROUP BY o.customer_id
+
+3. Subquery applies HAVING:
+   - HAVING COUNT(o.order_id) > 20
+
+4. If subquery returns any row:
+   - EXISTS = TRUE → Customer included
+   - EXISTS = FALSE → Customer excluded
+```
+
+>[!TIP] 
+> This is success The subquery returns rows only for customers who meet the aggregate condition. EXISTS checks if any row was returned.
+
+---
+
+### Common Use Cases
+
+| Business Question | Pattern |
+|-------------------|---------|
+| Customers with more than N orders | EXISTS + HAVING COUNT > N |
+| Products with total sales above threshold | EXISTS + HAVING SUM > threshold |
+| Employees managing more than N people | EXISTS + HAVING COUNT > N |
+| Suppliers with average rating below threshold | EXISTS + HAVING AVG < threshold |
+
+---
+
+**Tags**
+
+
+##### Input 4
+**Type:** Text
+
+## Concept 3: NOT EXISTS with JOIN Inside Subquery
+
+### What Is This Pattern?
+
+Sometimes you need to check for related data across multiple tables. You can `JOIN` tables inside the `NOT EXISTS` subquery.
+
+### Syntax
+
+```sql
+SELECT columns
+FROM table_a a
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM table_b b
+    JOIN table_c c ON b.id = c.foreign_id
+    WHERE b.foreign_id = a.id
+      AND c.<condition>
+);
+```
+
+### Example: Dead Stock Products
+
+**Scenario:** Find products that have never been part of a delivered order.
+
+```sql
+SELECT
+    p.product_id,
+    p.product_name,
+    p.category,
+    p.sub_category
+FROM ex_products p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM ex_transactions t
+    JOIN ex_orders o ON t.order_id = o.order_id
+    WHERE t.product_id = p.product_id
+      AND o.order_status = 'delivered'
+);
+```
+
+### Output
+
+| product_id | product_name | category | sub_category |
+|------------|--------------|----------|--------------|
+| PROD-0014 | Wireless Presenter | Technology | Accessories |
+| PROD-0067 | Legal Bookcase | Furniture | Bookcases |
+| PROD-0102 | Mesh Task Chair | Furniture | Chairs |
+| PROD-0189 | USB Hub | Technology | Peripherals |
+
+### How the Subquery Works
+
+```
+For each product in ex_products:
+
+1. Subquery joins ex_transactions with ex_orders:
+   - JOIN ex_orders o ON t.order_id = o.order_id
+
+2. Subquery filters:
+   - WHERE t.product_id = p.product_id (correlation)
+   - AND o.order_status = 'delivered'
+
+3. If subquery finds zero rows:
+   - NOT EXISTS = TRUE → Product included (dead stock)
+   
+4. If subquery finds any row:
+   - NOT EXISTS = FALSE → Product excluded (has been sold)
+```
+
+### Why JOIN Inside the Subquery?
+
+| Reason | Explanation |
+|--------|-------------|
+| Access order status | `ex_transactions` has product_id, but `ex_orders` has order_status |
+| Maintain correlation | The product correlation is through `ex_transactions` |
+| Single subquery | No need for nested subqueries or CTEs |
+
+>[!IMPORTANT] 
+> This is importantThe correlation is `t.product_id = p.product_id`, not `t.order_id = p.product_id`. Match the correct foreign key relationship.
+
+---
+
+### EXISTS and NOT EXISTS vs IN and NOT IN
+
+| Issue | IN or NOT IN | EXISTS or NOT EXISTS |
+|-------|--------------|---------------------|
+| **NULL handling** | Fails if subquery returns NULL | Handles NULLs correctly |
+| **Performance** | Materializes entire subquery result | Stops after first match (EXISTS) |
+| **Readability** | Less intuitive for existence checks | Clearly expresses intent |
+
+### The NULL Problem with NOT IN
+
+If `ex_orders` contains:
+
+| customer_id |
+|-------------|
+| 101 |
+| 102 |
+| NULL |
+| 105 |
+
+The condition becomes:
+```sql
+WHERE customer_id NOT IN (101, 102, NULL, 105)
+```
+
+This is logically equivalent to:
+```sql
+WHERE customer_id != 101 
+  AND customer_id != 102 
+  AND customer_id != NULL  -- This is UNKNOWN, not TRUE!
+  AND customer_id != 105
+```
+
+In SQL, `value != NULL` evaluates to `UNKNOWN`, not `TRUE`. The entire WHERE clause becomes `UNKNOWN`, and no rows are returned.
+
+### The NULL-Safe Alternative
+
+```sql
+SELECT c.customer_id, c.customer_name
+FROM ex_customers c
+WHERE NOT EXISTS (
+    SELECT 1 FROM ex_orders o
+    WHERE o.customer_id = c.customer_id
+);
+```
+
+`NOT EXISTS` checks for row existence, not value comparison. NULL values in the data do not affect the logic.
+
+>[!IMPORTANT] 
+> This is important Always prefer `NOT EXISTS` over `NOT IN` when checking for missing related records. It is both NULL-safe and often more efficient.
+
+---
+
+**Tags**
+
+
+##### Input 5
+**Type:** Choice
+
+**Question:** What is the key difference between a correlated subquery and a non-correlated subquery?
+
+**Options:** 
+- A correlated subquery executes once, while a non-correlated subquery executes once per outer row
+
+- A correlated subquery references a column from the outer query, while a non-correlated subquery does not
+
+- A correlated subquery uses EXISTS, while a non-correlated subquery uses IN
+
+- A correlated subquery is always faster than a non-correlated subquery
+
+**Correct Options:** 
+- A correlated subquery references a column from the outer query, while a non-correlated subquery does not
+
+**Solution:** 
+- A **correlated subquery** references a column from the outer query, which means it executes once for each row in the outer query.
+- A **non-correlated subquery** is independent and executes only once, with the result used by the outer query.
+- The correlation condition (e.g., `o.customer_id = c.customer_id`) is what makes a subquery correlated.
+- Performance depends on the data and indexing; correlated subqueries are not always faster or slower.
+
+**Tags**
+- data-wrangling / correlated-queries (skill)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** Which of the following statements about EXISTS and NOT EXISTS are TRUE? (Select 2)
+
+**Options:** 
+- NOT EXISTS returns TRUE when the subquery finds zero matching rows
+
+- EXISTS with GROUP BY and HAVING requires the HAVING clause to be in the outer query
+
+- NOT EXISTS handles NULL values correctly, unlike NOT IN
+
+- EXISTS can only be used with simple subqueries, not with JOINs inside
+
+**Correct Options:** 
+- NOT EXISTS returns TRUE when the subquery finds zero matching rows
+
+- NOT EXISTS handles NULL values correctly, unlike NOT IN
+
+**Solution:** 
+- **NOT EXISTS** returns TRUE when the subquery finds zero matching rows, which is the opposite of EXISTS.
+- **NOT EXISTS** is NULL-safe because it checks for row existence, not value comparison. This makes it more reliable than NOT IN.
+- The **HAVING clause must be inside the subquery**, not the outer query, because only the subquery has the aggregate data.
+- **EXISTS and NOT EXISTS can include JOINs** inside the subquery when you need to check conditions across multiple tables.
+
+**Tags**
+- data-wrangling / correlated-queries (skill)
+
+##### Input 7
+**Type:** Choice
+
+**Question:** In the dead stock products query, why is the JOIN between ex_transactions and ex_orders placed inside the NOT EXISTS subquery?
+
+**Options:** 
+- To improve query performance by reducing the number of tables in the outer query
+
+- Because the order_status column needed to filter delivered orders is in ex_orders, not ex_transactions
+
+- To make the query syntax simpler and easier to read
+
+- Because JOINs are not allowed in the outer query when using NOT EXISTS
+
+**Correct Options:** 
+- Because the order_status column needed to filter delivered orders is in ex_orders, not ex_transactions
+
+**Solution:** 
+- The JOIN is inside the subquery because we need to access **order_status** from `ex_orders` to filter for delivered orders.
+- The `ex_transactions` table has `product_id` for correlation, but `ex_orders` has `order_status` for filtering.
+- By joining these tables inside the subquery, we can check if a product has ever been part of a delivered order.
+- JOINs are allowed in both outer and inner queries; the placement depends on the logical requirement, not syntax restrictions.
+
+**Tags**
+- data-wrangling / correlated-queries (skill)
+
+##### Input 8
+**Type:** Text
+
+## Summary: Key Takeaways
+
+### Syntax Templates
+
+```sql
+-- NOT EXISTS: Find records with no related data
+SELECT * FROM table_a a
+WHERE NOT EXISTS (
+    SELECT 1 FROM table_b b
+    WHERE b.foreign_id = a.id
+);
+
+-- EXISTS with Aggregation: Filter by aggregate condition
+SELECT * FROM table_a a
+WHERE EXISTS (
+    SELECT 1 FROM table_b b
+    WHERE b.foreign_id = a.id
+    GROUP BY b.foreign_id
+    HAVING COUNT(*) > threshold
+);
+
+-- NOT EXISTS with JOIN: Check absence across tables
+SELECT * FROM table_a a
+WHERE NOT EXISTS (
+    SELECT 1 FROM table_b b
+    JOIN table_c c ON b.id = c.foreign_id
+    WHERE b.foreign_id = a.id
+      AND c.condition = 'value'
+);
+```
+
+### Decision Guide
+
+| Business Question | Pattern to Use |
+|-------------------|----------------|
+| Never had any related records | NOT EXISTS (simple) |
+| Has at least one related record | EXISTS (simple) |
+| Has more than N related records | EXISTS + GROUP BY + HAVING |
+| Never had related records with condition | NOT EXISTS + JOIN inside |
+
+### Best Practices
+
+| Practice | Why |
+|----------|-----|
+| Use `SELECT 1` in subquery | EXISTS only checks row existence |
+| Always include correlation condition | Without it, subquery is not correlated |
+| Put HAVING inside subquery | Outer query has no aggregate data |
+| Prefer NOT EXISTS over NOT IN | NULL-safe and often faster |
+| Filter early in subquery | Reduces rows to process |
+
+
+### Next Steps
+
+You've now learned how correlated subqueries with EXISTS and NOT EXISTS work. Practice identifying when to use these patterns for existence checks, and you will be able to write clean, NULL-safe queries for real business problems.
+
+---
+
+**Tags**
+

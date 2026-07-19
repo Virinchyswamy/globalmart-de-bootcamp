@@ -1,0 +1,480 @@
+# Tier-based loyalty discount report
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to build a Python-based loyalty tier segmentation system for GlobalMart by applying Pandas groupby operations, conditional logic, and DataFrame merging to classify customers into tiers and calculate discounted prices on new orders.
+
+## Learning Objectives
+- Apply groupby and aggregation to calculate each customer's total spending and order count over a six-month period
+- Design a tier assignment function using conditional logic to segment customers into Silver, Gold, and Platinum tiers
+- Implement a discount function that returns the correct percentage based on both tier and order frequency
+- Merge DataFrames to join the loyalty tier report with new order data using a common key
+- Build a derived column that computes discounted prices using a percentage-based formula
+
+## Prerequisites
+- Working knowledge of Pandas including DataFrame filtering, groupby, and aggregation
+- Ability to write Python functions with if-elif-else conditional logic
+- Understanding of DataFrame merge operations using a shared key column
+
+## Duration of Completion
+60 minutes
+
+## Level
+Intermediate
+
+## Industries
+- general
+
+## Tags
+- approach (skill)
+- data-quality (skill)
+- data-wrangling (skill)
+- python (tool)
+
+#### Overview
+In this scenario you will learn how to build a Python-based loyalty tier segmentation system for GlobalMart by applying Pandas groupby operations, conditional logic, and DataFrame merging to classify customers into tiers and calculate discounted prices on new orders.
+
+#### Level
+intermediate
+
+#### Industries
+- general
+
+#### Tags
+- approach (skill)
+- data-quality (skill)
+- data-wrangling (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## Scenario: GlobalMart Loyalty Tier System
+
+GlobalMart wants to reward loyal customers and improve retention by offering tiered discounts. Your task is to build a Python system that automatically segments customers into loyalty tiers and applies the correct discount to their new orders.
+
+You have three datasets to work with:
+
+| Dataset | Description |
+|---|---|
+| **Orders** | Historical order data with customer IDs, order amounts, and order dates |
+| **Customers** | Customer information linked by customer ID |
+| **New Orders** | Upcoming orders that need discount pricing applied |
+
+>[!IMPORTANT]
+> The important learning idea is that the second report depends on the first report. You must first summarize customer history, then use that summary to price new orders.
+>
+> - [Data Dictionary](https://cdn.enqurious.com/others/9f87b326-538e-480c-a237-42dcec82a225___Data_dictionary_globalmart.xlsx)
+> - [GlobalMart Dataset](https://cdn.enqurious.com/others/2bc134f3-bc1c-41e0-8a19-3befa101cbd7__globalmart.xlsx)
+> - [New Orders Dataset](https://cdn.enqurious.com/others/085712d7-f11e-489f-84e9-b4e8c5fed912_new_orders.xlsx)
+
+### What You Need To Build
+
+You will build two reports:
+
+| Report | Purpose |
+|---|---|
+| **Customer Loyalty Tier Report** | Classifies each customer into a loyalty tier and assigns a discount |
+| **Discounted Pricing Report** | Applies the assigned discount to each new order |
+
+
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Step-By-Step Approach
+
+### Step 1: Analyze Customer History
+
+Filter the customer orders dataset to the last six months. Then calculate two metrics for each customer:
+
+| Metric | How To Calculate It |
+|---|---|
+| `total_spending` | Sum of `order_amount` for each customer |
+| `order_count` | Count of orders for each customer |
+
+### Step 2: Assign Loyalty Tiers And Discounts
+
+Use each customer's six-month spending and order count to assign a tier and discount.
+
+| Tier | Total Spending | Number Of Orders | Discount |
+|---|---:|---:|---:|
+| Silver | Less than 500 | Less than 10 | 2% |
+| Silver | Less than 500 | 10 or more | 4% |
+| Gold | 500 to 2000 | Less than 10 | 6% |
+| Gold | 500 to 2000 | 10 or more | 8% |
+| Platinum | More than 2000 | Less than 10 | 10% |
+| Platinum | More than 2000 | 10 or more | 15% |
+
+>[!NOTE]
+> The threshold for the higher discount within a tier is 10 or more orders (>= 10), not strictly more than 10. A customer with exactly 10 orders qualifies for the higher discount.
+
+### Step 3: Build The Customer Loyalty Tier Report
+
+Create a DataFrame showing each customer's assigned tier and applicable discount percentage.
+
+### Step 4: Apply Discounts To New Orders
+
+Merge the loyalty report with the new orders dataset and calculate the discounted price:
+
+```text
+Discounted Price = Original Price x (1 - Discount Applicable / 100)
+```
+
+### Step 5: Build The Discounted Pricing Report
+
+Create a final report showing original price, applicable discount, and discounted price per new order.
+
+>[!TIP]
+> Build the loyalty tier report first. The discounted pricing report depends on it.
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+## Expected Output
+
+After completing the task, your reports should match these structures.
+
+### Customer Loyalty Tier Report
+
+One row per customer showing the customer tier and discount:
+
+![Expected output: Customer Loyalty Tier Report showing customer_id, customer_name, total_spending, order_count, tier, and discount_applicable](https://cdn.enqurious.com/images/7c373bae-183c-46eb-a2a1-0e5b5fb43f73_image.webp)
+
+| Column | Description |
+|---|---|
+| `customer_id` | Unique customer identifier |
+| `customer_name` | Customer name from the customer details dataset |
+| `total_spending` | Total order amount in the last six months |
+| `order_count` | Number of orders placed in the last six months |
+| `tier` | Assigned loyalty tier |
+| `discount_applicable` | Discount percentage assigned to the customer |
+
+### Discounted Pricing Report
+
+One row per new order showing original and discounted prices:
+
+![Expected output: Discounted Pricing Report showing order_id, customer_name, original_price, discount_applicable, and discounted_price](https://cdn.enqurious.com/images/ec133146-6f10-4ee6-b471-cbc7f3c27731_image.webp)
+
+| Column | Description |
+|---|---|
+| `order_id` | New order identifier |
+| `customer_id` | Customer identifier |
+| `customer_name` | Customer name from the loyalty report |
+| `original_price` | Price before discount |
+| `discount_applicable` | Discount percentage assigned from loyalty rules |
+| `discounted_price` | Final price after applying the discount |
+
+>[!TIP]
+> Use a left merge when joining new orders to the loyalty report so that all new orders are retained even if a customer has no order history.
+
+---
+
+**Tags**
+
+
+##### Input 4
+**Type:** Choice
+
+**Question:** After merging the Customer Orders dataset with the Customer Details dataset, how many orders have no matching customer details?
+
+**Options:** 
+- 1
+
+- 0
+
+- 13
+
+- 8
+
+**Correct Options:** 
+- 13
+
+**Solution:** 
+- **Correct - 13:** When you perform a left join from orders to customer details on `customer_id`, 13 order records have no matching entry in the customer details table. You can identify them by checking for `NaN` in the customer name column after the merge.
+- **Wrong - 1:** Only 1 unmatched order would suggest near-complete data coverage, but the merged data shows more missing customer references.
+- **Wrong - 0:** Zero unmatched orders would mean perfect referential integrity across both datasets. The data contains missing references, which is common in real-world datasets.
+- **Wrong - 8:** 8 is plausible but incorrect. Check that you are joining on the correct key column, `customer_id`, and using a left join.
+
+**Tags**
+
+
+##### Input 5
+**Type:** Choice
+
+**Question:** After filtering the Customer Orders dataset to the last six months, how many orders remain?
+
+**Options:** 
+- 3490
+
+- 9818
+
+- 4120
+
+- 9201
+
+**Correct Options:** 
+- 4120
+
+**Solution:** 
+- **Correct - 4120:** Filtering orders where `order_date >= max_date - 6 months` retains 4,120 records. This becomes the working dataset for calculating per-customer spending and order count.
+- **Wrong - 3490:** This count is too low. Verify that your comparison uses `>=` and that `order_date` has been converted to datetime before filtering.
+- **Wrong - 9818:** This is close to the total dataset size, which suggests the six-month filter may not have been applied.
+- **Wrong - 9201:** This is also larger than the expected filtered result. Check that your cutoff date is based on the most recent order date in the dataset, not today's date.
+
+**Tags**
+
+
+##### Input 6
+**Type:** Choice
+
+**Question:** Which THREE of the following statements about the loyalty tier rules are correct? (Select 3)
+
+**Options:** 
+- A Platinum customer with fewer than 10 orders receives a 10% discount, not 15%
+
+- Within each loyalty tier, a higher order count always results in a higher discount percentage
+
+- A customer with total spending of exactly 500 is assigned to the Gold tier, not Silver
+
+- The Platinum tier always offers a 15% discount regardless of how many orders a customer has placed
+
+- A Silver tier customer always receives a 2% discount regardless of order frequency
+
+**Correct Options:** 
+- A Platinum customer with fewer than 10 orders receives a 10% discount, not 15%
+
+- Within each loyalty tier, a higher order count always results in a higher discount percentage
+
+- A customer with total spending of exactly 500 is assigned to the Gold tier, not Silver
+
+**Solution:** 
+- **Correct - Platinum with fewer than 10 orders gets 10%:** The Platinum tier has two discount levels. Fewer than 10 orders gives 10%, while 10 or more orders gives 15%.
+- **Correct - Higher order count increases discount within a tier:** This holds across all three tiers. Silver increases from 2% to 4%, Gold from 6% to 8%, and Platinum from 10% to 15%.
+- **Correct - Spending of exactly 500 falls in Gold:** Silver covers spending less than 500. Since 500 is not less than 500, it falls into Gold.
+- **Wrong - Platinum always gives 15%:** Platinum customers with fewer than 10 orders receive 10%, not 15%.
+- **Wrong - Silver always gives 2%:** A Silver customer with 10 or more orders receives 4%, not 2%.
+
+**Tags**
+
+
+##### Input 7
+**Type:** Choice
+
+**Question:** Which loyalty tier offers the highest possible discount percentage?
+
+**Options:** 
+- Silver
+
+- Gold
+
+- Platinum
+
+- All tiers offer the same maximum discount
+
+**Correct Options:** 
+- Platinum
+
+**Solution:** 
+- **Correct - Platinum:** The highest discount in the system is 15%, available to Platinum customers with 10 or more orders.
+- **Wrong - Silver:** Silver offers only 2% or 4%, which is lower than the maximum discount in Gold and Platinum.
+- **Wrong - Gold:** Gold's maximum discount is 8%, which is higher than Silver but lower than Platinum.
+- **Wrong - All tiers offer the same maximum discount:** The maximum discount differs by tier. Silver maxes at 4%, Gold at 8%, and Platinum at 15%.
+
+>[!IMPORTANT]
+> If a previous version of this question listed Gold as the answer, that was incorrect. Gold's top discount is 8%; Platinum's top discount is 15%.
+
+**Tags**
+
+
+##### Input 8
+**Type:** Code
+
+**Question:** Write the complete Python code to build the **Customer Loyalty Tier Report**. 
+
+**Language:** python
+
+**Snippet:** # Load datasets
+customers_df = pd.read_excel("https://cdn.enqurious.com/others/46de2415-dc50-46ed-8133-cccc2f034680_globalmart.xlsx", sheet_name='customers') # Add the path
+
+orders_df = pd.read_excel("https://cdn.enqurious.com/others/46de2415-dc50-46ed-8133-cccc2f034680_globalmart.xlsx", sheet_name='orders') # Add the path 
+
+trans = pd.read_excel("https://cdn.enqurious.com/others/46de2415-dc50-46ed-8133-cccc2f034680_globalmart.xlsx", sheet_name='transactions') 
+
+**Solution:** 
+```python
+import pandas as pd
+
+# Load datasets
+customers_df = pd.read_excel("https://cdn.enqurious.com/others/46de2415-dc50-46ed-8133-cccc2f034680_globalmart.xlsx", sheet_name='customers') # Add the path
+
+orders_df = pd.read_excel("https://cdn.enqurious.com/others/46de2415-dc50-46ed-8133-cccc2f034680_globalmart.xlsx", sheet_name='orders') # Add the path 
+
+trans = pd.read_excel("https://cdn.enqurious.com/others/46de2415-dc50-46ed-8133-cccc2f034680_globalmart.xlsx", sheet_name='transactions') 
+# =====================================================================
+# STEP 1: Combine Orders & Transaction Data to gather dates and amounts
+# =====================================================================
+# orders_df gives us 'order_purchase_date' and 'customer_id'
+# trans gives us the financial column 'sales_amt'
+order_trans_df = orders_df.merge(trans, on='order_id', how='inner')
+
+# =====================================================================
+# STEP 2: Filter Data for the Last 6 Months
+# =====================================================================
+# Ensure the purchase date column is parsed into proper datetime objects
+order_trans_df['order_purchase_date'] = pd.to_datetime(order_trans_df['order_purchase_date'])
+
+# Establish the 6-month cutoff date relative to the latest transaction in the dataset
+cutoff_date = order_trans_df['order_purchase_date'].max() - pd.DateOffset(months=6)
+recent_orders = order_trans_df[order_trans_df['order_purchase_date'] >= cutoff_date]
+
+# =====================================================================
+# STEP 3: Aggregate Spending and Order Frequencies per Customer
+# =====================================================================
+customer_summary = recent_orders.groupby('customer_id').agg(
+    total_spending=('sales_amt', 'sum'),
+    order_count=('order_id', 'count')
+).reset_index()
+
+# =====================================================================
+# STEP 4: Define Conditional Segmentation and Tier Logic Rules
+# =====================================================================
+def assign_tier(row):
+    if row['total_spending'] < 500:
+        return 'Silver'
+    elif row['total_spending'] <= 2000:
+        return 'Gold'
+    else:
+        return 'Platinum'
+
+def assign_discount(row):
+    if row['tier'] == 'Silver':
+        return 4 if row['order_count'] >= 10 else 2
+    elif row['tier'] == 'Gold':
+        return 8 if row['order_count'] >= 10 else 6
+    else: # Platinum Tier
+        return 15 if row['order_count'] >= 10 else 10
+
+# =====================================================================
+# STEP 5: Run Segmentations and Generate the Loyalty Report
+# =====================================================================
+# Apply the conditional rule matrices to calculate tiers and discounts
+customer_summary['tier'] = customer_summary.apply(assign_tier, axis=1)
+customer_summary['discount_applicable'] = customer_summary.apply(assign_discount, axis=1)
+
+# Left join with customers_df to cleanly match descriptive customer names 
+loyalty_report = customer_summary.merge(
+    customers_df[['customer_id', 'customer_name']], 
+    on='customer_id', 
+    how='left'
+)
+
+# Restructure final schema to match the requested output requirements
+loyalty_report = loyalty_report[[
+    'customer_id', 'customer_name', 'total_spending', 
+    'order_count', 'tier', 'discount_applicable'
+]]
+
+# Preview the finished Customer Loyalty Tier Report
+loyalty_report.head()
+```
+
+**Tags**
+- data-wrangling / derived-column (skill)
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / date-processing (skill)
+- data-wrangling / join (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / math-calculations (skill)
+
+##### Input 9
+**Type:** Code
+
+**Question:** Using the `loyalty_report` DataFrame from the previous step, write Python code to build the **Discounted Pricing Report** for new orders. Your solution must:
+
+**Language:** python
+
+**Snippet:** # new_orders_df is already loaded
+# loyalty_report is available from the previous step
+
+# This dataset contains the upcoming orders that need promotional pricing applied
+new_orders_url = "https://cdn.enqurious.com/documents/517cad90-cfb3-48fe-975e-256d942412ac_neworders.csv"
+
+**Solution:** 
+```python
+import pandas as pd
+import numpy as np
+
+# =====================================================================
+# STEP 1: Load the New Orders Dataset
+# =====================================================================
+# This dataset contains the upcoming orders that need promotional pricing applied
+new_orders_url = "https://cdn.enqurious.com/documents/517cad90-cfb3-48fe-975e-256d942412ac_neworders.csv"
+new_orders_df = pd.read_csv(new_orders_url)
+
+# Clean column names to lowercase to prevent capitalization mismatches (e.g., Order_id vs order_id)
+new_orders_df.columns = new_orders_df.columns.str.lower()
+
+# =====================================================================
+# STEP 2: Merge New Orders with the Loyalty Report
+# =====================================================================
+# We use a LEFT join so that all upcoming orders are retained, 
+# even if a customer is completely new and has no historical tier data.
+pricing_report = new_orders_df.merge(
+    loyalty_report[['customer_id', 'customer_name', 'tier', 'discount_applicable']],
+    on='customer_id',
+    how='left'
+)
+
+# =====================================================================
+# STEP 3: Handle New/Unmatched Customers (Data Cleaning)
+# =====================================================================
+# New customers without history will inherit NaN values for their discount.
+# We explicitly fill these missing values with 0% so the pricing math runs perfectly.
+pricing_report['discount_applicable'] = pricing_report['discount_applicable'].fillna(0)
+pricing_report['tier'] = pricing_report['tier'].fillna('No Tier')
+
+# =====================================================================
+# STEP 4: Calculate the Final Discounted Price
+# =====================================================================
+# Formula: Original Price × (1 − Discount Applicable / 100)
+pricing_report['discounted_price'] = (
+    pricing_report['original_price'] * (1 - pricing_report['discount_applicable'] / 100)
+)
+
+# Optional: Round the currency calculations to 2 decimal places for neatness
+pricing_report['discounted_price'] = pricing_report['discounted_price'].round(2)
+
+# =====================================================================
+# STEP 5: Reorder and Select Specified Output Columns
+# =====================================================================
+pricing_report = pricing_report[[
+    'order_id', 'customer_id', 'customer_name', 
+    'original_price', 'discount_applicable', 'discounted_price'
+]]
+
+# Display the first 5 rows of your final Discounted Pricing Report
+pricing_report.head()
+```
+
+**Tags**
+- data-wrangling / derived-column (skill)
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / date-processing (skill)
+- data-wrangling / join (skill)
+- data-wrangling / math-calculations (skill)
+- data-wrangling / aggregate (skill)

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gossip Chain — Instructor Guide (Do Not Share)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--pk:#f472b6;--pk2:#fbcfe8;--a:#38bdf8;--g:#22c55e;--y:#f59e0b;--p:#a78bfa;--text:#e6edf3;--muted:#8b949e}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100}
+.nbadge{font-size:.7rem;font-weight:800;letter-spacing:2px;color:#ef4444;text-transform:uppercase}
+.ntitle{font-size:.82rem;color:var(--muted);margin-left:10px}
+.nnav{display:flex;align-items:center;gap:6px}
+.nb{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nb:hover{background:var(--pk);color:#000;border-color:var(--pk)}
+.nc{font-size:12px;color:var(--muted);min-width:80px;text-align:center}
+.deck{padding-top:52px;height:100vh;overflow-y:auto}
+.slide{display:none;min-height:calc(100vh - 52px);padding:22px 52px 30px;flex-direction:column;gap:13px;animation:fi .2s ease}
+.slide.active{display:flex}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.badge{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+h2{font-size:1.4rem;font-weight:800;margin-bottom:2px}
+.sub{font-size:.9rem;color:var(--muted);margin-top:4px}
+p{font-size:.87rem;color:#c9d1d9;line-height:1.7}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.card h3{font-size:.85rem;font-weight:700;margin-bottom:7px}
+
+.pink{background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.3);border-radius:10px;padding:12px 16px}
+.blue{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.3);border-radius:10px;padding:12px 16px}
+.green{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:12px 16px}
+.yellow{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px}
+.red{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px}
+.purple{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px 16px}
+
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;gap:12px;align-items:flex-start}
+.snum{font-weight:900;font-size:.75rem;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.spy{background:var(--y);color:#000}
+.spk{background:var(--pk);color:#000}
+.sbl{background:var(--a);color:#000}
+.sgo{background:var(--g);color:#000}
+.stxt{font-size:.85rem;color:#c9d1d9;line-height:1.65}
+.stxt strong{color:var(--text)}
+.stxt em{color:var(--y);font-style:normal;font-weight:700}
+
+pre{background:#090d1a;border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:.77rem;line-height:1.9;overflow-x:auto;white-space:pre}
+code{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a)}
+.kw{color:#ff7b72;font-weight:700}
+.fn{color:#d2a8ff}
+.str{color:#a5d6ff}
+.cm{color:#6e7681;font-style:italic}
+.col{color:#79c0ff}
+.tbl{color:#ffa657}
+.hl-b{background:rgba(56,189,248,.2);border-radius:3px;padding:0 3px}
+.hl-p{background:rgba(167,139,250,.2);border-radius:3px;padding:0 3px}
+.hl-g{background:rgba(34,197,94,.2);border-radius:3px;padding:0 3px}
+
+table{width:100%;border-collapse:collapse}
+th{background:rgba(244,114,182,.08);color:var(--pk2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;font-weight:700}
+td{padding:6px 10px;border-bottom:1px solid var(--border);font-size:.8rem;color:#c9d1d9}
+
+/* Timer */
+.timer-card{background:var(--bg2);border:2px solid rgba(244,114,182,.4);border-radius:14px;padding:16px 22px;text-align:center}
+.tdig{font-family:'JetBrains Mono',monospace;font-size:4rem;font-weight:700;color:var(--pk);line-height:1;letter-spacing:4px;transition:color .3s}
+.tdig.warn{color:var(--y)}
+.tdig.danger{color:#ef4444;animation:flash 1s infinite}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
+.tbtn{background:var(--pk);color:#000;border:none;font-family:'Inter',sans-serif;font-weight:900;font-size:.9rem;padding:8px 22px;border-radius:8px;cursor:pointer;margin-top:8px;transition:filter .15s}
+.tbtn:hover{filter:brightness(1.12)}
+.tbtn.run{background:#ef4444;color:#fff}
+.treset{background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-family:'Inter',sans-serif;font-size:.75rem;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;margin-left:6px}
+
+/* Run sheet */
+.rs{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;display:flex;gap:10px;align-items:flex-start;margin-bottom:5px}
+.rs-time{font-size:.7rem;font-weight:800;color:var(--a);background:rgba(56,189,248,.1);padding:2px 8px;border-radius:100px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.rs-txt{font-size:.82rem;color:#e6edf3;line-height:1.6}
+.rs-txt em{color:var(--y);font-style:normal;font-weight:700}
+.rs-txt .say{color:var(--pk2);font-style:italic}
+
+/* Pairing list */
+.pair{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;font-size:.82rem}
+.pname{font-weight:700;color:var(--pk2);min-width:120px}
+.parr{color:var(--muted)}
+.ptold{font-weight:700;color:var(--text);min-width:120px}
+.phop{font-size:.7rem;color:var(--muted);margin-left:auto}
+
+/* Check list */
+.check-li{list-style:none;padding:0}
+.check-li li{font-size:.8rem;color:#c9d1d9;padding:3px 0;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.check-li li::before{content:"☐";opacity:.5;flex-shrink:0;margin-top:1px}
+
+/* Leaderboard */
+.score-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.sc{background:var(--bg2);border:2px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;transition:border-color .3s,box-shadow .3s}
+.sc.winner{border-color:var(--y);box-shadow:0 0 16px rgba(245,158,11,.2)}
+.sc-name{font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.4}
+.sc-score{font-family:'JetBrains Mono',monospace;font-size:2.4rem;font-weight:800;color:var(--pk);line-height:1}
+.sc-btn{padding:4px 0;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;border:none;width:100%;margin-top:4px;transition:all .12s}
+.s5{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--g)}
+.s2{background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);color:var(--a)}
+.su{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5;font-size:.62rem}
+.reset-sc{background:var(--bg2);border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:7px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.73rem}
+
+/* Output rows */
+.out-row{display:flex;align-items:center;gap:10px;padding:6px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;font-size:.76rem}
+.out-name{color:var(--pk2);font-weight:700;min-width:110px}
+.out-hop{background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.25);color:var(--pk);font-size:.65rem;font-weight:800;padding:1px 8px;border-radius:100px;min-width:50px;text-align:center}
+.out-chain{color:#c9d1d9;font-size:.68rem;flex:1}
+
+/* Verify */
+.vcheck{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 12px;margin-bottom:5px;font-size:.8rem;color:#86efac}
+.vcheck::before{content:"✓ ";font-weight:800}
+
+/* Bonus */
+.bonus-q{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:6px}
+.bonus-q h4{font-size:.82rem;font-weight:700;color:var(--y);margin-bottom:4px}
+.bonus-q p{font-size:.8rem;color:#c9d1d9;line-height:1.6}
+</style>
+</head>
+<body>
+<nav>
+  <div style="display:flex;align-items:center">
+    <span class="nbadge">INSTRUCTOR ONLY — Do Not Share</span>
+    <span class="ntitle">Gossip Chain · Instructor Guide · Day 4</span>
+  </div>
+  <div class="nnav">
+    <button class="nb" onclick="go(-1)">← Prev</button>
+    <span class="nc" id="ctr">1 / 8</span>
+    <button class="nb" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- SLIDE 0: MISSION CONTROL -->
+<div class="slide active">
+  <div><div class="badge">Instructor · Mission Control</div>
+  <h2 style="color:var(--pk)">Gossip Chain — Launch Control</h2>
+  <p class="sub">Keep this screen for yourself. Project <strong>Gossip Chain — Activity.html</strong> for students.</p></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="timer-card">
+        <div class="badge" style="margin-bottom:6px;text-align:center">ACT 2 SQL TIMER · 10 MINUTES</div>
+        <div class="tdig" id="tdig">10:00</div>
+        <div style="margin-top:10px">
+          <button class="tbtn" id="tbtn" onclick="toggleTimer()">▶ Start Act 2</button>
+          <button class="treset" onclick="resetTimer()">↺ Reset</button>
+        </div>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:8px">Yellow at 3 min left · Red flash at 1 min left</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--pk)">Pre-flight checklist</h3>
+        <ul class="check-li">
+          <li>Activity.html is open on your screen (to project to students)</li>
+          <li>Students have SSMS open and connected to mskl-masterclass</li>
+          <li>Tell students: "Look at Activity.html Slide 3 (Chinese Whispers rules) — don't touch SSMS yet."</li>
+          <li>You have this Instructor Guide on your personal screen only</li>
+        </ul>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="yellow">
+        <p style="font-weight:700;color:var(--y);margin-bottom:6px">Activity overview:</p>
+        <table>
+          <tr><th>Phase</th><th>Time</th><th>What happens</th></tr>
+          <tr><td>Chinese Whispers</td><td>5 min</td><td>Groups whisper their phrase down the line</td></tr>
+          <tr><td>Reveal + Laugh</td><td>2 min</td><td>Last person says what they heard vs. original</td></tr>
+          <tr><td>Bridge</td><td>2 min</td><td>"Humans distort. SQL doesn't."</td></tr>
+          <tr><td>SQL Challenge</td><td>10 min</td><td>Groups write Recursive CTE in SSMS (start timer)</td></tr>
+          <tr><td>Debrief</td><td>3 min</td><td>Answer reveal, winner, key concepts</td></tr>
+        </table>
+      </div>
+      <div class="red">
+        <p style="font-size:.82rem;color:#fca5a5">When a group shouts DONE — walk to their screen. Check their output against the Verify Checklist on Slide 5 of this guide before awarding points.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 1: RUN SHEET -->
+<div class="slide">
+  <div><div class="badge">Instructor Script</div>
+  <h2 style="color:var(--pk)">Run Sheet — What to Say at Each Step</h2></div>
+
+  <div class="rs"><span class="rs-time">0:00</span><div class="rs-txt">Project Activity.html Slide 0 (Title). Say: <span class="say">"Today's end-of-day activity has two parts — Act 1 you're going to play a game, Act 2 you're going to write the SQL that does it perfectly."</span></div></div>
+
+  <div class="rs"><span class="rs-time">0:01</span><div class="rs-txt">Move to Activity Slide 1 (The Scenario). Read the rumour dramatically: <span class="say">"Did you hear? The CEO is relocating the entire office to Antarctica. Free penguins for everyone."</span> Pause for laughs. Then: <em>"This rumour spread through 22 people in this batch. Your job: trace the full chain."</em></div></div>
+
+  <div class="rs"><span class="rs-time">0:02</span><div class="rs-txt">Move to Activity Slide 3 (Chinese Whispers Rules). Read the 4 rules out loud slowly. Ask: <em>"Does everyone understand? No writing it down, no repeats, no phones."</em> Confirm groups are sitting in a line.</div></div>
+
+  <div class="rs"><span class="rs-time">0:03</span><div class="rs-txt">Move to Activity Slide 4 (Group Phrases). Say: <em>"First person in each group only — I'm going to reveal your phrase. Read it silently. Do NOT say it out loud. Ready? GO."</em> Click reveal for all 5 groups.</div></div>
+
+  <div class="rs"><span class="rs-time">0:04</span><div class="rs-txt">Let groups whisper. Stay quiet — walk around, watch for cheating (writing it down). Give exactly 3 minutes for the chain to reach the last person.</div></div>
+
+  <div class="rs"><span class="rs-time">0:07</span><div class="rs-txt">Say: <em>"STOP. Last person in each group — say aloud exactly what you heard."</em> Move to Activity Slide 5. Reveal each group's original phrase after they speak. Laugh with the class — the distortions are the best part!</div></div>
+
+  <div class="rs"><span class="rs-time">0:09</span><div class="rs-txt">Move to Activity Slide 6 (Bridge). Deliver bridge script from Slide 3 of this guide. Slow down, make it land. End with the transition line to Act 2.</div></div>
+
+  <div class="rs"><span class="rs-time">0:11</span><div class="rs-txt">Move to Activity Slide 2 (Setup SQL). Say: <em>"Run this block in SSMS first — it creates the temp table with all 22 rows. You have 60 seconds."</em> Let them run it.</div></div>
+
+  <div class="rs"><span class="rs-time">0:12</span><div class="rs-txt">Move to Activity Slide 7 (Act 2 Challenge). Say: <em>"10 minutes. First group with the correct output gets 5 points. Go."</em> Start Act 2 timer on Slide 0 of this guide.</div></div>
+
+  <div class="rs"><span class="rs-time">Group done</span><div class="rs-txt">When a group shouts DONE — check their output against Verify Checklist on Slide 5 of this guide. If correct: <em>"Group X is first — 5 points!"</em> Award on Leaderboard (Slide 7). Tell them: <em>"Try the bonus queries on Activity Slide 12 while others finish."</em></div></div>
+
+  <div class="rs"><span class="rs-time">~0:22</span><div class="rs-txt">Timer ends. Say: <em>"Hands off the keyboard."</em> Move to Activity Slide 11 (Full Answer). Walk through Base Case (blue) → UNION ALL → Recursive Case (purple) → connection rule (green). Show output on Slide 12.</div></div>
+
+  <div class="rs"><span class="rs-time">~0:23</span><div class="rs-txt">Move to Activity Slide 13 (Key Takeaways). Ask: <em>"What other scenarios at Tredence need a Recursive CTE?"</em> Get 2-3 answers. Announce leaderboard winner. Day 4 done.</div></div>
+</div>
+
+<!-- SLIDE 2: MASTER PHRASES — INSTRUCTOR ONLY -->
+<div class="slide">
+  <div><div class="badge">Act 1 · Master Phrases — Instructor Only</div>
+  <h2 style="color:var(--pk)">The 5 Phrases — All Groups Visible Here</h2>
+  <p class="sub">No reveal button needed — this is your copy. After each last person speaks, read the original and compare.</p></div>
+  <table>
+    <tr><th style="width:10%">Group</th><th style="width:40%">Original Phrase (what they started with)</th><th>Expected distortion (for laughs)</th></tr>
+    <tr>
+      <td><span style="color:var(--a);font-weight:800">Group 1</span><br><span style="font-size:.7rem;color:var(--muted)">Aman S · Aman T<br>Amardeep · Aviskar · Bysani</span></td>
+      <td style="color:var(--text);font-weight:600">"Base case runs once and produces the starting row for the recursive chain"</td>
+      <td style="color:var(--muted);font-style:italic;font-size:.78rem">"Base cake runs once and puts the starting crow for the wreck cursive chain"</td>
+    </tr>
+    <tr>
+      <td><span style="color:var(--g);font-weight:800">Group 2</span><br><span style="font-size:.7rem;color:var(--muted)">Devanand · Harsh<br>Heemansh · Hritin · Pratik</span></td>
+      <td style="color:var(--text);font-weight:600">"Recursive case joins back to the CTE on from person equals previous to person"</td>
+      <td style="color:var(--muted);font-style:italic;font-size:.78rem">"Recursive case joins back the city on from person equals previous two persons"</td>
+    </tr>
+    <tr>
+      <td><span style="color:var(--p);font-weight:800">Group 3</span><br><span style="font-size:.7rem;color:var(--muted)">Gaurav · Ganadeep<br>Payal · Prishita · Raj</span></td>
+      <td style="color:var(--text);font-weight:600">"Union all collects every row from every iteration into one big result set"</td>
+      <td style="color:var(--muted);font-style:italic;font-size:.78rem">"Union all collects every crow from every situation into one big reset"</td>
+    </tr>
+    <tr>
+      <td><span style="color:var(--y);font-weight:800">Group 4</span><br><span style="font-size:.7rem;color:var(--muted)">Kamal · Sneha<br>Saket · Santosh · Shivam</span></td>
+      <td style="color:var(--text);font-weight:600">"The recursion stops automatically when the join finds zero matching rows"</td>
+      <td style="color:var(--muted);font-style:italic;font-size:.78rem">"The recursion stops automatically when the john finds zero matching crows"</td>
+    </tr>
+    <tr>
+      <td><span style="color:#f87171;font-weight:800">Group 5</span><br><span style="font-size:.7rem;color:var(--muted)">Sujit · Sukrit<br>Sushant · Nikshitha · Yogesh</span></td>
+      <td style="color:var(--text);font-weight:600">"Cast the path as varchar max so the chain string can grow with every hop"</td>
+      <td style="color:var(--muted);font-style:italic;font-size:.78rem">"Cast the bath as bar char max so the chain string can grow with every hop scotch"</td>
+    </tr>
+  </table>
+  <div class="yellow" style="margin-top:6px">
+    <p style="font-size:.83rem;color:#c9d1d9;line-height:1.7"><strong style="color:var(--y)">After each last person speaks:</strong> Read their version back to the class, then reveal the original. Laugh together. Go all 5 groups, then move to Slide 3 (Bridge Script).</p>
+  </div>
+</div>
+
+<!-- SLIDE 3: BRIDGE SCRIPT -->
+<div class="slide">
+  <div><div class="badge">Act 1 · Bridge — Exact Words to Say</div>
+  <h2 style="color:var(--pk)">Bridge Script — Deliver This After the Game</h2>
+  <p class="sub">Say this as you move to Activity Slide 6. About 2 minutes. Slow down — make it land.</p></div>
+  <div class="pink" style="margin-bottom:12px">
+    <p style="font-weight:700;color:var(--pk);margin-bottom:10px">Say this verbatim (or close):</p>
+    <div class="steps">
+      <div class="step"><div class="snum spk">→</div><div class="stxt"><em>"You all just played Chinese Whispers. The message got distorted — a little or a lot — at every hop. Why? Because human memory is imperfect. Every re-tell was a new chance of error."</em></div></div>
+      <div class="step"><div class="snum spk">→</div><div class="stxt"><em>"Now think about what Recursive CTE does. It passes a result from one step to the next. From the anchor row — to the first JOIN — to the second JOIN — and so on. But SQL doesn't mishear. The JOIN condition is exact. Every single time."</em></div></div>
+      <div class="step"><div class="snum spk">→</div><div class="stxt"><em>"You're about to build that. Your SQL is going to trace a gossip chain through 22 names — perfectly — in about 10 lines of code."</em></div></div>
+    </div>
+  </div>
+  <div class="two">
+    <div class="blue">
+      <p style="font-weight:700;color:var(--a);margin-bottom:8px">The analogy to draw (optional — on whiteboard):</p>
+      <div class="steps">
+        <div class="step"><div class="snum sbl">1</div><div class="stxt">Chinese Whispers hop = one person retelling (imperfect)</div></div>
+        <div class="step"><div class="snum sbl">2</div><div class="stxt">Recursive CTE hop = one UNION ALL iteration (exact)</div></div>
+        <div class="step"><div class="snum sbl">3</div><div class="stxt">9 hops in the chain = 9 UNION ALL iterations in the CTE</div></div>
+      </div>
+    </div>
+    <div class="green">
+      <p style="font-weight:700;color:var(--g);margin-bottom:8px">Transition line to Act 2:</p>
+      <p style="font-size:.87rem;font-style:italic;color:#86efac;line-height:1.8">"The data is in #gossip_chain — Yogesh started the rumour. Now write the CTE that traces every hop perfectly. 10 minutes. First correct output wins 5 points."</p>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:8px">→ Then: Activity Slide 2 (Setup SQL) → Activity Slide 7 (Challenge) → Start timer on this guide's Slide 0</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: FULL ANSWER -->
+<div class="slide">
+  <div><div class="badge">Full Answer — Always Visible</div>
+  <h2 style="color:var(--g)">Correct SQL + What to Look For</h2></div>
+  <div class="two">
+    <pre style="font-size:.74rem"><span class="kw">WITH</span> <span class="fn">rumour_trail</span> <span class="kw">AS</span> (
+
+    <span class="cm">-- BASE CASE: Yogesh's direct tell</span>
+    <span class="hl-b"><span class="kw">SELECT</span>
+        from_person,
+        to_person,
+        <span class="fn">CAST</span>(from_person + <span class="str">' → '</span> + to_person <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> chain,
+        1 <span class="kw">AS</span> level
+    <span class="kw">FROM</span>  <span class="tbl">#gossip_chain</span>
+    <span class="kw">WHERE</span> from_person = <span class="str">'Yogesh'</span></span>
+
+    <span class="kw">UNION ALL</span>
+
+    <span class="cm">-- RECURSIVE CASE: who did each person tell next?</span>
+    <span class="hl-p"><span class="kw">SELECT</span>
+        g.from_person,
+        g.to_person,
+        <span class="fn">CAST</span>(rt.chain + <span class="str">' → '</span> + g.to_person <span class="kw">AS</span> <span class="fn">VARCHAR</span>(<span class="fn">MAX</span>)) <span class="kw">AS</span> chain,
+        rt.level + 1
+    <span class="kw">FROM</span> <span class="tbl">#gossip_chain</span> g
+    <span class="kw">JOIN</span> <span class="fn">rumour_trail</span> rt
+        <span class="kw">ON</span> <span class="hl-g">g.from_person = rt.to_person</span>
+    <span class="kw">WHERE</span> rt.level &lt; 20</span>
+)
+<span class="kw">SELECT</span>
+    to_person  <span class="kw">AS</span> person_who_heard_it,
+    level      <span class="kw">AS</span> hops_from_yogesh,
+    chain      <span class="kw">AS</span> how_they_heard_it
+<span class="kw">FROM</span>   <span class="fn">rumour_trail</span>
+<span class="kw">ORDER BY</span> level, to_person</pre>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card">
+        <h3 style="color:var(--g)">Verify checklist — walk to their screen and check:</h3>
+        <div class="vcheck">Exactly 9 rows in output</div>
+        <div class="vcheck">Column names: person_who_heard_it, hops_from_yogesh, how_they_heard_it</div>
+        <div class="vcheck">hops_from_yogesh values are 1 through 9</div>
+        <div class="vcheck">Row 1: Sujit, hop 1, "Yogesh → Sujit"</div>
+        <div class="vcheck">Last row: Gaurav, hop 9</div>
+        <div class="vcheck">Ordered by hops ASC</div>
+        <div class="vcheck">chain column shows full path with " → " separators</div>
+      </div>
+      <div class="red">
+        <p style="font-weight:700;color:#f87171;margin-bottom:4px">Common mistakes to watch for:</p>
+        <ul style="font-size:.8rem;color:#fca5a5;padding-left:16px;line-height:2">
+          <li>CTE name mismatch (skeleton says <code>___</code>, they forget to name it)</li>
+          <li>JOIN condition reversed: <code>rt.to_person = g.from_person</code> is same — both fine</li>
+          <li>Missing <code>WHERE rt.level &lt; 20</code> — gets MAXRECURSION error</li>
+          <li>Using <code>UNION</code> instead of <code>UNION ALL</code> — may lose rows</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: BONUS QUERIES + ANSWERS -->
+<div class="slide">
+  <div><div class="badge">Bonus Queries — For Early Finishers</div>
+  <h2 style="color:var(--y)">Bonus Queries + Expected Answers</h2>
+  <p class="sub">Show these on Activity Slide 9 after the main challenge is done. Groups that finish early work on these.</p></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="bonus-q">
+        <h4>B1 — Kumar Pratik's chain (change starting person)</h4>
+        <p>Change <code>WHERE from_person = 'Yogesh'</code> to <code>'Kumar Pratik'</code>. Expected: 9 rows (Hritin → Heemansh → Harsh → Devanand → Bysani → Aviskar → Amardeep → Aman T → Aman S). Also 9 hops — same length as Yogesh's chain.</p>
+      </div>
+      <div class="bonus-q">
+        <h4>B2 — Shivam's chain (shortest)</h4>
+        <p>Change to <code>'Shivam'</code>. Expected: 4 rows only (Santosh, Saket, Sneha, Kamal). Chain is 4 hops long vs 9 for Yogesh. Good for showing different depths.</p>
+      </div>
+      <div class="bonus-q">
+        <h4>B3 — Remove the WHERE (all chains at once)</h4>
+        <p>Remove <code>WHERE from_person = 'Yogesh'</code> from the Base Case. This starts a chain from EVERY person in the table simultaneously. Output will be much larger — shows that the Base Case controls which chain(s) you trace.</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="bonus-q">
+        <h4>B4 — Count who reached the most people (advanced)</h4>
+        <pre style="font-size:.7rem;margin-top:4px"><span class="cm">-- Remove WHERE from Base Case, then wrap in outer query:</span>
+<span class="kw">SELECT</span> from_person, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total_reached
+<span class="kw">FROM</span> (<span class="cm">... full rumour_trail CTE without WHERE ...</span>)
+<span class="kw">GROUP BY</span> from_person
+<span class="kw">ORDER BY</span> total_reached <span class="kw">DESC</span></pre>
+        <p>Expected: Yogesh and Kumar Pratik each reached 9 people. Shivam reached 4. People in the middle of a chain also show up as "starters" so results will include partial chains — great discussion point.</p>
+      </div>
+      <div class="card" style="border-color:rgba(167,139,250,.3)">
+        <h3 style="color:var(--p)">Discussion question after bonus:</h3>
+        <p style="font-size:.82rem;margin-top:4px;line-height:1.7">"Why does the recursive case need <code>WHERE rt.level &lt; 20</code>? What would happen if this gossip table had cycles — like if Gaurav told Yogesh? What would the query do?"</p>
+        <p style="font-size:.8rem;margin-top:8px;color:var(--muted)">Answer: Without the guard, cycles cause infinite recursion. SQL Server hits MAXRECURSION 100 and throws an error. The level guard stops it at 20 hops regardless of cycles.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: LEADERBOARD -->
+<div class="slide">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div><div class="badge">Live Scoring</div><h2 style="color:var(--pk)">Leaderboard</h2></div>
+    <button class="reset-sc" onclick="resetScores()">↺ Reset All</button>
+  </div>
+  <div class="score-cards">
+    <div class="sc" id="sc1">
+      <div class="sc-name">Group 1<br><span style="font-size:.64rem;color:var(--muted)">Aman S · Aman T<br>Amardeep · Aviskar · Bysani</span></div>
+      <div class="sc-score" id="ss1">0</div>
+      <button class="sc-btn s5" onclick="award(1,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(1,2)">+2 Bonus Q</button>
+      <button class="sc-btn su" onclick="award(1,-1)">−1 Undo</button>
+    </div>
+    <div class="sc" id="sc2">
+      <div class="sc-name">Group 2<br><span style="font-size:.64rem;color:var(--muted)">Devanand · Harsh<br>Heemansh · Hritin · Pratik</span></div>
+      <div class="sc-score" id="ss2">0</div>
+      <button class="sc-btn s5" onclick="award(2,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(2,2)">+2 Bonus Q</button>
+      <button class="sc-btn su" onclick="award(2,-1)">−1 Undo</button>
+    </div>
+    <div class="sc" id="sc3">
+      <div class="sc-name">Group 3<br><span style="font-size:.64rem;color:var(--muted)">Gaurav · Ganadeep<br>Payal · Prishita · Raj</span></div>
+      <div class="sc-score" id="ss3">0</div>
+      <button class="sc-btn s5" onclick="award(3,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(3,2)">+2 Bonus Q</button>
+      <button class="sc-btn su" onclick="award(3,-1)">−1 Undo</button>
+    </div>
+    <div class="sc" id="sc4">
+      <div class="sc-name">Group 4<br><span style="font-size:.64rem;color:var(--muted)">Kamal · Sneha<br>Saket · Santosh · Shivam</span></div>
+      <div class="sc-score" id="ss4">0</div>
+      <button class="sc-btn s5" onclick="award(4,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(4,2)">+2 Bonus Q</button>
+      <button class="sc-btn su" onclick="award(4,-1)">−1 Undo</button>
+    </div>
+    <div class="sc" id="sc5">
+      <div class="sc-name">Group 5<br><span style="font-size:.64rem;color:var(--muted)">Sujit · Sukrit<br>Sushant · Nikshitha · Yogesh</span></div>
+      <div class="sc-score" id="ss5">0</div>
+      <button class="sc-btn s5" onclick="award(5,5)">+5 First Done</button>
+      <button class="sc-btn s2" onclick="award(5,2)">+2 Bonus Q</button>
+      <button class="sc-btn su" onclick="award(5,-1)">−1 Undo</button>
+    </div>
+  </div>
+  <div id="winner-banner" style="display:none;text-align:center;padding:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;font-size:.9rem;font-weight:800;color:#fcd34d;margin-top:8px"></div>
+</div>
+
+<!-- SLIDE 7: DEBRIEF NOTES -->
+<div class="slide">
+  <div><div class="badge">Act 3 · Debrief</div>
+  <h2 style="color:var(--pk)">Debrief Notes — What to Emphasise</h2></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="blue">
+        <p style="font-weight:700;color:var(--a);margin-bottom:6px">The 3 things they must leave knowing:</p>
+        <div class="steps">
+          <div class="step"><div class="snum sbl">1</div><div class="stxt"><strong>Base Case</strong> = the starting seed. <code>WHERE from_person = 'Yogesh'</code> gave one row. Runs once.</div></div>
+          <div class="step"><div class="snum sbl">2</div><div class="stxt"><strong>Recursive Case</strong> = takes <code>to_person</code> from previous result, finds who THEY told. The JOIN is the chain link.</div></div>
+          <div class="step"><div class="snum sbl">3</div><div class="stxt"><strong>Stops automatically</strong> when the JOIN finds nothing — the recursion returns 0 rows and SQL stops. No code needed to stop it (except the safety guard).</div></div>
+        </div>
+      </div>
+      <div class="green">
+        <p style="font-weight:700;color:var(--g);margin-bottom:6px">One sentence to leave them with:</p>
+        <p style="font-size:.85rem;font-style:italic;color:#86efac;line-height:1.75">"Recursive CTE is nothing but a loop with a memory. Each iteration knows what the previous one found, and uses that to find the next step."</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card">
+        <h3 style="color:var(--pk)">Expected output for reference (Yogesh's chain):</h3>
+        <div class="out-row"><span class="out-name">Sujit</span><span class="out-hop">hop 1</span><span class="out-chain">Yogesh → Sujit</span></div>
+        <div class="out-row"><span class="out-name">Sukrit</span><span class="out-hop">hop 2</span><span class="out-chain">Yogesh → Sujit → Sukrit</span></div>
+        <div class="out-row"><span class="out-name">Sushant</span><span class="out-hop">hop 3</span></div>
+        <div class="out-row"><span class="out-name">Nikshitha</span><span class="out-hop">hop 4</span></div>
+        <div class="out-row"><span class="out-name">Raj</span><span class="out-hop">hop 5</span></div>
+        <div class="out-row"><span class="out-name">Prishita</span><span class="out-hop">hop 6</span></div>
+        <div class="out-row"><span class="out-name">Payal</span><span class="out-hop">hop 7</span></div>
+        <div class="out-row"><span class="out-name">Ganadeep</span><span class="out-hop">hop 8</span></div>
+        <div class="out-row"><span class="out-name" style="color:var(--g)">Gaurav ← STOP</span><span class="out-hop">hop 9</span></div>
+      </div>
+      <div class="yellow">
+        <p style="font-size:.8rem;color:var(--y);font-weight:700;margin-bottom:4px">Bridge to real work:</p>
+        <p style="font-size:.8rem;color:#c9d1d9;line-height:1.7">Ask: "At Tredence, what data would have a chain structure like this?" Expect answers like: org charts, customer referrals, ticket escalations, supply chain stages. Confirm each one and show how the same CTE template applies.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+// Navigation
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const N=slides.length;
+const ctr=document.getElementById('ctr');
+function show(n){slides[cur].classList.remove('active');cur=(n+N)%N;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+N;document.querySelector('.deck').scrollTop=0;}
+function go(d){show(cur+d);}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+
+// Timer
+let timerSec=10*60,timerIv=null,timerRun=false;
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function updateDisp(){const el=document.getElementById('tdig');el.textContent=fmt(timerSec);el.className='tdig'+(timerSec<=60?' danger':timerSec<=180?' warn':'');}
+function toggleTimer(){
+  const btn=document.getElementById('tbtn');
+  if(timerRun){clearInterval(timerIv);timerRun=false;btn.textContent='▶ Resume';btn.classList.remove('run');}
+  else{if(timerSec<=0)return;timerRun=true;btn.textContent='⏸ Pause';btn.classList.add('run');timerIv=setInterval(()=>{if(timerSec<=0){clearInterval(timerIv);timerRun=false;btn.textContent='⏱ Time!';btn.classList.remove('run');return;}timerSec--;updateDisp();},1000);}
+}
+function resetTimer(){clearInterval(timerIv);timerRun=false;timerSec=10*60;updateDisp();const btn=document.getElementById('tbtn');btn.textContent='▶ Start Act 2';btn.classList.remove('run');}
+
+// Leaderboard
+const scores=[0,0,0,0,0,0];
+function award(g,pts){scores[g]=Math.max(0,scores[g]+pts);document.getElementById('ss'+g).textContent=scores[g];updateWinner();}
+function updateWinner(){
+  const max=Math.max(...scores.slice(1));
+  for(let i=1;i<=5;i++)document.getElementById('sc'+i).classList.toggle('winner',scores[i]===max&&max>0);
+  const w=[];for(let i=1;i<=5;i++)if(scores[i]===max&&max>0)w.push('Group '+i);
+  const b=document.getElementById('winner-banner');
+  if(w.length){b.style.display='block';b.textContent='🏆 Leading: '+w.join(' · ')+' — '+max+' pts';}
+  else b.style.display='none';
+}
+function resetScores(){for(let i=1;i<=5;i++){scores[i]=0;document.getElementById('ss'+i).textContent='0';document.getElementById('sc'+i).classList.remove('winner');}document.getElementById('winner-banner').style.display='none';}
+</script>
+</body>
+</html>

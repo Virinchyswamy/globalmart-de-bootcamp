@@ -1,0 +1,691 @@
+# Understanding Recursive CTE in SQL
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to use Recursive Common Table Expressions (CTEs) to query hierarchical and sequential data. You will master the base case and recursive case pattern to solve real-world problems like patient care pathways, organizational charts, and bill of materials.
+
+## Learning Objectives
+- Understand the structure of a Recursive CTE with Base Case and Recursive Case
+- Write recursive queries to traverse organizational hierarchies
+- Build connected paths from sequential data such as patient referrals or care pathways
+- Implement termination conditions to prevent infinite recursion
+- Use string concatenation to build hierarchical paths
+- Apply level tracking to understand position in a hierarchy
+
+## Prerequisites
+- Basic SQL syntax including SELECT, FROM, WHERE, JOIN, and ORDER BY
+- Understanding of Common Table Expressions (CTEs) using the WITH clause
+- String concatenation operators for your database system
+- Understanding of table relationships and foreign keys
+
+## Duration of Completion
+60 minutes
+
+## Level
+Advanced
+
+## Industries
+- healthcare
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+In this scenario you will learn how to use Recursive Common Table Expressions (CTEs) to query hierarchical and sequential data. You will master the base case and recursive case pattern to solve real-world problems like patient care pathways, organizational charts, and bill of materials.
+
+#### Level
+advanced
+
+#### Industries
+- healthcare
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## The Business Challenge: Regional Health Network Patient Pathway Analysis
+
+Sarah, a Data Analyst intern at Regional Health Network, received an urgent request from the Care Coordination Office (CCO). The healthcare network operates multiple facilities across various regions daily, with each patient potentially making several connected visits between departments or facilities.
+
+The CCO needed to answer critical questions for their quarterly operations review:
+
+- What is the longest connected patient care pathway for each patient on a given date?
+- How can we track which patients visited which departments?
+- Which departments are connected in sequence for each patient's care journey?
+
+---
+
+### The Current Problem
+
+The patient visit data was stored in the `PatientVisits` table with individual visit segments. Here's a sample of 10 records from their daily operations:
+
+| date | patient_id | from_department | to_department |
+|------|------------|----------------|---------------|
+| 2025-01-15 | P001 | Emergency | Radiology |
+| 2025-01-15 | P001 | Radiology | Cardiology |
+| 2025-01-15 | P001 | Cardiology | ICU |
+| 2025-01-15 | P001 | Pediatrics | Dermatology |
+| 2025-01-15 | P002 | Pediatrics | Dermatology |
+| 2025-01-15 | P002 | Dermatology | Pharmacy |
+| 2025-01-15 | P002 | Pharmacy | Discharge |
+| 2025-01-15 | P003 | Oncology | Laboratory |
+| 2025-01-15 | P003 | Laboratory | Surgery |
+| 2025-01-15 | P003 | Surgery | Recovery |
+
+A standard query could show individual visits, but it could not:
+
+- Link visits where the destination of one visit matches the source of the next
+- Build a string showing the complete journey like `Emergency > Radiology > Cardiology > ICU`
+- Count how many transfers are in each connected sequence
+- Find the longest pathway per patient
+
+```sql
+-- This shows individual visits, not connected pathways
+SELECT * FROM PatientVisits
+WHERE patient_id = 'P001' AND date = '2025-01-15';
+```
+
+The CCO needed a **connected pathway** showing the full journey for each patient.
+
+---
+
+### Why Standard SQL Falls Short
+
+Traditional SQL queries can retrieve data from one level at a time. They cannot:
+
+- Traverse hierarchical relationships (employee reports to manager, who reports to director)
+- Follow sequential connections (visit destination becomes next visit's source)
+- Build cumulative paths across multiple related rows
+- Dynamically determine depth without knowing the hierarchy level in advance
+
+---
+
+### Sarah's Task
+
+Sarah needed to learn **Recursive Common Table Expressions (CTEs)** — a powerful SQL feature that allows a query to reference itself to iteratively build results.
+
+A Recursive CTE has two mandatory parts:
+
+| Part | Purpose |
+|------|---------|
+| **Base Case (Anchor Member)** | The starting point — initial rows to begin recursion |
+| **Recursive Case (Recursive Member)** | References the CTE itself to generate new rows from previous results |
+
+These two parts are combined with `UNION ALL`.
+
+By the end of this masterclass, Sarah (and you) will be able to write recursive queries that solve hierarchical and sequential problems across various industries.
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Concept 1: Recursive CTE Structure
+
+### What Is a Recursive CTE?
+
+A Recursive CTE is a query that **references itself** to iteratively build results. It starts with an initial result (the base case), then repeatedly applies a rule to generate new rows (the recursive case) until no more rows are produced.
+
+### General Syntax Pattern
+
+```
+WITH RECURSIVE [cte_name] AS (
+    -- Base Case: Starting rows (no self-reference)
+    SELECT
+        [columns needed]
+    FROM [table_name]
+    WHERE [initial_condition]
+
+    UNION ALL
+
+    -- Recursive Case: References the CTE itself
+    SELECT
+        [columns needed]
+    FROM [table_name] t
+    JOIN [cte_name] c ON [join_condition]
+    WHERE [termination_condition]
+)
+SELECT * FROM [cte_name];
+```
+
+### Execution Flow
+
+```text
+Iteration 0: Execute Base Case
+→ Returns initial set of rows (anchor rows)
+
+Iteration 1: Execute Recursive Case
+→ Joins with Base Case results
+→ Returns new rows based on join
+
+Iteration 2: Execute Recursive Case Again
+→ Joins with Iteration 1 results
+→ Returns more new rows
+
+(continues iterating...)
+
+Iteration N: Recursive Case Returns ZERO Rows
+→ No more matching rows found
+→ Recursion STOPS
+
+Final Result: UNION ALL of All Iterations
+```
+
+>[!IMPORTANT]
+> The recursive case must eventually return zero rows, or the query will run infinitely. Most databases have a recursion limit to prevent this.
+
+### Key Components Checklist
+
+| Component | Purpose | Pseudo Code Pattern |
+|-----------|---------|---------------------|
+| **Base Case** | Starting rows | `SELECT ... FROM table WHERE [starting_condition]` |
+| **Recursive Case** | Self-reference to extend results | `JOIN [cte_name] c ON [connection_logic]` |
+| **UNION ALL** | Combines base and recursive results | `UNION ALL` between the two |
+| **Termination Condition** | Stops recursion | `WHERE [level] < [max_depth]` |
+| **Progression Logic** | Advances each iteration | `[level] + 1`, `[transfer_count] + 1` |
+| **Connection Logic** | Links rows correctly | `ON [next.from_department] = [current.to_department]` |
+
+---
+
+### Base Case Explained
+
+The Base Case is your **starting point**. It:
+
+- Does NOT reference the CTE itself
+- Defines the initial rows that recursion will build upon
+- Often includes a WHERE clause to filter starting rows
+
+**Pseudo Code Pattern for Patient Pathways:**
+```
+SELECT
+    [date_column],
+    [patient_column],
+    [from_department],
+    [to_department],
+    [from] || ' > ' || [to] AS pathway,
+    1 AS transfer_count
+FROM [visit_table]
+WHERE [date_filter] AND [patient_filter]
+```
+
+### Recursive Case Explained
+
+The Recursive Case **references the CTE itself**. It:
+
+- Joins the base table with the CTE from the previous iteration
+- Extends or builds upon previous results
+- Must include a termination condition to eventually stop
+
+**Pseudo Code Pattern for Patient Pathways:**
+```
+SELECT
+    [v.date_column],
+    [v.patient_column],
+    [cte.from_department],       -- Keep original starting point
+    [v.to_department],           -- New destination
+    [cte.pathway] || ' > ' || [v.to_department],  -- Extend pathway
+    [cte.transfer_count] + 1     -- Increment transfer count
+FROM [visit_table] [v]
+JOIN [cte_name] [cte]
+    ON [v.from_department] = [cte.to_department]   -- Connection logic
+    AND [v.patient] = [cte.patient]                -- Same patient
+    AND [v.date] = [cte.date]                      -- Same day
+```
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+## Concept 2: Building Connected Patient Pathways
+
+### Scenario
+
+Find all connected patient pathways for patient P001 on 2025-01-15 using our 10-record sample dataset.
+
+### Sample Data (10 Records)
+
+| date | patient_id | from_department | to_department |
+|------|------------|----------------|---------------|
+| 2025-01-15 | P001 | Emergency | Radiology |
+| 2025-01-15 | P001 | Radiology | Cardiology |
+| 2025-01-15 | P001 | Cardiology | ICU |
+| 2025-01-15 | P001 | Pediatrics | Dermatology |
+| 2025-01-15 | P002 | Pediatrics | Dermatology |
+| 2025-01-15 | P002 | Dermatology | Pharmacy |
+| 2025-01-15 | P002 | Pharmacy | Discharge |
+| 2025-01-15 | P003 | Oncology | Laboratory |
+| 2025-01-15 | P003 | Laboratory | Surgery |
+| 2025-01-15 | P003 | Surgery | Recovery |
+
+### Solution Approach (Pseudo Code)
+
+```
+WITH [patient_pathway_cte] AS (
+    -- Base Case: Start with each visit as a potential pathway beginning
+    SELECT
+        [date],
+        [patient_id],
+        [from_department],
+        [to_department],
+        [from] || ' > ' || [to] AS pathway,
+        1 AS transfer_count
+    FROM [PatientVisits]
+    WHERE [date] = '[target_date]' AND [patient_id] = '[target_patient]'
+
+    UNION ALL
+
+    -- Recursive Case: Find next connected visit
+    SELECT
+        [v.date],
+        [v.patient_id],
+        [pp.from_department],        -- Keep original starting point
+        [v.to_department],           -- New destination
+        [pp.pathway] || ' > ' || [v.to_department],  -- Extend pathway
+        [pp.transfer_count] + 1      -- Increment transfer count
+    FROM [PatientVisits] [v]
+    JOIN [patient_pathway_cte] [pp]
+        ON [v.from_department] = [pp.to_department]   -- Connection logic
+        AND [v.patient_id] = [pp.patient_id]          -- Same patient
+        AND [v.date] = [pp.date]                      -- Same day
+)
+SELECT * FROM [patient_pathway_cte];
+```
+
+>[!TIP]
+> Replace bracketed placeholders like `[patient_pathway_cte]`, `[PatientVisits]`, `[from_department]`, etc. with actual column and table names from your schema.
+
+### Expected Output Structure
+
+| date | patient_id | from_department | to_department | pathway | transfer_count |
+|------|------------|----------------|---------------|---------|----------------|
+| 2025-01-15 | P001 | Emergency | Radiology | Emergency > Radiology | 1 |
+| 2025-01-15 | P001 | Radiology | Cardiology | Radiology > Cardiology | 1 |
+| 2025-01-15 | P001 | Cardiology | ICU | Cardiology > ICU | 1 |
+| 2025-01-15 | P001 | Pediatrics | Dermatology | Pediatrics > Dermatology | 1 |
+| 2025-01-15 | P001 | Emergency | Cardiology | Emergency > Radiology > Cardiology | 2 |
+| 2025-01-15 | P001 | Radiology | ICU | Radiology > Cardiology > ICU | 2 |
+| 2025-01-15 | P001 | Emergency | ICU | Emergency > Radiology > Cardiology > ICU | 3 |
+
+### How It Works
+
+| Iteration | What Happens | Rows Produced |
+|-----------|--------------|---------------|
+| **Base Case** | Select all individual visits for the target patient/date | 4 rows (each visit as starting point) |
+| **Iteration 1** | Find visits where from = previous to | 2 rows (Emergency→Cardiology, Radiology→ICU) |
+| **Iteration 2** | Extend pathways again | 1 row (Emergency→ICU) |
+| **Iteration 3** | No more connected visits | 0 rows → STOP |
+
+### Reading the Pathway Column
+
+| Pathway | Interpretation |
+|---------|----------------|
+| `Emergency > Radiology` | Single transfer: Emergency to Radiology |
+| `Emergency > Radiology > Cardiology` | Two transfers: Emergency→Radiology, then Radiology→Cardiology |
+| `Emergency > Radiology > Cardiology > ICU` | Three transfers: Complete care journey |
+
+>[!TIP]
+> The Base Case initializes each visit as a starting point. The Recursive Case extends existing pathways by finding the next connected visit.
+
+---
+
+### Finding the Longest Pathway Per Patient (Pseudo Code)
+
+To identify the longest connected pathway for each patient:
+
+```
+WITH [patient_pathway_cte] AS (
+    -- Base Case
+    SELECT
+        [date],
+        [patient_id],
+        [from_department],
+        [to_department],
+        [from] || ' > ' || [to] AS pathway,
+        1 AS transfer_count
+    FROM [PatientVisits]
+
+    UNION ALL
+
+    -- Recursive Case
+    SELECT
+        [v.date],
+        [v.patient_id],
+        [pp.from_department],
+        [v.to_department],
+        [pp.pathway] || ' > ' || [v.to_department],
+        [pp.transfer_count] + 1
+    FROM [PatientVisits] [v]
+    JOIN [patient_pathway_cte] [pp]
+        ON [v.from_department] = [pp.to_department]
+        AND [v.patient_id] = [pp.patient_id]
+        AND [v.date] = [pp.date]
+)
+-- Select longest pathway per patient per date
+SELECT DISTINCT ON ([date], [patient_id])
+    [date],
+    [patient_id],
+    [pathway] AS longest_day_pathway
+FROM [patient_pathway_cte]
+ORDER BY [date], [patient_id], [transfer_count] DESC;
+```
+
+### Expected Output Structure
+
+| date | patient_id | longest_day_pathway |
+|------|------------|---------------------|
+| 2025-01-15 | P001 | Emergency > Radiology > Cardiology > ICU |
+| 2025-01-15 | P002 | Pediatrics > Dermatology > Pharmacy > Discharge |
+| 2025-01-15 | P003 | Oncology > Laboratory > Surgery > Recovery |
+
+>[!TIP]
+> `DISTINCT ON (date, patient_id)` picks one row per patient per date. Combined with `ORDER BY ... transfer_count DESC`, it selects the pathway with the most transfers.
+
+---
+
+**Tags**
+
+
+##### Input 4
+**Type:** Text
+
+## Concept 3: Preventing Infinite Recursion
+
+### The Problem
+
+If your data has **cycles** (A reports to B, B reports to A), recursion never stops:
+
+**Dangerous Pattern (No Termination Condition):**
+```
+WITH [infinite_loop] AS (
+    SELECT 1 AS counter
+    UNION ALL
+    SELECT [counter] + 1 FROM [infinite_loop]
+)
+SELECT * FROM [infinite_loop];
+```
+
+This query runs forever (or until the database stops it).
+
+### Solution 1: Add a Level Limit
+
+**Pseudo Code Pattern:**
+```
+WITH [org_chart_cte] AS (
+    SELECT
+        [employee_id],
+        [employee_name],
+        [manager_id],
+        1 AS level
+    FROM [employees]
+    WHERE [employee_id] = [starting_id]
+
+    UNION ALL
+
+    SELECT
+        [e.employee_id],
+        [e.employee_name],
+        [e.manager_id],
+        [oc.level] + 1
+    FROM [employees] [e]
+    JOIN [org_chart_cte] [oc]
+        ON [e.manager_id] = [oc.employee_id]
+    WHERE [oc.level] < [max_depth]  -- Termination: Stop at N levels
+)
+SELECT * FROM [org_chart_cte];
+```
+
+### Solution 2: Track Visited Nodes
+
+**Pseudo Code Pattern:**
+```
+WITH [patient_pathway_cte] AS (
+    SELECT
+        [from_department],
+        [to_department],
+        [from] || ' > ' || [to] AS pathway,
+        [to_department] AS visited_departments,
+        1 AS transfer_count
+    FROM [PatientVisits]
+
+    UNION ALL
+
+    SELECT
+        [pp.from_department],
+        [v.to_department],
+        [pp.pathway] || ' > ' || [v.to_department],
+        [pp.visited_departments] || ',' || [v.to_department],
+        [pp.transfer_count] + 1
+    FROM [PatientVisits] [v]
+    JOIN [patient_pathway_cte] [pp]
+        ON [v.from_department] = [pp.to_department]
+    WHERE [pp.visited_departments] NOT LIKE '%' || [v.to_department] || '%'
+)
+SELECT * FROM [patient_pathway_cte];
+```
+
+>[!IMPORTANT]
+> Always include a termination condition. Either limit the recursion depth (level < N) or track visited nodes to prevent cycles.
+
+---
+
+### Example: Organizational Hierarchy
+
+Navigate an employee hierarchy to find all employees reporting (directly or indirectly) to a specific manager.
+
+#### Sample Data: Employees Table (10 Records)
+
+| employee_id | employee_name | manager_id |
+|-------------|---------------|------------|
+| 1 | CEO Alice | NULL |
+| 2 | VP Bob | 1 |
+| 3 | VP Carol | 1 |
+| 4 | Director Dave | 2 |
+| 5 | Director Eve | 2 |
+| 6 | Director Frank | 3 |
+| 7 | Manager Grace | 4 |
+| 8 | Manager Henry | 5 |
+| 9 | Manager Ivy | 6 |
+| 10 | Analyst Jack | 7 |
+
+#### Solution Approach: Find All Employees Under VP Bob (Pseudo Code)
+
+```
+WITH [org_chart_cte] AS (
+    -- Base Case: Start with VP Bob (employee_id = 2)
+    SELECT
+        [employee_id],
+        [employee_name],
+        [manager_id],
+        1 AS level
+    FROM [employees]
+    WHERE [employee_id] = [starting_id]
+
+    UNION ALL
+
+    -- Recursive Case: Find employees whose manager is in the previous level
+    SELECT
+        [e.employee_id],
+        [e.employee_name],
+        [e.manager_id],
+        [oc.level] + 1
+    FROM [employees] [e]
+    JOIN [org_chart_cte] [oc]
+        ON [e.manager_id] = [oc.employee_id]
+)
+SELECT * FROM [org_chart_cte];
+```
+
+#### Expected Output Structure
+
+| employee_id | employee_name | manager_id | level |
+|-------------|---------------|------------|-------|
+| 2 | VP Bob | 1 | 1 |
+| 4 | Director Dave | 2 | 2 |
+| 5 | Director Eve | 2 | 2 |
+| 7 | Manager Grace | 4 | 3 |
+| 8 | Manager Henry | 5 | 3 |
+| 10 | Analyst Jack | 7 | 4 |
+
+#### Interpretation
+
+| Level | Employees | Meaning |
+|-------|-----------|---------|
+| 1 | VP Bob | The starting manager |
+| 2 | Director Dave, Director Eve | Direct reports to Bob |
+| 3 | Manager Grace, Manager Henry | Indirect reports (report to Dave/Eve) |
+| 4 | Analyst Jack | Second-level indirect reports |
+
+>[!TIP]
+> The `level` column tracks depth in the hierarchy. Level 1 = starting point, Level 2 = direct reports, Level 3+ = indirect reports.
+
+---
+
+### When to Use Recursive CTEs
+
+| Scenario | Use Recursive CTE |
+|----------|-------------------|
+| Organizational hierarchies | ✅ Yes |
+| Patient or transportation routes | ✅ Yes |
+| Bill of materials | ✅ Yes |
+| Category trees | ✅ Yes |
+| Graph traversal | ✅ Yes |
+| Simple aggregations | ❌ Use GROUP BY |
+| Flat table lookups | ❌ Use standard SELECT |
+
+---
+
+**Tags**
+
+
+##### Input 5
+**Type:** Choice
+
+**Question:** What are the two mandatory parts of a Recursive CTE?
+
+**Options:** 
+- SELECT clause and FROM clause
+
+- Base Case (Anchor Member) and Recursive Case (Recursive Member)
+
+- WHERE clause and HAVING clause
+
+- JOIN clause and UNION clause
+
+**Correct Options:** 
+- Base Case (Anchor Member) and Recursive Case (Recursive Member)
+
+**Tags**
+- data-wrangling / recursive-cte (skill)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** Which of the following are essential components to prevent infinite recursion in a Recursive CTE? (Select 2)
+
+**Options:** 
+- Ensuring the recursive case progresses toward the termination condition (e.g., level + 1)
+
+- Using DISTINCT in the SELECT clause
+
+- Including a termination condition in the WHERE clause of the recursive case
+
+- Using ORDER BY to sort the results
+
+**Correct Options:** 
+- Ensuring the recursive case progresses toward the termination condition (e.g., level + 1)
+
+- Including a termination condition in the WHERE clause of the recursive case
+
+**Tags**
+- data-wrangling / recursive-cte (skill)
+
+##### Input 7
+**Type:** Choice
+
+**Question:** In the patient pathway Recursive CTE, what is the purpose of the connection logic that joins the from_department of one visit with the to_department of the previous visit?
+
+**Options:** 
+- To join the PatientVisits table with itself for performance optimization
+
+- To ensure all visits are included regardless of connection
+
+- To link visits where the destination of one visit matches the source of the next visit
+
+- To filter out visits that have the same source and destination
+
+**Correct Options:** 
+- To link visits where the destination of one visit matches the source of the next visit
+
+**Tags**
+- data-wrangling / recursive-cte (skill)
+
+##### Input 8
+**Type:** Text
+
+## Summary: Key Takeaways
+
+### Recursive CTE Template (Pseudo Code)
+
+```
+WITH [cte_name] AS (
+    -- Base Case
+    SELECT
+        [columns],
+        1 AS level
+    FROM [table]
+    WHERE [starting_condition]
+
+    UNION ALL
+
+    -- Recursive Case
+    SELECT
+        [t.columns],
+        [c.level] + 1
+    FROM [table] [t]
+    JOIN [cte_name] [c] ON [join_condition]
+    WHERE [termination_condition]
+)
+SELECT * FROM [cte_name];
+```
+
+### Common Patterns
+
+| Pattern | Use Case |
+|---------|----------|
+| `[level] + 1` | Track depth in hierarchy |
+| `[pathway] || ' > ' || [next_value]` | Build hierarchical pathway string |
+| `WHERE [level] < [max_depth]` | Limit recursion depth |
+| `DISTINCT ON ([id])` | Pick one row per group |
+| `ORDER BY ... DESC` | Get longest or deepest first |
+
+### Termination Strategies
+
+| Strategy | When to Use |
+|----------|-------------|
+| `WHERE [level] < [max_depth]` | You know maximum depth |
+| `WHERE [visited] NOT LIKE '%' || [value] || '%'` | Prevent cycles |
+| `WHERE [date] = [specific_date]` | Limit to specific scope |
+| Natural termination | Data has no cycles (org charts) |
+
+
+### Next Steps
+
+You've now learned how Recursive CTEs work and how to apply them to hierarchical and sequential data. Practice writing recursive queries with different termination conditions and pathway-building patterns to master this powerful SQL technique.
+
+---
+
+**Tags**
+

@@ -1,0 +1,520 @@
+# Product Performance Analysis at GlobalMart using SQL
+## Content Type
+Scenario
+
+## Overview
+You've just joined **GlobalMart**, a fast-growing e-commerce giant spanning 120 markets across North America and Europe in Technology, Office Supplies, and Furniture. Your mission? The Product Management Team needs critical insights that will define their competitive edge.
+
+This isn't about basic reporting—you'll uncover hidden patterns, reveal market opportunities, and drive strategic decisions affecting millions of customers. Every SQL query you write directly influences product strategy as you become the detective uncovering stories within GlobalMart's vast data ecosystem.
+
+**Master game-changing skills:** Transform raw data into strategic insights, uncover trends through advanced aggregations, navigate complex challenges with subqueries and CTEs, and integrate multiple data sources seamlessly.
+
+This is hands-on problem-solving with authentic e-commerce challenges that top-tier companies face daily. Ready to transform data into competitive advantage? Your advanced analytics journey starts here.
+
+## Learning Objectives
+- Write effective SQL queries to retrieve and analyze business data
+- Apply GROUP BY and aggregate functions to summarize data and calculate key business metrics
+- Develop complex queries using subqueries and Common Table Expressions (CTEs) for advanced analysis
+- Execute JOIN operations to combine data from multiple tables for comprehensive reporting
+
+## Prerequisites
+- Knowledge of basic SQL concepts like SELECT, WHERE, GROUP BY, HAVING, ORDER BY, and JOIN.
+- Familiarity with concepts such as joins, aggregations, and groupings.
+- Understand common SQL functions like `COUNT`, `SUM`, and `DATEDIFF`.
+
+## Duration of Completion
+45 minutes
+
+## Level
+Beginner
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+You've just joined **GlobalMart**, a fast-growing e-commerce giant spanning 120 markets across North America and Europe in Technology, Office Supplies, and Furniture. Your mission? The Product Management Team needs critical insights that will define their competitive edge.
+
+This isn't about basic reporting—you'll uncover hidden patterns, reveal market opportunities, and drive strategic decisions affecting millions of customers. Every SQL query you write directly influences product strategy as you become the detective uncovering stories within GlobalMart's vast data ecosystem.
+
+**Master game-changing skills:** Transform raw data into strategic insights, uncover trends through advanced aggregations, navigate complex challenges with subqueries and CTEs, and integrate multiple data sources seamlessly.
+
+This is hands-on problem-solving with authentic e-commerce challenges that top-tier companies face daily. Ready to transform data into competitive advantage? Your advanced analytics journey starts here.
+
+#### Level
+beginner
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+GlobalMart, an emerging E-Commerce player in North America and Europe, specializes in Technology, Office Supplies, and Furniture across 120 markets.
+
+You have recently joined GlobalMart as a data analyst. As part of the analytics team, your mission is to ensure that the company maintains its high standards in product management. 
+
+GlobalMart's Product Management Team needs you to prepare the following summary report : 
+
+<figure class="image image_resized"><img src="https://mentorskool-platform-uploads.s3.ap-south-1.amazonaws.com/images/d826abc6-f14d-40ed-b3b4-9e716e9ea998_83d04ac6-cb74-4a96-a06a-e0d5442aa126_image.webp"></figure>
+
+>[!TIP] 
+> The numbers in the report are for representation purposes only
+
+<u>**Description :**</u>
+
+- **category** - Name of the category 
+- **sub-category** - Name of the sub category
+- **tot\_products** - Total products available under a given category and sub-category
+- **no\_photos** - Total products under a given category and sub-category which don't have any photo (product\_photos\_qty column under products table having values 0 means no photos available)
+- **total\_sales\_value** - Total sales amount for products under a given category and sub-category
+- **total\_units\_sold** - Total units sold for products under a given category and sub-category
+- **no\_photo\_percentage** - Total percentage of products with no photos for under a category, sub-category
+
+>[!NOTE]
+- Server name : mentorskool.database.windows.net
+  Username : mskllearnlogin
+  Password : !@#sw2aq1
+- The data dictionary and the ER-diagram is shown below:
+
+![Image-ER-diagram.png](https://cdn.enqurious.com/images/751b06c3-2660-442d-b3d8-5170bd949c92_ER-diagram.webp)
+
+Use the **mskl-masterclass** database
+
+[Here](https://cdn.enqurious.com/others/a9ff4875-993a-412c-bad8-fffaef0b4426_globalmart-dd.xlsx) is the data dictionary and ER diagram for the tables you'll be working with.
+
+
+>[!CAUTION] 
+> An order is considered to be fulfilled, only when it is delivered to the customer
+
+**Tags**
+
+
+##### Input 2
+**Type:** Choice
+
+**Question:** Which sub-category has the lowest total sales value?
+
+**Options:** 
+- Accessories
+
+- Fasteners
+
+- Bookcases
+
+- Labels
+
+**Correct Options:** 
+- Fasteners
+
+**Solution:** 
+```sql
+-- The data in the ex_transactions table is at transaction id level. Our report is at category & sub category level. 
+--  So there is a clear mismatch in the granularity of the data we have, and the report we want to create
+-- First step, is we bring the data to product id level, so that we can map it to a category and sub category
+-- We need to join it with ex_orders table because we need to only consider orders which have been delivered 
+
+with base_data as (
+SELECT  t.Product_ID, 
+		sum(t.Sales_Amount) as total_sales,
+		SUM(t.Quantity) as total_qty
+FROM ex_transactions t
+JOIN ex_orders o
+	ON t.order_id = o.order_id AND o.order_status = 'delivered'
+GROUP BY t.Product_ID
+),
+
+-- Now that we have data at product level, we need to map it to a category and subcategory
+-- We do this by joining the base_data cte with ex_products table
+--  Now there are products with no photos, hence we use case when to identify the products with no photos
+-- Next, when we have to take a count of all products with no photos, we will just do a sum of the prod_with_no_photo column
+-- We only consider the columns which are necessary for us, from the report perspective
+product_summary_data as (
+SELECT  p.product_id, 
+		p.category,
+		p.sub_category,
+		b.total_sales,
+		b.total_qty,
+		p.product_photos_qty,
+		CASE WHEN product_photos_qty = 0 THEN 1 ELSE 0 END as prod_with_no_photo
+FROM ex_products p
+JOIN base_data b
+	 ON p.product_id = b.product_id
+),
+
+-- Once the data is at product granularity, we can work on creating the requested report
+-- The data needs to be aggregated at category and sub category level, hence we need to use them in the group by statement
+-- Rest of the columns, we take it from the previous cte
+-- For calculating percentage, we use the format function. You can do a quick google search to understand its working
+--  Finally, the report is ordered according to category and sub category, so we use these 2 columns in the ORDER BY clause
+
+final_cte as (SELECT category,
+		sub_category,
+		count(product_id) as tot_products,
+		sum(prod_with_no_photo) as no_photos,
+		sum(total_sales) as total_sales_value, 
+		sum(total_qty) as total_units_sold,
+		FORMAT(1.0*sum(prod_with_no_photo)/count(product_id),'P2') as no_photo_percentage
+FROM product_summary_data
+GROUP BY category, sub_category
+--ORDER BY category, sub_category
+)
+
+SELECT sub_category, total_sales_value
+FROM final_cte
+ORDER BY total_sales_value ```
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / join (skill)
+- sql (tool)
+- data-wrangling / conditional-logic (skill)
+
+##### Input 3
+**Type:** Choice
+
+**Question:** What is the percentage of products with no photos in the Accessories subcategory?
+
+**Options:** 
+- 23.19%
+
+- 65.23%
+
+- 55.56%
+
+- 50.00%
+
+**Correct Options:** 
+- 50.00%
+
+**Solution:** 
+```sql
+-- The data in the ex_transactions table is at transaction id level. Our report is at category & sub category level. 
+--  So there is a clear mismatch in the granularity of the data we have, and the report we want to create
+-- First step, is we bring the data to product id level, so that we can map it to a category and sub category
+-- We need to join it with ex_orders table because we need to only consider orders which have been delivered 
+
+with base_data as (
+SELECT  t.Product_ID, 
+		sum(t.Sales_Amount) as total_sales,
+		SUM(t.Quantity) as total_qty
+FROM ex_transactions t
+JOIN ex_orders o
+	ON t.order_id = o.order_id AND o.order_status = 'delivered'
+GROUP BY t.Product_ID
+),
+
+-- Now that we have data at product level, we need to map it to a category and subcategory
+-- We do this by joining the base_data cte with ex_products table
+--  Now there are products with no photos, hence we use case when to identify the products with no photos
+-- Next, when we have to take a count of all products with no photos, we will just do a sum of the prod_with_no_photo column
+-- We only consider the columns which are necessary for us, from the report perspective
+product_summary_data as (
+SELECT  p.product_id, 
+		p.category,
+		p.sub_category,
+		b.total_sales,
+		b.total_qty,
+		p.product_photos_qty,
+		CASE WHEN product_photos_qty = 0 THEN 1 ELSE 0 END as prod_with_no_photo
+FROM ex_products p
+JOIN base_data b
+	 ON p.product_id = b.product_id
+),
+
+-- Once the data is at product granularity, we can work on creating the requested report
+-- The data needs to be aggregated at category and sub category level, hence we need to use them in the group by statement
+-- Rest of the columns, we take it from the previous cte
+-- For calculating percentage, we use the format function. You can do a quick google search to understand its working
+--  Finally, the report is ordered according to category and sub category, so we use these 2 columns in the ORDER BY clause
+final_cte as
+(
+SELECT category,
+		sub_category,
+		count(product_id) as tot_products,
+		sum(prod_with_no_photo) as no_photos,
+		sum(total_sales) as total_sales_value, 
+		sum(total_qty) as total_units_sold,
+		FORMAT(1.0*sum(prod_with_no_photo)/count(product_id),'P2') as no_photo_percentage
+FROM product_summary_data
+GROUP BY category, sub_category
+)
+select category,
+	   sub_category,
+	   no_photo_percentage
+from final_cte
+where category = 'Technology' and sub_category = 'Accessories';
+
+```
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / conditional-logic (skill)
+- data-wrangling / join (skill)
+- sql (tool)
+
+##### Input 4
+**Type:** Choice
+
+**Question:** Which sub-category has the highest **number of products** with no photos?
+
+**Options:** 
+- Accessories
+
+- Paper
+
+- Furnishings
+
+- Machines
+
+**Correct Options:** 
+- Paper
+
+**Solution:** 
+```sql
+-- The data in the ex_transactions table is at transaction id level. Our report is at category & sub category level. 
+--  So there is a clear mismatch in the granularity of the data we have, and the report we want to create
+-- First step, is we bring the data to product id level, so that we can map it to a category and sub category
+-- We need to join it with ex_orders table because we need to only consider orders which have been delivered 
+
+with base_data as (
+SELECT  t.Product_ID, 
+		sum(t.Sales_Amount) as total_sales,
+		SUM(t.Quantity) as total_qty
+FROM ex_transactions t
+JOIN ex_orders o
+	ON t.order_id = o.order_id AND o.order_status = 'delivered'
+GROUP BY t.Product_ID
+),
+
+-- Now that we have data at product level, we need to map it to a category and subcategory
+-- We do this by joining the base_data cte with ex_products table
+--  Now there are products with no photos, hence we use case when to identify the products with no photos
+-- Next, when we have to take a count of all products with no photos, we will just do a sum of the prod_with_no_photo column
+-- We only consider the columns which are necessary for us, from the report perspective
+product_summary_data as (
+SELECT  p.product_id, 
+		p.category,
+		p.sub_category,
+		b.total_sales,
+		b.total_qty,
+		p.product_photos_qty,
+		CASE WHEN product_photos_qty = 0 THEN 1 ELSE 0 END as prod_with_no_photo
+FROM ex_products p
+JOIN base_data b
+	 ON p.product_id = b.product_id
+),
+
+-- Once the data is at product granularity, we can work on creating the requested report
+-- The data needs to be aggregated at category and sub category level, hence we need to use them in the group by statement
+-- Rest of the columns, we take it from the previous cte
+-- For calculating percentage, we use the format function. You can do a quick google search to understand its working
+--  Finally, the report is ordered according to category and sub category, so we use these 2 columns in the ORDER BY clause
+final_cte as
+(
+SELECT category,
+		sub_category,
+		count(product_id) as tot_products,
+		sum(prod_with_no_photo) as no_photos,
+		sum(total_sales) as total_sales_value, 
+		sum(total_qty) as total_units_sold,
+		FORMAT(1.0*sum(prod_with_no_photo)/count(product_id),'P2') as no_photo_percentage
+FROM product_summary_data
+GROUP BY category, sub_category
+)
+select category,
+	   sub_category,
+	   no_photos
+from final_cte
+order by no_photos desc;
+
+```
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / conditional-logic (skill)
+- data-wrangling / join (skill)
+- sql (tool)
+
+##### Input 5
+**Type:** Choice
+
+**Question:** Which two subcategories of Technology contribute the most in terms of total sales value?
+
+**Options:** 
+- Phones
+
+- Copiers
+
+- Accessories
+
+- Machines
+
+**Correct Options:** 
+- Phones
+
+- Machines
+
+**Solution:** 
+```sql
+-- The data in the ex_transactions table is at transaction id level. Our report is at category & sub category level. 
+--  So there is a clear mismatch in the granularity of the data we have, and the report we want to create
+-- First step, is we bring the data to product id level, so that we can map it to a category and sub category
+-- We need to join it with ex_orders table because we need to only consider orders which have been delivered 
+
+with base_data as (
+SELECT  t.Product_ID, 
+		sum(t.Sales_Amount) as total_sales,
+		SUM(t.Quantity) as total_qty
+FROM ex_transactions t
+JOIN ex_orders o
+	ON t.order_id = o.order_id AND o.order_status = 'delivered'
+GROUP BY t.Product_ID
+),
+
+-- Now that we have data at product level, we need to map it to a category and subcategory
+-- We do this by joining the base_data cte with ex_products table
+--  Now there are products with no photos, hence we use case when to identify the products with no photos
+-- Next, when we have to take a count of all products with no photos, we will just do a sum of the prod_with_no_photo column
+-- We only consider the columns which are necessary for us, from the report perspective
+product_summary_data as (
+SELECT  p.product_id, 
+		p.category,
+		p.sub_category,
+		b.total_sales,
+		b.total_qty,
+		p.product_photos_qty,
+		CASE WHEN product_photos_qty = 0 THEN 1 ELSE 0 END as prod_with_no_photo
+FROM ex_products p
+JOIN base_data b
+	 ON p.product_id = b.product_id
+),
+
+-- Once the data is at product granularity, we can work on creating the requested report
+-- The data needs to be aggregated at category and sub category level, hence we need to use them in the group by statement
+-- Rest of the columns, we take it from the previous cte
+-- For calculating percentage, we use the format function. You can do a quick google search to understand its working
+--  Finally, the report is ordered according to category and sub category, so we use these 2 columns in the ORDER BY clause
+final_cte as
+(
+SELECT category,
+		sub_category,
+		count(product_id) as tot_products,
+		sum(prod_with_no_photo) as no_photos,
+		sum(total_sales) as total_sales_value, 
+		sum(total_qty) as total_units_sold,
+		FORMAT(1.0*sum(prod_with_no_photo)/count(product_id),'P2') as no_photo_percentage
+FROM product_summary_data
+GROUP BY category, sub_category
+)
+select category,
+	   sub_category,
+	   total_sales_value
+from final_cte
+where category = 'Technology'
+order by total_sales_value desc;
+
+```
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / conditional-logic (skill)
+- data-wrangling / join (skill)
+- sql (tool)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** In Office Supplies, which sub_category has the highest number of total_units_sold?
+
+**Options:** 
+- Appliances
+
+- Art
+
+- Binders
+
+- Paper
+
+**Correct Options:** 
+- Binders
+
+**Solution:** 
+```sql
+-- The data in the ex_transactions table is at transaction id level. Our report is at category & sub category level. 
+--  So there is a clear mismatch in the granularity of the data we have, and the report we want to create
+-- First step, is we bring the data to product id level, so that we can map it to a category and sub category
+-- We need to join it with ex_orders table because we need to only consider orders which have been delivered 
+
+with base_data as (
+SELECT  t.Product_ID, 
+		sum(t.Sales_Amount) as total_sales,
+		SUM(t.Quantity) as total_qty
+FROM ex_transactions t
+JOIN ex_orders o
+	ON t.order_id = o.order_id AND o.order_status = 'delivered'
+GROUP BY t.Product_ID
+),
+
+-- Now that we have data at product level, we need to map it to a category and subcategory
+-- We do this by joining the base_data cte with ex_products table
+--  Now there are products with no photos, hence we use case when to identify the products with no photos
+-- Next, when we have to take a count of all products with no photos, we will just do a sum of the prod_with_no_photo column
+-- We only consider the columns which are necessary for us, from the report perspective
+product_summary_data as (
+SELECT  p.product_id, 
+		p.category,
+		p.sub_category,
+		b.total_sales,
+		b.total_qty,
+		p.product_photos_qty,
+		CASE WHEN product_photos_qty = 0 THEN 1 ELSE 0 END as prod_with_no_photo
+FROM ex_products p
+JOIN base_data b
+	 ON p.product_id = b.product_id
+),
+
+-- Once the data is at product granularity, we can work on creating the requested report
+-- The data needs to be aggregated at category and sub category level, hence we need to use them in the group by statement
+-- Rest of the columns, we take it from the previous cte
+-- For calculating percentage, we use the format function. You can do a quick google search to understand its working
+--  Finally, the report is ordered according to category and sub category, so we use these 2 columns in the ORDER BY clause
+final_cte as
+(
+SELECT category,
+		sub_category,
+		count(product_id) as tot_products,
+		sum(prod_with_no_photo) as no_photos,
+		sum(total_sales) as total_sales_value, 
+		sum(total_qty) as total_units_sold,
+		FORMAT(1.0*sum(prod_with_no_photo)/count(product_id),'P2') as no_photo_percentage
+FROM product_summary_data
+GROUP BY category, sub_category
+)
+select category,
+	   sub_category,
+	   total_units_sold
+from final_cte
+where category = 'Office Supplies'
+order by total_units_sold desc;
+
+```
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / conditional-logic (skill)
+- data-wrangling / join (skill)
+- sql (tool)

@@ -1,0 +1,611 @@
+# Geographic Sales Reporting with ROLLUP, CUBE & GROUPING SETS
+## Content Type
+Scenario
+
+## Overview
+GlobalMart’s leadership is planning their annual expansion strategy and needs comprehensive sales reports analyzing performance across regions, states, and cities. As a Data Analyst intern, you’ll create hierarchical reports using three powerful SQL aggregation techniques like ROLLUP, CUBE, and GROUPING SETS, each suited for different analytical requirements. Your insights will directly influence where GlobalMart invests in new fulfillment centers and marketing campaigns next year.
+
+## Learning Objectives
+- Understand and apply the ROLLUP function for hierarchical aggregations
+- Use the CUBE function to generate all possible grouping combinations
+- Leverage GROUPING SETS to define custom grouping specifications
+- Compare and contrast when to use each aggregation technique in real business scenarios
+- Interpret subtotal and grand total rows in multi-level aggregation reports
+
+## Prerequisites
+- Knowledge of basic SQL concepts like SELECT, WHERE, GROUP BY, HAVING, ORDER BY, and JOIN.
+- Familiarity with aggregate functions (SUM, COUNT, AVG, etc.)
+
+## Duration of Completion
+60 minutes
+
+## Level
+Advanced
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Overview
+GlobalMart’s leadership is planning their annual expansion strategy and needs comprehensive sales reports analyzing performance across regions, states, and cities. As a Data Analyst intern, you’ll create hierarchical reports using three powerful SQL aggregation techniques like ROLLUP, CUBE, and GROUPING SETS, each suited for different analytical requirements. Your insights will directly influence where GlobalMart invests in new fulfillment centers and marketing campaigns next year.
+
+#### Level
+advanced
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- sql (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+GlobalMart, an e-commerce giant, is planning its **annual expansion strategy**. The leadership team needs comprehensive sales reports that analyze performance across different geographic levels from individual cities up to the grand total across all regions.
+
+You're a **Data Analyst intern** joining the Sales Analytics team. Your manager has tasked you with creating hierarchical sales reports that will help identify which regions, states, and cities are driving the most revenue. These insights will directly influence where GlobalMart invests in new fulfillment centers and marketing campaigns next year.
+
+To accomplish this, you'll master three powerful SQL aggregation techniques: **ROLLUP**, **CUBE**, and **GROUPING SETS**,  each suited for different analytical needs.
+
+>[!NOTE]
+- Server name : mentorskool.database.windows.net
+  Username : mskllearnlogin
+  Password : !@#sw2aq1
+
+- Use the **mskl-masterclass** database.
+- Download the Data Dictionary and the ER diagram from [here](https://cdn.enqurious.com/others/ae0d874c-f3a3-4499-84ac-05d35227085e_newERdatadict.xlsx).
+
+
+
+**Tags**
+
+
+##### Input 2
+**Type:** Code
+
+**Question:** ## Task 1: Hierarchical Sales Report with ROLLUP
+
+### Scenario
+The VP of Sales needs a **hierarchical summary** of total sales that rolls up from city level to state level to region level, and finally to a grand total. This report will help identify the geographic distribution of sales at each level of the organization.
+
+### Your Task
+Write a query that generates a sales report summarizing total sales across regions, states, and cities using the `ROLLUP` function.
+
+**Your report must include:**
+- Total sales for each city (within its state and region)
+- Subtotals for each state (all cities combined within that state)
+- Subtotals for each region (all states combined within that region)
+- A grand total for all regions, states, and cities
+
+### Expected Output Format
+Your output should look similar to this:
+
+| region | state | city | total_sales |
+|--------|-------|------|-------------|
+| Central | Illinois | Chicago | 125000.00 |
+| Central | Illinois | NULL | 250000.00 |
+| Central | Ohio | Columbus | 85000.00 |
+| Central | NULL | NULL | 500000.00 |
+| East | New York | New York City | 320000.00 |
+| NULL | NULL | NULL | 2500000.00 |
+
+>[!IMPORTANT] 
+> Use order_status = 'delivered' to ensure you're analyzing completed sales.
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+**Understanding the Problem**  
+Our goal is to create a **hierarchical sales report** that summarizes total sales across regions, states, and cities using `ROLLUP`. This report will help leadership identify sales performance at each geographic level — from individual cities up to state subtotals, region subtotals, and a grand total.
+
+**Step 1: What information do we need?**
+
+- `region` – To group sales by geographic region.
+- `state` – To group sales by state within each region.
+- `city` – To group sales by city within each state.
+- `sales_amount` – To calculate total sales.
+- `order_id` – To link transactions with orders.
+- `customer_id` – To link orders with customers.
+- `postal_code` – To link customers with locations.
+- `order_status` – To filter for delivered orders only.
+
+**Step 2: Where is this data found?**  
+We need to combine four tables:
+
+| Table | Column | Purpose |
+| --- | --- | --- |
+| ex\_transactions | sales\_amount | To calculate total sales |
+| ex\_transactions | order\_id | To join with orders |
+| ex\_orders | order\_id | To join with transactions |
+| ex\_orders | customer\_id | To join with customers |
+| ex\_orders | order\_status | To filter delivered orders |
+| ex\_customers | customer\_id | To join with orders |
+| ex\_customers | postal\_code | To join with locations |
+| ex\_locations | postal\_code | To join with customers |
+| ex\_locations | region, state, city | To group by geography |
+
+* * *
+
+**Logic Before Building the Solution**
+
+1. **Join all four tables** (`ex_transactions` → `ex_orders` → `ex_customers` → `ex_locations`) using their respective keys.
+2. **Filter for delivered orders** using `order_status = 'delivered'` to ensure we only analyze completed sales.
+3. **Use ROLLUP** to create hierarchical aggregations: `(region, state, city)` → `(region, state)` → `(region)` → `()`.
+4. **Aggregate sales** using `SUM(sales_amount)` grouped by `ROLLUP(region, state, city)`.
+5. **Round the result** to 2 decimal places using `ROUND()`.
+6. **Sort the results** by region, state, and city for readable output.
+
+* * *
+
+**Building the Solution Step-by-Step**
+
+**Phase 1: Join All Tables**
+
+```sql
+SELECT * FROM ex_transactions t
+JOIN ex_orders o 
+ON t.order_id = o.order_id 
+JOIN ex_customers c 
+ON o.customer_id = c.customer_id 
+JOIN ex_locations l 
+ON c.postal_code = l.postal_code;
+```
+**Phase 2: Add Filter and Select Required Columns**
+
+```sql
+SELECT l.region, l.state, l.city, t.sales_amount
+FROM ex_transactions t 
+JOIN ex_orders o 
+ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c 
+ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code;
+```
+**Phase 3: Apply ROLLUP and Aggregate**
+
+```sql
+SELECT l.region, l.state, l.city, SUM(t.sales_amount) AS total_sales
+FROM ex_transactions t 
+JOIN ex_orders o 
+ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c 
+ON o.customer_id = c.customer_id 
+JOIN ex_locations l 
+ON c.postal_code = l.postal_code
+GROUP BY ROLLUP(l.region, l.state, l.city);
+```
+**Phase 4: Add Rounding and Ordering**
+
+```sql
+SELECT l.region, l.state, l.city, ROUND(SUM(t.sales_amount), 2) AS total_sales
+FROM ex_transactions t 
+JOIN ex_orders o 
+ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c 
+ON o.customer_id = c.customer_id 
+JOIN ex_locations l 
+ON c.postal_code = l.postal_code
+GROUP BY ROLLUP(l.region, l.state, l.city)
+ORDER BY l.region, l.state, l.city;
+```
+* * *
+
+**Final Working Solution**
+```sql
+SELECT l.region, l.state, l.city, ROUND(SUM(t.sales_amount), 2) AS total_sales
+FROM ex_transactions t 
+JOIN ex_orders o 
+ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c 
+ON o.customer_id = c.customer_id 
+JOIN ex_locations l 
+ON c.postal_code = l.postal_code
+GROUP BY ROLLUP(l.region, l.state, l.city)
+ORDER BY l.region, l.state, l.city;
+```
+* * *
+
+**Common Student Mistakes & Point Deductions**
+
+- Forgetting to **filter for `order_status = 'delivered'`** → includes incomplete/cancelled orders in sales.
+- **Incorrect join conditions** → data duplication or missing records.
+- **Wrong column order in ROLLUP** → hierarchy doesn’t match business requirements (region → state → city).
+- Forgetting `ROUND()` → sales amounts show too many decimal places.
+- Not **ordering by region, state, city** → output appears unordered and hard to read.
+- **Missing tables in joins** → cannot access all required columns.
+
+✅ Correct approach: Join All Tables → Filter Delivered → Apply ROLLUP → Aggregate → Round → Order.
+
+**Tags**
+- data-wrangling / rollup (skill)
+
+##### Input 3
+**Type:** Code
+
+**Question:** ## Task 2: Comprehensive Sales Analysis with CUBE
+
+### Scenario
+The Chief Strategy Officer wants to explore **all possible combinations** of geographic groupings. They're not just interested in the standard hierarchy — they want to see sales by city across all regions, by state across all regions, and every other possible combination to uncover hidden patterns.
+
+### Your Task
+Write a query that generates a comprehensive sales report showing total sales for **all possible combinations** of regions, states, and cities using the `CUBE` function.
+
+**Your report must include:**
+- Total sales for each city within a state and region
+- Subtotals for each state across all cities in that state
+- Subtotals for each region across all states and cities in that region
+- Subtotals for each city across all regions (city-specific totals)
+- Subtotals for each state across all regions (state-specific totals)
+- A grand total for all regions, states, and cities
+
+### Expected Output Format
+Your output should show all 8 possible grouping combinations (2³ = 8):
+
+| region | state | city | total_sales |
+|--------|-------|------|-------------|
+| Central | Illinois | Chicago | 125000.00 |
+| Central | Illinois | NULL | 250000.00 |
+| Central | NULL | Chicago | 180000.00 |
+| Central | NULL | NULL | 500000.00 |
+| NULL | Illinois | Chicago | 140000.00 |
+| NULL | Illinois | NULL | 600000.00 |
+| NULL | NULL | Chicago | 450000.00 |
+| NULL | NULL | NULL | 2500000.00 |
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+**Understanding the Problem**  
+Our goal is to create a **comprehensive sales report** that shows total sales for **all possible combinations** of regions, states, and cities using `CUBE`. Unlike ROLLUP which creates a hierarchy, CUBE generates every possible grouping combination, helping the Chief Strategy Officer explore sales patterns from every angle.
+
+**Step 1: What information do we need?**
+
+- `region` – To group sales by geographic region.
+- `state` – To group sales by state.
+- `city` – To group sales by city.
+- `sales_amount` – To calculate total sales.
+- `order_id` – To link transactions with orders.
+- `customer_id` – To link orders with customers.
+- `postal_code` – To link customers with locations.
+- `order_status` – To filter for delivered orders only.
+
+**Step 2: Where is this data found?**  
+We need to combine four tables:
+
+| Table | Column | Purpose |
+| --- | --- | --- |
+| ex_transactions | sales_amount | To calculate total sales |
+| ex_transactions | order_id | To join with orders |
+| ex_orders | order_id | To join with transactions |
+| ex_orders | customer_id | To join with customers |
+| ex_orders | order_status | To filter delivered orders |
+| ex_customers | customer_id | To join with orders |
+| ex_customers | postal_code | To join with locations |
+| ex_locations | postal_code | To join with customers |
+| ex_locations | region, state, city | To group by geography |
+
+* * *
+
+**Logic Before Building the Solution**
+
+1. **Join all four tables** (`ex_transactions` → `ex_orders` → `ex_customers` → `ex_locations`) using their respective keys.
+2. **Filter for delivered orders** using `order_status = 'delivered'` to ensure we only analyze completed sales.
+3. **Use CUBE** to generate all possible combinations: 2³ = 8 groupings for 3 columns (region, state, city).
+4. **Aggregate sales** using `SUM(sales_amount)` grouped by `CUBE(region, state, city)`.
+5. **Round the result** to 2 decimal places using `ROUND()`.
+6. **Sort the results** by region, state, and city for readable output.
+
+* * *
+
+**Building the Solution Step-by-Step**
+
+**Phase 1: Join All Tables**
+
+```sql
+SELECT * 
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id 
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code;
+```
+
+**Phase 2: Add Filter and Select Required Columns**
+
+```sql
+SELECT l.region, l.state, l.city, t.sales_amount
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code;
+```
+
+**Phase 3: Apply CUBE and Aggregate**
+
+```sql
+SELECT l.region, l.state, l.city, SUM(t.sales_amount) AS total_sales
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code
+GROUP BY CUBE(l.region, l.state, l.city);
+```
+
+**Phase 4: Add Rounding and Ordering**
+
+```sql
+SELECT l.region, l.state, l.city, ROUND(SUM(t.sales_amount), 2) AS total_sales
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code
+GROUP BY CUBE(l.region, l.state, l.city)
+ORDER BY l.region, l.state, l.city;
+```
+
+* * *
+
+**Final Working Solution**
+
+```sql
+SELECT l.region, l.state, l.city, ROUND(SUM(t.sales_amount), 2) AS total_sales
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code
+GROUP BY CUBE(l.region, l.state, l.city)
+ORDER BY l.region, l.state, l.city;
+```
+
+* * *
+
+**Common Student Mistakes & Point Deductions**
+
+- Forgetting to **filter for `order_status = 'delivered'`** → includes incomplete/cancelled orders in sales.
+- **Confusing CUBE with ROLLUP** → CUBE produces 8 combinations, ROLLUP produces only 4.
+- **Incorrect join conditions** → data duplication or missing records.
+- Forgetting `ROUND()` → sales amounts show too many decimal places.
+- Not **ordering by region, state, city** → output appears unordered and hard to analyze.
+- **Missing tables in joins** → cannot access all required columns.
+
+✅ Correct approach: Join All Tables → Filter Delivered → Apply CUBE → Aggregate → Round → Order.
+
+---
+
+**Tags**
+- data-wrangling / cube (skill)
+
+##### Input 4
+**Type:** Code
+
+**Question:** ## Task 3: Custom Sales Report with GROUPING SETS
+
+### Scenario
+The Finance team has a **specific reporting requirement**. They don't need all combinations from CUBE, but they want more control than ROLLUP provides. They've requested a custom report with exactly four grouping levels tailored for their budget allocation model.
+
+### Your Task
+Write a query that generates a sales report for **specific combinations** of regions, states, and cities using the `GROUPING SETS` function.
+
+**Your report must include exactly these groupings:**
+- Total sales for each city within a state and region `(region, state, city)`
+- Subtotals for each state within a region `(region, state)`
+- Subtotals for each region `(region)`
+- A grand total for all regions, states, and cities `()`
+
+### Expected Output Format
+Your output should show exactly 4 grouping combinations:
+
+| region | state | city | total_sales |
+|--------|-------|------|-------------|
+| Central | Illinois | Chicago | 125000.00 |
+| Central | Illinois | NULL | 250000.00 |
+| Central | NULL | NULL | 500000.00 |
+| NULL | NULL | NULL | 2500000.00 |
+
+**Language:** sql
+
+**Snippet:** 
+
+**Solution:** 
+**Understanding the Problem**  
+Our goal is to create a **custom sales report** that shows total sales for **specific combinations** of regions, states, and cities using `GROUPING SETS`. Unlike ROLLUP (hierarchical) or CUBE (all combinations), GROUPING SETS allows the Finance team to define exactly which groupings they need for their budget allocation model.
+
+**Step 1: What information do we need?**
+
+- `region` – To group sales by geographic region.
+- `state` – To group sales by state within each region.
+- `city` – To group sales by city within each state.
+- `sales_amount` – To calculate total sales.
+- `order_id` – To link transactions with orders.
+- `customer_id` – To link orders with customers.
+- `postal_code` – To link customers with locations.
+- `order_status` – To filter for delivered orders only.
+
+**Step 2: Where is this data found?**  
+We need to combine four tables:
+
+| Table | Column | Purpose |
+| --- | --- | --- |
+| ex_transactions | sales_amount | To calculate total sales |
+| ex_transactions | order_id | To join with orders |
+| ex_orders | order_id | To join with transactions |
+| ex_orders | customer_id | To join with customers |
+| ex_orders | order_status | To filter delivered orders |
+| ex_customers | customer_id | To join with orders |
+| ex_customers | postal_code | To join with locations |
+| ex_locations | postal_code | To join with customers |
+| ex_locations | region, state, city | To group by geography |
+
+* * *
+
+**Logic Before Building the Solution**
+
+1. **Join all four tables** (`ex_transactions` → `ex_orders` → `ex_customers` → `ex_locations`) using their respective keys.
+2. **Filter for delivered orders** using `order_status = 'delivered'` to ensure we only analyze completed sales.
+3. **Use GROUPING SETS** to define exactly 4 custom groupings:
+   - `(region, state, city)` – City-level sales
+   - `(region, state)` – State subtotals within region
+   - `(region)` – Region subtotals
+   - `()` – Grand total
+4. **Aggregate sales** using `SUM(sales_amount)` grouped by the specified GROUPING SETS.
+5. **Round the result** to 2 decimal places using `ROUND()`.
+6. **Sort the results** by region, state, and city for readable output.
+
+* * *
+
+**Building the Solution Step-by-Step**
+
+**Phase 1: Join All Tables**
+
+```sql
+SELECT * 
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id 
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code;
+```
+
+**Phase 2: Add Filter and Select Required Columns**
+
+```sql
+SELECT l.region, l.state, l.city, t.sales_amount
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code;
+```
+
+**Phase 3: Apply GROUPING SETS and Aggregate**
+
+```sql
+SELECT l.region, l.state, l.city, SUM(t.sales_amount) AS total_sales
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code
+GROUP BY GROUPING SETS (
+    (l.region, l.state, l.city),
+    (l.region, l.state),
+    (l.region),
+    ()
+);
+```
+
+**Phase 4: Add Rounding and Ordering**
+
+```sql
+SELECT l.region, l.state, l.city, ROUND(SUM(t.sales_amount), 2) AS total_sales
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code
+GROUP BY GROUPING SETS (
+    (l.region, l.state, l.city),
+    (l.region, l.state),
+    (l.region),
+    ()
+)
+ORDER BY l.region, l.state, l.city;
+```
+
+* * *
+
+**Final Working Solution**
+
+```sql
+SELECT l.region, l.state, l.city, ROUND(SUM(t.sales_amount), 2) AS total_sales
+FROM ex_transactions t 
+JOIN ex_orders o ON t.order_id = o.order_id AND o.order_status = 'delivered'
+JOIN ex_customers c ON o.customer_id = c.customer_id 
+JOIN ex_locations l ON c.postal_code = l.postal_code
+GROUP BY GROUPING SETS (
+    (l.region, l.state, l.city),
+    (l.region, l.state),
+    (l.region),
+    ()
+)
+ORDER BY l.region, l.state, l.city;
+```
+
+* * *
+
+**Common Student Mistakes & Point Deductions**
+
+- Forgetting to **filter for `order_status = 'delivered'`** → includes incomplete/cancelled orders in sales.
+- **Missing the empty grouping set `()`** → grand total row is not included.
+- **Including unnecessary groupings** → adds combinations not requested by Finance team.
+- **Incorrect parentheses syntax** in GROUPING SETS → query fails to execute.
+- **Wrong column order in grouping sets** → hierarchy doesn't match requirements.
+- Forgetting `ROUND()` → sales amounts show too many decimal places.
+- Not **ordering by region, state, city** → output appears unordered and hard to read.
+
+✅ Correct approach: Join All Tables → Filter Delivered → Define GROUPING SETS (4 specific groupings) → Aggregate → Round → Order.
+
+---
+
+## Quick Reference: Comparison of All Three Solutions
+
+| Feature | Task 1 (ROLLUP) | Task 2 (CUBE) | Task 3 (GROUPING SETS) |
+|---------|-----------------|---------------|------------------------|
+| **Groupings Generated** | 4 (n+1 for 3 columns) | 8 (2³ for 3 columns) | 4 (exactly as specified) |
+| **Key Syntax** | `ROLLUP(a, b, c)` | `CUBE(a, b, c)` | `GROUPING SETS ((a,b,c), (a,b), (a), ())` |
+| **Use Case** | Hierarchical reporting | Exploratory analysis | Custom reporting requirements |
+| **Performance** | Moderate | Highest (most combinations) | Most efficient (only needed) |
+
+---
+
+## Evaluation Guidelines for AI Evaluator
+
+When evaluating learner responses, check for:
+
+### ✅ Must-Have Elements (All Tasks)
+1. **Correct table joins** – All 4 tables joined with proper conditions
+2. **Delivered filter** – `order_status = 'delivered'` in WHERE or JOIN clause
+3. **Proper aggregation** – `SUM(sales_amount)` with `ROUND(..., 2)`
+4. **Correct GROUP BY clause** – ROLLUP/CUBE/GROUPING SETS as per task
+5. **ORDER BY clause** – Results sorted by region, state, city
+
+### ⚠️ Common Deductions
+- Missing filter for delivered orders: **-20%**
+- Incorrect join conditions: **-30%**
+- Wrong GROUP BY syntax: **-25%**
+- Missing ROUND function: **-10%**
+- Missing ORDER BY: **-10%**
+- Missing or incorrect table aliases: **-5%**
+
+**Tags**
+- data-wrangling / grouping-sets (skill)
+
+##### Input 5
+**Type:** Short Answer
+
+**Question:** **When would you use CUBE instead of ROLLUP in a real business scenario?**
+
+**Template:** null
+
+**Solution:** 
+Use CUBE when stakeholders want to explore **all possible combinations** of dimensions for exploratory analysis (e.g., “show me sales by every combination of region, state, and city”). Use ROLLUP when you need a **standard hierarchical report** following a natural hierarchy like region → state → city → grand total.
+
+**Tags**
+
+
+##### Input 6
+**Type:** Short Answer
+
+**Question:** **What are the performance implications of using CUBE vs GROUPING SETS on large datasets?**
+
+**Template:** null
+
+**Solution:** 
+CUBE generates **2^n combinations** (exponential growth), which can be very expensive on large datasets with many columns. GROUPING SETS is **more efficient** because it only computes the specific groupings you define, reducing computational overhead and query execution time.
+
+**Tags**
+

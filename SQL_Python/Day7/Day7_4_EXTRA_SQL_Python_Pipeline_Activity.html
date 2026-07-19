@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Day 7 Activity — SQL & Python Pipeline</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
+  --green:#3fb950;--red:#f85149;--yellow:#d29922;--purple:#bc8cff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+  min-height:100vh;padding:2rem 1rem}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:2rem}
+
+/* header */
+.header{text-align:center}
+.header h1{font-size:1.7rem;font-weight:700;color:var(--accent)}
+.header p{color:var(--muted);margin-top:.4rem;font-size:.95rem}
+.score-bar{display:flex;align-items:center;justify-content:center;gap:1rem;margin-top:1rem}
+#score-display{font-family:'JetBrains Mono',monospace;font-size:1.1rem;
+  color:var(--accent);font-weight:700}
+.progress-track{flex:1;max-width:300px;height:6px;background:var(--border);
+  border-radius:3px;overflow:hidden}
+#progress-fill{height:100%;background:var(--accent);width:0%;
+  transition:width .4s;border-radius:3px}
+
+/* section label */
+.section-label{display:flex;align-items:center;gap:.8rem}
+.section-label h2{font-size:1rem;font-weight:700;color:var(--yellow);white-space:nowrap}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* question card */
+.q-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:1.4rem 1.6rem;display:flex;flex-direction:column;gap:1rem}
+.q-card.correct{border-color:var(--green)}
+.q-card.wrong{border-color:var(--red)}
+
+.q-num{font-size:.75rem;font-weight:700;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.05em}
+.q-text{font-size:.95rem;line-height:1.6}
+
+pre.snippet{background:#010409;border:1px solid var(--border);border-radius:6px;
+  padding:.7rem 1rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;
+  line-height:1.6;overflow-x:auto;white-space:pre;margin:.2rem 0}
+
+.kw{color:#ff7b72}.fn{color:#d2a8ff}.st{color:#a5d6ff}
+.cm{color:#8b949e;font-style:italic}.nm{color:#79c0ff}
+
+.options{display:flex;flex-direction:column;gap:.5rem}
+.opt{display:flex;align-items:flex-start;gap:.7rem;padding:.55rem .8rem;
+  border-radius:6px;border:1px solid var(--border);cursor:pointer;
+  transition:border-color .15s,background .15s;font-size:.88rem;line-height:1.5}
+.opt:hover:not(.locked){background:#1c2128;border-color:var(--accent)}
+.opt .opt-key{font-family:'JetBrains Mono',monospace;font-size:.75rem;
+  font-weight:700;color:var(--muted);min-width:18px;padding-top:.05rem}
+.opt.correct-ans{background:#0d2318;border-color:var(--green);color:var(--green)}
+.opt.correct-ans .opt-key{color:var(--green)}
+.opt.wrong-ans{background:#2a0d0d;border-color:var(--red);color:var(--red)}
+.opt.wrong-ans .opt-key{color:var(--red)}
+.opt.reveal{background:#1a2332;border-color:#3a5f3a}
+
+.feedback{font-size:.83rem;line-height:1.55;padding:.6rem .9rem;
+  border-radius:6px;display:none}
+.feedback.show{display:block}
+.feedback.ok{background:#0d2318;border-left:3px solid var(--green);color:#9ae09a}
+.feedback.no{background:#2a0d0d;border-left:3px solid var(--red);color:#f08080}
+
+/* final banner */
+#final-banner{display:none;text-align:center;padding:1.5rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px}
+#final-banner h2{font-size:1.3rem;color:var(--accent);margin-bottom:.4rem}
+#final-banner p{color:var(--muted);font-size:.95rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="header">
+  <h1>Day 7 Activity</h1>
+  <p>SQL &amp; Python Pipeline — Imagine it &nbsp;·&nbsp; Translate it</p>
+  <div class="score-bar">
+    <span id="score-display">0 / 10</span>
+    <div class="progress-track"><div id="progress-fill"></div></div>
+    <span style="color:var(--muted);font-size:.85rem" id="answered-label">0 answered</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section-label"><h2>Section 1 — Imagine the Pipeline</h2></div>
+
+<!-- Q1 -->
+<div class="q-card" id="q1">
+  <div class="q-num">Question 1 of 10</div>
+  <div class="q-text">
+    You have two tables — <code>transactions</code> and <code>products</code>.
+    You want to compute a <strong>discounted price per product category</strong>.
+    What must happen <em>first</em> in the pipeline, before any calculation?
+  </div>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q1',false)"><span class="opt-key">A</span>GROUP BY category to aggregate sales</div>
+    <div class="opt" onclick="answer(this,'q1',true)"><span class="opt-key">B</span>JOIN transactions and products on product_id</div>
+    <div class="opt" onclick="answer(this,'q1',false)"><span class="opt-key">C</span>Apply CASE WHEN to classify price tiers</div>
+    <div class="opt" onclick="answer(this,'q1',false)"><span class="opt-key">D</span>Filter rows where discount > 0</div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. You can't compute discounted price without the product's base price — which lives in <code>products</code>. JOIN first, calculate after. The pipeline always starts: Load → Join → Compute → Classify → Aggregate.
+  </div>
+  <div class="feedback no">
+    ✗ You need columns from <em>both</em> tables before any calculation is possible. JOIN is always the first step when data lives in separate tables.
+  </div>
+</div>
+
+<!-- Q2 -->
+<div class="q-card" id="q2">
+  <div class="q-num">Question 2 of 10</div>
+  <div class="q-text">
+    The <code>discount</code> column stores <code>0.45</code>, not <code>45</code>.
+    A product has <code>sales_amt = 500</code> and <code>qty = 2</code>.
+    Which formula gives the correct <strong>discounted unit price</strong>?
+  </div>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q2',false)"><span class="opt-key">A</span><code>(500 / 2) * (1 - 0.45 / 100)</code> — divide discount by 100 first</div>
+    <div class="opt" onclick="answer(this,'q2',true)"><span class="opt-key">B</span><code>(500 / 2) * (1 - 0.45)</code> — discount is already a decimal</div>
+    <div class="opt" onclick="answer(this,'q2',false)"><span class="opt-key">C</span><code>(500 / 2) + 0.45</code> — add the discount fraction to price</div>
+    <div class="opt" onclick="answer(this,'q2',false)"><span class="opt-key">D</span><code>500 * 0.45</code> — multiply total sales by discount</div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. <code>0.45</code> already means 45% — so <code>price × (1 − 0.45) = price × 0.55</code>. Dividing by 100 would treat it as 0.0045%, giving a nearly unchanged price. Always check the column's scale before writing the formula.
+  </div>
+  <div class="feedback no">
+    ✗ The column stores <code>0.45</code>, meaning 45% is already encoded. The formula is <code>price × (1 − discount)</code> directly — no division by 100 needed.
+  </div>
+</div>
+
+<!-- Q3 -->
+<div class="q-card" id="q3">
+  <div class="q-num">Question 3 of 10</div>
+  <div class="q-text">
+    You have monthly sales data for 3 categories across 12 months — one row per category per month (long format).
+    You want a table with <strong>months as rows and categories as columns</strong>, total sales in each cell.
+    Which operation creates this shape?
+  </div>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q3',false)"><span class="opt-key">A</span><code>.groupby('month').agg(total=('sales','sum'))</code> — aggregates but stays long</div>
+    <div class="opt" onclick="answer(this,'q3',false)"><span class="opt-key">B</span><code>.melt(id_vars='month')</code> — this goes wide → long (unpivot)</div>
+    <div class="opt" onclick="answer(this,'q3',true)"><span class="opt-key">C</span><code>.pivot_table(index='month', columns='category', values='sales', aggfunc='sum')</code></div>
+    <div class="opt" onclick="answer(this,'q3',false)"><span class="opt-key">D</span><code>.sort_values(['month','category'])</code> — just reorders rows</div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. <code>.pivot_table()</code> rotates the data — <code>index</code> stays as rows, <code>columns</code> spreads unique values into column headers, <code>aggfunc</code> handles duplicates. The inverse (back to long format) is <code>.melt()</code>.
+  </div>
+  <div class="feedback no">
+    ✗ <code>.melt()</code> goes wide → long. <code>.groupby()</code> aggregates but keeps long format. To turn category values into column headers you need <code>.pivot_table(columns='category')</code>.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section-label"><h2>Section 2 — Python → SQL</h2></div>
+
+<!-- Q4 -->
+<div class="q-card" id="q4">
+  <div class="q-num">Question 4 of 10</div>
+  <div class="q-text">Which SQL statement is equivalent to this Python?</div>
+  <pre class="snippet">df.<span class="fn">groupby</span>(<span class="st">'category'</span>).<span class="fn">agg</span>(
+    avg_orig = (<span class="st">'price'</span>,            <span class="st">'mean'</span>),
+    avg_disc = (<span class="st">'discounted_price'</span>, <span class="st">'mean'</span>)
+).<span class="fn">reset_index</span>()</pre>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q4',true)">
+      <span class="opt-key">A</span>
+      <code>SELECT category, AVG(price) AS avg_orig, AVG(discounted_price) AS avg_disc FROM t GROUP BY category</code>
+    </div>
+    <div class="opt" onclick="answer(this,'q4',false)">
+      <span class="opt-key">B</span>
+      <code>SELECT AVG(price), AVG(discounted_price) FROM t WHERE category IS NOT NULL</code>
+    </div>
+    <div class="opt" onclick="answer(this,'q4',false)">
+      <span class="opt-key">C</span>
+      <code>SELECT category, SUM(price), SUM(discounted_price) FROM t GROUP BY category</code>
+    </div>
+    <div class="opt" onclick="answer(this,'q4',false)">
+      <span class="opt-key">D</span>
+      <code>SELECT category, price, discounted_price FROM t ORDER BY category</code>
+    </div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. <code>groupby('category')</code> = <code>GROUP BY category</code>. Named aggregation <code>avg_orig=('price','mean')</code> = <code>AVG(price) AS avg_orig</code>. <code>.reset_index()</code> has no SQL equivalent — it just moves the index back to a regular column.
+  </div>
+  <div class="feedback no">
+    ✗ The function name matters — <code>'mean'</code> maps to <code>AVG()</code>, not <code>SUM()</code>. Also, <code>groupby</code> requires <code>GROUP BY</code> in SQL; <code>WHERE</code> filters rows, not groups.
+  </div>
+</div>
+
+<!-- Q5 -->
+<div class="q-card" id="q5">
+  <div class="q-num">Question 5 of 10</div>
+  <div class="q-text">Which SQL expression produces the same result as this Python?</div>
+  <pre class="snippet">df[<span class="st">'purchase_label'</span>] = (
+    df[<span class="st">'order_purchase_date'</span>].<span class="fn">dt</span>.<span class="fn">strftime</span>(<span class="st">'%A, %d %B %Y'</span>)
+)
+<span class="cm"># Output example: "Monday, 14 January 2019"</span></pre>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q5',false)"><span class="opt-key">A</span><code>CAST(order_purchase_date AS VARCHAR)</code></div>
+    <div class="opt" onclick="answer(this,'q5',false)"><span class="opt-key">B</span><code>EXTRACT(DAY FROM order_purchase_date)</code></div>
+    <div class="opt" onclick="answer(this,'q5',true)"><span class="opt-key">C</span><code>TO_CHAR(order_purchase_date, 'Day, DD Month YYYY')</code></div>
+    <div class="opt" onclick="answer(this,'q5',false)"><span class="opt-key">D</span><code>DATE_FORMAT(order_purchase_date, '%a %d %b %Y')</code> — MySQL syntax</div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. Python <code>strftime('%A, %d %B %Y')</code> = SQL <code>TO_CHAR(date, 'Day, DD Month YYYY')</code>. Same two-part idea: input date + output format pattern. <code>DATE_FORMAT</code> is MySQL-only — not standard SQL.
+  </div>
+  <div class="feedback no">
+    ✗ <code>strftime</code> formats a date as a readable string. Its SQL equivalent is <code>TO_CHAR(date, 'format')</code>. <code>EXTRACT</code> returns a number, <code>CAST</code> gives a default string representation — neither lets you control the format.
+  </div>
+</div>
+
+<!-- Q6 -->
+<div class="q-card" id="q6">
+  <div class="q-num">Question 6 of 10</div>
+  <div class="q-text">Which SQL clause does this Python list comprehension translate to?</div>
+  <pre class="snippet">[<span class="st">'Premium'</span>    <span class="kw">if</span> p > <span class="nm">200</span>
+ <span class="kw">else</span> <span class="st">'Mid-range'</span> <span class="kw">if</span> p > <span class="nm">100</span>
+ <span class="kw">else</span> <span class="st">'Budget'</span>
+ <span class="kw">for</span> p <span class="kw">in</span> df[<span class="st">'discounted_price'</span>]]</pre>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q6',false)"><span class="opt-key">A</span><code>WHERE discounted_price > 200 OR discounted_price > 100</code></div>
+    <div class="opt" onclick="answer(this,'q6',true)">
+      <span class="opt-key">B</span>
+      <code>CASE WHEN discounted_price > 200 THEN 'Premium' WHEN discounted_price > 100 THEN 'Mid-range' ELSE 'Budget' END</code>
+    </div>
+    <div class="opt" onclick="answer(this,'q6',false)"><span class="opt-key">C</span><code>HAVING discounted_price IN ('Premium', 'Mid-range', 'Budget')</code></div>
+    <div class="opt" onclick="answer(this,'q6',false)"><span class="opt-key">D</span><code>GROUP BY discounted_price ORDER BY discounted_price DESC</code></div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. The nested <code>if/else</code> chain maps condition-by-condition to <code>CASE WHEN … THEN … WHEN … THEN … ELSE … END</code>. Order matters in both — the first matching condition wins, so put the most specific check first.
+  </div>
+  <div class="feedback no">
+    ✗ This is row-level classification — assigning a label to each row. <code>WHERE</code> filters rows, <code>HAVING</code> filters groups, <code>GROUP BY</code> aggregates. The correct tool is <code>CASE WHEN … THEN … END</code>.
+  </div>
+</div>
+
+<!-- Q7 -->
+<div class="q-card" id="q7">
+  <div class="q-num">Question 7 of 10</div>
+  <div class="q-text">Which SQL statement matches this pandas merge?</div>
+  <pre class="snippet">result = transactions.<span class="fn">merge</span>(
+    products[[<span class="st">'product_id'</span>, <span class="st">'category'</span>, <span class="st">'sub_category'</span>]],
+    left_on  = <span class="st">'Product_ID'</span>,
+    right_on = <span class="st">'product_id'</span>,
+    how      = <span class="st">'left'</span>
+)</pre>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q7',false)"><span class="opt-key">A</span><code>SELECT * FROM transactions CROSS JOIN products</code></div>
+    <div class="opt" onclick="answer(this,'q7',false)"><span class="opt-key">B</span><code>SELECT * FROM transactions t INNER JOIN products p ON t.Product_ID = p.product_id</code></div>
+    <div class="opt" onclick="answer(this,'q7',true)">
+      <span class="opt-key">C</span>
+      <code>SELECT t.*, p.category, p.sub_category FROM transactions t LEFT JOIN products p ON t.Product_ID = p.product_id</code>
+    </div>
+    <div class="opt" onclick="answer(this,'q7',false)"><span class="opt-key">D</span><code>SELECT * FROM products p RIGHT JOIN transactions t ON t.Product_ID = p.product_id</code></div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. <code>how='left'</code> = <code>LEFT JOIN</code> — keeps ALL rows from transactions even with no match in products. Selecting only <code>['product_id','category','sub_category']</code> from products maps to <code>SELECT t.*, p.category, p.sub_category</code>. INNER JOIN would silently drop unmatched transactions.
+  </div>
+  <div class="feedback no">
+    ✗ <code>how='left'</code> means keep every row from the left table (transactions) — even if products has no matching row. That's <code>LEFT JOIN</code>. INNER JOIN drops unmatched rows; CROSS JOIN pairs every row with every other row.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section-label"><h2>Section 3 — SQL → Python</h2></div>
+
+<!-- Q8 -->
+<div class="q-card" id="q8">
+  <div class="q-num">Question 8 of 10</div>
+  <div class="q-text">Which Python line is equivalent to this SQL window function?</div>
+  <pre class="snippet"><span class="kw">SELECT</span> vendor_id,
+  <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> avg_delay <span class="kw">ASC</span>) <span class="kw">AS</span> delay_rank
+<span class="kw">FROM</span> vendor_summary;</pre>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q8',true)"><span class="opt-key">A</span><code>df['delay_rank'] = df['avg_delay'].rank(method='dense').astype(int)</code></div>
+    <div class="opt" onclick="answer(this,'q8',false)"><span class="opt-key">B</span><code>df['delay_rank'] = df['avg_delay'].rank(method='min').astype(int)</code></div>
+    <div class="opt" onclick="answer(this,'q8',false)"><span class="opt-key">C</span><code>df = df.sort_values('avg_delay').reset_index(drop=True)</code></div>
+    <div class="opt" onclick="answer(this,'q8',false)"><span class="opt-key">D</span><code>df['delay_rank'] = df['avg_delay'].rank(method='dense', ascending=False).astype(int)</code></div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. <code>DENSE_RANK() OVER (ORDER BY col ASC)</code> = <code>.rank(method='dense')</code> — pandas defaults to <code>ascending=True</code>, so rank 1 goes to the smallest value, matching <code>ASC</code>. <code>method='min'</code> is regular RANK (leaves gaps on ties). <code>ascending=False</code> would give rank 1 to the <em>largest</em> delay.
+  </div>
+  <div class="feedback no">
+    ✗ <code>DENSE_RANK()</code> = <code>method='dense'</code> (no gaps on ties). <code>ORDER BY ASC</code> = <code>ascending=True</code> (the pandas default). <code>sort_values</code> just reorders rows — it doesn't create a rank column.
+  </div>
+</div>
+
+<!-- Q9 -->
+<div class="q-card" id="q9">
+  <div class="q-num">Question 9 of 10</div>
+  <div class="q-text">Which Python expression matches this SQL?</div>
+  <pre class="snippet"><span class="kw">SELECT</span> <span class="fn">TO_CHAR</span>(joining_date, <span class="st">'Mon-YYYY'</span>) <span class="kw">AS</span> joining_cohort
+<span class="kw">FROM</span> customers;
+<span class="cm">-- Output example: "Jan-2021"</span></pre>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q9',false)"><span class="opt-key">A</span><code>df['joining_cohort'] = df['joining_date'].dt.strftime('%B-%Y')</code> — gives "January-2021"</div>
+    <div class="opt" onclick="answer(this,'q9',true)"><span class="opt-key">B</span><code>df['joining_cohort'] = df['joining_date'].dt.strftime('%b-%Y')</code> — gives "Jan-2021"</div>
+    <div class="opt" onclick="answer(this,'q9',false)"><span class="opt-key">C</span><code>df['joining_cohort'] = df['joining_date'].dt.month</code> — gives 1, 2, 3...</div>
+    <div class="opt" onclick="answer(this,'q9',false)"><span class="opt-key">D</span><code>df['joining_cohort'] = df['joining_date'].dt.strftime('%m-%Y')</code> — gives "01-2021"</div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. SQL <code>'Mon'</code> = abbreviated month (Jan, Feb…) → Python <code>'%b'</code>. Full month name (January) = SQL <code>'Month'</code> → Python <code>'%B'</code>. Numeric month = SQL <code>'MM'</code> → Python <code>'%m'</code>.
+  </div>
+  <div class="feedback no">
+    ✗ SQL <code>'Mon'</code> gives abbreviated month (Jan, Feb…). In Python that's <code>'%b'</code>. <code>'%B'</code> gives the full name (January), <code>'%m'</code> gives a number (01), and <code>.dt.month</code> returns an integer — none of these match the "Jan-2021" output.
+  </div>
+</div>
+
+<!-- Q10 -->
+<div class="q-card" id="q10">
+  <div class="q-num">Question 10 of 10</div>
+  <div class="q-text">
+    This SQL uses <code>SUM(CASE WHEN …)</code> — the classic SQL pivot trick — to spread months into columns.
+    Which pandas method is the direct equivalent?
+  </div>
+  <pre class="snippet"><span class="kw">SELECT</span> category,
+  <span class="fn">SUM</span>(<span class="kw">CASE</span> <span class="kw">WHEN</span> month = <span class="nm">1</span> <span class="kw">THEN</span> sales_amt <span class="kw">ELSE</span> <span class="nm">0</span> <span class="kw">END</span>) <span class="kw">AS</span> Jan,
+  <span class="fn">SUM</span>(<span class="kw">CASE</span> <span class="kw">WHEN</span> month = <span class="nm">2</span> <span class="kw">THEN</span> sales_amt <span class="kw">ELSE</span> <span class="nm">0</span> <span class="kw">END</span>) <span class="kw">AS</span> Feb,
+  <span class="cm">-- ... one CASE per month</span>
+<span class="kw">FROM</span> monthly_sales <span class="kw">GROUP BY</span> category;</pre>
+  <div class="options">
+    <div class="opt" onclick="answer(this,'q10',false)"><span class="opt-key">A</span><code>df.groupby(['category','month']).agg(total=('sales_amt','sum'))</code> — stays long</div>
+    <div class="opt" onclick="answer(this,'q10',false)"><span class="opt-key">B</span><code>df.melt(id_vars='category', value_vars=['Jan','Feb',...])</code> — this unpivots (opposite direction)</div>
+    <div class="opt" onclick="answer(this,'q10',true)"><span class="opt-key">C</span><code>df.pivot_table(index='category', columns='month', values='sales_amt', aggfunc='sum')</code></div>
+    <div class="opt" onclick="answer(this,'q10',false)"><span class="opt-key">D</span><code>df.sort_values(['category','month'])</code> — just reorders, no reshape</div>
+  </div>
+  <div class="feedback ok">
+    ✓ Correct. <code>SUM(CASE WHEN month=N THEN …)</code> is the SQL way to pivot — writing one conditional per column manually. <code>.pivot_table(columns='month')</code> does the same automatically for every unique month value. Much cleaner.
+  </div>
+  <div class="feedback no">
+    ✗ The SQL is pivoting — rotating month values (1, 2, …) into column headers. <code>.pivot_table(columns='month', aggfunc='sum')</code> does this automatically. <code>.melt()</code> goes the opposite direction (wide → long).
+  </div>
+</div>
+
+<!-- FINAL BANNER -->
+<div id="final-banner">
+  <h2 id="final-title"></h2>
+  <p id="final-msg"></p>
+</div>
+
+</div><!-- end wrap -->
+
+<script>
+const total = 10;
+let answered = 0;
+let correct  = 0;
+
+function answer(el, qid, isCorrect) {
+  const card = document.getElementById(qid);
+  if (card.classList.contains('correct') || card.classList.contains('wrong')) return;
+
+  card.querySelectorAll('.opt').forEach(o => o.classList.add('locked'));
+  el.classList.add(isCorrect ? 'correct-ans' : 'wrong-ans');
+
+  if (!isCorrect) {
+    card.querySelectorAll('.opt').forEach(o => {
+      if (o.getAttribute('onclick') && o.getAttribute('onclick').includes(',true)')) {
+        o.classList.add('reveal');
+      }
+    });
+  }
+
+  const feedbacks = card.querySelectorAll('.feedback');
+  feedbacks[isCorrect ? 0 : 1].classList.add('show');
+  card.classList.add(isCorrect ? 'correct' : 'wrong');
+
+  if (isCorrect) correct++;
+  answered++;
+
+  document.getElementById('score-display').textContent = correct + ' / ' + total;
+  document.getElementById('answered-label').textContent = answered + ' answered';
+  document.getElementById('progress-fill').style.width = (answered / total * 100) + '%';
+
+  if (answered === total) {
+    const pct = correct / total;
+    const banner = document.getElementById('final-banner');
+    banner.style.display = 'block';
+    document.getElementById('final-title').textContent =
+      correct + ' / ' + total + ' — ' +
+      (pct >= 0.9 ? 'Excellent work!' : pct >= 0.7 ? 'Good job!' : 'Keep practising!');
+    document.getElementById('final-msg').textContent =
+      pct >= 0.9
+        ? 'You can confidently read and translate between SQL and Python pipelines.'
+        : pct >= 0.7
+        ? "You've got the core concepts — revisit the slides for any questions you missed."
+        : 'Review the SQL Mental Model slides and map each code block to its SQL equivalent.';
+    banner.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+</script>
+</body>
+</html>

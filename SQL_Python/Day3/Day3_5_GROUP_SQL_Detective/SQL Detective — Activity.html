@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Detective — Activity (Student File)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--g1:#3b82f6;--g2:#22c55e;--g3:#a78bfa;--g4:#f59e0b;--g5:#ef4444}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:100}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
+.nav-title{font-size:12px;color:var(--muted)}
+.nav-right{display:flex;align-items:center;gap:6px}
+.nb{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+.nb:hover{background:var(--a);color:#fff;border-color:var(--a)}
+.nc{font-size:12px;color:var(--muted);min-width:80px;text-align:center}
+.deck{padding-top:52px;height:100vh;overflow-y:auto}
+.slide{display:none;min-height:calc(100vh - 52px);padding:20px 44px 30px;flex-direction:column;gap:10px;animation:fi .2s ease}
+.slide.active{display:flex}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+h1{font-size:1.8rem;font-weight:900;line-height:1.1}
+h2{font-size:1.3rem;font-weight:800}
+h3{font-size:.88rem;font-weight:700;margin-bottom:4px}
+p{font-size:.83rem;color:#c9d1d9;line-height:1.65}
+.tag{font-size:.65rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
+.sub{font-size:.82rem;color:var(--muted);margin-top:2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.five{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:11px 14px}
+table{width:100%;border-collapse:collapse}
+th{background:rgba(59,130,246,.1);color:var(--a2);padding:5px 9px;text-align:left;border-bottom:2px solid var(--border);font-size:.71rem}
+td{padding:4px 9px;border-bottom:1px solid var(--border);color:#c9d1d9;font-size:.76rem}
+code{font-family:'JetBrains Mono',monospace;font-size:.76rem;background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;color:var(--a2)}
+.bg1{background:rgba(59,130,246,.15);border:1px solid var(--g1);color:var(--g1);border-radius:100px;padding:2px 11px;font-size:.71rem;font-weight:700;display:inline-block}
+.bg2{background:rgba(34,197,94,.15);border:1px solid var(--g2);color:var(--g2);border-radius:100px;padding:2px 11px;font-size:.71rem;font-weight:700;display:inline-block}
+.bg3{background:rgba(167,139,250,.15);border:1px solid var(--g3);color:var(--g3);border-radius:100px;padding:2px 11px;font-size:.71rem;font-weight:700;display:inline-block}
+.bg4{background:rgba(245,158,11,.15);border:1px solid var(--g4);color:var(--g4);border-radius:100px;padding:2px 11px;font-size:.71rem;font-weight:700;display:inline-block}
+.bg5{background:rgba(239,68,68,.15);border:1px solid var(--g5);color:var(--g5);border-radius:100px;padding:2px 11px;font-size:.71rem;font-weight:700;display:inline-block}
+.cg1{background:var(--bg2);border:2px solid var(--g1);border-radius:12px;padding:11px 13px}
+.cg2{background:var(--bg2);border:2px solid var(--g2);border-radius:12px;padding:11px 13px}
+.cg3{background:var(--bg2);border:2px solid var(--g3);border-radius:12px;padding:11px 13px}
+.cg4{background:var(--bg2);border:2px solid var(--g4);border-radius:12px;padding:11px 13px}
+.cg5{background:var(--bg2);border:2px solid var(--g5);border-radius:12px;padding:11px 13px}
+.role-strip{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.rc{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:.74rem}
+.rc-name{font-weight:700;color:var(--text)}
+.rc-role{color:var(--muted);font-size:.69rem}
+.chat{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.cl{display:flex;align-items:flex-start;gap:7px}
+.cn{font-size:.68rem;font-weight:800;padding:2px 7px;border-radius:5px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.ct{font-size:.8rem;color:#c9d1d9;line-height:1.55;font-style:italic}
+.ct strong{color:var(--text);font-style:normal}
+.cn-a{background:rgba(59,130,246,.18);color:#93c5fd}
+.cn-c1{background:rgba(34,197,94,.18);color:#86efac}
+.cn-c2{background:rgba(16,185,129,.18);color:#6ee7b7}
+.cn-v{background:rgba(167,139,250,.18);color:#c4b5fd}
+.cn-p{background:rgba(245,158,11,.18);color:#fcd34d}
+.round-box{border-radius:10px;padding:11px 14px}
+.r1-g1{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.3)}
+.r1-g2{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.3)}
+.r1-g3{background:rgba(167,139,250,.05);border:1px solid rgba(167,139,250,.3)}
+.r1-g4{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.3)}
+.r1-g5{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.3)}
+.r2-box{background:rgba(255,255,255,.02);border:1px dashed var(--border);border-radius:10px;padding:11px 14px}
+.r2-hidden{display:none}
+.hint-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.hb{padding:4px 12px;border-radius:7px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.72rem;font-weight:700;border:none;transition:all .12s}
+.h-g1{background:rgba(59,130,246,.12);border:1px solid var(--g1);color:var(--g1)}
+.h-g2{background:rgba(34,197,94,.12);border:1px solid var(--g2);color:var(--g2)}
+.h-g3{background:rgba(167,139,250,.12);border:1px solid var(--g3);color:var(--g3)}
+.h-g4{background:rgba(245,158,11,.12);border:1px solid var(--g4);color:var(--g4)}
+.h-g5{background:rgba(239,68,68,.12);border:1px solid var(--g5);color:var(--g5)}
+.hbox{display:none;margin-top:5px;padding:7px 11px;border-radius:7px;font-size:.78rem;line-height:1.6}
+.hb-g1{background:rgba(59,130,246,.07);border-left:2px solid var(--g1);color:#93c5fd}
+.hb-g2{background:rgba(34,197,94,.07);border-left:2px solid var(--g2);color:#86efac}
+.hb-g3{background:rgba(167,139,250,.07);border-left:2px solid var(--g3);color:#c4b5fd}
+.hb-g4{background:rgba(245,158,11,.07);border-left:2px solid var(--g4);color:#fcd34d}
+.hb-g5{background:rgba(239,68,68,.07);border-left:2px solid var(--g5);color:#fca5a5}
+.unlock-btn{padding:7px 18px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700;border:none;transition:all .15s;display:block;width:100%;margin-bottom:6px}
+.u-g1{background:rgba(59,130,246,.08);border:1px dashed var(--g1);color:var(--g1)}
+.u-g2{background:rgba(34,197,94,.08);border:1px dashed var(--g2);color:var(--g2)}
+.u-g3{background:rgba(167,139,250,.08);border:1px dashed var(--g3);color:var(--g3)}
+.u-g4{background:rgba(245,158,11,.08);border:1px dashed var(--g4);color:var(--g4)}
+.u-g5{background:rgba(239,68,68,.08);border:1px dashed var(--g5);color:var(--g5)}
+.obox{background:var(--code);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:.71rem;color:#a5d6ff;margin-top:5px}
+.pts{display:inline-block;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:100px;padding:2px 10px;font-size:.72rem;font-weight:800;color:var(--a2);margin-left:4px}
+.jump-btn{padding:5px 0;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;border:none;transition:all .12s;display:block;width:100%;margin-top:7px}
+.jg1{background:rgba(59,130,246,.15);border:1px solid var(--g1);color:var(--g1)}
+.jg2{background:rgba(34,197,94,.15);border:1px solid var(--g2);color:var(--g2)}
+.jg3{background:rgba(167,139,250,.15);border:1px solid var(--g3);color:var(--g3)}
+.jg4{background:rgba(245,158,11,.15);border:1px solid var(--g4);color:var(--g4)}
+.jg5{background:rgba(239,68,68,.15);border:1px solid var(--g5);color:var(--g5)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <span class="nav-badge">Day 3 · Group Activity</span>
+    <span class="nav-title">SQL Detective — Student File</span>
+  </div>
+  <div class="nav-right">
+    <button class="nb" onclick="go(-1)">← Prev</button>
+    <span class="nc" id="ctr">Mission Brief</span>
+    <button class="nb" onclick="go(1)">Next →</button>
+  </div>
+</nav>
+<div class="deck">
+
+<!-- 0: MISSION BRIEF -->
+<div class="slide active">
+  <div><div class="tag">Day 3 · End-of-Day Activity</div>
+  <h1 style="color:var(--a)">GlobalMart Operations<br>Intelligence — Group Challenge</h1>
+  <p class="sub">Two rounds. Five groups. Real SQL. No templates. First correct output wins.</p></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="card"><h3 style="margin-bottom:8px">How it works</h3>
+        <ul style="padding-left:16px;font-size:.81rem;color:#c9d1d9;line-height:2.1">
+          <li><strong>Roleplay first (2 min)</strong> — Analyst reads the brief aloud. Everyone takes their character.</li>
+          <li><strong>Round 1 (8 min)</strong> — Day 1 &amp; 2 concept. Warm-up. Shout <em>"DONE!"</em> when output is ready.</li>
+          <li><strong>Round 2 (12 min)</strong> — Harder. New concept from today. Instructor says when to unlock.</li>
+          <li><strong>Presentations (5 min)</strong> — Presenter explains in 60 sec. Class votes for the best.</li>
+        </ul>
+      </div>
+      <div class="card"><h3 style="margin-bottom:8px">Scoring</h3>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-size:.81rem"><span>First correct output — Round 1</span><span class="pts">3 pts</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.81rem"><span>First correct output — Round 2</span><span class="pts">5 pts</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.81rem"><span>Best 60-sec presentation (class vote)</span><span class="pts">2 pts</span></div>
+          <div style="border-top:1px solid var(--border);padding-top:6px;display:flex;justify-content:space-between;font-size:.81rem;font-weight:700"><span>Maximum</span><span style="color:var(--a2)">10 pts</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="card"><h3 style="margin-bottom:8px">Timeline</h3>
+        <table><tr><th>Time</th><th>What happens</th></tr>
+          <tr><td>0:00</td><td>Instructor says GO · Roleplay starts</td></tr>
+          <tr><td>0:02</td><td>Round 1 timer starts (8 min)</td></tr>
+          <tr><td>~0:10</td><td>Instructor announces Round 2 · click Unlock</td></tr>
+          <tr><td>~0:22</td><td>Coding ends · Presentations begin</td></tr>
+          <tr><td>~0:27</td><td>Class votes for best presenter</td></tr>
+        </table>
+      </div>
+      <div class="card"><h3 style="margin-bottom:5px">Database</h3>
+        <p style="font-size:.8rem">Connect to <code>mskl-masterclass</code> in SSMS.<br>Tables: <code>ex_transactions</code> · <code>ex_orders</code> · <code>ex_customers</code> · <code>ex_locations</code></p>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;padding:9px;border-style:dashed">
+    <p style="font-size:.79rem;color:var(--muted)">Go to <strong style="color:var(--text)">Slide 2 → Role Assignments</strong> to jump to your group's slide.</p>
+  </div>
+</div>
+
+<!-- 1: ROLE ASSIGNMENTS -->
+<div class="slide">
+  <div><div class="tag">Jump to your group · click the button in your card</div>
+  <h2>Role Assignments — Pre-Assigned, No Trading</h2>
+  <p class="sub">Your role is fixed. Own it. Analyst speaks first — always.</p></div>
+  <div class="five">
+    <div class="cg1"><span class="bg1">Group 1</span>
+      <p style="font-size:.8rem;font-weight:700;color:var(--g1);margin:5px 0 4px">Logistics</p>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:.73rem;color:#c9d1d9">📖 <strong>Aman S. Verma</strong> <span style="color:var(--muted)">Analyst</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>Aman Thapliyal</strong> <span style="color:var(--muted)">Coder 1</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>Amardeep Meena</strong> <span style="color:var(--muted)">Coder 2</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">✅ <strong>Aviskar Dhavale</strong> <span style="color:var(--muted)">Validator</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">🎤 <strong>Bysani Karthik</strong> <span style="color:var(--muted)">Presenter</span></div>
+      </div><button class="jump-btn jg1" onclick="show(2)">→ Go to My Slide</button>
+    </div>
+    <div class="cg2"><span class="bg2">Group 2</span>
+      <p style="font-size:.8rem;font-weight:700;color:var(--g2);margin:5px 0 4px">Finance</p>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:.73rem;color:#c9d1d9">📖 <strong>Devanand P</strong> <span style="color:var(--muted)">Analyst</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>Harsh Kumar</strong> <span style="color:var(--muted)">Coder 1</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>Heemansh Bhawsar</strong> <span style="color:var(--muted)">Coder 2</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">✅ <strong>Hritin Raj</strong> <span style="color:var(--muted)">Validator</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">🎤 <strong>Kumar Pratik</strong> <span style="color:var(--muted)">Presenter</span></div>
+      </div><button class="jump-btn jg2" onclick="show(4)">→ Go to My Slide</button>
+    </div>
+    <div class="cg3"><span class="bg3">Group 3</span>
+      <p style="font-size:.8rem;font-weight:700;color:var(--g3);margin:5px 0 4px">Customer</p>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:.73rem;color:#c9d1d9">📖 <strong>M Gaurav Kumar</strong> <span style="color:var(--muted)">Analyst</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>P V Ganadeep</strong> <span style="color:var(--muted)">Coder 1</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>Payal</strong> <span style="color:var(--muted)">Coder 2</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">✅ <strong>Prishita Shukla</strong> <span style="color:var(--muted)">Validator</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">🎤 <strong>Raj Sharma</strong> <span style="color:var(--muted)">Presenter</span></div>
+      </div><button class="jump-btn jg3" onclick="show(6)">→ Go to My Slide</button>
+    </div>
+    <div class="cg4"><span class="bg4">Group 4</span>
+      <p style="font-size:.8rem;font-weight:700;color:var(--g4);margin:5px 0 4px">Operations</p>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:.73rem;color:#c9d1d9">📖 <strong>Kamal Kumar</strong> <span style="color:var(--muted)">Analyst</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>S R Sneha</strong> <span style="color:var(--muted)">Coder 1</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>Saket Ranjan</strong> <span style="color:var(--muted)">Coder 2</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">✅ <strong>Santosh Kumar</strong> <span style="color:var(--muted)">Validator</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">🎤 <strong>Shivam Kumar</strong> <span style="color:var(--muted)">Presenter</span></div>
+      </div><button class="jump-btn jg4" onclick="show(8)">→ Go to My Slide</button>
+    </div>
+    <div class="cg5"><span class="bg5">Group 5</span>
+      <p style="font-size:.8rem;font-weight:700;color:var(--g5);margin:5px 0 4px">Strategy</p>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:.73rem;color:#c9d1d9">📖 <strong>Sujit Kumar</strong> <span style="color:var(--muted)">Analyst</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>Sukrit Ghosh</strong> <span style="color:var(--muted)">Coder 1</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">💻 <strong>Sushant Kumar</strong> <span style="color:var(--muted)">Coder 2</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">✅ <strong>T Nikshitha</strong> <span style="color:var(--muted)">Validator</span></div>
+        <div style="font-size:.73rem;color:#c9d1d9">🎤 <strong>Yogesh Patidar</strong> <span style="color:var(--muted)">Presenter</span></div>
+      </div><button class="jump-btn jg5" onclick="show(10)">→ Go to My Slide</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2: G1 ROLEPLAY -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg1">Group 1 · Logistics</span><span style="font-size:.77rem;color:var(--muted)">Aman S. · Aman T. · Amardeep · Aviskar · Bysani</span><span style="font-size:.71rem;color:var(--g1);font-weight:700;margin-left:auto">🎭 Step 1 — Roleplay</span></div>
+  <div class="card" style="background:rgba(59,130,246,.04);border-color:rgba(59,130,246,.3)">
+    <h3 style="color:var(--g1);margin-bottom:6px">Your Roles</h3>
+    <div class="role-strip">
+      <div class="rc"><span>📖</span><span class="rc-name">Aman S. Verma</span><span class="rc-role">Analyst — reads the brief, delegates tasks</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">Aman Thapliyal</span><span class="rc-role">Coder 1 — writes SQL in SSMS</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">Amardeep Meena</span><span class="rc-role">Coder 2 — pairs with Coder 1</span></div>
+      <div class="rc"><span>✅</span><span class="rc-name">Aviskar Dhavale</span><span class="rc-role">Validator — checks output format &amp; row count</span></div>
+      <div class="rc"><span>🎤</span><span class="rc-name">Bysani Karthik</span><span class="rc-role">Presenter — explains solution in 60 sec</span></div>
+    </div>
+  </div>
+  <div><div class="tag" style="margin-bottom:7px">📢 Analyst reads first. Everyone else say your line when it's your turn.</div>
+    <div class="chat">
+      <div class="cl"><span class="cn cn-a">📖 Aman S.</span><span class="ct">"Team meeting. Right now. I just got a message from Saket."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Aman T.</span><span class="ct">"Is it bad?"</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Aman S.</span><span class="ct">"Yogesh is getting complaints. Customers say packages are arriving after the promised date. Some waited so long they forgot they even placed the order."</span></div>
+      <div class="cl"><span class="cn cn-c2">💻 Amardeep</span><span class="ct">"How late are we talking?"</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Aman S.</span><span class="ct">"One customer ordered before Diwali. Package arrived after New Year. That is not a delay — that is a personality trait."</span></div>
+      <div class="cl"><span class="cn cn-p">🎤 Bysani</span><span class="ct">"Okay. What exactly do we need to find?"</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Aman S.</span><span class="ct">"Round 1 — top 5 cities by total orders. Warm up the brain. Round 2 — top 5 <strong>states</strong> with the most late deliveries and average days late. That is the real question."</span></div>
+      <div class="cl"><span class="cn cn-v">✅ Aviskar</span><span class="ct">"Got it. I will validate the output. If the numbers are wrong, I am blaming the database. Professionally."</span></div>
+      <div class="cl"><span class="cn cn-p">🎤 Bysani</span><span class="ct">"Just give me clean numbers and I will make the presentation sound like we planned this all along."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Aman T.</span><span class="ct">"No pressure at all."</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Aman S.</span><span class="ct">"Coders — open SSMS. <strong>Let us go.</strong>"</span></div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;padding:9px;border-style:dashed"><p style="font-size:.79rem;color:var(--muted)">Scene done? Hit <strong style="color:var(--text)">→</strong> to see the queries.</p></div>
+</div>
+
+<!-- 3: G1 QUESTIONS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg1">Group 1 · Logistics</span><span style="font-size:.77rem;color:var(--muted)">Aman S. · Aman T. · Amardeep · Aviskar · Bysani</span><span style="font-size:.71rem;color:var(--g1);font-weight:700;margin-left:auto">🧩 Step 2 — Queries</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="round-box r1-g1">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g1);letter-spacing:1px">ROUND 1</span><span style="font-size:.67rem;color:var(--muted);background:rgba(59,130,246,.1);padding:1px 8px;border-radius:100px">Day 1 · CTE · 3 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Bysani needs to present a delivery heatmap. Find the <strong>top 5 cities</strong> with the most orders. Use a <strong>CTE</strong>.</p>
+        <div class="obox">city | state | order_count</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">5 rows · ordered by order_count DESC</p>
+        <div class="hint-row">
+          <button class="hb h-g1" onclick="tog('h1a',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g1" onclick="tog('h1b',this)">Hint 2 — CTE shape?</button>
+          <button class="hb h-g1" onclick="tog('h1c',this)">Hint 3 — Full structure</button>
+        </div>
+        <div class="hbox hb-g1" id="h1a">3 tables: ex_orders → ex_customers (customer_id) → ex_locations (postal_code). City and state are in ex_locations.</div>
+        <div class="hbox hb-g1" id="h1b">CTE: GROUP BY l.city, l.state and COUNT(o.order_id). Outer query: SELECT TOP 5 ... WHERE l.city IS NOT NULL ORDER BY order_count DESC.</div>
+        <div class="hbox hb-g1" id="h1c">WITH city_orders AS (SELECT l.city, l.state, COUNT(o.order_id) AS order_count FROM ex_orders o LEFT JOIN ex_customers c ON o.customer_id=c.customer_id LEFT JOIN ex_locations l ON c.postal_code=l.postal_code WHERE l.city IS NOT NULL GROUP BY l.city, l.state) SELECT TOP 5 city, state, order_count FROM city_orders ORDER BY order_count DESC</div>
+      </div>
+      <div class="card"><h3 style="color:var(--g1);margin-bottom:5px">Schema</h3>
+        <table><tr><th>Table</th><th>Key columns</th></tr>
+          <tr><td>ex_orders</td><td>order_id, customer_id, order_delivered_date, order_estimated_delivery_date</td></tr>
+          <tr><td>ex_customers</td><td>customer_id, postal_code</td></tr>
+          <tr><td>ex_locations</td><td>postal_code, city, state, region</td></tr>
+        </table>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="unlock-btn u-g1" id="ubtn1" onclick="unlock('r2g1','ubtn1')">🔒 Instructor will announce Round 2 — click when told</button>
+      <div class="r2-box r2-hidden" id="r2g1">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g1);letter-spacing:1px">ROUND 2</span><span style="font-size:.67rem;color:var(--muted);background:rgba(59,130,246,.1);padding:1px 8px;border-radius:100px">Day 3 · DATEDIFF · 5 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Now find the <strong>top 5 states</strong> with the most <strong>late deliveries</strong> and average days late. An order is late when it arrives after the estimated delivery date.</p>
+        <div class="obox">state | late_orders | avg_delay_days</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">5 rows · ordered by late_orders DESC</p>
+        <div class="hint-row">
+          <button class="hb h-g1" onclick="tog('h1d',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g1" onclick="tog('h1e',this)">Hint 2 — Function?</button>
+          <button class="hb h-g1" onclick="tog('h1f',this)">Hint 3 — WHERE &amp; GROUP BY</button>
+        </div>
+        <div class="hbox hb-g1" id="h1d">Same 3-table join. ex_orders has both delivery dates. ex_locations has state.</div>
+        <div class="hbox hb-g1" id="h1e">DATEDIFF(day, order_estimated_delivery_date, order_delivered_date) gives days late. Wrap in AVG().</div>
+        <div class="hbox hb-g1" id="h1f">WHERE order_delivered_date &gt; order_estimated_delivery_date AND order_delivered_date IS NOT NULL. GROUP BY l.state. TOP 5. ORDER BY late_orders DESC.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4: G2 ROLEPLAY -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg2">Group 2 · Finance</span><span style="font-size:.77rem;color:var(--muted)">Devanand · Harsh · Heemansh · Hritin · Kumar Pratik</span><span style="font-size:.71rem;color:var(--g2);font-weight:700;margin-left:auto">🎭 Step 1 — Roleplay</span></div>
+  <div class="card" style="background:rgba(34,197,94,.04);border-color:rgba(34,197,94,.3)">
+    <h3 style="color:var(--g2);margin-bottom:6px">Your Roles</h3>
+    <div class="role-strip">
+      <div class="rc"><span>📖</span><span class="rc-name">Devanand P</span><span class="rc-role">Analyst</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">Harsh Kumar</span><span class="rc-role">Coder 1</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">Heemansh Bhawsar</span><span class="rc-role">Coder 2</span></div>
+      <div class="rc"><span>✅</span><span class="rc-name">Hritin Raj</span><span class="rc-role">Validator</span></div>
+      <div class="rc"><span>🎤</span><span class="rc-name">Kumar Pratik</span><span class="rc-role">Presenter</span></div>
+    </div>
+  </div>
+  <div><div class="tag" style="margin-bottom:7px">📢 Analyst reads first. Everyone else say your line when it's your turn.</div>
+    <div class="chat">
+      <div class="cl"><span class="cn cn-a">📖 Devanand</span><span class="ct">"Urgent situation. Prishita from Finance is asking questions again."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Harsh</span><span class="ct">"Is she ever not asking questions?"</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Devanand</span><span class="ct">"It is CFO review week. She wants to know — are discounts actually helping revenue, or are we training customers to wait for sales?"</span></div>
+      <div class="cl"><span class="cn cn-c2">💻 Heemansh</span><span class="ct">"So we need to compare discounted orders versus full-price orders?"</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Devanand</span><span class="ct">"Exactly. Order count, total revenue, average revenue. Two groups: Discount greater than zero, and Full Price. Round 1 — top 5 customers by revenue using DENSE_RANK. Warm up first."</span></div>
+      <div class="cl"><span class="cn cn-p">🎤 Kumar Pratik</span><span class="ct">"I have already pre-concluded that discounts are hurting us. Just waiting for the data to confirm."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Harsh</span><span class="ct">"You cannot conclude before writing the query."</span></div>
+      <div class="cl"><span class="cn cn-p">🎤 Kumar Pratik</span><span class="ct">"That is literally what slide decks are for."</span></div>
+      <div class="cl"><span class="cn cn-v">✅ Hritin</span><span class="ct">"I will validate. Round 2 must have exactly two rows. If I see three, someone wrote the wrong GROUP BY."</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Devanand</span><span class="ct">"CASE WHEN is your friend today. Coders — open SSMS. <strong>Go.</strong>"</span></div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;padding:9px;border-style:dashed"><p style="font-size:.79rem;color:var(--muted)">Scene done? Hit <strong style="color:var(--text)">→</strong> for the queries.</p></div>
+</div>
+
+<!-- 5: G2 QUESTIONS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg2">Group 2 · Finance</span><span style="font-size:.77rem;color:var(--muted)">Devanand · Harsh · Heemansh · Hritin · Kumar Pratik</span><span style="font-size:.71rem;color:var(--g2);font-weight:700;margin-left:auto">🧩 Step 2 — Queries</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="round-box r1-g2">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g2);letter-spacing:1px">ROUND 1</span><span style="font-size:.67rem;color:var(--muted);background:rgba(34,197,94,.1);padding:1px 8px;border-radius:100px">Day 2 · DENSE_RANK · 3 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Hritin spotted some customers are massive spenders. Using <strong>DENSE_RANK()</strong>, rank customers by total revenue. Show the <strong>top 5</strong> with their rank.</p>
+        <div class="obox">customer_name | total_revenue | revenue_rank</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">5 rows · ordered by revenue_rank ASC</p>
+        <div class="hint-row">
+          <button class="hb h-g2" onclick="tog('h2a',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g2" onclick="tog('h2b',this)">Hint 2 — Why a CTE?</button>
+          <button class="hb h-g2" onclick="tog('h2c',this)">Hint 3 — Full structure</button>
+        </div>
+        <div class="hbox hb-g2" id="h2a">ex_transactions (Sales_Amount) → ex_orders → ex_customers (customer_name). 3-table join. GROUP BY customer_name.</div>
+        <div class="hbox hb-g2" id="h2b">You cannot apply a window function to an aggregated column in the same SELECT. Aggregate first in a CTE, then apply DENSE_RANK() on top of the CTE result.</div>
+        <div class="hbox hb-g2" id="h2c">WITH customer_rev AS (SELECT c.customer_name, ROUND(SUM(t.Sales_Amount),2) AS total_revenue FROM ex_transactions t LEFT JOIN ex_orders o ON t.Order_ID=o.order_id LEFT JOIN ex_customers c ON o.customer_id=c.customer_id GROUP BY c.customer_name) SELECT TOP 5 customer_name, total_revenue, DENSE_RANK() OVER (ORDER BY total_revenue DESC) AS revenue_rank FROM customer_rev ORDER BY revenue_rank</div>
+      </div>
+      <div class="card"><h3 style="color:var(--g2);margin-bottom:5px">Schema</h3>
+        <table><tr><th>Table</th><th>Key columns</th></tr>
+          <tr><td>ex_transactions</td><td>Order_ID, Sales_Amount, Discount, COGS</td></tr>
+          <tr><td>ex_orders</td><td>order_id, customer_id</td></tr>
+          <tr><td>ex_customers</td><td>customer_id, customer_name, segment</td></tr>
+        </table>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="unlock-btn u-g2" id="ubtn2" onclick="unlock('r2g2','ubtn2')">🔒 Instructor will announce Round 2 — click when told</button>
+      <div class="r2-box r2-hidden" id="r2g2">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g2);letter-spacing:1px">ROUND 2</span><span style="font-size:.67rem;color:var(--muted);background:rgba(34,197,94,.1);padding:1px 8px;border-radius:100px">Day 3 · CASE WHEN in GROUP BY · 5 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Now answer Prishita's question — compare <strong>Discounted vs Full Price orders</strong>. Show order count, total revenue, and average revenue per order for each type.</p>
+        <div class="obox">price_type | order_count | total_revenue | avg_revenue</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">Exactly 2 rows · ordered by total_revenue DESC</p>
+        <div class="hint-row">
+          <button class="hb h-g2" onclick="tog('h2d',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g2" onclick="tog('h2e',this)">Hint 2 — Create groups?</button>
+          <button class="hb h-g2" onclick="tog('h2f',this)">Hint 3 — GROUP BY trick</button>
+        </div>
+        <div class="hbox hb-g2" id="h2d">Only ex_transactions — Discount and Sales_Amount are both there. No joins required.</div>
+        <div class="hbox hb-g2" id="h2e">CASE WHEN Discount &gt; 0 THEN 'Discounted' ELSE 'Full Price' END in SELECT creates the two category labels.</div>
+        <div class="hbox hb-g2" id="h2f">Repeat the exact same CASE WHEN in GROUP BY — SQL Server does not allow GROUP BY by alias. Use COUNT(DISTINCT Order_ID) for order_count.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6: G3 ROLEPLAY -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg3">Group 3 · Customer</span><span style="font-size:.77rem;color:var(--muted)">Gaurav · Ganadeep · Payal · Prishita · Raj</span><span style="font-size:.71rem;color:var(--g3);font-weight:700;margin-left:auto">🎭 Step 1 — Roleplay</span></div>
+  <div class="card" style="background:rgba(167,139,250,.04);border-color:rgba(167,139,250,.3)">
+    <h3 style="color:var(--g3);margin-bottom:6px">Your Roles</h3>
+    <div class="role-strip">
+      <div class="rc"><span>📖</span><span class="rc-name">M Gaurav Kumar</span><span class="rc-role">Analyst</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">P V Ganadeep</span><span class="rc-role">Coder 1</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">Payal</span><span class="rc-role">Coder 2</span></div>
+      <div class="rc"><span>✅</span><span class="rc-name">Prishita Shukla</span><span class="rc-role">Validator</span></div>
+      <div class="rc"><span>🎤</span><span class="rc-name">Raj Sharma</span><span class="rc-role">Presenter</span></div>
+    </div>
+  </div>
+  <div><div class="tag" style="margin-bottom:7px">📢 Analyst reads first. Everyone else say your line when it's your turn.</div>
+    <div class="chat">
+      <div class="cl"><span class="cn cn-a">📖 Gaurav</span><span class="ct">"Raj. You got a message from leadership this morning?"</span></div>
+      <div class="cl"><span class="cn cn-p">🎤 Raj</span><span class="ct">"Yes. Someone said the Home Office segment is probably unprofitable after subtracting cost of goods."</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Gaurav</span><span class="ct">"Probably. Based on what data?"</span></div>
+      <div class="cl"><span class="cn cn-p">🎤 Raj</span><span class="ct">"Based on vibes, apparently."</span></div>
+      <div class="cl"><span class="cn cn-c2">💻 Payal</span><span class="ct">"Vibes are not a KPI."</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Gaurav</span><span class="ct">"Exactly. Round 1 — find which segments have above-average order value using HAVING with a subquery. Round 2 — full profit margin for all 3 segments. Revenue, COGS, profit, margin percent."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Ganadeep</span><span class="ct">"What is the join path for Round 2?"</span></div>
+      <div class="cl"><span class="cn cn-v">✅ Prishita</span><span class="ct">"Transactions to Orders to Customers. Segment is in ex_customers. COGS is in ex_transactions."</span></div>
+      <div class="cl"><span class="cn cn-p">🎤 Raj</span><span class="ct">"And if Home Office is profitable, I get to tell leadership that vibes are not data."</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Gaurav</span><span class="ct">"Best possible outcome. Coders — <strong>go!</strong>"</span></div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;padding:9px;border-style:dashed"><p style="font-size:.79rem;color:var(--muted)">Scene done? Hit <strong style="color:var(--text)">→</strong> for the queries.</p></div>
+</div>
+
+<!-- 7: G3 QUESTIONS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg3">Group 3 · Customer</span><span style="font-size:.77rem;color:var(--muted)">Gaurav · Ganadeep · Payal · Prishita · Raj</span><span style="font-size:.71rem;color:var(--g3);font-weight:700;margin-left:auto">🧩 Step 2 — Queries</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="round-box r1-g3">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g3);letter-spacing:1px">ROUND 1</span><span style="font-size:.67rem;color:var(--muted);background:rgba(167,139,250,.1);padding:1px 8px;border-radius:100px">Day 1 · HAVING + subquery · 3 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Payal is building a loyalty targeting plan. Find customer <strong>segments</strong> whose average order value is <strong>above the overall average</strong>. Use <strong>HAVING</strong> with a subquery.</p>
+        <div class="obox">segment | avg_order_value</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">Only above-average segments · ordered by avg_order_value DESC</p>
+        <div class="hint-row">
+          <button class="hb h-g3" onclick="tog('h3a',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g3" onclick="tog('h3b',this)">Hint 2 — HAVING vs WHERE?</button>
+          <button class="hb h-g3" onclick="tog('h3c',this)">Hint 3 — The subquery</button>
+        </div>
+        <div class="hbox hb-g3" id="h3a">ex_transactions (Sales_Amount) → ex_orders → ex_customers (segment). GROUP BY c.segment.</div>
+        <div class="hbox hb-g3" id="h3b">You cannot filter aggregates with WHERE. Use HAVING AVG(t.Sales_Amount) &gt; [something].</div>
+        <div class="hbox hb-g3" id="h3c">The "something" = (SELECT AVG(Sales_Amount) FROM ex_transactions). Put this scalar subquery directly inside the HAVING clause.</div>
+      </div>
+      <div class="card"><h3 style="color:var(--g3);margin-bottom:5px">Schema</h3>
+        <table><tr><th>Table</th><th>Key columns</th></tr>
+          <tr><td>ex_transactions</td><td>Order_ID, Sales_Amount, COGS</td></tr>
+          <tr><td>ex_orders</td><td>order_id, customer_id</td></tr>
+          <tr><td>ex_customers</td><td>customer_id, segment</td></tr>
+        </table>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="unlock-btn u-g3" id="ubtn3" onclick="unlock('r2g3','ubtn3')">🔒 Instructor will announce Round 2 — click when told</button>
+      <div class="r2-box r2-hidden" id="r2g3">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g3);letter-spacing:1px">ROUND 2</span><span style="font-size:.67rem;color:var(--muted);background:rgba(167,139,250,.1);padding:1px 8px;border-radius:100px">Day 3 · Profit margin · 5 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Now check all <strong>3 segments</strong> — show total revenue, COGS, profit, and <strong>profit margin %</strong>. Prove or disprove leadership's vibes about Home Office.</p>
+        <div class="obox">segment | total_revenue | total_cogs | total_profit | profit_margin_pct</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">3 rows · ordered by total_profit DESC</p>
+        <div class="hint-row">
+          <button class="hb h-g3" onclick="tog('h3d',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g3" onclick="tog('h3e',this)">Hint 2 — Profit formula?</button>
+          <button class="hb h-g3" onclick="tog('h3f',this)">Hint 3 — Margin %</button>
+        </div>
+        <div class="hbox hb-g3" id="h3d">Same 3-table join. COGS is in ex_transactions, segment is in ex_customers.</div>
+        <div class="hbox hb-g3" id="h3e">total_profit = ROUND(SUM(t.Sales_Amount - t.COGS), 2). Calculate inside SUM — not row-level then summed.</div>
+        <div class="hbox hb-g3" id="h3f">profit_margin_pct = ROUND(SUM(t.Sales_Amount - t.COGS) / SUM(t.Sales_Amount) * 100, 2). Divide aggregate sums — not average of row-level ratios.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8: G4 ROLEPLAY -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg4">Group 4 · Operations</span><span style="font-size:.77rem;color:var(--muted)">Kamal · Sneha · Saket · Santosh · Shivam</span><span style="font-size:.71rem;color:var(--g4);font-weight:700;margin-left:auto">🎭 Step 1 — Roleplay</span></div>
+  <div class="card" style="background:rgba(245,158,11,.04);border-color:rgba(245,158,11,.3)">
+    <h3 style="color:var(--g4);margin-bottom:6px">Your Roles</h3>
+    <div class="role-strip">
+      <div class="rc"><span>📖</span><span class="rc-name">Kamal Kumar</span><span class="rc-role">Analyst</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">S R Sneha</span><span class="rc-role">Coder 1</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">Saket Ranjan</span><span class="rc-role">Coder 2</span></div>
+      <div class="rc"><span>✅</span><span class="rc-name">Santosh Kumar</span><span class="rc-role">Validator</span></div>
+      <div class="rc"><span>🎤</span><span class="rc-name">Shivam Kumar</span><span class="rc-role">Presenter</span></div>
+    </div>
+  </div>
+  <div><div class="tag" style="margin-bottom:7px">📢 Analyst reads first. Everyone else say your line when it's your turn.</div>
+    <div class="chat">
+      <div class="cl"><span class="cn cn-a">📖 Kamal</span><span class="ct">"Standup time. Amardeep raised something important in the morning call."</span></div>
+      <div class="cl"><span class="cn cn-c2">💻 Saket</span><span class="ct">"What is the burning issue today?"</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Kamal</span><span class="ct">"We have three shipping modes and nobody has ever measured which one is actually the fastest. We have been guessing for months."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Sneha</span><span class="ct">"We have been guessing? This entire time?"</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Kamal</span><span class="ct">"Apparently yes. Round 1 — monthly order count with a running total using a window function. Warm up first. Round 2 — for each ship mode, avg days to dispatch and avg days to deliver."</span></div>
+      <div class="cl"><span class="cn cn-p">🎤 Shivam</span><span class="ct">"I am already predicting Standard Class is the slowest. Writing it down so I can say I called it."</span></div>
+      <div class="cl"><span class="cn cn-v">✅ Santosh</span><span class="ct">"That is the most data analyst thing I have ever witnessed."</span></div>
+      <div class="cl"><span class="cn cn-c2">💻 Saket</span><span class="ct">"For Round 2, remember IS NOT NULL on both date columns. Half-delivered orders will completely destroy our averages."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Sneha</span><span class="ct">"You remembered that from class today. I am genuinely impressed."</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Kamal</span><span class="ct">"Less talking, more DATEDIFF. Coders — <strong>open SSMS and go.</strong>"</span></div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;padding:9px;border-style:dashed"><p style="font-size:.79rem;color:var(--muted)">Scene done? Hit <strong style="color:var(--text)">→</strong> for the queries.</p></div>
+</div>
+
+<!-- 9: G4 QUESTIONS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg4">Group 4 · Operations</span><span style="font-size:.77rem;color:var(--muted)">Kamal · Sneha · Saket · Santosh · Shivam</span><span style="font-size:.71rem;color:var(--g4);font-weight:700;margin-left:auto">🧩 Step 2 — Queries</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="round-box r1-g4">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g4);letter-spacing:1px">ROUND 1</span><span style="font-size:.67rem;color:var(--muted);background:rgba(245,158,11,.1);padding:1px 8px;border-radius:100px">Day 2 · Running total window function · 3 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Santosh is building a monthly ops dashboard. Show <strong>monthly order count</strong> and a <strong>running total</strong> of orders across all months using a <strong>window function</strong>.</p>
+        <div class="obox">yr | mo | monthly_orders | running_total</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">One row per month · ordered by yr, mo ASC</p>
+        <div class="hint-row">
+          <button class="hb h-g4" onclick="tog('h4a',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g4" onclick="tog('h4b',this)">Hint 2 — Window function?</button>
+          <button class="hb h-g4" onclick="tog('h4c',this)">Hint 3 — CTE structure</button>
+        </div>
+        <div class="hbox hb-g4" id="h4a">Only ex_orders. YEAR(order_purchase_date) and MONTH(order_purchase_date). Filter WHERE order_purchase_date IS NOT NULL.</div>
+        <div class="hbox hb-g4" id="h4b">SUM(monthly_orders) OVER (ORDER BY yr, mo) — cumulative sum that grows with each month row. This is your running_total.</div>
+        <div class="hbox hb-g4" id="h4c">CTE: GROUP BY YEAR and MONTH, COUNT(order_id). Outer SELECT: add the window function on top of the CTE columns.</div>
+      </div>
+      <div class="card"><h3 style="color:var(--g4);margin-bottom:5px">Schema</h3>
+        <table><tr><th>Table</th><th>Key columns</th></tr>
+          <tr><td>ex_orders</td><td>order_id, ship_mode, order_purchase_date, order_dispatched_date, order_delivered_date</td></tr>
+        </table>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="unlock-btn u-g4" id="ubtn4" onclick="unlock('r2g4','ubtn4')">🔒 Instructor will announce Round 2 — click when told</button>
+      <div class="r2-box r2-hidden" id="r2g4">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g4);letter-spacing:1px">ROUND 2</span><span style="font-size:.67rem;color:var(--muted);background:rgba(245,158,11,.1);padding:1px 8px;border-radius:100px">Day 3 · DATEDIFF ×2 · 5 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Now answer Amardeep's real question — for <strong>each ship mode</strong>, show total orders, avg days to dispatch, and avg days to deliver. <strong>Fastest mode first.</strong></p>
+        <div class="obox">ship_mode | total_orders | avg_days_to_dispatch | avg_days_to_deliver</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">3 rows · ordered by avg_days_to_deliver ASC (fastest first)</p>
+        <div class="hint-row">
+          <button class="hb h-g4" onclick="tog('h4d',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g4" onclick="tog('h4e',this)">Hint 2 — Two DATEDIFFs?</button>
+          <button class="hb h-g4" onclick="tog('h4f',this)">Hint 3 — WHERE clause</button>
+        </div>
+        <div class="hbox hb-g4" id="h4d">Only ex_orders. All columns needed: ship_mode, order_purchase_date, order_dispatched_date, order_delivered_date. No joins.</div>
+        <div class="hbox hb-g4" id="h4e">Two DATEDIFF() in SELECT: DATEDIFF(day, order_purchase_date, order_dispatched_date) and DATEDIFF(day, order_purchase_date, order_delivered_date). Both wrapped in AVG().</div>
+        <div class="hbox hb-g4" id="h4f">WHERE order_dispatched_date IS NOT NULL AND order_delivered_date IS NOT NULL. GROUP BY ship_mode. ORDER BY avg_days_to_deliver ASC.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 10: G5 ROLEPLAY -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg5">Group 5 · Strategy</span><span style="font-size:.77rem;color:var(--muted)">Sujit · Sukrit · Sushant · Nikshitha · Yogesh</span><span style="font-size:.71rem;color:var(--g5);font-weight:700;margin-left:auto">🎭 Step 1 — Roleplay</span></div>
+  <div class="card" style="background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.3)">
+    <h3 style="color:var(--g5);margin-bottom:6px">Your Roles</h3>
+    <div class="role-strip">
+      <div class="rc"><span>📖</span><span class="rc-name">Sujit Kumar</span><span class="rc-role">Analyst</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">Sukrit Ghosh</span><span class="rc-role">Coder 1</span></div>
+      <div class="rc"><span>💻</span><span class="rc-name">Sushant Kumar</span><span class="rc-role">Coder 2</span></div>
+      <div class="rc"><span>✅</span><span class="rc-name">T Nikshitha</span><span class="rc-role">Validator</span></div>
+      <div class="rc"><span>🎤</span><span class="rc-name">Yogesh Patidar</span><span class="rc-role">Presenter</span></div>
+    </div>
+  </div>
+  <div><div class="tag" style="margin-bottom:7px">📢 Analyst reads first. Everyone else say your line when it's your turn.</div>
+    <div class="chat">
+      <div class="cl"><span class="cn cn-a">📖 Sujit</span><span class="ct">"High stakes, team. Hritin is presenting to leadership tomorrow morning and he needs real numbers."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Sukrit</span><span class="ct">"Already? What does he need?"</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Sujit</span><span class="ct">"He thinks just one or two regions drive most of GlobalMart's revenue. Leadership wants actual data — not feelings."</span></div>
+      <div class="cl"><span class="cn cn-c2">💻 Sushant</span><span class="ct">"So Round 2 is revenue by region and what percentage each region contributes to total?"</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Sujit</span><span class="ct">"Exactly. And Round 1 is a regional summary — total revenue, unique customers, and average order value. CTE required."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Sukrit</span><span class="ct">"Round 2 needs a subquery inside the SELECT itself for the percentage, right?"</span></div>
+      <div class="cl"><span class="cn cn-c2">💻 Sushant</span><span class="ct">"Yes. A scalar subquery. It runs once, returns total revenue, and you divide by it. Do not panic."</span></div>
+      <div class="cl"><span class="cn cn-c1">💻 Sukrit</span><span class="ct">"I am not panicking. I am processing the concept in real time."</span></div>
+      <div class="cl"><span class="cn cn-v">✅ Nikshitha</span><span class="ct">"I will validate. All regions must appear. Percentages must add up to 100."</span></div>
+      <div class="cl"><span class="cn cn-p">🎤 Yogesh</span><span class="ct">"I am already preparing my commentary. Spoiler — I think South region wins."</span></div>
+      <div class="cl"><span class="cn cn-a">📖 Sujit</span><span class="ct">"Four-table join. Hardest query in the room. Make us proud. Coders — <strong>go!</strong>"</span></div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;padding:9px;border-style:dashed"><p style="font-size:.79rem;color:var(--muted)">Scene done? Hit <strong style="color:var(--text)">→</strong> for the queries.</p></div>
+</div>
+
+<!-- 11: G5 QUESTIONS -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:10px"><span class="bg5">Group 5 · Strategy</span><span style="font-size:.77rem;color:var(--muted)">Sujit · Sukrit · Sushant · Nikshitha · Yogesh</span><span style="font-size:.71rem;color:var(--g5);font-weight:700;margin-left:auto">🧩 Step 2 — Queries</span></div>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="round-box r1-g5">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g5);letter-spacing:1px">ROUND 1</span><span style="font-size:.67rem;color:var(--muted);background:rgba(239,68,68,.1);padding:1px 8px;border-radius:100px">Day 1 · CTE multi-aggregate · 3 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Nikshitha is building a board-ready summary. Using a <strong>CTE</strong>, show each <strong>region's</strong> total revenue, unique customer count, and avg order value. Most revenue first.</p>
+        <div class="obox">region | total_revenue | unique_customers | avg_order_value</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">One row per region · ordered by total_revenue DESC</p>
+        <div class="hint-row">
+          <button class="hb h-g5" onclick="tog('h5a',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g5" onclick="tog('h5b',this)">Hint 2 — CTE shape?</button>
+          <button class="hb h-g5" onclick="tog('h5c',this)">Hint 3 — Unique customers</button>
+        </div>
+        <div class="hbox hb-g5" id="h5a">All 4 tables: ex_transactions → ex_orders → ex_customers → ex_locations. Region is in ex_locations.</div>
+        <div class="hbox hb-g5" id="h5b">CTE aggregates by l.region with WHERE l.region IS NOT NULL. Outer SELECT orders by total_revenue DESC.</div>
+        <div class="hbox hb-g5" id="h5c">COUNT(DISTINCT c.customer_id) — DISTINCT prevents counting the same customer multiple times across their orders.</div>
+      </div>
+      <div class="card"><h3 style="color:var(--g5);margin-bottom:5px">Schema</h3>
+        <table><tr><th>Table</th><th>Key columns</th></tr>
+          <tr><td>ex_transactions</td><td>Order_ID, Sales_Amount</td></tr>
+          <tr><td>ex_orders</td><td>order_id, customer_id</td></tr>
+          <tr><td>ex_customers</td><td>customer_id, postal_code</td></tr>
+          <tr><td>ex_locations</td><td>postal_code, region</td></tr>
+        </table>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="unlock-btn u-g5" id="ubtn5" onclick="unlock('r2g5','ubtn5')">🔒 Instructor will announce Round 2 — click when told</button>
+      <div class="r2-box r2-hidden" id="r2g5">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="font-size:.71rem;font-weight:800;color:var(--g5);letter-spacing:1px">ROUND 2</span><span style="font-size:.67rem;color:var(--muted);background:rgba(239,68,68,.1);padding:1px 8px;border-radius:100px">Day 3 · Subquery in SELECT · 5 pts if first</span></div>
+        <p style="font-size:.83rem;color:#e6edf3;line-height:1.7;margin-bottom:6px">Give Hritin what he needs — each <strong>region's total revenue</strong> and its <strong>% share</strong> of GlobalMart's total. Most revenue first.</p>
+        <div class="obox">region | total_revenue | revenue_pct</div>
+        <p style="font-size:.71rem;color:var(--muted);margin-top:4px">One row per region · revenue_pct values must sum to ~100</p>
+        <div class="hint-row">
+          <button class="hb h-g5" onclick="tog('h5d',this)">Hint 1 — Tables?</button>
+          <button class="hb h-g5" onclick="tog('h5e',this)">Hint 2 — % formula?</button>
+          <button class="hb h-g5" onclick="tog('h5f',this)">Hint 3 — Subquery syntax</button>
+        </div>
+        <div class="hbox hb-g5" id="h5d">Same 4-table join. GROUP BY l.region. WHERE l.region IS NOT NULL.</div>
+        <div class="hbox hb-g5" id="h5e">revenue_pct = SUM(t.Sales_Amount) * 100.0 / [total revenue]. Total revenue comes from a subquery that runs once for all rows.</div>
+        <div class="hbox hb-g5" id="h5f">(SELECT SUM(Sales_Amount) FROM ex_transactions) — use this inline as the denominator. Multiply by 100.0 not 100 to get decimal output. Wrap in ROUND(...,2).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const N=slides.length;
+const labels=['Mission Brief','Role Assignments','G1 Roleplay','G1 Questions','G2 Roleplay','G2 Questions','G3 Roleplay','G3 Questions','G4 Roleplay','G4 Questions','G5 Roleplay','G5 Questions'];
+function show(n){slides[cur].classList.remove('active');cur=(n+N)%N;slides[cur].classList.add('active');document.getElementById('ctr').textContent=labels[cur];document.querySelector('.deck').scrollTop=0;}
+function go(d){show(cur+d);}
+function tog(id,btn){const b=document.getElementById(id);if(b.style.display==='block'){b.style.display='none';btn.style.opacity='1';}else{b.style.display='block';btn.style.opacity='.55';}}
+function unlock(boxId,btnId){document.getElementById(boxId).classList.remove('r2-hidden');document.getElementById(btnId).style.display='none';}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+document.getElementById('ctr').textContent=labels[0];
+</script>
+</body>
+</html>

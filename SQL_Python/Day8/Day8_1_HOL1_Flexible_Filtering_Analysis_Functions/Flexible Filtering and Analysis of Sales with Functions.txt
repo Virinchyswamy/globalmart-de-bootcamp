@@ -1,0 +1,618 @@
+# Flexible Filtering and Analysis of Sales with Functions
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to build a reusable Python function library for GlobalMart's sales analytics team by defining functions with parameters, default arguments, and return values that filter and aggregate transaction data across product categories, ship modes, and sales thresholds.
+
+## Learning Objectives
+- Define Python functions using the def keyword with clearly named parameters and a return statement
+- Distinguish between positional arguments and keyword arguments when calling a function
+- Use default parameter values to make functions flexible and backward-compatible
+- Apply function parameters to filter a pandas DataFrame by category, ship mode, discount threshold, and other business-relevant fields
+- Combine filtering and aggregation logic inside a single function to produce a ready-to-use sales summary
+
+## Prerequisites
+- Familiarity with Python variables, conditionals, and basic data types
+- Basic experience with pandas DataFrames including reading CSVs, filtering rows, and selecting columns
+- Understanding of groupby().agg() and merge() at a conceptual level
+- Awareness of what a function is and why code reuse matters
+
+## Duration of Completion
+60 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- approach (skill)
+- quality (skill)
+- data-wrangling (skill)
+- python (tool)
+
+#### Overview
+In this scenario you will learn how to build a reusable Python function library for GlobalMart's sales analytics team by defining functions with parameters, default arguments, and return values that filter and aggregate transaction data across product categories, ship modes, and sales thresholds.
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- approach (skill)
+- quality (skill)
+- data-wrangling (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## GlobalMart's ad-hoc reporting problem
+
+
+GlobalMart's sales data grows by thousands of transactions every week. The analytics team is constantly asked for one-off reports - "Show me all Electronics sales above $5,000", "What's the total revenue for Furniture with a discount over 20%?", "Can you give me the top 5 products by quantity for Standard shipping?" - and right now, every one of these questions means writing a brand-new block of code from scratch. The result is a cluttered notebook full of duplicated logic, inconsistent outputs, and no way to reuse any of it.
+
+
+**The Mission:** You have been asked to build a reusable Python function library for sales analysis. Each function should accept the relevant filters as parameters so that any analyst can call it with different arguments without touching the underlying logic.
+
+
+| Function to Build | Business User | Query it Answers |
+|---|---|---|
+| `get_category_summary` | Category Management team | Total revenue, quantity, and average discount for any category - optionally filtered by minimum discount |
+| `filter_by_ship_mode` | Logistics team | All transactions for a given ship mode above an optional minimum sales threshold |
+| `get_top_products` | Sales team | Ranked leaderboard of top-N products by revenue within any category |
+
+> *"If I have to explain what the code does every time someone borrows it, it isn't reusable - it's just shared confusion. Functions with clear parameters are self-documenting."*
+> **Riya**, Lead Data Analyst, GlobalMart
+
+**Tables to use:** `ex_transactions`, `ex_orders`, `ex_products`
+
+>[!IMPORTANT]
+> All function exercises in this scenario operate on a single merged trans DataFrame - not the raw tables individually. Always pass trans as the first argument to your functions unless the exercise specifies otherwise.
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Concept: Function definitions, parameters, and arguments
+
+
+A Python **function** is a named, reusable block of code that performs a specific task. Instead of writing the same filtering logic repeatedly, you define it once with a `def` statement, give it a name, declare what inputs it needs (parameters), and `return` a result.
+
+
+**Analogy:** Think of a function like a coffee machine at GlobalMart's office. The machine is built once - the `def` block. Every morning, different people use it by putting in different inputs: "double espresso", "oat milk latte", "no sugar" - the arguments. The machine always runs the same internal logic but produces a customised output based on what was passed in. Nobody rebuilds the machine each time — they just call it with different arguments.
+
+**Key terms:**
+
+| Term | What It Means | Example |
+|---|---|---|
+| **Parameter** | Variable name declared inside `def` | `def filter_sales(category, min_amount)` |
+| **Argument** | Actual value passed when calling the function | `filter_sales("Electronics", 5000)` |
+| **Positional argument** | Matched to parameters by position - order matters | `filter_sales("Electronics", 5000)` |
+| **Keyword argument** | Matched by name - order does not matter | `filter_sales(min_amount=5000, category="Electronics")` |
+| **Default parameter** | Parameter with a pre-set fallback value | `def filter_sales(category, min_amount=0)` |
+| **Return value** | The output the function sends back to the caller | `return filtered_df` |
+
+
+**Anatomy of a function:**
+
+```python
+# 1. Define the function with parameters
+def get_category_summary(df, category, min_discount=0.0):
+    # 2. Function body -logic goes here
+    filtered = df[
+        (df["category"] == category) &
+        (df["discount"] >= min_discount)
+    ]
+    # 3. Return the result
+    return filtered[["sales_amount", "quantity", "discount"]].sum()
+
+# 4. Call it - using positional and keyword arguments
+get_category_summary(transactions, "Electronics")               # default min_discount = 0.0
+get_category_summary(transactions, "Furniture", min_discount=0.2)  # override default
+```
+
+**When to use positional vs keyword arguments:**
+
+| Situation | Recommended Style | Why |
+|---|---|---|
+| Few parameters, clear order | Positional | Concise and readable |
+| Many parameters | Keyword | Avoids order mistakes |
+| Optional / rarely changed | Default parameter | Callers only specify when needed |
+| Sharing code with others | Keyword | Self-documenting, harder to misuse |
+
+>[!TIP]
+> Functions should return data - let the caller decide whether to print it. A function that calls print() internally and omits return cannot be composed: its output cannot be stored in a variable, passed to another function, or used in a pipeline.
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+## Data Dictionary
+
+
+| Table | Column | Description |
+|---|---|---|
+| ex_transactions | transaction_id | Unique identifier for each transaction |
+| ex_transactions | order_id | Unique identifier for the associated order |
+| ex_transactions | product_id | Unique identifier for the associated product |
+| ex_transactions | sales_amount | Total sales amount for the transaction |
+| ex_transactions | quantity | Quantity of products sold in the transaction |
+| ex_transactions | discount | Discount applied to the transaction (as a decimal, e.g., 0.2 = 20%) |
+| ex_transactions | COGS | Cost of goods sold for the product in this transaction |
+| ex_orders | order_id | Unique identifier for each order |
+| ex_orders | ship_mode | Shipment mode (Premium, Fastrack, Standard, Regular) |
+| ex_orders | order_status | Current delivery status (Delivered, Cancelled, Shipped, Invoiced, etc.) |
+| ex_orders | order_purchase_date | Date and time when the order was placed |
+| ex_products | product_id | Unique identifier for the product |
+| ex_products | product_name | Name of the product |
+| ex_products | category | Product category (e.g., Furniture, Electronics) |
+| ex_products | sub_category | Product sub-category |
+| ex_products | manufacturer | Name of the product manufacturer |
+
+---
+>[!IMPORTANT]
+> The ex_transactions table may use different column name casing (e.g., Order_ID, Product_ID, Sales_Amount, Quantity, Discount). Always inspect column names with df.columns before referencing them in function bodies or merges to avoid KeyError.
+
+
+**Tags**
+
+
+##### Input 4
+**Type:** Code
+
+**Question:** Write a function called `get_category_summary` that accepts the merged `trans` DataFrame, a `category` string, and an optional `min_discount` parameter (default `0.0`). The function should return a single-row summary DataFrame. When called as `get_category_summary(trans, "Electronics")`.
+
+
+Your output should look like:
+| category | total_revenue | total_quantity | avg_discount |
+|---|---|---|---|
+| Electronics | 284530.75 | 1843 | 0.14 |
+
+
+When called as `get_category_summary(trans, "Electronics", min_discount=0.2)`, only transactions with a discount of 20% or more should be included.
+
+- `total_revenue` - sum of `sales_amount` for all matching transactions
+- `total_quantity` - sum of `quantity` for all matching transactions
+- `avg_discount` - mean of `discount` for all matching transactions, rounded to 2 decimal places
+
+>[!TIP]
+> Start by filtering the DataFrame inside the function using boolean conditions on category and discount. Then use .agg() or construct a summary dictionary and wrap it in pd.DataFrame([{...}]) for a clean single-row output. Remember: the function should return the result, not print it.
+
+**Language:** python
+
+**Snippet:** import pandas as pd
+
+# Load and merge tables
+transactions = pd.read_csv("https://cdn.enqurious.com/documents/c1783c85-e8de-4ccc-a92e-bfc37f8fbf93_extransactions.csv")
+orders       = pd.read_csv("https://cdn.enqurious.com/documents/e232a410-6d01-4c69-b468-4ef821382898_exorders.csv")
+products     = pd.read_csv("https://cdn.enqurious.com/documents/c2ac5069-8a28-487f-8aee-05c385222a6a_exproducts.csv")
+
+
+
+**Solution:** 
+**Filter first, aggregate second, wrap in a DataFrame last** - this sequence keeps each step testable and makes the function body easy to extend.
+
+```python
+import pandas as pd
+
+# Load and merge tables (from Input 3 setup)
+transactions = pd.read_csv("https://cdn.enqurious.com/documents/c1783c85-e8de-4ccc-a92e-bfc37f8fbf93_extransactions.csv")
+orders       = pd.read_csv("https://cdn.enqurious.com/documents/e232a410-6d01-4c69-b468-4ef821382898_exorders.csv")
+products     = pd.read_csv("https://cdn.enqurious.com/documents/c2ac5069-8a28-487f-8aee-05c385222a6a_exproducts.csv")
+
+trans = transactions.merge(
+    products[["product_id", "product_name", "category", "sub_category"]],
+    left_on="Product_ID", right_on="product_id", how="left"
+)
+trans = trans.merge(
+    orders[["order_id", "ship_mode", "order_status"]],
+    left_on="Order_ID", right_on="order_id", how="left"
+)
+
+# Function definition ───────────────────────────────────────────────────────
+def get_category_summary(df, category, min_discount=0.0):
+    """
+    Returns a one-row summary of sales metrics for a given product category.
+
+    Parameters
+    ----------
+    df           : merged transactions DataFrame
+    category     : str   — product category (e.g. "Electronics")
+    min_discount : float — minimum discount to include (default 0.0 = all)
+
+    Returns
+    -------
+    pd.DataFrame with columns: category, total_revenue, total_quantity, avg_discount
+    """
+    # Apply category and discount filters
+    filtered = df[
+        (df["category"]  == category) &
+        (df["Discount"]  >= min_discount)
+    ]
+
+    # Build the summary as a single-row DataFrame
+    summary = pd.DataFrame([{
+        "category"       : category,
+        "total_revenue"  : filtered["Sales_Amount"].sum(),
+        "total_quantity" : filtered["Quantity"].sum(),
+        "avg_discount"   : round(filtered["Discount"].mean(), 2)
+    }])
+    return summary
+
+# Function calls ────────────────────────────────────────────────────────────
+# Positional argument — uses default min_discount = 0.0
+print(get_category_summary(trans, "Electronics"))
+
+# Keyword argument — override the default to filter for ≥ 20% discount only
+print(get_category_summary(trans, "Electronics", min_discount=0.2))
+```
+
+- **`min_discount=0.0` as default**: A threshold of `0.0` means the condition `df["Discount"] >= 0.0` passes every row (all discounts are non-negative). This is the correct "no filter" behaviour -the caller does not need to pass anything when they want all transactions.
+- **`pd.DataFrame([{...}])`**: Wrapping the aggregated values in a list-of-dict produces a clean single-row DataFrame. This is preferable to returning a `pd.Series` because the caller can display, export, or chain further DataFrame operations without type conversion.
+- **`round(..., 2)`**: Applied to `avg_discount` to prevent floating-point precision noise (e.g., `0.14000000000000001`) in the output.
+- **Column name casing**: The solution uses `"Discount"`, `"Sales_Amount"`, and `"Quantity"` - the actual casing from the `ex_transactions` table. Always verify with `trans.columns` in your environment and update accordingly.
+
+>[!NOTE]
+> A function without a `return` statement implicitly returns `None`. If you filter and aggregate inside the function but forget `return summary`, the caller receives `None` and gets a confusing `AttributeError` when they try to display or use it.
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / join (skill)
+- data-wrangling / group (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / sort (skill)
+
+##### Input 5
+**Type:** Code
+
+**Question:** Extend `get_category_summary` to accept an optional `status` parameter (default `None`) that, when provided, filters rows to only those where `order_status` matches the given value. Calling `get_category_summary(trans, "Furniture", status="delivered")` should return a summary using only delivered Furniture transactions. Calling `get_category_summary(trans, "Furniture")` should still return all Furniture transactions as before.
+
+| category | total_revenue | total_quantity | avg_discount |
+|---|---|---|---|
+| Furniture | 91340.50 | 624 | 0.11 |
+
+
+>[!TIP]
+> Add status=None to the parameter list after min_discount. Inside the function body, apply the status filter conditionally using if status is not None. This guard ensures the function remains backward-compatible - existing calls without a status argument continue to work unchanged.
+
+**Language:** python
+
+**Snippet:** # Extend get_category_summary with an optional status parameter
+
+def get_category_summary(df, category, min_discount=0.0, status=None):
+    # Step 1: Apply category and discount filters (same as Input 5)
+    filtered = df[
+        (df["category"] == category) &
+        (df["Discount"] >= min_discount)
+    ]
+
+    # Step 2: Apply the optional status filter
+    if status is not None:
+        # your code here
+
+    # Step 3: Build and return the summary (same as Input 5)
+    summary = pd.DataFrame([{
+        "category"       : category,
+        "total_revenue"  : # your code here
+        "total_quantity" : # your code here
+        "avg_discount"   : # your code here
+    }])
+    return summary
+
+**Solution:** 
+**Use `None` as the default for optional string filters** - it creates a clear sentinel value that the function can test with `if status is not None`, keeping the guard readable and the default behaviour unchanged.
+
+```python
+def get_category_summary(df, category, min_discount=0.0, status=None):
+    """
+    Returns a one-row sales summary for a given category, with optional
+    discount threshold and order status filters.
+
+    Parameters
+    ----------
+    df           : merged transactions DataFrame
+    category     : str or None  - product category (e.g. "Furniture")
+    min_discount : float        - minimum discount to include (default 0.0)
+    status       : str or None  - order_status to filter on (default None = all statuses)
+
+    Returns
+    -------
+    pd.DataFrame with columns: category, total_revenue, total_quantity, avg_discount
+    """
+    # Start with category + discount filters
+    filtered = df[
+        (df["category"] == category) &
+        (df["Discount"] >= min_discount)
+    ]
+
+    # Apply optional status filter only when provided
+    if status is not None:
+        filtered = filtered[filtered["order_status"] == status]
+
+    summary = pd.DataFrame([{
+        "category"       : category,
+        "total_revenue"  : filtered["Sales_Amount"].sum(),
+        "total_quantity" : filtered["Quantity"].sum(),
+        "avg_discount"   : round(filtered["Discount"].mean(), 2)
+    }])
+    return summary
+
+# Uses default min_discount and no status filter - backward-compatible
+print(get_category_summary(trans, "Furniture"))
+
+# Keyword arguments — only delivered Furniture orders with ≥ 10% discount
+print(get_category_summary(trans, "Furniture", min_discount=0.1, status="delivered"))
+```
+
+- **`status=None` default**: Using `None` rather than an empty string `""` avoids accidental matches if any `order_status` value in the data happens to be an empty string. `None` is an unambiguous "not provided" sentinel.
+- **Conditional filter `if status is not None:`**: The filter is applied after the primary category and discount filters, so `filtered` shrinks progressively. This keeps each filter step independent and easy to debug.
+- **Backward compatibility**: Adding `status=None` at the end of the parameter list means all existing call sites (e.g., `get_category_summary(trans, "Electronics")`) continue to work without modification — a key property of extending functions with optional parameters.
+
+**Tags**
+- data-wrangling / sort (skill)
+- data-wrangling / join (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / math-calculations (skill)
+
+##### Input 6
+**Type:** Code
+
+**Question:** Write a function called `filter_by_ship_mode` that accepts the `trans` DataFrame, a `ship_mode` string, and an optional `min_sales` threshold (default `0`). The function should return the filtered rows - not a summary - so the Logistics team can inspect individual transactions. When called as `filter_by_ship_mode(trans, "Standard", min_sales=3000)`, it should return only Standard shipping transactions where `sales_amount` is at least 3,000.
+
+| transaction_id | order_id | product_name | category | sales_amount | quantity | discount | ship_mode |
+|---|---|---|---|---|---|---|---|
+| TXN-4421 | ORD-2201 | Ergonomic Chair | Furniture | 4200.00 | 2 | 0.10 | Standard |
+| TXN-4489 | ORD-2278 | Laptop Stand Pro | Electronics | 3750.50 | 1 | 0.05 | Standard |
+
+
+>[!TIP]
+> The function body only needs two filter conditions joined with '&'. Use reset_index(drop=True) on the returned DataFrame so the index is clean for the caller. Return a subset of columns - not the entire trans DataFrame - to keep the output focused on what the Logistics team uses.
+
+**Language:** python
+
+**Snippet:** def filter_by_ship_mode(df, ship_mode, min_sales=0):
+    """
+    Filters transactions by ship mode and an optional minimum sales threshold.
+
+    Parameters
+    ----------
+    df        : merged transactions DataFrame
+    ship_mode : str   — shipment mode to filter on (e.g. "Premium", "Standard")
+    min_sales : float — minimum sales_amount to include (default 0 = no threshold)
+
+    Returns
+    -------
+    pd.DataFrame of filtered transaction rows
+    """
+    filtered = df[
+        # your two filter conditions here
+    ]
+
+    return filtered[[
+        # list the columns to return
+    ]].reset_index(drop=True)
+
+# Test calls
+print(filter_by_ship_mode(trans, "Premium"))
+print(filter_by_ship_mode(trans, "Standard", min_sales=3000))
+print(filter_by_ship_mode(df=trans, ship_mode="Fastrack", min_sales=1500))
+
+**Solution:** 
+**A filter function returns rows, not metrics** - its value is in being callable with any combination of arguments, not in doing complex aggregation logic.
+
+```python
+def filter_by_ship_mode(df, ship_mode, min_sales=0):
+    """
+    Filters transactions by ship mode and an optional minimum sales threshold.
+
+    Parameters
+    ----------
+    df        : merged transactions DataFrame
+    ship_mode : str   - shipment mode to filter on (e.g. "Premium", "Standard")
+    min_sales : float - minimum sales_amount to include (default 0 = no threshold)
+
+    Returns
+    -------
+    pd.DataFrame of filtered transaction rows
+    """
+    filtered = df[
+        (df["ship_mode"]    == ship_mode) &
+        (df["Sales_Amount"] >= min_sales)
+    ]
+
+    # Return a clean subset of columns with a reset index
+    return filtered[[
+        "TransactionID", "Order_ID", "product_name",
+        "category", "Sales_Amount", "Quantity", "Discount", "ship_mode"
+    ]].reset_index(drop=True)
+
+# Positional only — returns all Premium transactions (min_sales defaults to 0)
+print(filter_by_ship_mode(trans, "Premium"))
+
+# Positional + keyword — Standard transactions worth at least $3,000
+print(filter_by_ship_mode(trans, "Standard", min_sales=3000))
+
+# Keyword arguments only — same result, order-independent
+print(filter_by_ship_mode(df=trans, ship_mode="Fastrack", min_sales=1500))
+```
+
+- **`min_sales=0` default**: A threshold of `0` means `df["Sales_Amount"] >= 0` passes all transactions (assuming no negative sales values). Callers who only want high-value shipments simply add `min_sales=3000` — the default requires no change to existing call sites.
+- **Returning a column subset**: Returning only the eight columns the Logistics team uses keeps the output focused. Returning the entire `trans` DataFrame (with all merge columns) would expose unnecessary data and make the output harder to read.
+- **`reset_index(drop=True)`**: After boolean filtering, the index retains the original row numbers from `trans` (e.g., 0, 5, 12, 19...). Resetting gives the caller a clean 0-based index, which is easier to work with in subsequent operations.
+- **All-keyword call `filter_by_ship_mode(df=trans, ship_mode="Fastrack", min_sales=1500)`**: Demonstrates that keyword arguments can be passed in any order — a useful pattern when sharing call sites with other analysts who may not remember parameter order.
+
+>[!NOTE]
+> Passing arguments in the wrong positional order — `filter_by_ship_mode(trans, 3000, "Standard")` — passes `3000` to `ship_mode` and `"Standard"` to `min_sales`, producing a `TypeError` or silently incorrect results. Use keyword arguments at call sites that others will read or reuse.
+
+**Tags**
+- data-wrangling / filter (skill)
+- data-wrangling / sort (skill)
+- data-wrangling / math-calculations (skill)
+
+##### Input 7
+**Type:** Code
+
+**Question:** Write a function called `get_top_products` that accepts the `trans` DataFrame, a `category` string, and an optional `top_n` integer (default `5`). The function should return a ranked leaderboard of the top-N products by total sales amount within that category, descending. When called as `get_top_products(trans, "Furniture", top_n=3)`, it should return the top 3 Furniture products.
+
+| rank | product_name | category | total_revenue | total_quantity |
+|---|---|---|---|---|
+| 1 | Laptop Stand Pro | Electronics | 48200.00 | 312 |
+| 2 | Wireless Keyboard X | Electronics | 39750.50 | 487 |
+| 3 | USB-C Hub Deluxe | Electronics | 31100.00 | 278 |
+
+
+>[!TIP]
+> Filter by category first, then use groupby("product_name").agg(...) to compute totals per product. Sort by total_revenue descending, take the top top_n rows with .head(top_n), and add a rank column using range(1, top_n + 1) after reset_index().
+
+**Language:** python
+
+**Snippet:** def get_top_products(df, category, top_n=5):
+    """
+    Returns a ranked leaderboard of the top-N products by total sales
+    within a given category.
+
+
+# Test calls
+print(get_top_products(trans, "Electronics"))
+print(get_top_products(trans, "Furniture", top_n=3))
+print(get_top_products(df=trans, category="Office Supplies", top_n=10))
+
+**Solution:** 
+**Filter → groupby → agg → sort → head → rank** — each step is a single pandas operation chained sequentially, making the logic easy to read and debug.
+
+```python
+def get_top_products(df, category, top_n=5):
+    """
+    Returns a ranked leaderboard of the top-N products by total sales
+    within a given category.
+
+    Parameters
+    ----------
+    df       : merged transactions DataFrame
+    category : str — product category to filter on (e.g. "Electronics")
+    top_n    : int — number of top products to return (default 5)
+
+    Returns
+    -------
+    pd.DataFrame with columns: rank, product_name, category,
+                               total_revenue, total_quantity
+    """
+    # Filter to the requested category
+    filtered = df[df["category"] == category]
+
+    # Aggregate total revenue and quantity per product, sort, take top N
+    leaderboard = (
+        filtered
+        .groupby("product_name")
+        .agg(
+            total_revenue  = ("Sales_Amount", "sum"),
+            total_quantity = ("Quantity",     "sum")
+        )
+        .reset_index()
+        .sort_values("total_revenue", ascending=False)
+        .head(top_n)
+        .reset_index(drop=True)
+    )
+
+    # Add rank and category columns at the front
+    leaderboard.insert(0, "rank",     range(1, len(leaderboard) + 1))
+    leaderboard.insert(2, "category", category)
+
+    return leaderboard
+
+# Positional only — top 5 Electronics (uses default top_n = 5)
+print(get_top_products(trans, "Electronics"))
+
+# Positional + keyword — top 3 Furniture products
+print(get_top_products(trans, "Furniture", top_n=3))
+
+# Keyword arguments only — top 10 Office Supplies
+print(get_top_products(df=trans, category="Office Supplies", top_n=10))
+```
+
+- **`.groupby("product_name").agg(...).reset_index()`**: After `groupby().agg()`, `product_name` becomes the DataFrame index. `reset_index()` promotes it back to a regular column so it can be referenced by name in subsequent operations and displayed cleanly.
+- **`.sort_values("total_revenue", ascending=False)`**: Sorts products from highest to lowest revenue before slicing — rank 1 is the top seller. `ascending=False` is explicit and prevents the common mistake of sorting ascending by default.
+- **`.head(top_n)`**: Slices the sorted DataFrame to the first `top_n` rows. Because the sort is already applied, `.head()` is equivalent to "top N by revenue".
+- **`leaderboard.insert(0, "rank", range(1, len(leaderboard) + 1))`**: Assigns sequential rank numbers 1 through N after the DataFrame is finalized. Using `range` rather than pandas `.rank()` here is intentional — the leaderboard is already sorted, so ordinal assignment is transparent and produces no ties.
+- **`top_n=5` default**: The most common business ask is "top 5". Making it the default means callers only need to specify it when they want a different count — keeping the common case simple.
+
+**Tags**
+- data-wrangling / sort (skill)
+- data-wrangling / join (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / math-calculations (skill)
+
+##### Input 8
+**Type:** Choice
+
+**Question:** An analyst calls `filter_by_ship_mode(trans, 3000, "Standard")`. The function signature is `def filter_by_ship_mode(df, ship_mode, min_sales=0)`. What is the most likely outcome?
+
+**Options:** 
+- The function returns all Standard shipping transactions with sales above 3,000 — the arguments are matched by name automatically
+
+- The function raises a `TypeError` or produces silently wrong results because `3000` is matched to `ship_mode` and `"Standard"` to `min_sales`
+
+- The function raises a `ValueError` because `3000` is not a valid ship mode string
+
+- The function uses the default `min_sales=0` because `3000` is passed as a keyword argument
+
+**Correct Options:** 
+- The function raises a `TypeError` or produces silently wrong results because `3000` is matched to `ship_mode` and `"Standard"` to `min_sales`
+
+**Solution:** 
+**Positional arguments are matched by position, not by name** — passing them in the wrong order causes silent logic errors or type errors that can be very hard to debug.
+
+- **Wrong order causes errors ✅** — With the signature `filter_by_ship_mode(df, ship_mode, min_sales=0)`, the call `filter_by_ship_mode(trans, 3000, "Standard")` maps `3000` to the `ship_mode` parameter and `"Standard"` to `min_sales`. Inside the function, `df["ship_mode"] == 3000` will match nothing (producing an empty DataFrame silently) and `df["Sales_Amount"] >= "Standard"` will raise a `TypeError` because you cannot compare a numeric column to a string.
+- **Matched by name automatically ❌** — Python does not infer intent from argument values. Positional arguments are always matched by position. Without keyword syntax, `3000` is the second argument and maps to `ship_mode`, not to `min_sales`.
+- **`ValueError` for invalid ship mode ❌** — Python functions do not validate parameter types or values by default. The function will not raise a `ValueError` on its own — it simply applies the filter, which either returns zero rows or raises an error when comparing incompatible types.
+- **Uses default `min_sales=0` ❌** — The default value for `min_sales` is only used when no argument is provided for that parameter. Here, `"Standard"` is explicitly passed as the third argument, so the default is overridden by `"Standard"` — not by `3000`.
+
+>[!TIP]
+> Use keyword arguments at any call site that others will read or reuse: `filter_by_ship_mode(trans, ship_mode="Standard", min_sales=3000)`. This makes the intent unambiguous and eliminates the risk of positional order mistakes.
+
+**Tags**
+- approach / error-identification (skill)
+
+##### Input 9
+**Type:** Choice
+
+**Question:** Which of the following are valid reasons to use `None` as the default value for an optional parameter instead of using an empty string `""` or an empty list `[]`? (Select 2)
+
+**Options:** 
+- `None` is an unambiguous sentinel value that cannot be confused with a valid input, making conditional guards like `if status is not None:` reliable
+
+- `None` is faster to evaluate than an empty string in boolean conditions, improving function performance
+
+- Using a mutable default value like `[]` is shared across all function calls — mutations in one call affect subsequent calls, which `None` avoids
+
+- `None` automatically converts to `False` in boolean conditions, removing the need for an explicit `if` guard
+
+**Correct Options:** 
+- `None` is an unambiguous sentinel value that cannot be confused with a valid input, making conditional guards like `if status is not None:` reliable
+
+- Using a mutable default value like `[]` is shared across all function calls — mutations in one call affect subsequent calls, which `None` avoids
+
+**Solution:** 
+**`None` as a default is a Python best practice for two distinct reasons** — one about semantic clarity, one about a dangerous mutable default bug.
+
+- **`None` as an unambiguous sentinel ✅** — An empty string `""` could be a valid `order_status` value in some datasets. Using `""` as the default would make it impossible to distinguish "caller passed no status filter" from "caller explicitly filtered for orders with an empty status". `None` has no such ambiguity — it unambiguously means "not provided", making `if status is not None:` a reliable guard.
+- **Mutable default argument bug ✅** — Python evaluates default parameter values once at function definition time, not at each call. If you write `def my_func(items=[])`, all calls share the same list object. Appending to `items` in one call permanently modifies the default for every subsequent call. Using `None` as the default and creating the list inside the function body (`if items is None: items = []`) avoids this entirely.
+- **Performance advantage ❌** — `None` has no meaningful performance advantage over an empty string in boolean evaluation. This is not a valid reason to prefer `None`.
+- **Automatic `False` conversion removing the `if` guard ❌** — While `None` is falsy in Python (`bool(None) == False`), relying on this to replace an explicit `if` guard is a code smell. An empty string `""` and an empty list `[]` are also falsy, making `if status:` unreliable as a guard when the caller might legitimately pass a falsy-but-valid value. Always use `if status is not None:` for clarity.
+
+**Tags**
+- approach / concept-clarity (skill)

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 – Mastering Joins, CTEs & Subqueries | Day 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #a78bfa; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button:hover { background: #a78bfa; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  .deck { padding-top: 60px; }
+  .slide { display: none; min-height: 100vh; padding: 48px 60px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #2d1b69 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 44px; font-weight: 800; color: #a78bfa; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 18px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #4c1d95; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 34px; font-weight: 700; color: #a78bfa; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 24px; font-weight: 700; color: #f8fafc; margin-bottom: 18px; }
+
+  .slide-demo { background: #0a1628; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 4px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 18px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px 24px; }
+  .card h4 { color: #a78bfa; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul { padding-left: 16px; }
+
+  .highlight-box { background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box.purple { background: #1e1040; border-color: #a78bfa; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.8; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .join-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .join-card {
+    border-radius: 10px; padding: 16px; text-align: center; border: 1px solid;
+  }
+  .join-card h5 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .join-card p { font-size: 12px; line-height: 1.5; }
+  .j-inner { background: #0d2d1a; border-color: #22c55e; }
+  .j-inner h5 { color: #22c55e; }
+  .j-left  { background: #1a2e4a; border-color: #3b82f6; }
+  .j-left h5 { color: #60a5fa; }
+  .j-right { background: #1e1040; border-color: #a78bfa; }
+  .j-right h5 { color: #c4b5fd; }
+  .j-full  { background: #2d1b0e; border-color: #f59e0b; }
+  .j-full h5 { color: #fbbf24; }
+  .j-cross { background: #2d0f0f; border-color: #ef4444; }
+  .j-cross h5 { color: #f87171; }
+  .j-self  { background: #1a1a2e; border-color: #8b5cf6; }
+  .j-self h5 { color: #a78bfa; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li { counter-increment: steps; display: flex; align-items: flex-start; gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 14px; color: #cbd5e1; line-height: 1.6; }
+  .order-list li::before { content: counter(steps); background: #4c1d95; color: #fff; min-width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+
+  table.sql-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  table.sql-table th { background: #4c1d95; color: #fff; padding: 8px 12px; text-align: left; }
+  table.sql-table td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 1 · MODULE 2 — Mastering Joins, CTEs & Subqueries</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 12</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Mastering Joins, CTEs<br>&amp; Subqueries</h1>
+    <p class="subtitle">Moving from basic SELECT to intermediate data wrangling — the foundation of real SQL analytics</p>
+    <div class="badge">Module 2 &nbsp;·&nbsp; Day 1 &nbsp;·&nbsp; Intermediate &nbsp;·&nbsp; 180 min self-paced</div>
+    <div style="margin-top:32px; color:#475569; font-size:13px;">
+      Rahul's journey → ORDER BY · TOP · OFFSET FETCH · All JOIN types · GROUP BY · HAVING · Subqueries · CTEs
+    </div>
+  </div>
+
+  <!-- SLIDE 2: CONTEXT -->
+  <div class="slide slide-section">
+    <div class="section-tag">The Problem</div>
+    <h2>Why Rahul Needs These Skills</h2>
+    <div class="two-col" style="margin-top:24px;">
+      <div>
+        <div class="card">
+          <h4>The Challenge at GlobalMart</h4>
+          <p>Rahul needs to answer business questions like:</p>
+          <ul style="margin-top:10px;">
+            <li>Who are the top 5 customers by total spend?</li>
+            <li>Which states have more than 100 orders?</li>
+            <li>Which customers haven't placed an order yet?</li>
+            <li>What's the fastest delivery we've ever done?</li>
+          </ul>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4>The Problem with Basic SQL</h4>
+          <p>Simple SELECT + WHERE can't answer these questions. He needs:</p>
+          <ul style="margin-top:10px;">
+            <li><strong>JOINs</strong> to merge data from multiple tables</li>
+            <li><strong>GROUP BY</strong> to summarize and aggregate</li>
+            <li><strong>Subqueries / CTEs</strong> to handle complex logic cleanly</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box purple">
+          <p><strong style="color:#a78bfa;">What you'll walk away knowing:</strong></p>
+          <ul style="margin-top:10px; padding-left:16px; color:#cbd5e1; font-size:14px; line-height:2;">
+            <li>Sort and paginate results with ORDER BY + OFFSET FETCH</li>
+            <li>Understand SQL's order of execution</li>
+            <li>Combine tables using all 6 types of JOINs</li>
+            <li>Summarize data with GROUP BY + aggregates</li>
+            <li>Filter groups with HAVING (vs WHERE)</li>
+            <li>Write subqueries and CTEs to structure complex logic</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: ORDER BY -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — ORDER BY &amp; Sorting</h3>
+    <div class="demo-label">Run in SSMS · mskl-masterclass · table: orders</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- Basic ascending sort (default, no keyword needed)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">ORDER BY</span> <span class="col">customer_id</span>;
+
+<span class="cm">-- Descending sort: latest orders first</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">ORDER BY</span> <span class="col">order_purchase_date</span> <span class="kw">DESC</span>;
+
+<span class="cm">-- Multi-column sort:
+-- First group by customer, then within each customer
+-- show latest purchase first</span>
+<span class="kw">SELECT</span>
+    <span class="col">order_id</span>,
+    <span class="col">customer_id</span>,
+    <span class="col">order_purchase_date</span>,
+    <span class="col">order_status</span>
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">ORDER BY</span> <span class="col">customer_id</span> <span class="kw">ASC</span>,
+         <span class="col">order_purchase_date</span> <span class="kw">DESC</span>;
+
+<span class="cm">-- Shortcut: use column position numbers instead of names
+-- 2 = customer_id (2nd column), 6 = order_purchase_date</span>
+<span class="kw">SELECT</span>
+    <span class="col">order_id</span>, <span class="col">customer_id</span>, <span class="col">vendor_id</span>,
+    <span class="col">ship_mode</span>, <span class="col">order_status</span>, <span class="col">order_purchase_date</span>
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">ORDER BY</span> <span class="str">2</span>, <span class="str">6</span> <span class="kw">DESC</span>;
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>TOP N + OFFSET FETCH</h4>
+          <pre style="font-size:12px;">
+<span class="cm">-- Top 3 fastest deliveries</span>
+<span class="kw">SELECT TOP</span> <span class="str">3</span>
+    <span class="col">order_id</span>,
+    <span class="fn">DATEDIFF</span>(day,
+        <span class="col">order_purchase_date</span>,
+        <span class="col">order_delivered_customer_date</span>
+    ) <span class="kw">AS</span> delivery_days
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> <span class="col">order_status</span> = <span class="str">'delivered'</span>
+<span class="kw">ORDER BY</span> <span class="str">2</span>;
+
+<span class="cm">-- Pagination: skip 10, take next 3
+-- Useful for "page 2" type results</span>
+<span class="kw">SELECT</span>
+    <span class="col">order_id</span>,
+    <span class="fn">DATEDIFF</span>(day,
+        <span class="col">order_purchase_date</span>,
+        <span class="col">order_delivered_customer_date</span>
+    ) <span class="kw">AS</span> delivery_days
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> <span class="col">order_status</span> = <span class="str">'delivered'</span>
+<span class="kw">ORDER BY</span> <span class="str">2</span>
+<span class="kw">OFFSET</span> <span class="str">10</span> ROWS
+<span class="kw">FETCH NEXT</span> <span class="str">3</span> ROWS ONLY;
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: SQL ORDER OF OPERATIONS -->
+  <div class="slide slide-content">
+    <h3>SQL Order of Operations — The Critical Mental Model</h3>
+    <div class="two-col">
+      <div>
+        <ol class="order-list">
+          <li><strong>FROM</strong> — SQL first finds the table(s) to work with</li>
+          <li><strong>JOIN … ON</strong> — Tables are merged; the ON condition is evaluated to match rows between them</li>
+          <li><strong>WHERE</strong> — Rows that don't match the filter are discarded</li>
+          <li><strong>GROUP BY</strong> — Remaining rows are grouped</li>
+          <li><strong>HAVING</strong> — Groups that don't match are discarded</li>
+          <li><strong>SELECT</strong> — Columns are selected / computed</li>
+          <li><strong>ORDER BY</strong> — Result is sorted for display</li>
+        </ol>
+        <div class="highlight-box warn" style="margin-top:18px;">
+          <p><strong style="color:#f59e0b;">Key rules:</strong><br><br>
+          JOIN runs <strong>before WHERE</strong> — so ON filters during table merging, WHERE filters the combined result after.<br><br>
+          You CANNOT use a SELECT alias inside WHERE — WHERE runs before SELECT.<br><br>
+          You CAN use a SELECT alias inside ORDER BY — it runs after SELECT.</p>
+        </div>
+      </div>
+      <div>
+        <pre>
+<span class="cm">-- We WRITE SQL top-to-bottom, but SQL EXECUTES in a different order</span>
+
+<span class="cm">-- Step 6: SELECT (runs 6th — aliases created here)</span>
+<span class="kw">SELECT</span>
+    <span class="tbl">c</span>.<span class="col">customer_name</span>,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>) <span class="kw">AS</span> total_orders,
+    <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>)          <span class="kw">AS</span> total_spent
+
+<span class="cm">-- Step 1: FROM (runs 1st — SQL finds the base table)</span>
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+
+<span class="cm">-- Step 2: JOIN + ON (runs 2nd — tables are merged on matching customer_id)</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">customer_id</span> = <span class="tbl">o</span>.<span class="col">customer_id</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+    <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">order_id</span> = <span class="tbl">t</span>.<span class="col">order_id</span>
+
+<span class="cm">-- Step 3: WHERE (runs 3rd — filters the combined result AFTER joining)
+-- Note: this runs AFTER JOIN, so you can filter on columns from any table</span>
+<span class="kw">WHERE</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+
+<span class="cm">-- Step 4: GROUP BY (runs 4th)</span>
+<span class="kw">GROUP BY</span> <span class="tbl">c</span>.<span class="col">customer_name</span>
+
+<span class="cm">-- Step 5: HAVING (runs 5th — filters groups AFTER aggregation)</span>
+<span class="kw">HAVING</span> <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="tbl">o</span>.<span class="col">order_id</span>) &gt; <span class="str">5</span>
+
+<span class="cm">-- Step 7: ORDER BY (runs last — can use SELECT alias here)</span>
+<span class="kw">ORDER BY</span> total_spent <span class="kw">DESC</span>;
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: JOIN TYPES OVERVIEW -->
+  <div class="slide slide-content">
+    <h3>All 6 Types of JOINs — At a Glance</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">Think of each JOIN as answering a different business question about overlapping datasets.</p>
+    <div class="join-grid">
+      <div class="join-card j-inner">
+        <h5>INNER JOIN</h5>
+        <p>Only rows that match in <em>both</em> tables. Customers who have orders.</p>
+      </div>
+      <div class="join-card j-left">
+        <h5>LEFT JOIN</h5>
+        <p>All rows from left table + matched rows from right. Shows customers with NO orders as NULL.</p>
+      </div>
+      <div class="join-card j-right">
+        <h5>RIGHT JOIN</h5>
+        <p>All rows from right table + matched rows from left. Mirror of LEFT JOIN.</p>
+      </div>
+      <div class="join-card j-full">
+        <h5>FULL OUTER JOIN</h5>
+        <p>Everything from both tables. NULLs where no match exists on either side.</p>
+      </div>
+      <div class="join-card j-cross">
+        <h5>CROSS JOIN</h5>
+        <p>Every possible combination. 5 employees × 4 departments = 20 rows. No ON clause needed.</p>
+      </div>
+      <div class="join-card j-self">
+        <h5>SELF JOIN</h5>
+        <p>Table joined with itself. Classic use: employee + their manager (same table).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: JOIN DEMOS -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — JOINs in Action</h3>
+    <div class="demo-label">Run in SSMS · mskl-masterclass</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- INNER JOIN: customers who have placed orders</span>
+<span class="kw">SELECT</span>
+    <span class="tbl">c</span>.<span class="col">customer_id</span>,
+    <span class="tbl">c</span>.<span class="col">customer_name</span>,
+    <span class="tbl">o</span>.<span class="col">order_id</span>,
+    <span class="tbl">o</span>.<span class="col">order_purchase_date</span>
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+<span class="kw">INNER JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">customer_id</span> = <span class="tbl">o</span>.<span class="col">customer_id</span>;
+
+<span class="cm">-- LEFT JOIN: ALL customers, even those with no orders
+-- Unmatched customers will have NULL for order columns</span>
+<span class="kw">SELECT</span>
+    <span class="tbl">c</span>.<span class="col">customer_id</span>,
+    <span class="tbl">c</span>.<span class="col">customer_name</span>,
+    <span class="tbl">o</span>.<span class="col">order_id</span>
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+<span class="kw">LEFT JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">customer_id</span> = <span class="tbl">o</span>.<span class="col">customer_id</span>;
+
+<span class="cm">-- Find customers who have NEVER placed an order</span>
+<span class="cm">-- The trick: filter WHERE order_id IS NULL after LEFT JOIN</span>
+<span class="kw">SELECT</span>
+    <span class="tbl">c</span>.<span class="col">customer_id</span>,
+    <span class="tbl">c</span>.<span class="col">customer_name</span>
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+<span class="kw">LEFT JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">customer_id</span> = <span class="tbl">o</span>.<span class="col">customer_id</span>
+<span class="kw">WHERE</span> <span class="tbl">o</span>.<span class="col">order_id</span> <span class="kw">IS NULL</span>;
+        </pre>
+      </div>
+      <div>
+        <pre>
+<span class="cm">-- SELF JOIN: find employee and their manager</span>
+<span class="cm">-- Both come from the same employees table</span>
+<span class="kw">SELECT</span>
+    <span class="tbl">e1</span>.<span class="col">employee_name</span> <span class="kw">AS</span> Employee,
+    <span class="tbl">e2</span>.<span class="col">employee_name</span> <span class="kw">AS</span> Manager
+<span class="kw">FROM</span> <span class="tbl">employees</span> <span class="tbl">e1</span>
+<span class="kw">JOIN</span>  <span class="tbl">employees</span> <span class="tbl">e2</span>
+    <span class="kw">ON</span> <span class="tbl">e1</span>.<span class="col">manager_id</span> = <span class="tbl">e2</span>.<span class="col">employee_id</span>;
+
+<span class="cm">-- THREE-TABLE JOIN: customers + orders + transactions</span>
+<span class="cm">-- This is the pattern used in Module 3 & 4</span>
+<span class="kw">SELECT</span>
+    <span class="tbl">c</span>.<span class="col">customer_name</span>,
+    <span class="tbl">o</span>.<span class="col">order_id</span>,
+    <span class="fn">SUM</span>(<span class="tbl">t</span>.<span class="col">sales_amount</span>) <span class="kw">AS</span> order_total
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="tbl">c</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_orders</span> <span class="tbl">o</span>
+    <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">customer_id</span> = <span class="tbl">o</span>.<span class="col">customer_id</span>
+<span class="kw">JOIN</span> <span class="tbl">ex_transactions</span> <span class="tbl">t</span>
+    <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">order_id</span> = <span class="tbl">t</span>.<span class="col">order_id</span>
+<span class="kw">WHERE</span> <span class="tbl">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+<span class="kw">GROUP BY</span>
+    <span class="tbl">c</span>.<span class="col">customer_name</span>,
+    <span class="tbl">o</span>.<span class="col">order_id</span>
+<span class="kw">ORDER BY</span> order_total <span class="kw">DESC</span>;
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: GROUP BY + AGGREGATES -->
+  <div class="slide slide-content">
+    <h3>GROUP BY + Aggregate Functions</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>The 5 Aggregate Functions</h4>
+          <table class="sql-table" style="margin-top:4px;">
+            <tr><th>Function</th><th>What it returns</th></tr>
+            <tr><td>COUNT(*)</td><td>Number of rows in each group</td></tr>
+            <tr><td>COUNT(DISTINCT col)</td><td>Unique values in group</td></tr>
+            <tr><td>SUM(col)</td><td>Total of all values</td></tr>
+            <tr><td>AVG(col)</td><td>Average value</td></tr>
+            <tr><td>MAX(col) / MIN(col)</td><td>Highest / lowest value</td></tr>
+          </table>
+        </div>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">Rule:</strong> Every column in SELECT that is NOT inside an aggregate function MUST appear in GROUP BY.</p>
+        </div>
+      </div>
+      <div>
+        <pre>
+<span class="cm">-- Total sales per customer</span>
+<span class="kw">SELECT</span>
+    <span class="col">customer_id</span>,
+    <span class="fn">SUM</span>(<span class="col">sales_amount</span>) <span class="kw">AS</span> total_sales
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">GROUP BY</span> <span class="col">customer_id</span>;
+
+<span class="cm">-- Orders per region with average delivery time</span>
+<span class="kw">SELECT</span>
+    <span class="col">region</span>,
+    <span class="fn">COUNT</span>(<span class="col">order_id</span>)   <span class="kw">AS</span> total_orders,
+    <span class="fn">AVG</span>(<span class="fn">DATEDIFF</span>(day,
+        <span class="col">order_purchase_date</span>,
+        <span class="col">order_delivered_customer_date</span>
+    ))                   <span class="kw">AS</span> avg_delivery_days
+<span class="kw">FROM</span> <span class="tbl">ex_orders</span>
+<span class="kw">WHERE</span> <span class="col">order_status</span> = <span class="str">'delivered'</span>
+<span class="kw">GROUP BY</span> <span class="col">region</span>
+<span class="kw">ORDER BY</span> avg_delivery_days <span class="kw">DESC</span>;
+
+<span class="cm">-- Only customers who spent more than 5000</span>
+<span class="kw">SELECT</span>
+    <span class="col">customer_id</span>,
+    <span class="fn">SUM</span>(<span class="col">sales_amount</span>) <span class="kw">AS</span> total_sales
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">GROUP BY</span> <span class="col">customer_id</span>
+<span class="kw">HAVING</span> <span class="fn">SUM</span>(<span class="col">sales_amount</span>) &gt; <span class="str">5000</span>;
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: WHERE vs HAVING -->
+  <div class="slide slide-content">
+    <h3>WHERE vs HAVING — The Crucial Difference</h3>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h4>WHERE filters ROWS (before grouping)</h4>
+          <pre style="font-size:12px; margin-top:10px;">
+<span class="cm">-- Filter individual rows first,
+-- THEN count what's left per group</span>
+<span class="kw">SELECT</span>
+    <span class="col">state</span>,
+    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> customer_count
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>
+<span class="kw">WHERE</span> <span class="col">state</span> &lt;&gt; <span class="str">'Unknown'</span>
+<span class="kw">GROUP BY</span> <span class="col">state</span>;
+          </pre>
+          <p style="margin-top:10px; font-size:13px; color:#94a3b8;">Use WHERE when the condition applies to individual rows</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>HAVING filters GROUPS (after grouping)</h4>
+          <pre style="font-size:12px; margin-top:10px;">
+<span class="cm">-- Group first, THEN throw away
+-- groups that are too small</span>
+<span class="kw">SELECT</span>
+    <span class="col">state</span>,
+    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> customer_count
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span>
+<span class="kw">GROUP BY</span> <span class="col">state</span>
+<span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) &gt; <span class="str">50</span>;
+          </pre>
+          <p style="margin-top:10px; font-size:13px; color:#94a3b8;">Use HAVING when the condition applies to an aggregated value</p>
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box purple" style="margin-top:20px;">
+      <p><strong style="color:#a78bfa;">Quick Memory Trick:</strong> WHERE is a bouncer at the door (filters before the party). HAVING is a judge at the end (rules on the groups after they've formed). You can use BOTH in the same query!</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: SUBQUERY -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — Subqueries</h3>
+    <div class="demo-label">A query inside another query | Run in SSMS</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- Problem: find customers in specific states,
+-- but the state column has typos and bad casing</span>
+
+<span class="cm">-- Without subquery: messy, hard to read</span>
+<span class="kw">SELECT</span>
+    <span class="col">state_name</span>,
+    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> customer_count
+<span class="kw">FROM</span> (
+    <span class="cm">-- Inner query: this is the "sub-query"
+    -- It cleans the data before the outer query uses it</span>
+    <span class="kw">SELECT</span>
+        <span class="col">customer_id</span>,
+        <span class="kw">CASE</span>
+            <span class="kw">WHEN</span> <span class="fn">TRIM</span>(<span class="col">state</span>) = <span class="str">'calfornia'</span>
+                <span class="kw">THEN</span> <span class="fn">UPPER</span>(<span class="str">'California'</span>)
+            <span class="kw">WHEN</span> <span class="fn">TRIM</span>(<span class="col">state</span>) = <span class="str">'masachusets'</span>
+                <span class="kw">THEN</span> <span class="fn">UPPER</span>(<span class="str">'Massachusetts'</span>)
+            <span class="kw">ELSE</span> <span class="fn">UPPER</span>(<span class="fn">TRIM</span>(<span class="col">state</span>))
+        <span class="kw">END</span> <span class="kw">AS</span> state_name
+    <span class="kw">FROM</span> <span class="tbl">mskl_customers</span>
+) <span class="kw">AS</span> <span class="tbl">t</span>
+<span class="kw">GROUP BY</span> state_name
+<span class="kw">HAVING</span> state_name <span class="kw">IN</span>
+    (<span class="str">'CALIFORNIA'</span>, <span class="str">'ARIZONA'</span>, <span class="str">'TEXAS'</span>);
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>How a Subquery Works</h4>
+          <p>The inner query (inside the parentheses) runs <strong>first</strong> and produces a temporary result set.</p>
+          <p style="margin-top:8px;">The outer query then treats that result just like a normal table.</p>
+          <p style="margin-top:8px; color:#94a3b8;">Think of it like: clean the ingredients (inner), then cook (outer).</p>
+        </div>
+        <div class="highlight-box warn" style="margin-top:14px;">
+          <p><strong style="color:#f59e0b;">Downside of subqueries:</strong> As they nest deeper, they become very hard to read. That's why CTEs exist.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: CTEs -->
+  <div class="slide slide-demo">
+    <h3>Live Demo — CTEs (Common Table Expressions)</h3>
+    <div class="demo-label">WITH clause | The cleaner alternative to subqueries</div>
+    <div class="two-col">
+      <div>
+        <pre>
+<span class="cm">-- Same logic as the subquery, but written as a CTE</span>
+<span class="cm">-- CTE gives the subquery a NAME and moves it to the top</span>
+
+<span class="kw">WITH</span> customer_list <span class="kw">AS</span> (
+    <span class="cm">-- Step 1: Clean the state column once here</span>
+    <span class="kw">SELECT</span>
+        <span class="col">customer_id</span>,
+        <span class="kw">CASE</span>
+            <span class="kw">WHEN</span> <span class="fn">TRIM</span>(<span class="col">state</span>) = <span class="str">'calfornia'</span>
+                <span class="kw">THEN</span> <span class="fn">UPPER</span>(<span class="str">'California'</span>)
+            <span class="kw">WHEN</span> <span class="fn">TRIM</span>(<span class="col">state</span>) = <span class="str">'masachusets'</span>
+                <span class="kw">THEN</span> <span class="fn">UPPER</span>(<span class="str">'Massachusetts'</span>)
+            <span class="kw">ELSE</span> <span class="fn">UPPER</span>(<span class="fn">TRIM</span>(<span class="col">state</span>))
+        <span class="kw">END</span> <span class="kw">AS</span> state_name
+    <span class="kw">FROM</span> <span class="tbl">mskl_customers</span>
+)
+
+<span class="cm">-- Step 2: Now use 'customer_list' just like a normal table</span>
+<span class="kw">SELECT</span>
+    state_name,
+    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> customer_count
+<span class="kw">FROM</span> customer_list
+<span class="kw">GROUP BY</span> state_name
+<span class="kw">HAVING</span> state_name <span class="kw">IN</span>
+    (<span class="str">'CALIFORNIA'</span>, <span class="str">'ARIZONA'</span>, <span class="str">'TEXAS'</span>);
+        </pre>
+      </div>
+      <div>
+        <div class="card">
+          <h4>CTE vs Subquery</h4>
+          <table class="sql-table">
+            <tr><th></th><th>Subquery</th><th>CTE</th></tr>
+            <tr><td>Where written</td><td>Inside FROM</td><td>Before main query (WITH)</td></tr>
+            <tr><td>Named?</td><td>Optional alias</td><td>Always named</td></tr>
+            <tr><td>Reusable?</td><td>No</td><td>Yes — reference it many times</td></tr>
+            <tr><td>Readability</td><td>Harder to follow</td><td>Much cleaner</td></tr>
+          </table>
+        </div>
+        <div class="highlight-box success" style="margin-top:14px;">
+          <p><strong style="color:#22c55e;">Key insight:</strong> A CTE doesn't create a physical table. It's just a named temporary result that lives only for the duration of that query execution.</p>
+        </div>
+        <div class="highlight-box purple" style="margin-top:12px;">
+          <p><strong style="color:#a78bfa;">Multiple CTEs</strong> — stack them with commas!</p>
+          <pre style="margin-top:8px; font-size:12px;">
+<span class="kw">WITH</span>
+cte_one <span class="kw">AS</span> (... first logic ...),
+cte_two <span class="kw">AS</span> (... uses cte_one ...)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> cte_two;
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: SELF-PACED PREVIEW -->
+  <div class="slide slide-content">
+    <h3>What the Self-Paced Content Covers</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">After this session, learners go through 3 detailed scenarios in the platform:</p>
+    <div class="three-col">
+      <div class="card">
+        <h4>Scenario 1: Data Sorting</h4>
+        <p>Rahul sorts GlobalMart orders by customer and date. Covers ORDER BY, multi-column sort, TOP N, OFFSET FETCH.</p>
+        <p style="margin-top:10px; font-size:12px; color:#64748b;">3 quiz questions at the end</p>
+      </div>
+      <div class="card">
+        <h4>Scenario 2: Merging & Summarizing</h4>
+        <p>Rahul merges customer, order, product tables. All 6 JOIN types, GROUP BY + aggregates, WHERE vs HAVING.</p>
+        <p style="margin-top:10px; font-size:12px; color:#64748b;">7 quiz questions + video</p>
+      </div>
+      <div class="card">
+        <h4>Scenario 3: Subqueries & CTEs</h4>
+        <p>Rahul cleans messy state data using subqueries then rewrites with CTEs. Compare both approaches.</p>
+        <p style="margin-top:10px; font-size:12px; color:#64748b;">4 quiz questions at the end</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:24px;">
+      <p><strong style="color:#38bdf8;">Duration:</strong> 180 minutes total &nbsp;|&nbsp; <strong style="color:#38bdf8;">Level:</strong> Intermediate &nbsp;|&nbsp; <strong style="color:#38bdf8;">Database:</strong> mskl-masterclass &nbsp;|&nbsp; <strong style="color:#38bdf8;">Character:</strong> Rahul at GlobalMart</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: WRAP UP -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Summary</div>
+    <h2>Module 2 Recap</h2>
+    <div class="three-col" style="margin-top:28px; max-width:900px;">
+      <div class="card" style="text-align:left;">
+        <h4>Sorting</h4>
+        <p>ORDER BY with ASC/DESC, multi-column, column index, TOP N, OFFSET FETCH</p>
+      </div>
+      <div class="card" style="text-align:left;">
+        <h4>Joining</h4>
+        <p>INNER, LEFT, RIGHT, FULL OUTER, CROSS, SELF — each answers a different question</p>
+      </div>
+      <div class="card" style="text-align:left;">
+        <h4>Summarizing</h4>
+        <p>GROUP BY + COUNT/SUM/AVG. WHERE filters rows, HAVING filters groups</p>
+      </div>
+      <div class="card" style="text-align:left;">
+        <h4>Subqueries</h4>
+        <p>Query inside a query. Inner query runs first, outer uses its result</p>
+      </div>
+      <div class="card" style="text-align:left;">
+        <h4>CTEs</h4>
+        <p>WITH clause gives a subquery a name. Cleaner, reusable, reads top-down</p>
+      </div>
+      <div class="card" style="text-align:left;">
+        <h4>Up Next</h4>
+        <p>Module 3: Product Performance Analysis — apply all of this on real business questions</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

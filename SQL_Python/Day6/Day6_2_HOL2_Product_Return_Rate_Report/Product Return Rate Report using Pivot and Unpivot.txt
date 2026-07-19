@@ -1,0 +1,388 @@
+# Product return rate report using pivot and unpivot
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to build a product return rate report by merging multi-table data, computing category-level return metrics, and reshaping data between wide and long formats using pandas pivot_table() and melt().
+
+## Learning Objectives
+- Merge multi-table DataFrames in the correct order to construct a category-level return summary
+- Apply groupby() and aggregation functions to compute total orders, total returns, and return rate per product category
+- Use pivot_table() to reshape long-format return data into a wide, human-readable report
+- Apply melt() to unpivot a wide DataFrame back into long format for charting and downstream analysis
+- Identify and avoid common data wrangling mistakes such as incorrect join types, NaN handling errors, and premature rate computation
+
+## Prerequisites
+- Familiarity with reading data using pd.read_csv() and basic DataFrame operations
+- Understanding of aggregate functions such as sum(), count(), and mean()
+- Knowledge of groupby() and its purpose in summarising data
+- Basic understanding of merge() for combining DataFrames
+
+## Duration of Completion
+60 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- python (tool)
+
+#### Overview
+In this scenario you will learn how to build a product return rate report by merging multi-table data, computing category-level return metrics, and reshaping data between wide and long formats using pandas pivot_table() and melt().
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+## GlobalMart's product return crisis
+
+
+**GlobalMart** processes thousands of orders every month, but product returns are silently eroding margins. The return data sits scattered across **orders, returns, and products tables** - making it impossible to see which product categories are driving the most returns and why.
+
+You are stepping in as a **Data Analyst** tasked with building the **Python backbone** of a **Product Return Rate Report** from scratch.
+
+**The Mission:** Transform raw, fragmented return data into a clean, reshaped report that answers three critical business questions:
+
+
+| Business Question | Technique |
+|---|---|
+| Which product categories have the highest return rates? | `groupby()` + aggregation |
+| How do return metrics compare across categories side by side? | `pivot_table()` - wide format |
+| How can the wide table be fed into charts or downstream models? | `melt()` - long format |
+
+
+**Tables to use:** `ex_orders`, `ex_returns` `ex_transactions`, and `ex_products`
+
+Consider this briefing from the Lead Analyst:
+
+> *"Our returns data only becomes useful when we can reshape it. A long table of individual return records tells us nothing at a glance. What the merchandising team actually needs is a pivot - one row per product category, with return rate, total returns, and total orders as columns. And when we need to feed that into a chart or a downstream model, we unpivot it back. That's the core skill here."*
+
+>[!IMPORTANT]
+> The ex_returns table does not contain product_id directly. You must first join returns to orders to retrieve product_id, and then join to products to retrieve category. Performing these joins in the wrong order will cause a KeyError.
+
+>[!TIP]
+> Products with no returns should still appear in the final output with total_returns = 0. Always use a left join when merging returns onto orders so that all products are preserved.
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Code
+
+**Question:** Write a Python script to build a **category-level return summary** with one row per product category, matching this structure:
+| category | total\_orders | total\_returns | return\_rate |
+| --- | --- | --- | --- |
+| Electronics | 1200 | 180 | 15.00% |
+
+**Language:** python
+
+**Snippet:** import pandas as pd
+import numpy as np
+
+orders   = pd.read_csv("https://cdn.enqurious.com/documents/660a051c-25ef-4fd2-96bc-7179565c8d6f_exorders.csv")
+returns  = pd.read_csv("https://cdn.enqurious.com/documents/e4961106-208d-4b54-bb13-f9dca0cddf7f_exreturns.csv")
+products = pd.read_csv("https://cdn.enqurious.com/documents/bf35fdf1-d9a0-4432-9b55-6a8cb2720716_exproducts.csv")
+transactions = pd.read_csv("https://cdn.enqurious.com/documents/d2628fca-f225-4482-80ee-889fdf3f95aa_extransactions.csv")
+
+# Your code here
+
+**Solution:** 
+Orders do not directly contain a product reference, so transactions acts as the bridge between orders and products.
+
+---
+
+## Step 1: Link Orders to Products via Transactions
+
+```python
+order_product = transactions[['Order_ID', 'Product_ID']].drop_duplicates()
+```
+
+Only the two linking columns are pulled from transactions. `drop_duplicates()` ensures each order-product pair appears once, preventing duplicate rows from inflating counts downstream.
+
+---
+
+## Step 2: Bring in Category from Products
+
+```python
+order_category = order_product.merge(
+    products[['product_id', 'category']],
+    left_on='Product_ID',
+    right_on='product_id',
+    how='left'
+)
+```
+
+The products table is merged in to attach a category label to each order. `left_on` and `right_on` are used explicitly because the column names differ between tables: `Product_ID` in transactions vs `product_id` in products. `how='left'` keeps all orders even if a product has no matching entry in the products table.
+
+---
+
+## Step 3: Merge with Orders
+
+```python
+orders_with_category = orders.merge(
+    order_category[['Order_ID', 'category']],
+    left_on='order_id',
+    right_on='Order_ID',
+    how='left'
+)
+```
+
+The category label is joined back onto the main orders table. Again, `left_on` and `right_on` handle the case difference between `order_id` in orders and `Order_ID` in transactions. `how='left'` preserves every order row.
+
+---
+
+## Step 4: Flag Returned Orders
+
+```python
+orders_with_category['is_return'] = orders_with_category['order_id'].isin(returns['order_id'])
+```
+
+A boolean column `is_return` is added. It is `True` for any order whose `order_id` appears in the returns table, and `False` otherwise. This avoids a join and produces a clean flag column ready for aggregation.
+
+---
+
+## Step 5: Group by Category
+
+```python
+summary = orders_with_category.groupby('category').agg(
+    total_orders  = ('order_id', 'count'),
+    total_returns = ('is_return', 'sum')
+).reset_index()
+```
+
+All orders are grouped by category. Two aggregations run at once:
+
+- `total_orders` counts all rows per category using `count` on `order_id`.
+- `total_returns` sums the boolean `is_return` column. In Python, `True` counts as 1 and `False` as 0, so `sum` gives the total number of returned orders per category.
+
+---
+
+## Step 6: Compute Return Rate
+
+```python
+summary['return_rate'] = (
+    summary['total_returns'] / summary['total_orders'] * 100
+).map('{:.2f}%'.format)
+summary['total_returns'] = summary['total_returns'].astype(int)
+```
+
+Return rate is calculated last, after grouping, using the already-summed category-level totals. `.map('{:.2f}%'.format)` formats the result as a percentage string with two decimal places, matching the target output format. `total_returns` is cast to `int` to remove any float formatting from the boolean sum.
+
+---
+## Final Code
+```notebook-python
+import pandas as pd
+import numpy as np
+
+orders       = pd.read_csv("https://cdn.enqurious.com/documents/660a051c-25ef-4fd2-96bc-7179565c8d6f_exorders.csv")
+returns      = pd.read_csv("https://cdn.enqurious.com/documents/e4961106-208d-4b54-bb13-f9dca0cddf7f_exreturns.csv")
+products     = pd.read_csv("https://cdn.enqurious.com/documents/bf35fdf1-d9a0-4432-9b55-6a8cb2720716_exproducts.csv")
+transactions = pd.read_csv("https://cdn.enqurious.com/documents/d2628fca-f225-4482-80ee-889fdf3f95aa_extransactions.csv")
+
+# Step 1: Link orders → products via transactions
+order_product = transactions[['Order_ID', 'Product_ID']].drop_duplicates()
+
+# Step 2: Bring in category from products
+order_category = order_product.merge(products[['product_id', 'category']], left_on='Product_ID', right_on='product_id', how='left')
+
+# Step 3: Merge with orders
+orders_with_category = orders.merge(order_category[['Order_ID', 'category']], left_on='order_id', right_on='Order_ID', how='left')
+
+# Step 4: Flag returned orders
+orders_with_category['is_return'] = orders_with_category['order_id'].isin(returns['order_id'])
+
+# Step 5: Group by category
+summary = orders_with_category.groupby('category').agg(
+    total_orders=('order_id', 'count'),
+    total_returns=('is_return', 'sum')
+).reset_index()
+
+summary['return_rate'] = (summary['total_returns'] / summary['total_orders'] * 100).map('{:.2f}%'.format)
+summary['total_returns'] = summary['total_returns'].astype(int)
+
+print(summary.to_string(index=False))
+
+```
+
+## Key Design Decisions
+
+| Decision | Reason |
+|---|---|
+| Transactions as the bridge | Orders have no direct product reference; the join path is orders to transactions to products. |
+| `drop_duplicates()` on order-product pairs | Prevents one order appearing multiple times if it has multiple transaction lines. |
+| `left_on` and `right_on` in merges | Column names differ in case between tables, so a single `on` key would fail. |
+| `isin()` for return flagging | Cleaner than a merge for producing a boolean column; no extra rows or NaN handling needed. |
+| `sum` on a boolean column | `True` equals 1 and `False` equals 0 in Python, so summing directly gives the return count. |
+| Rate computed after `groupby` | Computing rate at the order or product level first and then averaging gives a mathematically incorrect result at the category level. |
+
+**Tags**
+- data-wrangling / dataframe-processing (skill)
+- data-wrangling / join (skill)
+- data-wrangling / conditional-logic (skill)
+
+##### Input 3
+**Type:** Code
+
+**Question:** Using the `category-level return summary` DataFrame, write a Python script to **pivot** it so that each metric (`total_orders`, `total_returns`, `return_rate`) becomes a column, with `category` as the index. The expected output structure is:
+| category | return\_rate | total\_orders | total\_returns |
+| --- | --- | --- | --- |
+| Electronics | 15.00% | 1200 | 180 |
+| Clothing | 22.50% | 800 | 180 |
+
+**Language:** python
+
+**Snippet:** # Your pivot code here
+
+**Solution:** 
+**`pivot_table()` reshapes without aggregating** when the data already has one row per group — use `aggfunc='first'` to simply pick the single existing value.
+
+```python
+# Pivot: one row per category, metrics as columns
+pivot_df = summary.pivot_table(
+    index='category',
+    values=['total_orders', 'total_returns', 'return_rate'],
+    aggfunc='first'
+).reset_index()
+
+print(pivot_df)
+```
+
+- **`index='category'`**: Makes `category` the row identifier — one row per category in the output.
+- **`aggfunc='first'`**: Since `category_summary` already has one row per category, there is nothing to aggregate. `'first'` simply returns the existing value without arithmetic.
+- **`reset_index()`**: After `pivot_table()`, `category` becomes the DataFrame index. Calling `reset_index()` promotes it back to a regular column so it is available for `melt()` in the next step.
+
+>[!NOTE]
+> Forgetting `reset_index()` is a common mistake — `category` will not be accessible as a column for the `melt()` operation in Input 6.
+
+**Tags**
+- data-wrangling / dataframe-processing (skill)
+- data-wrangling / join (skill)
+- data-wrangling / math-calculations (skill)
+- data-wrangling / aggregate (skill)
+- data-wrangling / group (skill)
+
+##### Input 4
+**Type:** Code
+
+**Question:** Now take the pivoted DataFrame `pivot_df` and **unpivot** it back to long format using `melt()`. The output should have exactly three columns: `category`, `metric`, and `value`, with one row per category-metric combination.
+
+| category | metric | value |
+| --- | --- | --- |
+| Clothing | return\_rate | 22.50% |
+| Clothing | total\_orders | 800 |
+| Clothing | total\_returns | 180 |
+
+
+>[!TIP]
+> The id_vars parameter in melt() specifies which columns to keep as identifiers (i.e., the columns that should NOT be unpivoted). Everything else becomes a row.
+
+**Language:** python
+
+**Snippet:** # Your your code here
+
+**Solution:** 
+```python
+# Unpivot: melt wide format back to long format
+long_df = pivot_df.melt(
+    id_vars='category',
+    value_vars=['total_orders', 'total_returns', 'return_rate'],
+    var_name='metric',
+    value_name='value'
+)
+
+long_df = long_df.sort_values(['category', 'metric']).reset_index(drop=True)
+
+print(long_df)
+```
+
+**Tags**
+- data-wrangling / join (skill)
+- data-wrangling / group (skill)
+- data-wrangling / math-calculations (skill)
+
+##### Input 5
+**Type:** Choice
+
+**Question:** **Why is `drop_duplicates()` called on the transactions table before merging with orders in the following code?**
+
+```python
+order_product = transactions[['Order_ID', 'Product_ID']].drop_duplicates()
+```
+
+**Options:** 
+- It removes rows where `Product_ID` is `NaN`, preventing merge errors downstream
+
+- It ensures each order-product pair appears only once, preventing duplicate rows from inflating order counts
+
+- It speeds up the merge operation by reducing the size of the transactions table
+
+- It filters out cancelled orders before the category summary is computed
+
+**Correct Options:** 
+- It ensures each order-product pair appears only once, preventing duplicate rows from inflating order counts
+
+**Solution:** 
+**`drop_duplicates()` is used to deduplicate order-product pairs, not to filter bad data.**
+
+- **A is incorrect.** `drop_duplicates()` does not target `NaN` values. `dropna()` is the correct method for that. The purpose here is deduplication, not null handling.
+- **B is correct.** A single order can generate multiple rows in the transactions table if it contains several line items. Without `drop_duplicates()`, the same `Order_ID` would appear multiple times, inflating `total_orders` when counts are computed in the groupby step.
+- **C is incorrect.** While removing duplicates does reduce the row count, performance is not the reason this step exists. The reason is correctness of the final counts.
+- **D is incorrect.** No filtering on order status happens here. The step only deduplicates on the combination of `Order_ID` and `Product_ID`.
+
+**Tags**
+- data-wrangling / dataframe-processing (skill)
+
+##### Input 6
+**Type:** Choice
+
+**Question:** **In the code below, why is `return_rate` computed after `groupby()` rather than before it?**
+
+```python
+summary = orders_with_category.groupby('category').agg(
+    total_orders  = ('order_id', 'count'),
+    total_returns = ('is_return', 'sum')
+).reset_index()
+
+summary['return_rate'] = (
+    summary['total_returns'] / summary['total_orders'] * 100
+).map('{:.2f}%'.format)
+```
+
+**Options:** 
+- `.map('{:.2f}%'.format)` only works on aggregated DataFrames, not on row-level data
+
+- The `is_return` column is only available after `groupby()` completes
+
+- `groupby()` does not support string columns, so `return_rate` must be added after formatting
+
+- Computing return rate per row first and then averaging across a category gives a mathematically incorrect result
+
+**Correct Options:** 
+- Computing return rate per row first and then averaging across a category gives a mathematically incorrect result
+
+**Solution:** 
+**Return rate must be computed from aggregated totals, not averaged from row-level rates.**
+
+- **A is incorrect.** The reason for computing after `groupby()` has nothing to do with string formatting. The order is about mathematical correctness, not data types.
+- **B is correct.** If return rate were computed per order or per product first and then averaged across a category, each row would carry equal weight regardless of how many orders it represents. For example, a product with 2 orders and 1 return (50%) and another with 1000 orders and 100 returns (10%) would average to 30%, not the correct category-level rate of approximately 10.1%. Computing after `groupby()` uses the summed totals, which gives the true category-level rate.
+- **C is incorrect.** The `is_return` boolean column is created in Step 4 and is available on every row before `groupby()` runs. It is the input to the `sum` aggregation inside `groupby()`.
+- **D is incorrect.** `.map('{:.2f}%'.format)` works on any pandas Series. The formatting step is independent of whether the data is aggregated or not.
+
+**Tags**
+- data-wrangling / math-calculations (skill)

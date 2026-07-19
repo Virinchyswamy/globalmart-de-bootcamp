@@ -1,0 +1,594 @@
+# Analyzing Customer Reviews at GlobalMart
+## Content Type
+Scenario
+
+## Overview
+In this scenario you will learn how to clean and analyze customer review text for GlobalMart by using Python string operations, regular expressions, and Pandas to flag product issues, extract phone numbers, count keywords, and validate review quality.
+
+## Learning Objectives
+- Clean raw review text by removing punctuation, normalizing whitespace, and converting text to lowercase
+- Apply regex word-boundary patterns to identify reviews mentioning product issues
+- Extract phone numbers from unstructured review text using regex capture patterns
+- Count keyword occurrences in reviews to support sentiment and concern analysis
+- Validate review length by counting words and applying minimum and maximum thresholds
+
+## Prerequisites
+- Basic Python syntax including functions and imports
+- Working knowledge of Pandas DataFrames and column operations
+- Basic familiarity with Python strings
+
+## Duration of Completion
+60 minutes
+
+## Level
+Intermediate
+
+## Industries
+- e-commerce
+
+## Tags
+- data-wrangling (skill)
+- python (tool)
+
+#### Overview
+In this scenario you will learn how to clean and analyze customer review text for GlobalMart by using Python string operations, regular expressions, and Pandas to flag product issues, extract phone numbers, count keywords, and validate review quality.
+
+#### Level
+intermediate
+
+#### Industries
+- e-commerce
+
+#### Tags
+- data-wrangling (skill)
+- python (tool)
+
+#### Scenario Inputs
+##### Input 1
+**Type:** Text
+
+GlobalMart has collected customer reviews about its products and services. These reviews contain useful signals about customer sentiment, product quality, refund concerns, and possible follow-up requests.
+![Image-Gemini_Generated_Image_soygccsoygccsoyg.png](https://cdn.enqurious.com/images/e378f2a0-0068-4edc-806f-0c339003e975_Gemini_Generated_Image_soygccsoygccsoyg.webp)
+
+Rahul, a data analyst at GlobalMart, needs to turn this messy review text into structured columns that can be analyzed. Sharon, a senior data scientist, guides him through the workflow using Python string operations, regular expressions, and Pandas.
+
+### What You Will Build
+
+You will transform raw customer reviews into analysis-ready columns:
+
+| Output Column | Purpose |
+|---|---|
+| `cleaned_reviews` | Stores normalized review text |
+| `mentions_issue` | Flags reviews that mention product issues |
+| `contact_numbers` | Extracts phone numbers from reviews |
+| `count_excellent` | Counts how often the keyword `excellent` appears |
+| `count_refund` | Counts how often the keyword `refund` appears |
+| `valid_review` | Flags reviews with acceptable word count |
+
+>[!IMPORTANT]
+> Text data is often messy. Cleaning the review text first makes later regex tasks more reliable and easier to interpret.
+
+---
+
+**Tags**
+
+
+##### Input 2
+**Type:** Text
+
+## Dataset And Setup
+
+Download the reviews dataset before starting:
+
+| Dataset | Description |
+|---|---|
+| `Globalmart_reviews.csv` | customer_review contains GlobalMart customer feedback text used to clean reviews, extract issues, detect contact numbers, count keywords, and validate review quality. |
+
+| Column | Description |
+|---|---|
+| `review_id` | Unique identifier for each customer review |
+| `review_text` | Text feedback written by the customer |
+| `order_id` | Unique identifier of the order linked to the review |
+| `customer_id` | Unique identifier of the customer who submitted the review |
+| `reviews_rating` | Rating given by the customer for the order or product |
+
+>[!TIP]
+> If your code fails because of missing values, convert missing review text to an empty string before applying regex operations.
+
+---
+
+**Tags**
+
+
+##### Input 3
+**Type:** Text
+
+## Regex Patterns You Will Use
+
+Regex, short for regular expression, is a pattern-matching tool used to search, extract, and replace text.
+
+You do not need to memorize every regex symbol. For this scenario, focus on the patterns that directly support review cleaning and extraction.
+
+| Pattern | Meaning | Example Use |
+|---|---|---|
+| `[^\\w\\s]` | Matches characters that are not word characters or whitespace | Remove punctuation |
+| `\\s+` | Matches one or more whitespace characters | Replace multiple spaces with one space |
+| `\\b` | Matches a word boundary | Match `refund` but not `refunds` unless intended |
+| `(a\|b\|c)` | Matches one of several alternatives | Match `broken`, `defective`, or `damaged` |
+| `\\d` | Matches a digit | Build phone number patterns |
+| `{n}` | Matches exactly `n` repetitions | Match exactly 3 digits using `\\d{3}` |
+| `?` | Makes the previous pattern optional | Allow optional country code |
+| `re.sub()` | Replaces matched text | Clean punctuation and spaces |
+| `str.contains()` | Checks whether a Pandas string column contains a pattern | Create True or False flags |
+| `str.extract()` | Extracts matched text from a Pandas string column | Extract phone numbers |
+| `re.findall()` | Finds all pattern matches in text | Count keyword occurrences |
+
+>[!NOTE]
+> Use raw strings such as `r"\\brefund\\b"` for regex patterns in Python. Raw strings reduce escaping issues.
+
+---
+
+**Tags**
+
+
+##### Input 4
+**Type:** Text
+
+## Task 1: Clean Customer Review Text
+
+Rahul notices that the `review_text` column contains punctuation, inconsistent casing, and extra spaces. Before extracting insights, he needs to clean the text.
+
+### Goal
+
+Create a new column named `cleaned_reviews`.
+
+The cleaning logic should:
+
+- Remove punctuation and special characters
+- Replace multiple spaces with a single space
+- Remove leading and trailing spaces
+- Convert all text to lowercase
+
+### Expected Output Structure
+
+| review_text | cleaned_reviews |
+|---|---|
+| Excellent product! Very useful!! | excellent product very useful |
+| Refund took too long... | refund took too long |
+
+>[!TIP]
+> Cleaning should happen before issue detection, keyword counting, and review length validation.
+
+---
+
+**Tags**
+
+
+##### Input 5
+**Type:** Code
+
+**Question:** Write Python code to clean the `review_text` column and create a new column named `cleaned_reviews`.
+
+**Language:** python
+
+**Snippet:** import pandas as pd
+import re
+
+reviews_df = pd.read_csv(
+    "https://cdn.enqurious.com/documents/aa1ba063-9ee6-4d79-bfd3-1b1503609f56_Globalmart_reviews.csv"
+)
+
+def clean_text(text):
+    # TODO: handle missing values
+    # TODO: remove punctuation and special characters
+    # TODO: replace multiple spaces with a single space
+    # TODO: strip extra spaces and convert to lowercase
+    pass
+
+reviews_df["cleaned_reviews"] = # TODO: apply clean_text to review_text
+
+reviews_df[["review_text", "cleaned_reviews"]].head()
+
+**Solution:** 
+```python
+import pandas as pd
+import re
+
+reviews_df = pd.read_csv(
+    "https://cdn.enqurious.com/documents/aa1ba063-9ee6-4d79-bfd3-1b1503609f56_Globalmart_reviews.csv"
+)
+
+def clean_text(text):
+    text = "" if pd.isna(text) else str(text)
+    text = re.sub(r"[^\w\s]", "", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip().lower()
+
+reviews_df["cleaned_reviews"] = reviews_df["review_text"].apply(clean_text)
+
+reviews_df[["review_text", "cleaned_reviews"]].head()
+```
+
+**Tags**
+- data-wrangling / dataframe-processing (skill)
+- data-wrangling / regex (skill)
+- data-wrangling / math-calculations (skill)
+
+##### Input 6
+**Type:** Text
+
+## Task 2: Extract Mentions Of Product Issues
+
+After cleaning the reviews, Rahul wants to identify reviews that mention product issues.
+
+### Goal
+
+Create a new Boolean column named `mentions_issue`.
+
+The column should return:
+
+| Value | Meaning |
+|---|---|
+| `True` | The review mentions `broken`, `defective`, or `damaged` |
+| `False` | The review does not mention those issue words |
+
+### Why Word Boundaries Matter
+
+The `\b` pattern matches a word boundary. It helps match a complete word such as `broken` without accidentally matching it inside another word.
+
+| cleaned_reviews | mentions_issue |
+|---|---|
+| broken product | True |
+| excellent product very useful | False |
+
+---
+
+**Tags**
+
+
+##### Input 7
+**Type:** Code
+
+**Question:** Write Python code to create the `mentions_issue` column by checking whether `cleaned_reviews` mentions `broken`, `defective`, or `damaged`.
+
+**Language:** python
+
+**Snippet:** # cleaned_reviews column is already available from Task 1
+
+issue_pattern = # TODO: create regex pattern for broken, defective, damaged
+
+reviews_df["mentions_issue"] = # TODO: check whether cleaned_reviews contains issue pattern
+
+reviews_df[["cleaned_reviews", "mentions_issue"]].head()
+
+**Solution:** 
+```python
+# cleaned_reviews column is already available from Task 1
+
+issue_pattern = r"\b(broken|defective|damaged)\b"
+
+reviews_df["mentions_issue"] = reviews_df["cleaned_reviews"].str.contains(
+    issue_pattern,
+    flags=re.IGNORECASE,
+    regex=True,
+    na=False
+)
+
+reviews_df[["cleaned_reviews", "mentions_issue"]].head()
+```
+
+**Tags**
+- data-wrangling / regex (skill)
+
+##### Input 8
+**Type:** Choice
+
+**Question:** What percentage of reviews mention product issues?
+
+**Options:** 
+- 1.0%
+
+- 6%
+
+- 3.76%
+
+- 0.38%
+
+**Correct Options:** 
+- 0.38%
+
+**Solution:** 
+- **Correct - 0.38%:** After applying the issue-word pattern to `cleaned_reviews`, only a small share of reviews mention `broken`, `defective`, or `damaged`.
+- **Wrong - 1.0%:** This is higher than the calculated issue mention percentage.
+- **Wrong - 6%:** This would suggest product issue mentions are much more common than they are in the dataset.
+- **Wrong - 3.76%:** This is also higher than the calculated percentage.
+
+**Tags**
+- data-wrangling / math-calculations (skill)
+
+##### Input 9
+**Type:** Text
+
+## Task 3: Extract Contact Numbers
+
+Some customers may include phone numbers in reviews for follow-up. Rahul needs to extract those numbers into a structured column.
+
+### Goal
+
+Create a new column named `contact_numbers`.
+
+The column should contain:
+
+| Case | Output |
+|---|---|
+| Review contains a phone number | Extracted phone number |
+| Review does not contain a phone number | `NaN` |
+
+Use a flexible phone number pattern that can match formats such as:
+
+| Example Format |
+|---|
+| `9876543210` |
+| `+1-123-456-7890` |
+| `(123) 456-7890` |
+
+>[!IMPORTANT]
+> Extracting personal contact information can involve privacy concerns. In a real business workflow, review your organization's data privacy policy before using or sharing extracted phone numbers.
+
+---
+
+**Tags**
+
+
+##### Input 10
+**Type:** Code
+
+**Question:** Write Python code to extract phone numbers from `cleaned_reviews` into a new column named `contact_numbers`.
+
+**Language:** python
+
+**Snippet:** # cleaned_reviews column is already available
+
+phone_pattern = # TODO: create regex pattern for phone numbers
+
+reviews_df["contact_numbers"] = # TODO: extract first matching phone number
+
+reviews_df[["cleaned_reviews", "contact_numbers"]].head()
+
+**Solution:** 
+```python
+# cleaned_reviews column is already available
+
+phone_pattern = r"\b(?:\+?\d{1,3})?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b"
+
+reviews_df["contact_numbers"] = reviews_df["cleaned_reviews"].str.extract(
+    f"({phone_pattern})",
+    expand=False
+)
+
+reviews_df[["cleaned_reviews", "contact_numbers"]].head()
+```
+
+**Tags**
+- data-wrangling / math-calculations (skill)
+- data-wrangling / regex (skill)
+
+##### Input 11
+**Type:** Choice
+
+**Question:** If the `contact_numbers` column contains extracted phone numbers for only a few reviews, what does this indicate about the dataset?
+
+**Options:** 
+- The dataset contains significant personal contact information
+
+- Most customers do not include contact numbers in their reviews
+
+- Every customer review contains a phone number
+
+- Regex cannot be used to extract phone numbers from text
+
+**Correct Options:** 
+- Most customers do not include contact numbers in their reviews
+
+**Solution:** 
+- **Correct - Most customers do not include contact numbers in their reviews:** If only a few rows contain extracted numbers, phone numbers are rare in the review text.
+- **Wrong - The dataset contains significant personal contact information:** A few extracted numbers do not support the claim that the dataset contains significant personal contact information.
+- **Wrong - Every customer review contains a phone number:** This is contradicted by the presence of `NaN` values in `contact_numbers`.
+- **Wrong - Regex cannot be used to extract phone numbers from text:** Regex can extract phone-like patterns when the pattern is designed correctly.
+
+**Tags**
+- data-wrangling / dataframe-processing (skill)
+
+##### Input 12
+**Type:** Text
+
+## Task 4: Count Keywords In Reviews
+
+Rahul also wants to count specific keywords in each review. This can support quick sentiment and concern analysis.
+
+### Goal
+
+Create keyword count columns such as:
+
+| Column | Meaning |
+|---|---|
+| `count_excellent` | Number of times `excellent` appears in a review |
+| `count_refund` | Number of times `refund` appears in a review |
+
+### Expected Output Structure
+
+| cleaned_reviews | count_excellent | count_refund |
+|---|---:|---:|
+| excellent product very useful | 1 | 0 |
+| poor quality need refund | 0 | 1 |
+
+Use `re.findall()` because it returns all matches, and the number of matches gives the keyword count.
+
+---
+
+**Tags**
+
+
+##### Input 13
+**Type:** Code
+
+**Question:** Write Python code to count how many times the keywords `excellent` and `refund` appear in each cleaned review.
+
+**Language:** python
+
+**Snippet:** # cleaned_reviews column is already available
+
+def count_keyword(text, keyword):
+    # TODO: find all whole-word matches for keyword
+    # TODO: return number of matches
+    pass
+
+reviews_df["count_excellent"] = # TODO: count excellent
+reviews_df["count_refund"] = # TODO: count refund
+
+reviews_df[["cleaned_reviews", "count_excellent", "count_refund"]].head()
+
+**Solution:** 
+```python
+# cleaned_reviews column is already available
+
+def count_keyword(text, keyword):
+    text = "" if pd.isna(text) else str(text)
+    return len(re.findall(rf"\b{keyword}\b", text, flags=re.IGNORECASE))
+
+reviews_df["count_excellent"] = reviews_df["cleaned_reviews"].apply(
+    lambda text: count_keyword(text, "excellent")
+)
+
+reviews_df["count_refund"] = reviews_df["cleaned_reviews"].apply(
+    lambda text: count_keyword(text, "refund")
+)
+
+reviews_df[["cleaned_reviews", "count_excellent", "count_refund"]].head()
+```
+
+**Tags**
+- data-wrangling / regex (skill)
+- data-wrangling / math-calculations (skill)
+
+##### Input 14
+**Type:** Choice
+
+**Question:** How many reviews mention the keyword `excellent` exactly once?
+
+**Options:** 
+- 75
+
+- 50
+
+- 95
+
+- 15
+
+**Correct Options:** 
+- 75
+
+**Solution:** 
+- **Correct - 75:** After counting whole-word matches for `excellent`, 75 reviews contain the keyword exactly once.
+- **Wrong - 50:** This is too low for the count of reviews mentioning `excellent` exactly once.
+- **Wrong - 95:** This is higher than the calculated count.
+- **Wrong - 15:** This is much too low .
+
+**Tags**
+- data-wrangling / regex (skill)
+
+##### Input 15
+**Type:** Text
+
+## Task 5: Validate Review Length
+
+Some reviews may be too short to provide meaningful insight, while extremely long reviews may need separate handling. Rahul needs to flag reviews that fall within an acceptable word-count range.
+
+### Goal
+
+Create a Boolean column named `valid_review`.
+
+The rule is:
+
+| Word Count | `valid_review` |
+|---:|---|
+| Less than 10 | `False` |
+| 10 to 100 | `True` |
+| More than 100 | `False` |
+
+### Expected Output Structure
+
+| cleaned_reviews | valid_review |
+|---|---|
+| excellent product very useful | False |
+| the product is amazing and works exactly as described by the seller | True |
+
+>[!NOTE]
+> The threshold is inclusive. Reviews with exactly 10 words or exactly 100 words are valid.
+
+---
+
+**Tags**
+
+
+##### Input 16
+**Type:** Code
+
+**Question:** Write Python code to create the `valid_review` column. A valid review must contain at least 10 words and at most 100 words.
+
+**Language:** python
+
+**Snippet:** # cleaned_reviews column is already available
+
+def validate_review_length(text):
+    # TODO: count words using regex
+    # TODO: return True if word count is between 10 and 100 inclusive
+    pass
+
+reviews_df["valid_review"] = # TODO: apply validate_review_length
+
+reviews_df[["cleaned_reviews", "valid_review"]].head()
+
+**Solution:** 
+```python
+# cleaned_reviews column is already available
+
+def validate_review_length(text):
+    text = "" if pd.isna(text) else str(text)
+    word_count = len(re.findall(r"\b\w+\b", text))
+    return 10 <= word_count <= 100
+
+reviews_df["valid_review"] = reviews_df["cleaned_reviews"].apply(validate_review_length)
+
+reviews_df[["cleaned_reviews", "valid_review"]].head()
+```
+
+**Tags**
+- data-wrangling / regex (skill)
+- data-wrangling / dataframe-processing (skill)
+
+##### Input 17
+**Type:** Choice
+
+**Question:** What is the total number of valid reviews in the dataset?
+
+**Options:** 
+- 813
+
+- 784
+
+- 1597
+
+- 1000
+
+**Correct Options:** 
+- 784
+
+**Solution:** 
+- **Wrong - 813:** Applying the 10-to-100 word rule to `cleaned_reviews` gives 784 valid reviews.
+- **Correct - 784:** This is correct count of valid reviews.
+- **Wrong - 1597:** This is likely close to the full dataset size, not the number of valid reviews.
+- **Wrong - 1000:** This is a rounded guess and does not match the calculated result.
+
+**Tags**
+- data-wrangling / math-calculations (skill)
