@@ -44,7 +44,7 @@ STORAGE_ACCOUNT = "ecomdata"
 CONTAINER = "raw-demo-data"
 MOUNT_POINT = "/mnt/virinchy_gbmart_data"
 
-STORAGE_ACCOUNT_KEY = "YOUR_STORAGE_ACCOUNT_KEY"
+STORAGE_ACCOUNT_KEY = "YOUR_STORAGE_ACCOUNT_KEY"  # paste your own key here, never commit a real one (see Step 0 above)
 
 configs = {
     f"fs.azure.account.key.{STORAGE_ACCOUNT}.blob.core.windows.net": STORAGE_ACCOUNT_KEY
