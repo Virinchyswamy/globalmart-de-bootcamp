@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Day 12 | ILT 1 — Data Governance: Unity Catalog</title>
+<title>Day 12 | ILT 1 — Data Governance &amp; Unity Catalog</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
@@ -89,6 +89,7 @@
   .pill-blue { background: #1d4ed8; color: #bfdbfe; }
   .pill-green { background: #15803d; color: #bbf7d0; }
   .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
 
   .order-list { counter-reset: steps; list-style: none; padding: 0; }
   .order-list li {
@@ -114,15 +115,19 @@
     background: #111827;
   }
   table.sql-table tr:nth-child(even) td { background: #0f172a; }
+
+  .pillar-flow { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  .pillar-flow .step { background:#1e293b; border:1px solid #334155; border-radius:8px; padding:8px 14px; font-size:13px; color:#cbd5e1; }
+  .pillar-flow .arrow { color:#475569; font-size:16px; }
 </style>
 </head>
 <body>
 
 <nav>
-  <div class="logo">DAY 12 · ILT 1 — Data Governance: Unity Catalog</div>
+  <div class="logo">DAY 12 · ILT 1 — Data Governance &amp; Unity Catalog</div>
   <div class="controls">
     <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 20</span>
+    <span class="slide-counter" id="counter">1 / 42</span>
     <button onclick="changeSlide(1)">Next &#8594;</button>
   </div>
 </nav>
@@ -131,81 +136,252 @@
 
   <!-- SLIDE 1: COVER -->
   <div class="slide slide-cover active">
-    <h1>Data Governance: Unity Catalog</h1>
-    <p class="subtitle">Who can touch what, which rows they see, which column values they see, and proving where a number actually came from</p>
-    <div class="badge">Day 12 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; 9:30–10:30 AM</div>
+    <h1>Data Governance &amp; Unity Catalog</h1>
+    <p class="subtitle">Why every organization needs governance, the five pillars it rests on, and how Unity Catalog implements every one of them for real</p>
+    <div class="badge">Day 12 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; Extended Session</div>
     <div style="margin-top:36px; color:#475569; font-size:13px;">
-      What we'll cover today → Permissions · Row Filters · Masking · Lineage
+      What we'll cover → Governance Fundamentals · The 5 Pillars · UC Architecture · Fine-Grained Access Control · Data Masking · FGAC vs RBAC · A Real-World Scenario
     </div>
   </div>
 
   <!-- SLIDE 2: AGENDA -->
   <div class="slide slide-section">
     <div class="section-tag">Overview</div>
-    <h2>Four Mechanisms, Covered in Order</h2>
-    <div class="three-col" style="margin-top:24px;">
-      <div class="card">
-        <h4>🔑 Permissions</h4>
-        <ul>
-          <li>Who can touch what — <code>GRANT</code>/<code>REVOKE</code>, one hierarchy, four levels</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h4>👁️ Row Filters &amp; Masking</h4>
-        <ul>
-          <li>Which rows they see, which column values they see — enforced automatically for every reader</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h4>🧬 Lineage</h4>
-        <ul>
-          <li>Proving, after the fact, where a number actually came from</li>
-        </ul>
-      </div>
+    <h2>Seven Parts, in Order</h2>
+    <div class="three-col" style="margin-top:20px;">
+      <div class="card"><h4>1 · What Governance Is</h4><p>Why organizations need it, and what breaks without it</p></div>
+      <div class="card"><h4>2 · The 5 Pillars</h4><p>Discovery, Audit, Lineage, Identity, Access Control — tool-agnostic</p></div>
+      <div class="card"><h4>3 · UC Solves Each Pillar</h4><p>Problem → UC's answer → live demo → enterprise example, for all 5</p></div>
+      <div class="card"><h4>4 · UC Architecture</h4><p>Metastore, catalog, schema, managed vs. external, storage credentials, connections</p></div>
+      <div class="card"><h4>5 · Fine-Grained Access Control</h4><p>Row-level security, column-level security, dynamic views</p></div>
+      <div class="card"><h4>6 · Data Masking</h4><p>What, why, dynamic masking, real sensitive-column examples</p></div>
     </div>
-    <div class="highlight-box success" style="margin-top:20px;">
-      <p><strong style="color:#22c55e;">Safety, upfront:</strong> every <code>ALTER TABLE</code>, <code>CREATE FUNCTION</code>, <code>GRANT</code>, and <code>REVOKE</code> that actually runs in today's demo targets only your own practice schema (<code>main.YOUR_SCHEMA</code>) — never any <code>gbmart.*</code> object. The only things this session does against the real <code>gbmart</code> catalog are <code>SHOW GRANTS</code>, <code>DESCRIBE HISTORY</code>, and plain <code>SELECT</code>s — all non-destructive, read-only.</p>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><strong style="color:#22c55e;">Then:</strong> Fine-Grained Access Control vs. RBAC, and a full Healthcare/Banking/Retail scenario tying every pillar together. <strong>Safety, upfront:</strong> every <code>ALTER TABLE</code>, <code>CREATE FUNCTION</code>, <code>GRANT</code>/<code>REVOKE</code> that actually runs today targets only your own practice schema — never a real <code>gbmart.*</code> object. Everything against the real catalog is read-only: <code>SHOW GRANTS</code>, <code>DESCRIBE HISTORY</code>, plain <code>SELECT</code>.</p>
     </div>
   </div>
 
-  <!-- SLIDE 3: WHY THIS, NOW -->
+  <!-- ================= PART 1: WHAT GOVERNANCE IS ================= -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 1</div>
+    <h2>Introduction to Data Governance</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">Before any tool — what governance actually means, and why it stops being optional past a certain size</p>
+  </div>
+
+  <!-- SLIDE 4: WHAT IS DATA GOVERNANCE -->
   <div class="slide slide-content">
-    <h3>Why This, Now</h3>
+    <h3>What Is Data Governance?</h3>
     <div class="two-col">
       <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">
-          By Day 7 you had one shared <code>gbmart.gold</code> layer, built from GlobalMart's <strong style="color:#e2e8f0;">2 real ingestion pathways</strong> — ADLS Autoloader files and the Postgres/Supabase CDC pipeline. That's exactly the moment governance stops being theoretical: the same <code>fact_sales</code> and <code>dim_customer</code> tables now get queried by data engineers, analysts, a future Genie space (this afternoon's topic), and eventually external auditors.
-        </p>
-        <div class="highlight-box">
-          <p>Not all of them should see the same thing. An analyst needs <code>SELECT</code> on <code>gold</code>, not <code>MODIFY</code>. A regional sales lead should only see their own region's rows. Nobody outside HR should see a raw customer email address.</p>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">The set of policies, processes, and controls that decide three things for every piece of data an organization holds:</p>
+        <div class="pillar-flow">
+          <div class="step">Who can access it</div><div class="arrow">&rarr;</div>
+          <div class="step">What they're allowed to do with it</div><div class="arrow">&rarr;</div>
+          <div class="step">How you prove that, after the fact</div>
         </div>
       </div>
-      <div>
-        <div class="card">
-          <h4>Unity Catalog's Four Answers</h4>
-          <ul>
-            <li><strong>Permissions</strong> — who can touch what</li>
-            <li><strong>Row filters</strong> — which rows they see</li>
-            <li><strong>Masking</strong> — which column values they see</li>
-            <li><strong>Lineage</strong> — proving where a number came from, after the fact</li>
-          </ul>
-        </div>
+      <div class="card">
+        <h4>It's a discipline, not a product</h4>
+        <p>Governance existed long before Unity Catalog — it's the rules. Unity Catalog is Databricks' way of <em>implementing</em> those rules directly on your tables, so the rule and the enforcement are the same thing, not a policy document nobody checks against reality.</p>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 4: SECTION 1 -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
-    <div class="section-tag">Section 1</div>
-    <h2>The Permissions Model</h2>
-    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      One hierarchy, four levels. Every privilege you grant sits at one of these levels — and grants are inherited downward.
-    </p>
+  <!-- SLIDE 5: WHY ORGS NEED IT -->
+  <div class="slide slide-content">
+    <h3>Why Organizations Need It</h3>
+    <div class="three-col">
+      <div class="card"><h4>⚖️ Compliance</h4><p>GDPR, HIPAA, PCI-DSS, SOX don't just recommend access control and audit trails — they legally require them, with real fines for failing to produce one on demand.</p></div>
+      <div class="card"><h4>🎯 Trust</h4><p>One number, one version of the truth. Without governance, Finance and Sales can query "the same" table and get different answers because nobody controls which copy is authoritative.</p></div>
+      <div class="card"><h4>🔒 Security</h4><p>Every person with unnecessary access to sensitive data is one more way a breach — accidental or malicious — can happen.</p></div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">The scale problem:</strong> tribal trust ("just ask Priya before touching that table") works for 3 people. It collapses at 300 — nobody knows who to ask, what exists, or who touched what last.</p>
+    </div>
   </div>
 
-  <!-- SLIDE 5: HIERARCHY -->
+  <!-- SLIDE 6: CHALLENGES WITHOUT GOVERNANCE -->
   <div class="slide slide-content">
-    <h3>One Hierarchy, Four Levels</h3>
+    <h3>Challenges Without a Centralized Framework</h3>
+    <table class="sql-table">
+      <tr><th>Without governance...</th><th>What actually happens</th></tr>
+      <tr><td>No single source of truth</td><td>The same table gets copied into 4 tools, each drifting out of sync the moment one copy is refreshed and the others aren't</td></tr>
+      <tr><td>No audit trail</td><td>After a breach or a compliance ask, "who accessed this customer's record last month" has no answer</td></tr>
+      <tr><td>Permissions scattered per-tool</td><td>Access is managed separately in the warehouse, the BI tool, and the file store — revoking someone takes as many steps as there are systems</td></tr>
+      <tr><td>No lineage</td><td>"Why does this dashboard number look wrong" becomes forensic archaeology through old notebooks and Slack threads</td></tr>
+      <tr><td>All-or-nothing access</td><td>The only lever is "give this person the whole table or nothing" — no way to share 90% of a table while protecting one sensitive column</td></tr>
+    </table>
+  </div>
+
+  <!-- ================= PART 2: THE 5 PILLARS ================= -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 2</div>
+    <h2>The Five Pillars of Data Governance</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">Tool-agnostic for now — these are the problems <em>any</em> platform has to solve, before we look at how Unity Catalog specifically solves them</p>
+  </div>
+
+  <!-- SLIDE 8: 5 PILLARS OVERVIEW -->
+  <div class="slide slide-content">
+    <h3>The Five Pillars, at a Glance</h3>
+    <div class="three-col">
+      <div class="card"><h4>🔍 Discovery</h4><p>Can people find data that already exists, or do they recreate it from scratch because they didn't know it was there?</p></div>
+      <div class="card"><h4>📝 Audit</h4><p>Is there a record of who accessed or changed what, and when?</p></div>
+      <div class="card"><h4>🧬 Lineage</h4><p>Do you know what feeds a table, and what breaks if you change it?</p></div>
+      <div class="card"><h4>👤 Identity Management</h4><p>Is "who is this person, and what groups are they in" managed in one place?</p></div>
+      <div class="card"><h4>🔑 Access Control</h4><p>Can you grant exactly the right level of access — not more, not less?</p></div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p>Part 3 takes each of these five, one at a time, and shows the concrete problem it solves, live in Databricks, plus a real enterprise example of the pain it prevents.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: PILLAR - DISCOVERY PROBLEM -->
+  <div class="slide slide-content">
+    <h3>Pillar 1 — Data Discovery: the Problem Without It</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>What goes wrong</h4>
+        <p>Nobody has a map of what data exists. An analyst who needs "customer lifetime value" has no way to know a table with exactly that already exists three teams over — so they rebuild it, badly, from scratch.</p>
+      </div>
+      <div class="card">
+        <h4>The compounding cost</h4>
+        <p>Every rebuild is a slightly different definition of the same metric. Six months later, three teams have three different "customer lifetime value" numbers, and nobody can say which one is right.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: PILLAR - AUDIT PROBLEM -->
+  <div class="slide slide-content">
+    <h3>Pillar 2 — Data Audit: the Problem Without It</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>What goes wrong</h4>
+        <p>Queries against sensitive tables leave no record. If a customer's data was viewed by someone who shouldn't have, there is no way to find out — not this week, not ever.</p>
+      </div>
+      <div class="card">
+        <h4>The compounding cost</h4>
+        <p>A compliance audit or a legal discovery request that asks "prove nobody outside the billing team accessed this table in March" has no evidence to produce, regardless of whether anything actually went wrong.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: PILLAR - LINEAGE PROBLEM -->
+  <div class="slide slide-content">
+    <h3>Pillar 3 — Data Lineage: the Problem Without It</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>What goes wrong</h4>
+        <p>Nobody can say, with confidence, what feeds a given table or dashboard — or what else would break if that table's schema changed tomorrow.</p>
+      </div>
+      <div class="card">
+        <h4>The compounding cost</h4>
+        <p>A well-intentioned schema change silently breaks four downstream dashboards nobody knew depended on it. The first anyone hears about it is an angry message from a VP whose report is now blank.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: PILLAR - IDENTITY PROBLEM -->
+  <div class="slide slide-content">
+    <h3>Pillar 4 — User &amp; Identity Management: the Problem Without It</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>What goes wrong</h4>
+        <p>Every tool — the warehouse, the BI platform, the file store — manages its own separate list of who's allowed in. There is no single place that says "this is everyone with access, and here's what they can do."</p>
+      </div>
+      <div class="card">
+        <h4>The compounding cost</h4>
+        <p>An employee leaves. Revoking their access means separately remembering, and separately doing, the same removal in every one of those systems — and it's exactly the step someone forgets.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: PILLAR - ACCESS CONTROL PROBLEM -->
+  <div class="slide slide-content">
+    <h3>Pillar 5 — Access Control: the Problem Without It</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>What goes wrong</h4>
+        <p>The only available lever is often "grant the whole table" or "grant nothing." There's no native way to say "this row only" or "every column except this one."</p>
+      </div>
+      <div class="card">
+        <h4>The compounding cost</h4>
+        <p>Teams either over-share (give everyone the whole table because narrower access isn't achievable) or under-share (block a whole table over one sensitive column, and now legitimate analysis can't happen either).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PART 3: HOW UC SOLVES EACH PILLAR ================= -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 3</div>
+    <h2>How Unity Catalog Solves These Problems</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">Same five pillars, now with Unity Catalog's actual answer to each — problem, solution, a live look in Databricks, and a real enterprise use case</p>
+  </div>
+
+  <!-- SLIDE 15: DISCOVERY SOLUTION -->
+  <div class="slide slide-content">
+    <h3>Discovery — Solved</h3>
+    <table class="sql-table">
+      <tr><th>Problem</th><th>Unity Catalog's answer</th></tr>
+      <tr><td>No map of what data exists</td><td><strong>Catalog Explorer</strong> — one centralized, searchable catalog of every table, view, volume, model, and function across the whole account, with tags, comments, and descriptions attached directly to the object</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:14px;"><p><strong style="color:#38bdf8;">Live in Databricks:</strong> open Catalog Explorer, search "customer," and show that <code>gbmart.silver.customers</code> and <code>gbmart.gold.dim_customer</code> both surface immediately, with column names, data types, and comments visible before anyone writes a single query.</p></div>
+    <div class="highlight-box success" style="margin-top:12px;"><p><strong style="color:#22c55e;">Enterprise example:</strong> a bank with 200 analysts across 10 teams — a new hire searches "risk score" in Catalog Explorer and finds the authoritative table in seconds, instead of asking around on Slack for a week.</p></div>
+  </div>
+
+  <!-- SLIDE 16: AUDIT SOLUTION -->
+  <div class="slide slide-content">
+    <h3>Audit — Solved</h3>
+    <table class="sql-table">
+      <tr><th>Problem</th><th>Unity Catalog's answer</th></tr>
+      <tr><td>No record of who accessed or changed what</td><td><strong>Audit logs</strong> — every query, every <code>GRANT</code>/<code>REVOKE</code>, every table create/drop is automatically logged, queryable through <code>system.access.audit</code></td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:14px;"><p><strong style="color:#38bdf8;">Live in Databricks:</strong> a read-only query against <code>system.access.audit</code> (where enabled) showing who queried a specific table and when — no extra logging code, no separate audit system to run.</p></div>
+    <div class="highlight-box success" style="margin-top:12px;"><p><strong style="color:#22c55e;">Enterprise example:</strong> a healthcare provider must prove, for a HIPAA audit, exactly who viewed a specific patient record and when — Unity Catalog's audit log is the evidence, already collected, without a bespoke logging system built for the purpose.</p></div>
+  </div>
+
+  <!-- SLIDE 17: LINEAGE SOLUTION -->
+  <div class="slide slide-content">
+    <h3>Lineage — Solved</h3>
+    <table class="sql-table">
+      <tr><th>Problem</th><th>Unity Catalog's answer</th></tr>
+      <tr><td>No idea what feeds a table, or what depends on it</td><td><strong>Automatic end-to-end lineage</strong> — table-level and column-level, captured just by Unity Catalog observing every query, no manual tagging required</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:14px;"><p><strong style="color:#38bdf8;">Live in Databricks:</strong> Catalog Explorer's Lineage tab on <code>gbmart.gold.fact_sales</code>, showing every upstream Silver table that feeds it and every downstream dashboard/job that reads it.</p></div>
+    <div class="highlight-box success" style="margin-top:12px;"><p><strong style="color:#22c55e;">Enterprise example:</strong> before deprecating a column, an engineer checks lineage and sees three dashboards and one nightly job still depend on it — impact analysis in seconds, not a company-wide "does anyone use this?" email.</p></div>
+  </div>
+
+  <!-- SLIDE 18: IDENTITY SOLUTION -->
+  <div class="slide slide-content">
+    <h3>User &amp; Identity Management — Solved</h3>
+    <table class="sql-table">
+      <tr><th>Problem</th><th>Unity Catalog's answer</th></tr>
+      <tr><td>Access managed separately per tool</td><td><strong>Centralized identity</strong> — users, groups, and service principals defined once at the account level, synced from an existing identity provider (Azure AD, Okta) rather than re-created per system</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:14px;"><p><strong style="color:#38bdf8;">Live in Databricks:</strong> Account Console's Users &amp; Groups — the same group (<code>analysts</code>, <code>data-engineers</code>) referenced identically in every <code>GRANT</code> statement across every catalog.</p></div>
+    <div class="highlight-box success" style="margin-top:12px;"><p><strong style="color:#22c55e;">Enterprise example:</strong> an employee leaves the company — removing them from one Azure AD group instantly revokes their access across every Unity Catalog object that group was ever granted, with nothing else to remember.</p></div>
+  </div>
+
+  <!-- SLIDE 19: ACCESS CONTROL SOLUTION -->
+  <div class="slide slide-content">
+    <h3>Access Control — Solved</h3>
+    <table class="sql-table">
+      <tr><th>Problem</th><th>Unity Catalog's answer</th></tr>
+      <tr><td>All-or-nothing access, no fine-grained lever</td><td><strong><code>GRANT</code>/<code>REVOKE</code> at every level</strong> — catalog, schema, table, view, and (Parts 5-6 of this session) column and row</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:14px;"><p><strong style="color:#38bdf8;">Live in Databricks:</strong> the exact <code>GRANT</code> syntax and hierarchy, covered in full over the next several slides.</p></div>
+    <div class="highlight-box success" style="margin-top:12px;"><p><strong style="color:#22c55e;">Enterprise example:</strong> a retailer's regional managers each see only their own region's sales — one row-filter function on the fact table, not 50 separately-maintained regional SQL views that all drift out of sync with each other.</p></div>
+  </div>
+
+  <!-- ================= PART 4: UC ARCHITECTURE ================= -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Part 4</div>
+    <h2>Unity Catalog Architecture</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">The object model everything above is actually built on — one hierarchy, a handful of object types, and how storage is wired in underneath it</p>
+  </div>
+
+  <!-- SLIDE 21: METASTORE/CATALOG/SCHEMA -->
+  <div class="slide slide-content">
+    <h3>Metastore &rarr; Catalog &rarr; Schema</h3>
     <div class="two-col">
       <div>
 <pre>metastore                     <span class="cm"># one per region/account</span>
@@ -219,112 +395,88 @@
               |-- dim_product    <span class="cm">TABLE</span>
               |-- fact_sales     <span class="cm">TABLE</span></pre>
       </div>
-      <div>
-        <div class="highlight-box">
-          <p><strong style="color:#38bdf8;">Functions and views sit at the same level as tables</strong> — including the row-filter and masking functions built later in this session. They're securable objects inside a schema too.</p>
-        </div>
+      <div class="card">
+        <h4>The three levels, plainly</h4>
+        <p><strong>Metastore</strong> — the top-level container for a whole region/account, created once by an admin. <strong>Catalog</strong> — the biggest unit you'll actually work in day to day (<code>gbmart</code>); often maps to an environment or a business domain. <strong>Schema</strong> — a grouping inside a catalog (<code>bronze</code>, <code>silver</code>, <code>gold</code>); the medallion layers you've been building all course are schemas, not catalogs.</p>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 6: PRINCIPALS AND PRIVILEGES -->
+  <!-- SLIDE 22: SECURABLE OBJECTS -->
   <div class="slide slide-content">
-    <h3>Principals and the Standard Privilege Set</h3>
-    <div class="two-col">
-      <div>
-        <table class="sql-table">
-          <tr><th>Principal type</th><th>Typical use</th></tr>
-          <tr><td>User</td><td>One person's own login/access</td></tr>
-          <tr><td>Group</td><td>The normal case — grant to a group, add/remove members, never re-grant</td></tr>
-          <tr><td>Service principal</td><td>Jobs, pipelines, automation — no human login</td></tr>
-        </table>
-      </div>
-      <div>
-        <table class="sql-table">
-          <tr><th>Privilege</th><th>Grants...</th></tr>
-          <tr><td><code>USE CATALOG</code> / <code>USE SCHEMA</code></td><td>"Step into" — necessary but not sufficient alone</td></tr>
-          <tr><td><code>SELECT</code></td><td>Read rows from a table/view</td></tr>
-          <tr><td><code>MODIFY</code></td><td><code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>/<code>MERGE</code></td></tr>
-          <tr><td><code>CREATE TABLE</code> / <code>CREATE FUNCTION</code></td><td>Create new tables / functions in a schema</td></tr>
-          <tr><td><code>ALL PRIVILEGES</code></td><td>Everything valid at that level, combined</td></tr>
-        </table>
-      </div>
+    <h3>What Lives Inside a Schema</h3>
+    <div class="three-col">
+      <div class="card"><h4>Tables &amp; Views</h4><p>What you've built all course — managed/external Delta tables, and views defined on top of them</p></div>
+      <div class="card"><h4>Volumes</h4><p>Governed storage for <strong>non-tabular files</strong> — the same mechanism Day 1's HOL uses for raw CSVs instead of a raw ADLS key, so file access follows the same <code>GRANT</code> model as tables</p></div>
+      <div class="card"><h4>Functions</h4><p>SQL functions — including the row-filter and masking functions built later this session. Securable objects too, just like a table</p></div>
+      <div class="card"><h4>Models</h4><p>Unity Catalog also governs ML models via Model Registry — same permission model, same catalog/schema location, for a completely different kind of asset</p></div>
     </div>
-    <div class="highlight-box warn" style="margin-top:16px;">
-      <p><strong style="color:#f59e0b;"><code>USE CATALOG</code>/<code>USE SCHEMA</code> trip people up:</strong> being able to "step into" <code>gbmart.gold</code> doesn't let you read anything inside it — you also need <code>SELECT</code> on the schema or the table itself.</p>
-    </div>
+    <div class="highlight-box" style="margin-top:14px;"><p>Everything above sits at the schema level and follows the exact same <code>GRANT</code>/<code>REVOKE</code> hierarchy — governance in Unity Catalog isn't a special case per object type, it's one consistent model applied everywhere.</p></div>
   </div>
 
-  <!-- SLIDE 7: GRANT/REVOKE + INHERITANCE -->
+  <!-- SLIDE 23: MANAGED VS EXTERNAL -->
   <div class="slide slide-content">
-    <h3>GRANT / REVOKE Syntax, and Inheritance</h3>
-    <div class="two-col">
-      <div>
-<pre><span class="cm">-- Read access to an entire schema -- present AND future tables</span>
-<span class="kw">GRANT</span> USE CATALOG <span class="kw">ON</span> CATALOG main <span class="kw">TO</span> <span class="str">`analysts`</span>;
-<span class="kw">GRANT</span> USE SCHEMA <span class="kw">ON</span> SCHEMA main.YOUR_SCHEMA <span class="kw">TO</span> <span class="str">`analysts`</span>;
-<span class="kw">GRANT</span> SELECT <span class="kw">ON</span> SCHEMA main.YOUR_SCHEMA <span class="kw">TO</span> <span class="str">`analysts`</span>;
-
-<span class="cm">-- Narrower: only one specific table</span>
-<span class="kw">GRANT</span> SELECT <span class="kw">ON</span> TABLE main.YOUR_SCHEMA.practice_customers <span class="kw">TO</span> <span class="str">`analysts`</span>;
-
-<span class="cm">-- Take it away again</span>
-<span class="kw">REVOKE</span> SELECT <span class="kw">ON</span> SCHEMA main.YOUR_SCHEMA <span class="kw">FROM</span> <span class="str">`analysts`</span>;</pre>
-      </div>
-      <div>
-        <table class="sql-table">
-          <tr><th>Granting SELECT at...</th><th>...covers</th></tr>
-          <tr><td><code>CATALOG gbmart</code></td><td>Every schema and table, now and later</td></tr>
-          <tr><td><code>SCHEMA gbmart.gold</code></td><td>Every table today — <strong>and any table added next month</strong></td></tr>
-          <tr><td><code>TABLE gbmart.gold.fact_sales</code></td><td>Only that one table</td></tr>
-        </table>
-        <div class="highlight-box success" style="margin-top:12px;">
-          <p><strong style="color:#22c55e;">Memorize the middle row:</strong> a schema-level grant is a standing rule for whatever exists at query time, not a one-time snapshot.</p>
-        </div>
-      </div>
-    </div>
+    <h3>Managed vs. External Tables</h3>
+    <table class="sql-table">
+      <tr><th></th><th>Managed table</th><th>External table</th></tr>
+      <tr><td><strong>Who owns the files</strong></td><td>Unity Catalog — it decides where they live</td><td>You — files live at a location you named, UC just points at it</td></tr>
+      <tr><td><strong><code>DROP TABLE</code></strong></td><td>Deletes the underlying data too</td><td>Only removes the catalog entry — the actual files stay put</td></tr>
+      <tr><td><strong>GlobalMart example</strong></td><td>Most of <code>gbmart.bronze/silver/gold.*</code> — created with plain <code>saveAsTable</code></td><td>Raw ADLS files under the <code>gbmart-ext-loc</code> external location — never a table themselves, but accessed the same governed way</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:14px;"><p><strong style="color:#f59e0b;">Why this distinction matters day to day:</strong> dropping a managed table by mistake is destructive — the data is gone. Dropping an external table is a metadata-only mistake — annoying, but the real files are untouched and re-registerable.</p></div>
   </div>
 
-  <!-- SLIDE 8: READING REAL GRANTS -->
+  <!-- SLIDE 24: STORAGE CREDENTIALS & EXTERNAL LOCATIONS -->
   <div class="slide slide-content">
-    <h3>Reading the Real <code>gbmart</code> Grants — Live, Read-Only</h3>
+    <h3>Storage Credentials &amp; External Locations</h3>
     <div class="two-col">
-      <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;"><code>SHOW GRANTS</code> is itself just a read — it changes nothing. Wrapped in <code>try/except</code>: this demo account may not own <code>gbmart</code>, and a permission error here is a <strong>normal Unity Catalog boundary</strong>, not a bug.</p>
-        <div class="highlight-box">
-          <p>We check three real levels: the <code>gbmart</code> catalog itself, the <code>gold</code> schema, and one specific table (<code>fact_sales</code>).</p>
-        </div>
+      <div class="card">
+        <h4>Storage Credential</h4>
+        <p>A keyless, Unity-Catalog-managed identity that's allowed to talk to a specific cloud storage account — <code>ecomprojectscredentials</code> in the real GlobalMart setup. Nobody ever pastes a raw storage account key into a notebook; UC holds the credential centrally instead.</p>
       </div>
-      <div>
-<pre>grant_checks = [
-    (<span class="str">"CATALOG gbmart"</span>, <span class="kw">f</span><span class="str">"SHOW GRANTS ON CATALOG {CATALOG}"</span>),
-    (<span class="str">"SCHEMA gbmart.gold"</span>, <span class="kw">f</span><span class="str">"SHOW GRANTS ON SCHEMA {CATALOG}.gold"</span>),
-    (<span class="str">"TABLE gbmart.gold.fact_sales"</span>,
-     <span class="kw">f</span><span class="str">"SHOW GRANTS ON TABLE {CATALOG}.gold.fact_sales"</span>),
-]
-<span class="kw">for</span> label, stmt <span class="kw">in</span> grant_checks:
-    <span class="kw">try</span>: spark.<span class="fn">sql</span>(stmt).<span class="fn">display</span>()
-    <span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> e:
-        <span class="fn">print</span>(<span class="str">"Normal UC boundary, not a bug."</span>)</pre>
+      <div class="card">
+        <h4>External Location</h4>
+        <p>A named, governed pointer at one path in that storage account — <code>gbmart-ext-loc</code>, pointing at <code>abfss://.../raw-data</code>. Grant <code>READ FILES</code>/<code>WRITE FILES</code> on the location itself, the same <code>GRANT</code> syntax as a table.</p>
       </div>
     </div>
+    <div class="highlight-box success" style="margin-top:14px;"><p><strong style="color:#22c55e;">The pattern to remember:</strong> Storage Credential answers "how do we authenticate to this cloud account at all," External Location answers "which specific path, and who's allowed near it." Every Autoloader read in this course goes through exactly this pair, not a hardcoded key.</p></div>
   </div>
 
-  <!-- SLIDE 9: SECTION 2 -->
+  <!-- SLIDE 25: CONNECTIONS -->
+  <div class="slide slide-content">
+    <h3>Connections — Brief Overview</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">A <strong>Connection</strong> is Unity Catalog's object for <em>querying an external system live</em> — Postgres, MySQL, Snowflake — without copying its data into Databricks first (Lakehouse Federation).</p>
+    <div class="highlight-box warn"><p><strong style="color:#f59e0b;">Not the same thing as Lakeflow Connect.</strong> GlobalMart's real Postgres ingestion (Day 2) uses Lakeflow Connect — a managed CDC <em>ingestion pipeline</em> that copies changes into Bronze. A Connection is for querying a source live, in place, occasionally — a different tool for a different situation, and out of scope for a deep dive today.</p></div>
+  </div>
+
+  <!-- ================= PART 5: FGAC ================= -->
   <div class="slide slide-section" style="text-align:center; align-items:center;">
-    <div class="section-tag">Section 2</div>
-    <h2>Row-Level Security — Row Filters</h2>
-    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      A row filter is a SQL function returning <code>BOOLEAN</code> — a row is visible only if the function returns <code>true</code> for it.
-    </p>
+    <div class="section-tag">Part 5</div>
+    <h2>Fine-Grained Access Control</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">Beyond "can you see the table" — controlling exactly which rows and which column values a given reader sees, inside a table they already have <code>SELECT</code> on</p>
   </div>
 
-  <!-- SLIDE 10: ROW FILTERS -->
+  <!-- SLIDE 27: WHAT IS FGAC -->
   <div class="slide slide-content">
-    <h3>Define and Attach a Row Filter</h3>
+    <h3>What Is Fine-Grained Access Control?</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Table-level access answers one question</h4>
+        <p>"Can this person query this table at all?" — a yes/no gate, granted once.</p>
+      </div>
+      <div class="card">
+        <h4>FGAC answers a sharper one</h4>
+        <p>"Given that they CAN query it — which rows, and which column values, do they actually see?" Three mechanisms, covered next: row-level security, column-level security, and dynamic views.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 28: ROW-LEVEL SECURITY -->
+  <div class="slide slide-content">
+    <h3>Row-Level Security</h3>
     <div class="two-col">
       <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Attach it once with <code>ALTER TABLE ... SET ROW FILTER</code>, and every reader of that table — any tool, any notebook, any BI dashboard — is filtered automatically. No application code anywhere has to remember a <code>WHERE</code> clause.</p>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">A row filter is a SQL function returning <code>BOOLEAN</code> — a row is visible only if the function returns <code>true</code> for it. Attach once, and <strong>every</strong> reader of that table — any tool, any notebook, any BI dashboard — is filtered automatically. No application code anywhere has to remember a <code>WHERE</code> clause.</p>
 <pre><span class="kw">CREATE OR REPLACE FUNCTION</span> your_catalog.your_schema.region_filter(region <span class="kw">STRING</span>)
 <span class="kw">RETURNS BOOLEAN</span>
 <span class="kw">RETURN</span> region = <span class="str">'US'</span>;
@@ -334,37 +486,76 @@
       </div>
       <div>
         <div class="highlight-box success">
-          <p><strong style="color:#22c55e;">The hands-on demo uses exactly this simple fixed-literal version</strong> (<code>region = 'US'</code>) on purpose — deterministic no matter which account runs it, which is exactly what a repeatable classroom demo needs.</p>
+          <p><strong style="color:#22c55e;">Today's hands-on demo uses exactly this simple fixed-literal version</strong> (<code>region = 'US'</code>) on purpose — deterministic no matter which account runs it, which is exactly what a repeatable classroom demo needs.</p>
+        </div>
+        <div class="highlight-box" style="margin-top:12px;">
+          <p><strong style="color:#38bdf8;">In production</strong>, the function body is usually role-aware instead of a fixed literal:</p>
+<pre><span class="kw">RETURN CASE</span>
+    <span class="kw">WHEN</span> is_account_group_member(<span class="str">'global_admins'</span>) <span class="kw">THEN</span> true
+    <span class="kw">WHEN</span> is_account_group_member(<span class="str">'us_sales_team'</span>) <span class="kw">THEN</span> region = <span class="str">'US'</span>
+    <span class="kw">ELSE</span> false
+<span class="kw">END</span>;</pre>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 11: ROW FILTERS IN PRODUCTION -->
+  <!-- SLIDE 29: COLUMN-LEVEL SECURITY POINTER -->
   <div class="slide slide-content">
-    <h3>In Production: Role-Aware Row Filters</h3>
-    <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">A real deployment's function body is usually role-aware rather than a fixed literal, so different groups see different slices of the <em>same</em> table:</p>
-<pre><span class="cm">-- Illustrative only -- what a role-aware version looks like in production</span>
-<span class="kw">RETURN CASE</span>
-    <span class="kw">WHEN</span> is_account_group_member(<span class="str">'global_admins'</span>) <span class="kw">THEN</span> true
-    <span class="kw">WHEN</span> is_account_group_member(<span class="str">'us_sales_team'</span>) <span class="kw">THEN</span> region = <span class="str">'US'</span>
-    <span class="kw">WHEN</span> is_account_group_member(<span class="str">'in_sales_team'</span>) <span class="kw">THEN</span> region = <span class="str">'IN'</span>
-    <span class="kw">ELSE</span> false
-<span class="kw">END</span>;</pre>
+    <h3>Column-Level Security</h3>
+    <p style="color:#94a3b8; font-size:15px; margin-bottom:14px;">The column equivalent of a row filter — instead of true/false per row, it returns a <strong>transformed value</strong> for one column, so unauthorized readers see a masked version instead of the real one.</p>
+    <div class="highlight-box"><p>This is exactly <strong>Data Masking</strong> — important enough to get its own dedicated part of this session (Part 6, next). Row filters and masks are siblings: same attach mechanism (<code>ALTER TABLE</code>), same "enforced for every reader automatically" guarantee, different axis — rows vs. column values.</p></div>
   </div>
 
-  <!-- SLIDE 12: SECTION 3 -->
+  <!-- SLIDE 30: DYNAMIC VIEWS -->
+  <div class="slide slide-content">
+    <h3>Dynamic Views — the Older, More Manual Technique</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Before native row filters and masks existed as a feature, teams got the same effect by baking the logic directly into a <strong>view's own <code>SELECT</code></strong>, using <code>current_user()</code> or <code>is_account_group_member()</code> inline:</p>
+<pre><span class="kw">CREATE VIEW</span> your_catalog.your_schema.customers_dynamic <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  customer_id,
+  <span class="kw">CASE WHEN</span> is_account_group_member(<span class="str">'pii_readers'</span>)
+       <span class="kw">THEN</span> email <span class="kw">ELSE</span> <span class="str">'***'</span> <span class="kw">END AS</span> email
+<span class="kw">FROM</span> your_catalog.your_schema.customers
+<span class="kw">WHERE</span> is_account_group_member(<span class="str">'global_admins'</span>)
+   <span class="kw">OR</span> region = <span class="str">'US'</span>;</pre>
+      </div>
+      <div>
+        <div class="highlight-box warn">
+          <p><strong style="color:#f59e0b;">The gap native row filters/masks close:</strong> a dynamic view only protects people who query <em>through that view</em>. Anyone with direct <code>SELECT</code> on the base table bypasses it entirely. A native row filter or mask, attached to the table itself, protects <strong>every</strong> path in — the view, a notebook, a BI tool, all of it.</p>
+        </div>
+        <div class="highlight-box success" style="margin-top:12px;"><p><strong style="color:#22c55e;">When you'd still reach for a dynamic view today:</strong> highly custom per-query logic that doesn't fit a simple row-filter/mask function shape, or governing a non-Delta source where native row filters aren't available.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PART 6: DATA MASKING ================= -->
   <div class="slide slide-section" style="text-align:center; align-items:center;">
-    <div class="section-tag">Section 3</div>
-    <h2>Column-Level Security — Masking</h2>
-    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      The column equivalent of a row filter: instead of true/false per row, it returns a transformed value for one column.
-    </p>
+    <div class="section-tag">Part 6</div>
+    <h2>Data Masking</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">Sharing data broadly for analytics while keeping the specific values that identify a person out of view</p>
   </div>
 
-  <!-- SLIDE 13: MASKING -->
+  <!-- SLIDE 32: WHAT IS MASKING / WHY -->
   <div class="slide slide-content">
-    <h3>Define and Attach a Masking Function</h3>
+    <h3>What Is Data Masking, and Why It's Required</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>What it is</h4>
+        <p>Transforming or obscuring a sensitive value so the row is still usable and queryable — you can still count, join, and group by it — but the raw value itself isn't revealed to a reader who shouldn't see it.</p>
+      </div>
+      <div class="card">
+        <h4>Why it's required</h4>
+        <p>Compliance laws protecting PII (GDPR, HIPAA), the principle of least privilege, and simply reducing the blast radius of any single compromised account — a stolen credential that can only see masked emails is a much smaller incident than one that sees everything raw.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 33: DYNAMIC MASKING MECHANISM -->
+  <div class="slide slide-content">
+    <h3>Dynamic Data Masking in Unity Catalog</h3>
     <div class="two-col">
       <div>
 <pre><span class="kw">CREATE OR REPLACE FUNCTION</span> your_catalog.your_schema.email_mask(email <span class="kw">STRING</span>)
@@ -376,16 +567,28 @@
       </div>
       <div>
         <div class="highlight-box">
-          <p>Attach with <code>ALTER TABLE ... ALTER COLUMN ... SET MASK</code>, and every reader of that column gets the function's output instead of the raw value — same mechanism as a row filter, applied per-column.</p>
+          <p><strong style="color:#38bdf8;"><em>Dynamic</em> is the key word:</strong> nothing is pre-computed or stored masked. The function runs at query time, per row, per reader — the same underlying table shows different values depending on who's asking, right now, not a separately-maintained "masked copy" that can drift out of sync with the real data.</p>
         </div>
         <div class="highlight-box success" style="margin-top:12px;">
-          <p><strong style="color:#22c55e;">The hands-on demo runs the unconditional version</strong> — masked for absolutely everyone, including you — for the same determinism reason as the row filter. A production version swaps in a <code>CASE</code>/<code>is_account_group_member(...)</code> body, full value for one role, redacted for everyone else.</p>
+          <p><strong style="color:#22c55e;">Today's demo runs the unconditional version</strong> — masked for absolutely everyone, including you, for the same determinism reason as the row filter. A production version swaps in a <code>CASE</code>/<code>is_account_group_member(...)</code> body: full value for one authorized role, redacted for everyone else.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 14: WHY PRACTICE TABLE -->
+  <!-- SLIDE 34: SENSITIVE COLUMN EXAMPLES -->
+  <div class="slide slide-content">
+    <h3>Masking Real Sensitive Columns</h3>
+    <table class="sql-table">
+      <tr><th>Column</th><th>Masking pattern</th><th>Why this shape</th></tr>
+      <tr><td><strong>Email</strong></td><td><code>***@example.com</code> — hide the local part, keep the domain</td><td>Domain alone is often useful for analysis (which company); the identifying local part isn't</td></tr>
+      <tr><td><strong>PAN</strong> (India tax ID) / SSN</td><td><code>XXXXX1234X</code> — mask most digits, keep a short suffix visible</td><td>A visible tail lets support staff confirm "is this the right record" without ever seeing the full number — the standard banking pattern</td></tr>
+      <tr><td><strong>Salary</strong></td><td>Bucket into a range (<code>"50k-75k"</code>) or return <code>NULL</code> for non-HR roles</td><td>Aggregate analysis (average salary by department) still works on buckets; an individual's exact number stays protected</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:14px;"><p>Each of these is the same <code>CREATE FUNCTION</code> + <code>ALTER COLUMN ... SET MASK</code> mechanism from the previous slide — only the function body changes to match the column's own sensitivity shape.</p></div>
+  </div>
+
+  <!-- SLIDE 35: WHY PRACTICE TABLE -->
   <div class="slide slide-content">
     <h3>Why a Practice Table, Not <code>gbmart</code></h3>
     <div class="two-col">
@@ -407,7 +610,7 @@
     </div>
   </div>
 
-  <!-- SLIDE 15: DEMO -->
+  <!-- SLIDE 36: DEMO -->
   <div class="slide slide-demo">
     <h3>Hands-On: Build It on a Practice Table</h3>
     <div class="demo-label">Companion notebook · Day12_1_ILT1_Data_Governance_Unity_Catalog.ipynb</div>
@@ -431,102 +634,86 @@
     </div>
   </div>
 
-  <!-- SLIDE 16: SECTION 4 -->
+  <!-- ================= FGAC vs RBAC ================= -->
   <div class="slide slide-section" style="text-align:center; align-items:center;">
-    <div class="section-tag">Section 4</div>
-    <h2>Lineage — Two Different (Related) Things</h2>
-    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
-      "Lineage" gets used loosely, but this session means two specific, different things — a common trip-up.
-    </p>
+    <div class="section-tag">Comparison</div>
+    <h2>Fine-Grained Access Control vs. RBAC</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">Not competitors — one is layered on top of the other</p>
   </div>
 
-  <!-- SLIDE 17: DESCRIBE HISTORY VS LINEAGE -->
+  <!-- SLIDE 38: FGAC VS RBAC TABLE -->
   <div class="slide slide-content">
-    <h3><code>DESCRIBE HISTORY</code> vs. Catalog Explorer Lineage</h3>
+    <h3>Two Different Questions, Both Needed</h3>
     <table class="sql-table">
-      <tr><th></th><th><code>DESCRIBE HISTORY</code></th><th>Unity Catalog Lineage</th></tr>
-      <tr><td>Scope</td><td>One table's own version timeline</td><td>Cross-object graph: tables, notebooks, jobs, dashboards</td></tr>
-      <tr><td>Answers</td><td>"What changed, and when?"</td><td>"What fed this table, what consumes it?"</td></tr>
-      <tr><td>Captured by</td><td>The Delta transaction log</td><td>Unity Catalog observing every query</td></tr>
-      <tr><td>Granularity</td><td>Table + version</td><td>Table-level <strong>and</strong> column-level</td></tr>
-      <tr><td>How you see it</td><td><code>DESCRIBE HISTORY &lt;table&gt;</code></td><td>Catalog Explorer's Lineage tab</td></tr>
+      <tr><th></th><th>RBAC</th><th>Fine-Grained Access Control</th></tr>
+      <tr><td><strong>Decides access based on</strong></td><td><em>Who you are</em> — your role/group</td><td><em>What's in the data itself</em> — a row's region, a column's sensitivity</td></tr>
+      <tr><td><strong>Granularity</strong></td><td>Object-level — the whole table or schema, all or nothing</td><td>Row-level and column-level, within a table you already have access to</td></tr>
+      <tr><td><strong>Mechanism here</strong></td><td><code>GRANT SELECT ON SCHEMA gold TO analysts</code></td><td>Row filters, column masks, dynamic views</td></tr>
+      <tr><td><strong>Answers</strong></td><td>"Can this group reach this table at all?"</td><td>"Given that they can — what exactly do they see once they're in?"</td></tr>
     </table>
-    <div class="highlight-box" style="margin-top:16px;">
-      <p>Both are automatic — neither needs manual tagging — but they answer different questions.</p>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><strong style="color:#22c55e;">The relationship:</strong> RBAC is the gate. FGAC is what happens once you're through it. The sales team gets <code>SELECT</code> on <code>gold</code> via RBAC — then a row filter (FGAC) ensures each rep only sees their own region's rows within that same grant.</p>
     </div>
   </div>
 
-  <!-- SLIDE 18: REAL HISTORY DEMO -->
+  <!-- ================= REAL-WORLD SCENARIO ================= -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Bringing It Together</div>
+    <h2>A Real-World Scenario</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">Healthcare · Banking · Retail — same governance requirements, dressed differently by industry</p>
+  </div>
+
+  <!-- SLIDE 40: SCENARIO SETUP -->
   <div class="slide slide-content">
-    <h3>Real Version History — <code>gbmart.gold.dim_customer</code></h3>
-    <div class="two-col">
-      <div>
-        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;"><code>dim_customer</code> is SCD2 (Day 6/10) — genuinely interesting history, since Day 10's SCD2 <code>MERGE</code> demo created new versions on top of Day 6's initial build.</p>
-<pre>HISTORY_TABLE = <span class="kw">f</span><span class="str">"{CATALOG}.gold.dim_customer"</span>
-<span class="kw">try</span>:
-    spark.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"DESCRIBE HISTORY {HISTORY_TABLE}"</span>) \
-        .<span class="fn">select</span>(<span class="str">"version"</span>,<span class="str">"timestamp"</span>,<span class="str">"operation"</span>) \
-        .<span class="fn">limit</span>(<span class="col">10</span>).<span class="fn">display</span>()
-<span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> e:
-    <span class="fn">print</span>(<span class="str">"No SELECT, or not present yet."</span>)</pre>
-      </div>
-      <div>
-        <div class="highlight-box">
-          <p><strong style="color:#38bdf8;">Bonus (optional):</strong> some workspaces additionally expose lineage as queryable metadata — <code>system.access.table_lineage</code> / <code>column_lineage</code> — if an account admin has enabled it. 100% read-only either way; Catalog Explorer's Lineage tab always works regardless.</p>
-        </div>
-      </div>
-    </div>
+    <h3>The Scenario</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">A hospital network's data platform (the richest version of this scenario — the same shape shows up as a bank's customer-account data, or a retailer's loyalty-program data):</p>
+    <table class="sql-table">
+      <tr><th>Requirement</th><th>Who needs it, and why</th></tr>
+      <tr><td>Multiple teams share the same underlying data</td><td>Billing, clinical research, and hospital administration all need the same patient encounter records — for different purposes</td></tr>
+      <tr><td>Analysts should only see relevant records</td><td>A clinical researcher studying cardiology cases shouldn't see psychiatric or oncology patient records at all</td></tr>
+      <tr><td>Sensitive columns (PII) must remain masked</td><td>Social Security Number, full date of birth, and home address should never be visible to a research analyst who only needs diagnosis codes and outcomes</td></tr>
+      <tr><td>Auditors must be able to track every access</td><td>Regulators can demand, at any time, a complete record of who viewed a specific patient's data and when</td></tr>
+    </table>
   </div>
 
-  <!-- SLIDE 19: KEY TAKEAWAYS -->
+  <!-- SLIDE 41: SCENARIO SOLVED -->
+  <div class="slide slide-content">
+    <h3>How Unity Catalog Solves All Four, at Once</h3>
+    <table class="sql-table">
+      <tr><th>Requirement</th><th>Unity Catalog mechanism</th></tr>
+      <tr><td>Multiple teams, one dataset</td><td><strong>RBAC</strong> — <code>GRANT SELECT</code> at the schema level for each team's group; everyone reads the same one authoritative table, not separate copies</td></tr>
+      <tr><td>Analysts see only relevant records</td><td><strong>Row-level security</strong> — a row filter keyed on department/specialty, so the cardiology team's query against the exact same table as the oncology team returns different rows automatically</td></tr>
+      <tr><td>PII stays masked</td><td><strong>Dynamic data masking</strong> on SSN, DOB, and address — full value for the billing team's group, redacted for the research analysts, same underlying column</td></tr>
+      <tr><td>Auditors track every access</td><td><strong>Audit logs</strong> — every one of the above queries is already recorded in <code>system.access.audit</code>, with no extra system built for the purpose</td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:16px;"><p><strong style="color:#22c55e;">One table. One set of grants, filters, and masks, defined once at the object level.</strong> Every reader — billing, research, administration, a future auditor — gets exactly the slice they're entitled to, automatically, without a single line of access-control code living in any of their tools.</p></div>
+  </div>
+
+  <!-- SLIDE 42: KEY TAKEAWAYS + CLOSING -->
   <div class="slide slide-section">
     <div class="section-tag">Wrap-Up</div>
     <h2>Key Takeaways</h2>
     <div class="three-col" style="margin-top:24px;">
       <div class="card">
-        <h4>🔑 Permissions</h4>
+        <h4>🏛️ Governance is a discipline</h4>
         <ul>
-          <li>One hierarchy — metastore &rarr; catalog &rarr; schema &rarr; table/view/function</li>
-          <li>Grants at a higher level are inherited by everything below, including objects created later</li>
+          <li>5 pillars — Discovery, Audit, Lineage, Identity, Access Control</li>
+          <li>Unity Catalog implements every one, in one consistent object model</li>
         </ul>
       </div>
       <div class="card">
-        <h4>👁️ Row Filters &amp; Masking</h4>
+        <h4>🔑 RBAC + FGAC, layered</h4>
         <ul>
-          <li>Both apply to every reader automatically — zero application-side filtering code</li>
-          <li>Never attach either to a real shared table you don't own — practice first</li>
+          <li>RBAC decides who's in the door; FGAC decides what they see once inside</li>
+          <li>Row filters, column masks, and dynamic views are the FGAC toolkit</li>
         </ul>
-      </div>
-      <div class="card">
-        <h4>🧬 Lineage</h4>
-        <ul>
-          <li><code>DESCRIBE HISTORY</code> and Catalog Explorer lineage are both automatic, but answer different questions</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- SLIDE 20: WHAT'S NEXT / CLOSING -->
-  <div class="slide slide-section" style="text-align:center; align-items:center;">
-    <div class="section-tag">What's Next</div>
-    <h2>You're Ready for ILT 2</h2>
-    <p style="color:#94a3b8; max-width:680px; margin-top:12px; font-size:15px;">
-      Deferred to a later, separate hands-on: <em>"Apply Unity Catalog Governance — GRANT/REVOKE, Mask PII, Verify Lineage (4 Sources)"</em> — that calendar title's "4 Sources" is the original spec name; GlobalMart in fact has <strong style="color:#38bdf8;">2 real ingestion pathways</strong>, and that session will apply today's techniques for real to the <code>gbmart.gold</code> layer built from those 2 sources.
-    </p>
-    <div class="three-col" style="margin-top:28px; max-width:820px;">
-      <div class="card">
-        <h4>✅ Recap</h4>
-        <p>4 mechanisms: permissions, row filters, masking, lineage — all practiced safely on your own schema</p>
-      </div>
-      <div class="card">
-        <h4>➡️ Up Next</h4>
-        <p>Day 12 ILT 2 (11:00 AM): Introduction to Genie &amp; Semantic Layer</p>
       </div>
       <div class="card">
         <h4>🎤 Closing Check</h4>
-        <p>Name the 4 Unity Catalog hierarchy levels. Name the 2 real GlobalMart ingestion pathways.</p>
+        <p>Name the 5 pillars. Explain, in one sentence each, the difference between RBAC and FGAC, and between a managed and an external table.</p>
       </div>
     </div>
+    <div class="highlight-box" style="margin-top:16px;"><p><strong style="color:#38bdf8;">Up next:</strong> Day 12 ILT 2 — Introduction to Genie &amp; Semantic Layer.</p></div>
   </div>
 
 </div><!-- /deck -->
