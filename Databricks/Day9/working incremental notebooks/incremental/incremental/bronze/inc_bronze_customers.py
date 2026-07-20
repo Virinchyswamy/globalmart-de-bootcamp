@@ -89,7 +89,7 @@ customers_inc_df = (
     spark.read
         .option("header", "true")
         .option("inferSchema", "true")
-        .csv(f"{SOURCE_PATH}customer_040626.csv")
+        .csv(f"{SOURCE_PATH}customer_consent_040626.csv")
 )
 
 display(customers_inc_df)
@@ -152,7 +152,7 @@ customers_df.display()
 # MAGIC ## Step 6 — Writing the Data: Columns Get Merged
 # MAGIC
 # MAGIC Once this write completes, the new columns will show up as real columns
-# MAGIC on `gbmart.bronze.customers` — existing rows will show `NULL` for them,
+# MAGIC on `harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.customers` — existing rows will show `NULL` for them,
 # MAGIC the consent file's rows will have them populated.
 # MAGIC
 # MAGIC **The important detail:** `mergeSchema = "true"` on the write side.

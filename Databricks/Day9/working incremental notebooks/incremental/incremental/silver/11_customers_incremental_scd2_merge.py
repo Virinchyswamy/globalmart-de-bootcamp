@@ -5,8 +5,8 @@
 # MAGIC
 # MAGIC | | |
 # MAGIC |---|---|
-# MAGIC | **Source** | `gbmart.bronze.customers` — CDF enabled |
-# MAGIC | **Target** | `gbmart.silver.customers` |
+# MAGIC | **Source** | `harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.customers` — CDF enabled |
+# MAGIC | **Target** | `harsh_kumar01_npmentorskool_onmicrosoft_com.silver.customers` |
 # MAGIC | **SCD Type** | SCD2 — an attribute change (e.g. `email`) creates a new version, old version closed out |
 # MAGIC
 # MAGIC Same 6-step flow as `10_products_incremental_scd2_merge.ipynb`, applied
@@ -148,68 +148,6 @@ silver_table = DeltaTable.forName(spark, SILVER_TABLE)
 )
 
 print("Step 5a complete — old versions closed out where email changed")
-
-# COMMAND ----------
-
-# 5b — insert new versions (email changes) + brand-new customers
-new_versions_df = processed_df \
-    .withColumn("effective_start_date", current_date()) \
-    .withColumn("effective_end_date", lit(None).cast("date")) \
-    .withColumn("is_current", lit(True)) \
-    .withColumn("customer_sk",
-        sha2(concat_ws("|", col("customer_id"), col("effective_start_date").cast("string")), 256)
-    ) \
-    .withColumn("_silver_updated_at", current_timestamp()) \
-    .select(
-        "customer_sk", "customer_id", "full_name", "email", "phone_number",
-        "date_of_birth", "age", "registration_date", "customer_tenure_days",
-        "preferred_payment_method_id",
-        "is_current", "effective_start_date", "effective_end_date",
-        "_silver_updated_at"
-    )
-
-new_versions_df.write.format("delta").mode("append").saveAsTable(SILVER_TABLE)
-print(f"Step 5b complete — {new_versions_df.count()} new version row(s) inserted")
-
-# COMMAND ----------
-
-# 5b — insert new versions (email changes) + brand-new customers
-new_versions_df = processed_df \
-    .withColumn("effective_start_date", current_date()) \
-    .withColumn("effective_end_date", lit(None).cast("date")) \
-    .withColumn("is_current", lit(True)) \
-    .withColumn(
-        "customer_sk",
-        sha2(
-            concat_ws("|", col("customer_id"), col("effective_start_date").cast("string")),
-            256
-        )
-    ) \
-    .withColumn("_silver_updated_at", current_timestamp()) \
-    .select(
-        "customer_sk",
-        "customer_id",
-        "full_name",
-        "email",
-        "phone_number",
-        "date_of_birth",
-        "age",
-        "registration_date",
-        "customer_tenure_days",
-        "preferred_payment_method_id",
-        "is_current",
-        "effective_start_date",
-        "effective_end_date",
-        "_silver_updated_at"
-    )
-
-new_versions_df.write \
-    .format("delta") \
-    .option("mergeSchema", "true") \
-    .mode("append") \
-    .saveAsTable(SILVER_TABLE)
-
-print(f"Step 5b complete — {new_versions_df.count()} new version row(s) inserted")
 
 # COMMAND ----------
 

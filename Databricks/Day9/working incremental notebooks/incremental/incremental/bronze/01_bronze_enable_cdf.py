@@ -66,7 +66,7 @@ for table in BRONZE_TABLES:
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC describe history gbmart.bronze.customers;
+# MAGIC describe history harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.customers;
 
 # COMMAND ----------
 
@@ -75,21 +75,21 @@ for table in BRONZE_TABLES:
 # MAGIC
 # MAGIC ```
 # MAGIC Bronze Delta Tables (CDF enabled)
-# MAGIC   gbmart.bronze.customers          <- CDF ON
-# MAGIC   gbmart.bronze.orders             <- skipped, Lakeflow Connect Streaming Table (pipeline-owned) — uses updated_at cursor instead
-# MAGIC   gbmart.bronze.order_items        <- skipped, Lakeflow Connect Streaming Table (pipeline-owned) — uses updated_at cursor instead
-# MAGIC   gbmart.bronze.products           <- CDF ON
-# MAGIC   gbmart.bronze.addresses          <- CDF ON
-# MAGIC   gbmart.bronze.payments           <- CDF ON
-# MAGIC   gbmart.bronze.payment_methods    <- CDF ON
-# MAGIC   gbmart.bronze.returns            <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.customers          <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.orders             <- skipped, Lakeflow Connect Streaming Table (pipeline-owned) — uses updated_at cursor instead
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.order_items        <- skipped, Lakeflow Connect Streaming Table (pipeline-owned) — uses updated_at cursor instead
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.products           <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.addresses          <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.payments           <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.payment_methods    <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.returns            <- CDF ON
 # MAGIC        |
 # MAGIC        |  Silver reads via:
 # MAGIC        |  spark.read.format("delta")
 # MAGIC        |      .option("readChangeFeed", "true")
 # MAGIC        |      .option("startingVersion", last_version)
 # MAGIC        v
-# MAGIC   gbmart.silver.*  (next layer)
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.silver.*  (next layer)
 # MAGIC ```
 # MAGIC
 # MAGIC **Bronze layer CDF is enabled. Next: run the Silver layer's own CDF

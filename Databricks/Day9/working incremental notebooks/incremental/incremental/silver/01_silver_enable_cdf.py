@@ -66,14 +66,14 @@ for table in SILVER_TABLES:
 # MAGIC
 # MAGIC ```
 # MAGIC Silver Delta Tables (CDF enabled)
-# MAGIC   gbmart.silver.customers          <- CDF ON
-# MAGIC   gbmart.silver.orders             <- CDF ON
-# MAGIC   gbmart.silver.order_items        <- CDF ON
-# MAGIC   gbmart.silver.products           <- CDF ON
-# MAGIC   gbmart.silver.address            <- CDF ON
-# MAGIC   gbmart.silver.payments           <- CDF ON
-# MAGIC   gbmart.silver.payment_methods    <- CDF ON
-# MAGIC   gbmart.silver.returns            <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.silver.customers          <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.silver.orders             <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.silver.order_items        <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.silver.products           <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.silver.address            <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.silver.payments           <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.silver.payment_methods    <- CDF ON
+# MAGIC   harsh_kumar01_npmentorskool_onmicrosoft_com.silver.returns            <- CDF ON
 # MAGIC        |
 # MAGIC        |  Available for incremental reads via:
 # MAGIC        |  spark.read.format("delta")

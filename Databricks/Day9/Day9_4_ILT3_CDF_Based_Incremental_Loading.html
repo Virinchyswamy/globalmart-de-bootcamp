@@ -158,11 +158,14 @@
   <p class="lead">
     ILT 2's watermark loader has a blind spot: a hard-deleted row never produces a newer
     <code>updated_at</code>, so it's never noticed. Today we close that gap with Delta's
-    built-in Change Data Feed, enable it for real on <code>gbmart</code>, then read
+    built-in Change Data Feed, enable it for real on <code>&lt;your-catalog&gt;</code>, then read
     GlobalMart's actual Bronze → Silver SCD2 <code>MERGE</code> code — rough edges included.
+    Code snippets below show the real literal catalog GlobalMart's Bronze/Silver run
+    uses, <code>harsh_kumar01_npmentorskool_onmicrosoft_com</code> — not <code>gbmart</code>,
+    which is a separate catalog used only for Gold (Day 7).
   </p>
   <div class="meta-row">
-    <span class="meta-pill">✅ Enables real CDF on real gbmart tables</span>
+    <span class="meta-pill">✅ Enables real CDF on real Bronze/Silver tables</span>
     <span class="meta-pill">📖 Read-only walkthrough of the real MERGE pattern</span>
     <span class="meta-pill">➡️ Follows ILT 2 · Sets up Day 10's hands-on SCD build</span>
   </div>
@@ -227,7 +230,7 @@
 
     <pre><span class="cm"># Attempts ALL 8 Bronze tables -- does NOT pre-filter orders/order_items out</span>
 <span class="cm"># of the list before trying. try/except records what actually happens.</span>
-CATALOG = <span class="str">"gbmart"</span>
+CATALOG = <span class="str">"harsh_kumar01_npmentorskool_onmicrosoft_com"</span>
 SCHEMA  = <span class="str">"bronze"</span>
 
 BRONZE_TABLES = [
@@ -259,14 +262,14 @@ BRONZE_TABLES = [
     </div>
 
     <div class="highlight-box success">
-      <p>Santosh Kumar ran this exact loop against real <code>gbmart</code> and watched
+      <p>Santosh Kumar ran this exact loop against real <code>harsh_kumar01_npmentorskool_onmicrosoft_com</code> and watched
       <code>orders</code> and <code>order_items</code> print <code>SKIPPED</code> — exactly
       what the real pipeline notebook's markdown expected, just confirmed live instead of
       assumed in advance.</p>
     </div>
 
-    <div class="demo-label" style="margin-top:20px;">Live check — run against real gbmart, read-only</div>
-    <pre>spark.<span class="fn">sql</span>(<span class="str">"DESCRIBE HISTORY gbmart.bronze.customers"</span>) \
+    <div class="demo-label" style="margin-top:20px;">Live check — run against real harsh_kumar01_npmentorskool_onmicrosoft_com, read-only</div>
+    <pre>spark.<span class="fn">sql</span>(<span class="str">"DESCRIBE HISTORY harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.customers"</span>) \
     .<span class="fn">select</span>(<span class="str">"version"</span>, <span class="str">"timestamp"</span>, <span class="str">"operation"</span>) \
     .<span class="fn">orderBy</span>(<span class="str">"version"</span>, ascending=<span class="kw">False</span>) \
     .<span class="fn">show</span>(5, truncate=<span class="kw">False</span>)</pre>
@@ -290,7 +293,7 @@ BRONZE_TABLES = [
 ]
 
 <span class="kw">for</span> table <span class="kw">in</span> SILVER_TABLES:
-    full_name = <span class="fn">f</span><span class="str">"gbmart.silver.{table}"</span>
+    full_name = <span class="fn">f</span><span class="str">"harsh_kumar01_npmentorskool_onmicrosoft_com.silver.{table}"</span>
     <span class="kw">try</span>:
         spark.<span class="fn">sql</span>(<span class="fn">f</span><span class="str">"ALTER TABLE {full_name} SET TBLPROPERTIES (delta.enableChangeDataFeed = true)"</span>)
         <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  CDF enabled : {full_name}"</span>)
@@ -328,12 +331,12 @@ BRONZE_TABLES = [
       completely normal batch read.
     </p>
 
-    <div class="demo-label">Live check — run against real gbmart, read-only</div>
+    <div class="demo-label">Live check — run against real harsh_kumar01_npmentorskool_onmicrosoft_com, read-only</div>
     <pre>cdf_df = (
     spark.<span class="fn">read</span>.<span class="fn">format</span>(<span class="str">"delta"</span>)
         .<span class="fn">option</span>(<span class="str">"readChangeFeed"</span>, <span class="str">"true"</span>)
         .<span class="fn">option</span>(<span class="str">"startingVersion"</span>, 0)
-        .<span class="fn">table</span>(<span class="str">"gbmart.bronze.products"</span>)
+        .<span class="fn">table</span>(<span class="str">"harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.products"</span>)
 )
 
 cdf_df.<span class="fn">groupBy</span>(<span class="str">"_change_type"</span>).<span class="fn">count</span>().<span class="fn">show</span>()
@@ -345,6 +348,19 @@ cdf_df.<span class="fn">select</span>(<span class="str">"product_id"</span>, <sp
       same read starting from a real "last processed" version instead of <code>0</code>,
       the way a production incremental job actually would.</p>
     </div>
+
+    <h3 style="margin-top:32px; font-size:19px; color:var(--text);">The Same Read, in SQL: <code>table_changes()</code></h3>
+    <p class="section-intro" style="margin-top:8px;">
+      <code>readChangeFeed</code> above is the PySpark option-pair form. Delta also exposes
+      CDF as a plain SQL table-valued function, <code>table_changes()</code> — same
+      underlying data, same 4 <code>_change_type</code> values. Useful in a SQL notebook or
+      a dashboard view instead of PySpark; both forms read the identical CDF log.
+    </p>
+    <div class="demo-label">Live check — run against real harsh_kumar01_npmentorskool_onmicrosoft_com, read-only</div>
+    <pre><span class="kw">SELECT</span> product_id, discounted_price_inr, _change_type, _commit_version
+<span class="kw">FROM</span> <span class="fn">table_changes</span>(<span class="str">'harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.products'</span>, 0)
+<span class="kw">WHERE</span> _change_type != <span class="str">'update_preimage'</span>
+<span class="kw">LIMIT</span> 10</pre>
   </div>
 </section>
 
@@ -362,7 +378,7 @@ cdf_df.<span class="fn">select</span>(<span class="str">"product_id"</span>, <sp
     <div class="highlight-box warn">
       <p><b>What comes next is different.</b> This is a verbatim walkthrough of
       GlobalMart's actual <code>10_products_incremental_scd2_merge.py</code> — the real
-      Bronze → Silver SCD2 <code>MERGE</code> that keeps <code>gbmart.silver.products</code>
+      Bronze → Silver SCD2 <code>MERGE</code> that keeps <code>harsh_kumar01_npmentorskool_onmicrosoft_com.silver.products</code>
       in sync using CDF. We read it, line by line — but we do <b>not run it</b> in this
       ILT. A <code>MERGE</code> + <code>append</code> pair is not idempotent the way
       <code>ALTER TABLE</code> is: running it twice would insert a second batch of "new
@@ -402,8 +418,8 @@ cdf_df.<span class="fn">select</span>(<span class="str">"product_id"</span>, <sp
     <div class="section-tag">Reading The Real Notebook, Steps 1–4</div>
     <h2 class="section-title">Where This Starts: All of Bronze, Then Just What Changed</h2>
 
-    <pre>BRONZE_TABLE = <span class="str">"gbmart.bronze.products"</span>
-SILVER_TABLE = <span class="str">"gbmart.silver.products"</span>
+    <pre>BRONZE_TABLE = <span class="str">"harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.products"</span>
+SILVER_TABLE = <span class="str">"harsh_kumar01_npmentorskool_onmicrosoft_com.silver.products"</span>
 
 bronze_df = spark.<span class="fn">table</span>(BRONZE_TABLE)
 <span class="fn">print</span>(<span class="fn">f</span><span class="str">"Total rows currently in Bronze: {bronze_df.count():,}"</span>)</pre>

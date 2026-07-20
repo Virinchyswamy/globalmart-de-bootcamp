@@ -181,7 +181,7 @@
     <div class="grid-2">
       <div class="card">
         <h4>Part 1 — CDF Path (you build it)</h4>
-        <p>Build a real incremental Bronze → Silver refresh for <code>gbmart.payments</code>, using Delta CDF +
+        <p>Build a real incremental Bronze → Silver refresh for <code>harsh_kumar01_npmentorskool_onmicrosoft_com.payments</code>, using Delta CDF +
         <code>MERGE</code> — a plain upsert, not the SCD2 dimension-history version. That's Day 10's job.</p>
       </div>
       <div class="card">
@@ -235,17 +235,17 @@
       <div>
         <p style="color:#94a3b8; font-size:14px;">
           This exercise's whole point is watching a MERGE consume a batch of pending changes, then run again and
-          find nothing left. Against the real shared <code>gbmart.silver.payments</code>, only the <i>first</i>
+          find nothing left. Against the real shared <code>harsh_kumar01_npmentorskool_onmicrosoft_com.silver.payments</code>, only the <i>first</i>
           person to run this in the whole cohort would ever see a non-zero merge — everyone after (including you,
           rehearsing before class) would see "0 changed rows," and the exercise would look broken.
         </p>
       </div>
       <div>
 <pre><span class="kw">CREATE OR REPLACE TABLE</span> <span class="tbl">bronze_payments_practice</span>
-  <span class="kw">SHALLOW CLONE</span> <span class="tbl">gbmart.bronze.payments</span>;
+  <span class="kw">SHALLOW CLONE</span> <span class="tbl">harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.payments</span>;
 
 <span class="kw">CREATE OR REPLACE TABLE</span> <span class="tbl">silver_payments_practice</span>
-  <span class="kw">SHALLOW CLONE</span> <span class="tbl">gbmart.silver.payments</span>;
+  <span class="kw">SHALLOW CLONE</span> <span class="tbl">harsh_kumar01_npmentorskool_onmicrosoft_com.silver.payments</span>;
 
 <span class="kw">ALTER TABLE</span> <span class="tbl">bronze_payments_practice</span>
   <span class="kw">SET TBLPROPERTIES</span> (delta.enableChangeDataFeed = <span class="kw">true</span>);</pre>
@@ -256,7 +256,7 @@
         A <code>SHALLOW CLONE</code> in your own schema gives you the same real data and the same real CDF
         mechanics, but a version history that's entirely yours — repeatable every time, for every student, forever.
         Everything you write in Part 1 stays inside <code>main.YOUR_SCHEMA</code> — never a direct write against
-        shared <code>gbmart.*</code> tables.
+        shared <code>harsh_kumar01_npmentorskool_onmicrosoft_com.*</code> tables.
       </p>
     </div>
     <div class="highlight-box success" style="margin-top:16px;">
@@ -350,13 +350,14 @@
       <tr><td>3</td><td>Row counts, <code>orders</code> + <code>order_items</code></td><td>Live totals via <code>COUNT(*)</code>, compared against a stated baseline</td></tr>
       <tr><td>4</td><td>Top 5 rows by <code>updated_at DESC</code></td><td>Which rows the most recent pipeline run actually touched</td></tr>
       <tr><td>5</td><td><code>DESCRIBE HISTORY</code></td><td>A new version confirms the pipeline actually wrote something</td></tr>
+      <tr><td>6</td><td><code>table_changes()</code> on <code>OR-000478</code>/<code>OR-900001</code>/<code>OR-900002</code></td><td>Same rows, but via the SQL CDF function — shows the actual <code>_change_type</code> (<code>insert</code> vs. <code>update_postimage</code>), not just current values</td></tr>
     </table>
 
     <div class="highlight-box">
       <p>
         <b>About those row-count numbers:</b> at authoring time, the stated baseline was <code>126,036</code>
-        orders (<code>126,038</code> once the 2 new orders land) and <code>377,866</code> order_items (unchanged,
-        or <code>377,868</code> if the matching order_items insert was also run). Those are the pipeline's
+        orders (<code>126,038</code> once the 2 new orders land) and <code>126,036</code> order_items (unchanged,
+        or <code>126,038</code> if the matching order_items insert was also run (order_items is 1:1 with orders in this dataset)). Those are the pipeline's
         <i>reference</i> numbers from when this lab was written — not something to hardcode or assert against. The
         real cohort table keeps growing as other students and instructor demos run against it, so always verify
         live with <code>COUNT(*)</code>, exactly the way Check 3 does it.
@@ -382,8 +383,8 @@
         <code>customers</code> source files <b>twice</b> — first with <code>cloudFiles.schemaEvolutionMode =
         "addNewColumns"</code>, then again with <code>schemaEvolutionMode = "rescue"</code> — each time against a
         source file that had genuinely gained one new column, <code>third_party_data_sharing</code>. Everything ran
-        against <code>gbmart.bronze_practice.customers_exp</code>, an isolated practice schema — production
-        <code>gbmart.bronze.customers</code> was never touched.
+        against <code>harsh_kumar01_npmentorskool_onmicrosoft_com.bronze_practice.customers_exp</code>, an isolated practice schema — production
+        <code>harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.customers</code> was never touched.
       </p>
     </div>
 
@@ -411,7 +412,7 @@
     <div class="highlight-box success">
       <p>
         Sujit Kumar's proof query is the simplest possible check that this happened:
-        <code>SELECT * FROM gbmart.bronze_practice.customers_exp WHERE third_party_data_sharing IS NOT NULL</code>
+        <code>SELECT * FROM harsh_kumar01_npmentorskool_onmicrosoft_com.bronze_practice.customers_exp WHERE third_party_data_sharing IS NOT NULL</code>
         — rows with a value there arrived after the new column existed. That one file, run twice, is the receipt:
         schema evolution isn't just a Day 3 slide, it's something this course's own practice pipeline actually did,
         safely, in a schema built only for practicing it. <b>Nothing to build here</b> — just something to recognize.
@@ -444,7 +445,7 @@
     <p class="section-intro">Click to reveal each answer. If any of these surprise you, re-read the section above before starting.</p>
 
     <details class="qa-card">
-      <summary>Why does Part 1 use a SHALLOW CLONE instead of writing straight into gbmart.silver.payments?</summary>
+      <summary>Why does Part 1 use a SHALLOW CLONE instead of writing straight into harsh_kumar01_npmentorskool_onmicrosoft_com.silver.payments?</summary>
       <div class="qa-answer">Because the exercise's whole point is watching a MERGE consume pending changes, then find nothing left on a second run. Against the real shared table, only the first person in the whole cohort would ever see a non-zero merge — everyone after would see "0 changed rows" and the exercise would look broken. A SHALLOW CLONE gives every student the same real data and CDF mechanics, but a version history that's entirely their own.</div>
     </details>
 
@@ -476,7 +477,7 @@
         <li>☐ Control table <code>main.YOUR_SCHEMA._incremental_control</code> created</li>
         <li>☐ <code>refresh_silver_payments()</code> run once — initial load completed</li>
         <li>☐ <code>refresh_silver_payments()</code> run a second time — confirmed 0 changed rows</li>
-        <li>☐ Part 2 — all 5 checks run against the real <code>orders</code>/<code>order_items</code> Bronze tables (<code>OR-000478</code> update, <code>OR-900001</code>/<code>OR-900002</code> new orders, row counts, most-recent <code>updated_at</code>, <code>DESCRIBE HISTORY</code>)</li>
+        <li>☐ Part 2 — all 6 checks run against the real <code>orders</code>/<code>order_items</code> Bronze tables (<code>OR-000478</code> update, <code>OR-900001</code>/<code>OR-900002</code> new orders, row counts, most-recent <code>updated_at</code>, <code>DESCRIBE HISTORY</code>, and the <code>table_changes()</code> SQL-form check)</li>
         <li>☐ Read the Day 3 schema-evolution callback — no build required</li>
         <li>☐ Notebook run top-to-bottom with no errors</li>
       </ul>

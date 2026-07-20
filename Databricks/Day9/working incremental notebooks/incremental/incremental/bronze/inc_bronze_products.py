@@ -76,7 +76,7 @@ for f in files:
 
 # MAGIC %md
 # MAGIC ## Step 3 — Baseline Check
-# MAGIC Confirm the current row count in `gbmart.bronze.products` **before** running
+# MAGIC Confirm the current row count in `harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.products` **before** running
 # MAGIC the incremental load, so the before/after comparison in Step 7 is
 # MAGIC meaningful. Should show 500 rows.
 

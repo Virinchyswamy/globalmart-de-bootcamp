@@ -78,7 +78,7 @@ for f in files:
 
 # MAGIC %md
 # MAGIC ## Step 3 — Baseline Check
-# MAGIC Confirm the current row count in `gbmart.bronze.payments` **before**
+# MAGIC Confirm the current row count in `harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.payments` **before**
 # MAGIC running the incremental load, so the before/after comparison in Step 7 is
 # MAGIC meaningful.
 
@@ -93,7 +93,7 @@ payments_inc_df = (
     spark.read
          .option("header", "true")
          .option("inferSchema", "true")
-         .csv(f"{SOURCE_PATH}payments_040626.csv")
+         .csv(f"{SOURCE_PATH}payments_050626.csv")
 )
 
 payments_inc_df.display()

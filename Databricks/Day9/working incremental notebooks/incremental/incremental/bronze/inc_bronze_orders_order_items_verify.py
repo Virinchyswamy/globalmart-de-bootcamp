@@ -14,7 +14,7 @@
 # MAGIC This notebook is purely **verification** — confirming the changes made
 # MAGIC in Supabase (`05_make_order_changes_for_incremental.sql`: the
 # MAGIC `OR-000478` update + the `OR-900001`/`OR-900002` inserts) actually landed
-# MAGIC in `gbmart.bronze.orders` / `gbmart.bronze.order_items` after the
+# MAGIC in `harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.orders` / `harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.order_items` after the
 # MAGIC pipeline run.
 
 # COMMAND ----------
@@ -76,8 +76,8 @@
 
 # MAGIC %md
 # MAGIC ## Check 5 — Total Row Count on bronze.order_items
-# MAGIC Should be `377,866` (unchanged), or `377,868` if the order_items insert
-# MAGIC was run.
+# MAGIC Should be `126,036` (unchanged), or `126,038` if the order_items insert
+# MAGIC was run — same 1:1 relationship as orders.
 
 # COMMAND ----------
 
@@ -93,9 +93,9 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC select 'orders' as table_name, count(*) as row_count from gbmart.bronze.orders
+# MAGIC select 'orders' as table_name, count(*) as row_count from harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.orders
 # MAGIC union all
-# MAGIC select 'order_items', count(*) from gbmart.bronze.order_items;
+# MAGIC select 'order_items', count(*) from harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.order_items;
 
 # COMMAND ----------
 
