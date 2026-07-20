@@ -122,7 +122,7 @@
   <div class="logo">DAY 11 · ILT 2 — DLQ, Replay &amp; Operational Readiness</div>
   <div class="controls">
     <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter">1 / 22</span>
+    <span class="slide-counter" id="counter">1 / 25</span>
     <button onclick="changeSlide(1)">Next &#8594;</button>
   </div>
 </nav>
@@ -180,6 +180,24 @@
     </p>
   </div>
 
+  <!-- SLIDE 3B: PLAIN-LANGUAGE ANALOGY -->
+  <div class="slide slide-content">
+    <h3>Start With a Post Office, Not a Pipeline</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>📮 A letter with a torn label</h4>
+        <p>Every correctly-addressed letter at a sorting facility goes straight into the delivery van. A letter with a torn or unreadable label doesn't get thrown in the bin, and it doesn't stop the whole van from leaving — it gets pulled aside into a "needs attention" tray so someone can fix the address later and send it on its way.</p>
+      </div>
+      <div class="card">
+        <h4>📦 That tray is a DLQ</h4>
+        <p>A <strong>Dead-Letter Queue</strong> is that "needs attention" tray, except it's a Delta table instead of a physical box. Every row your pipeline can't process for any reason lands there instead of vanishing or blocking everything else. "Dead letter" is literally a postal-service term — mail that couldn't be delivered as addressed.</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p>It's called a "queue," not a "bin," on purpose — the tray is meant to <strong>empty out</strong>. Every row in it is expected to eventually get fixed and sent on (replayed), or looked at by a person and explicitly written off — never to just sit there forever.</p>
+    </div>
+  </div>
+
   <!-- SLIDE 4: THREE WAYS TO HANDLE A BAD ROW -->
   <div class="slide slide-content">
     <h3>Three Ways to Handle a Row That Fails</h3>
@@ -189,15 +207,15 @@
           Malformed JSON, a schema mismatch, a business-rule violation, a null where a downstream step assumes a value — every pipeline hits rows like this eventually. There are three ways to react, in ascending order of how much a production team should tolerate them.
         </p>
         <div class="highlight-box">
-          <p><strong style="color:#38bdf8;">A Dead-Letter Queue (DLQ)</strong> is a Delta table that exists purely to catch anything that fails processing, for any reason, anywhere in the pipeline. It's called a "queue" because the intent is to <em>drain</em> it — every row is expected to eventually be replayed or explicitly written off, not to live there forever.</p>
+          <p><strong style="color:#38bdf8;">In pipeline terms:</strong> a DLQ is a Delta table that exists purely to catch anything that fails processing, for any reason, anywhere in the pipeline — the digital version of that "needs attention" tray.</p>
         </div>
       </div>
       <div>
         <table class="sql-table">
           <tr><th>Approach</th><th>What happens</th><th>The problem</th></tr>
-          <tr><td>Crash the batch</td><td>One bad row raises an exception; the whole job fails</td><td>Every other good row is blocked too</td></tr>
-          <tr><td>Silently drop it</td><td>Filtered out, never written anywhere</td><td>Disappears with no record it existed</td></tr>
-          <tr><td>Route it to a DLQ</td><td>Written as-is, tagged with why and when</td><td>Good rows keep flowing; bad row is inspectable</td></tr>
+          <tr><td>Crash the batch</td><td>One bad row raises an exception; the whole job fails</td><td>Every other good row is blocked too — the whole delivery van stops for one torn label</td></tr>
+          <tr><td>Silently drop it</td><td>Filtered out, never written anywhere</td><td>Disappears with no record it existed — the letter is just thrown away</td></tr>
+          <tr><td>Route it to a DLQ</td><td>Written as-is, tagged with why and when</td><td>Good rows keep flowing; bad row is inspectable and fixable later</td></tr>
         </table>
       </div>
     </div>
@@ -261,7 +279,10 @@
   <!-- SLIDE 8: KEY-BASED MERGE FIX -->
   <div class="slide slide-content">
     <h3>The Fix: Key-Based MERGE, Not Blind Append</h3>
-    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;">This is the exact idempotency principle Day 9/Day 10 already established for incremental loading — replay is really just another incremental load, sourced from the DLQ table instead of a change feed.</p>
+    <div class="highlight-box" style="margin-bottom:16px;">
+      <p><strong style="color:#38bdf8;">Think of a store's return-scanner.</strong> A cashier scans a returned item's receipt number before refunding it — if that receipt was already refunded, the system says "already done," it doesn't refund it a second time. It checks an <em>identity</em> (the receipt number) before acting, instead of blindly processing every return handed to it.</p>
+    </div>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:14px;"><code>MERGE</code> is that receipt-number check for a table: "does a row with this <strong>key</strong> already exist? If yes, update it. If no, insert it." That single rule is what makes replaying a row safe even if you accidentally do it twice. This is the exact idempotency principle Day 9/Day 10 already established for incremental loading — replay is really just another incremental load, sourced from the DLQ table instead of a change feed.</p>
     <table class="sql-table">
       <tr><th>Step</th><th>What it does</th><th>Why it's safe to re-run</th></tr>
       <tr><td>1</td><td>Read all rows currently in the DLQ table</td><td>Reading never has side effects</td></tr>
@@ -304,6 +325,22 @@
     </p>
   </div>
 
+  <!-- SLIDE 10B: RUNBOOK ANALOGY -->
+  <div class="slide slide-content" style="text-align:center; align-items:center;">
+    <h3>Think of It as a Recipe Card, Not a Memory Test</h3>
+    <div class="two-col" style="max-width:820px;">
+      <div class="card">
+        <h4>🌙 Without a runbook</h4>
+        <p>Something breaks at 2 AM. Whoever's on call has to remember — or guess — what the person who built the pipeline would have checked first. Under pressure, half-remembered steps get skipped.</p>
+      </div>
+      <div class="card">
+        <h4>📝 With a runbook</h4>
+        <p>A recipe card someone already wrote, step by step, before the emergency happened. Anyone on call can follow it exactly, in order, without needing to have built the pipeline themselves.</p>
+      </div>
+    </div>
+    <p style="color:#94a3b8; font-size:14px; margin-top:20px; max-width:640px;">The GlobalMart runbook on the next slide follows one shape every time: <strong>symptom → detect → triage → fix → confirm → close out.</strong> Learn that shape once, reuse it for any pipeline.</p>
+  </div>
+
   <!-- SLIDE 11: RUNBOOK -->
   <div class="slide slide-content">
     <h3>Runbook: <code>orders_data_ingestion_cdc</code> Failed Overnight</h3>
@@ -341,6 +378,17 @@
     <h2>SLAs: Defining and Measuring "Fresh Enough"</h2>
     <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">
       A pipeline SLA here means one thing: how stale is too stale? Without a stated number, "is the pipeline healthy" has no answer.
+    </p>
+  </div>
+
+  <!-- SLIDE 13B: SLA ANALOGY -->
+  <div class="slide slide-content" style="text-align:center; align-items:center;">
+    <h3>Like a Delivery App's "Arriving By" Estimate</h3>
+    <p style="color:#cbd5e1; font-size:15px; max-width:640px; margin-bottom:20px;">
+      A food delivery app doesn't just say "your order is being processed." It gives you a number — "arriving by 7:40 PM" — so you and the app both have the same definition of "on time" vs. "late."
+    </p>
+    <p style="color:#94a3b8; font-size:14px; max-width:640px;">
+      An <strong>SLA</strong> (Service Level Agreement) is that same idea for a data pipeline: a stated number for "how old can this data be before we call it stale?" Without that number, nobody — not you, not the person asking "why does this dashboard look wrong" — has a shared answer for whether the pipeline is actually healthy right now.
     </p>
   </div>
 
