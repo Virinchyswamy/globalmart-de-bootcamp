@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 11 | ILT 1 — Orchestration in Practice: A Live Jobs &amp; Pipelines Walkthrough</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 48px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 20px; color: #94a3b8; max-width: 640px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 36px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.7; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 11 · ILT 1 — Orchestration in Practice</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 27</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Orchestration, Live</h1>
+    <p class="subtitle">A screen-by-screen walkthrough of Jobs &amp; Pipelines — one real Job, built live, every field explained</p>
+    <div class="badge">Day 11 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; 90 minutes &nbsp;·&nbsp; Intermediate</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      What we'll cover → Task setup · Compute &amp; Photon · Libraries · Parameters · Notifications · Retries · Metric Thresholds<br>
+      Pairs with Day11_1_ILT1_Orchestration_Jobs_Pipelines_Walkthrough.ipynb
+    </div>
+  </div>
+
+  <!-- SLIDE 2: AGENDA -->
+  <div class="slide slide-section">
+    <div class="section-tag">Overview</div>
+    <h2>Why This Session Exists</h2>
+    <div class="two-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>Day 10 answered "why" and "what"</h4>
+        <p>Why orchestrate at all, what a DAG is, Databricks Workflows vs. Airflow at a conceptual level.</p>
+      </div>
+      <div class="card">
+        <h4>Today answers "how"</h4>
+        <p>The actual screens. Every field you'll click through when you're handed a real notebook to orchestrate next.</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong style="color:#38bdf8;">Format:</strong> this is a live, on-screen build — one real Job, built from scratch, narrated field by field. Nothing here creates or runs a real job itself; every setting is shown as an inspectable dictionary matching exactly what the UI saves.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: SECTION 1 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 1</div>
+    <h2>Getting There</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">Jobs &amp; Pipelines — and why we're staying on the Jobs tab, not Pipelines</p>
+  </div>
+
+  <!-- SLIDE 4: JOBS VS PIPELINES -->
+  <div class="slide slide-content">
+    <h3>Jobs vs. Pipelines — Two Different Tools</h3>
+    <table class="sql-table">
+      <tr><th></th><th>Jobs</th><th>Pipelines</th></tr>
+      <tr><td><strong>You author</strong></td><td>The steps yourself — which notebook, in what order, on what compute</td><td>The end state of your tables (<code>CREATE STREAMING TABLE</code>) — the engine plans execution and incremental refresh for you</td></tr>
+      <tr><td><strong>Mental model</strong></td><td>"Run this, then this, then this"</td><td>"Make this table look like this, keep it that way"</td></tr>
+      <tr><td><strong>Today</strong></td><td>✓ this is what we're using</td><td>Not covered today</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p>Left sidebar → <strong>Jobs &amp; Pipelines</strong> → stay on the <strong>Jobs</strong> tab → <strong>Create Job</strong>. You land on one blank task — everything from here is filling that in.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: SECTION 2 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 2</div>
+    <h2>The Task: Name, Type, Source, Path</h2>
+  </div>
+
+  <!-- SLIDE 6: TASK FIELDS -->
+  <div class="slide slide-demo">
+    <h3>Live: Filling In the First Task</h3>
+    <div class="demo-label">Screen: Create Job → Task 1</div>
+    <table class="sql-table">
+      <tr><th>Field</th><th>Value we enter</th><th>Why</th></tr>
+      <tr><td><strong>Task name</strong></td><td><code>orchestration</code></td><td>Becomes the <code>task_key</code> other tasks reference in <code>depends_on</code> — name it after what it does, not "task1"</td></tr>
+      <tr><td><strong>Type</strong></td><td><code>Notebook</code></td><td>Databricks Jobs also supports Python script, JAR, SQL, dbt, Pipeline, another Job — Notebook is what nearly everything in this course is built as</td></tr>
+      <tr><td><strong>Source</strong></td><td><code>Workspace</code></td><td>Browse the workspace file tree directly. The alternative, <code>Git provider</code>, pins to a specific commit — the production choice, skipped today since we're demoing</td></tr>
+      <tr><td><strong>Path</strong></td><td>browse to the target notebook</td><td>Use the file picker — never type a path by hand</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p><strong>Live gotcha to show once:</strong> picking Git provider with no repo linked yet blocks you until you connect one under Workspace settings → Git integration.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: SECTION 3 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 3</div>
+    <h2>Compute: "Add New Cluster"</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">The single most important cost decision on this whole screen</p>
+  </div>
+
+  <!-- SLIDE 8: JOB CLUSTER VS ALL-PURPOSE -->
+  <div class="slide slide-content">
+    <h3>Why a New Cluster, Not Your Existing One</h3>
+    <table class="sql-table">
+      <tr><th></th><th>All-purpose cluster</th><th>Job cluster ("Add new cluster")</th></tr>
+      <tr><td><strong>Lifetime</strong></td><td>Runs until you stop it, or it idles out</td><td>Starts with the job, <strong>terminates automatically</strong> when it ends</td></tr>
+      <tr><td><strong>Shared with</strong></td><td>Anyone attached, any time</td><td>Nobody — exclusive to this run</td></tr>
+      <tr><td><strong>DBU rate</strong></td><td>Higher — interactive pricing</td><td>Lower — jobs-compute pricing</td></tr>
+      <tr><td><strong>Right for</strong></td><td>Development, exploring data live</td><td>Scheduled, unattended production runs</td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p>A nightly scheduled job should <strong>never</strong> point at your personal all-purpose cluster — more expensive per DBU, and if you're mid-edit on it, you've just contended for compute with your own pipeline.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: PHOTON -->
+  <div class="slide slide-demo">
+    <h3>Live: Deselecting Photon Acceleration</h3>
+    <div class="demo-label">Screen: New cluster config</div>
+    <p style="font-size:15px; color:#cbd5e1; margin-bottom:16px;">Photon is Databricks' vectorized query engine — dramatically faster for SQL/DataFrame-shaped work, at a <strong>higher DBU rate</strong>.</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>Deselect it when —</h4>
+        <p>The workload is light (today's demo), dominated by UDFs/ML training, or the job isn't cost-critical.</p>
+      </div>
+      <div class="card">
+        <h4>Select it when —</h4>
+        <p>Genuinely SQL/join-heavy at real volume — exactly the shape of GlobalMart's own Bronze→Silver→Gold builds. Day 7 ILT 2 already measured Photon's real speed impact on <code>fact_sales</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: NODE TYPE -->
+  <div class="slide slide-content">
+    <h3>Node Type — Standard_DS3_v2</h3>
+    <div class="three-col">
+      <div class="card"><h4>What it is</h4><p>An Azure VM family. <code>DS3_v2</code> is general-purpose.</p></div>
+      <div class="card"><h4>The spec</h4><p><strong>14 GB RAM, 4 cores</strong> — comfortably enough for a demo job touching a handful of small tables.</p></div>
+      <div class="card"><h4>Sizing rule</h4><p>Match node memory to your <strong>largest single-task working set</strong>, not your whole warehouse.</p></div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;">
+      <p>1 worker, no autoscaling, is fine here. Autoscaling matters once volume varies run to run — a monthly job that's 10x bigger at month-end, for example.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: SECTION 4 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 4</div>
+    <h2>Dependent Libraries</h2>
+  </div>
+
+  <!-- SLIDE 12: LIBRARIES -->
+  <div class="slide slide-content">
+    <h3>Anything Not Already on the Runtime</h3>
+    <p style="font-size:15px; color:#cbd5e1; margin-bottom:16px;">The Runtime ships with <code>pyspark</code>, <code>pandas</code>, <code>numpy</code>, <code>delta-spark</code> pre-installed. A dependent library is anything your notebook imports that isn't on that list — missing it means <code>ModuleNotFoundError</code>, every run, since a job cluster starts fresh.</p>
+    <table class="sql-table">
+      <tr><th>Library</th><th>Real GlobalMart reason you'd need it</th><th>Source</th></tr>
+      <tr><td><code>openpyxl</code></td><td>Reading <code>.xlsx</code> directly — e.g. the supply chain assessment's Data Dictionary workbook</td><td>PyPI</td></tr>
+      <tr><td>Postgres JDBC driver</td><td>Hand-rolling a JDBC connection to Supabase, bypassing the managed Lakeflow Connect pipeline</td><td>Maven</td></tr>
+      <tr><td><code>azure-storage-blob</code></td><td>Direct SDK access to ADLS, bypassing Spark's <code>abfss://</code> reader</td><td>PyPI</td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:14px;">
+      <p>Notice: nothing in the <strong>real</strong> Bronze/Silver/Gold pipeline built across this course needs an extra library. That's the platform's native tools doing the job — reach for a dependent library only with a specific, named reason, and always <strong>pin the version</strong>.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: SECTION 5 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 5</div>
+    <h2>Parameters</h2>
+    <p style="color:#94a3b8; max-width:600px; margin-top:12px; font-size:15px;">The one rule in this whole session that matters most</p>
+  </div>
+
+  <!-- SLIDE 14: GOOD PARAMETER -->
+  <div class="slide slide-demo">
+    <h3>Live: A Good Parameter — catalog_name</h3>
+    <div class="demo-label">Screen: Task → Parameters tab</div>
+    <pre><span class="cm"># Key:   catalog_name</span>
+<span class="cm"># Value: harsh_kumar01_npmentorskool_onmicrosoft_com</span>
+
+<span class="col">CATALOG</span> = dbutils.widgets.<span class="fn">get</span>(<span class="str">"catalog_name"</span>)
+df = spark.<span class="fn">table</span>(<span class="fn">f</span><span class="str">"{CATALOG}.silver.orders"</span>)</pre>
+    <div class="highlight-box success" style="margin-top:14px;">
+      <p>Run the exact same job against a <code>_dev</code> catalog by changing one value — no code edit. This is <em>why</em> parameters exist: it identifies <em>where</em>, it isn't secret, and it genuinely differs across dev/test/prod (Day 11 ILT 2's environment strategy).</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: BAD PARAMETER -->
+  <div class="slide slide-demo" style="border-left-color:#ef4444;">
+    <h3 style="color:#ef4444;">Never Do This: storage_account_key as a Parameter</h3>
+    <div class="demo-label">The mistake, shown deliberately</div>
+    <pre><span class="cm"># Key:   storage_account_key</span>
+<span class="cm"># Value: &lt;a real 88-character Azure storage key&gt;   ❌ NEVER</span></pre>
+    <div class="highlight-box warn" style="margin-top:14px;">
+      <p><strong>Why this is a real mistake:</strong> parameters are stored in <strong>plaintext</strong> in the job config and every run's history — anyone with permission to <em>view</em> the job, not even run it, can read it straight off the Run Details screen. It shows up in audit logs. There's no rotation without editing every job that references it.</p>
+    </div>
+    <p style="margin-top:12px; font-size:13.5px; color:#94a3b8;">This is the exact class of mistake this cohort's own real pipeline hit once — a hardcoded storage key sitting in a committed notebook, caught only because GitHub's push protection blocked it.</p>
+  </div>
+
+  <!-- SLIDE 16: SECRET SCOPE -->
+  <div class="slide slide-demo" style="border-left-color:#22c55e;">
+    <h3 style="color:#22c55e;">The Correct Way: a Secret Scope</h3>
+    <pre>storage_key = dbutils.secrets.<span class="fn">get</span>(scope=<span class="str">"globalmart-storage"</span>, key=<span class="str">"account-key"</span>)
+<span class="fn">print</span>(storage_key)  <span class="cm"># prints [REDACTED] -- automatically, everywhere</span></pre>
+    <table class="sql-table" style="margin-top:14px;">
+      <tr><th></th><th>Job parameter</th><th>Secret Scope</th></tr>
+      <tr><td><strong>Right for</strong></td><td>Anything non-sensitive that varies by run — catalog, date, threshold</td><td>Anything that grants access — key, password, token, connection string</td></tr>
+      <tr><td><strong>Visible to</strong></td><td>Anyone who can view the job</td><td>Redacted from output everywhere, even for code that calls it</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 17: SECTION 6 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 6</div>
+    <h2>Notifications, In Detail</h2>
+  </div>
+
+  <!-- SLIDE 18: NOTIFICATION EVENTS -->
+  <div class="slide slide-content">
+    <h3>The Event Types</h3>
+    <table class="sql-table">
+      <tr><th>Event</th><th>Fires when</th><th>GlobalMart example</th></tr>
+      <tr><td><strong>On start</strong></td><td>Run begins</td><td>Rarely used — mostly noise</td></tr>
+      <tr><td><strong>On success</strong></td><td>Every task completes clean</td><td>Off for routine nightly runs; on for a rare one-time backfill</td></tr>
+      <tr><td><strong>On failure</strong></td><td>Any task fails</td><td><strong>Always on</strong>, every production job</td></tr>
+      <tr><td><strong>On duration warning</strong></td><td>Exceeds a threshold, even on success</td><td>The Gold <code>fact_sales</code> refresh — 10 min normally, 40 min means investigate now</td></tr>
+      <tr><td><strong>On backlog exceeded</strong></td><td>Streaming task falls behind</td><td>Bronze Autoloader/streaming tasks specifically</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 19: NOTIFICATION PLAN -->
+  <div class="slide slide-demo">
+    <h3>A Concrete GlobalMart Notification Plan</h3>
+    <pre><span class="cm">Bronze ingestion job     → On failure only               → #data-eng-alerts</span>
+<span class="cm">Silver transform job     → On failure + duration warning → #data-eng-alerts</span>
+<span class="cm">Gold fact_sales refresh  → On failure + duration warning → #data-eng-alerts + owner email</span>
+<span class="cm">One-time backfill job    → On start/success/failure     → email to whoever's running it</span></pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Routine, frequent jobs stay quiet unless something's wrong. Rare, high-stakes runs get chattier — there's a human specifically watching that one.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 20: SECTION 7 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 7</div>
+    <h2>Retries, In Detail</h2>
+  </div>
+
+  <!-- SLIDE 21: RETRY SETTINGS -->
+  <div class="slide slide-content">
+    <h3>The Settings, and When They Help</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>Retries help for —</h4>
+        <p><strong>Transient</strong> failures: a network blip to Supabase, a cluster still spinning up, a momentary API rate limit. True now, false a minute later, no code change needed. 2-3 retries, 1-2 min interval is standard.</p>
+      </div>
+      <div class="card">
+        <h4>Settings</h4>
+        <p><strong>Retries</strong> — how many attempts. <strong>Min retry interval</strong> — wait time between. <strong>Retry on timeout</strong> — whether a too-slow (not errored) task also retries.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 22: IDEMPOTENCY TRAP -->
+  <div class="slide slide-demo" style="border-left-color:#ef4444;">
+    <h3 style="color:#ef4444;">The Idempotency Trap</h3>
+    <p style="font-size:15px; color:#cbd5e1; margin-bottom:14px;">A retry is only safe if running the same task <strong>twice</strong> produces the same result as running it <strong>once</strong>.</p>
+    <div class="highlight-box warn">
+      <p>This is exactly the bug this cohort actually hit: <code>orders_incremental_scd1_merge</code>'s CDF read could hand MERGE two rows for the same <code>order_id</code>, and separately, a customers SCD2 notebook had an insert block accidentally tripled. With retries on, a partial failure wouldn't just fail loudly again — it could succeed on attempt two while having <em>already</em> written duplicate data on attempt one.</p>
+    </div>
+    <p style="margin-top:14px; font-size:14.5px; color:#cbd5e1;"><strong>Ask before enabling retries:</strong> "if this task succeeds twice in a row on the same input, is that safe?" A MERGE keyed on a real primary key — yes. A blind append with no key — no.</p>
+  </div>
+
+  <!-- SLIDE 23: SECTION 8 -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Section 8</div>
+    <h2>Metric Thresholds, In Detail</h2>
+  </div>
+
+  <!-- SLIDE 24: METRIC THRESHOLDS -->
+  <div class="slide slide-content">
+    <h3>Catching a Job That's Quietly Getting Worse</h3>
+    <p style="font-size:15px; color:#cbd5e1; margin-bottom:14px;">A threshold rule — <code>if RUN_DURATION_SECONDS &gt; X</code> — doesn't stop the job. It triggers whichever notification you attached to "duration warning" back in Section 6.</p>
+    <div class="highlight-box">
+      <p>Without one, a job that goes from 10 minutes to 55 minutes still shows a plain <strong>green success</strong> — nothing visibly wrong, because nothing failed. A threshold turns a silent, slow-motion degradation into an active alert while the job is still succeeding, when you have the most time to investigate calmly.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 25: THRESHOLD PLAN -->
+  <div class="slide slide-demo">
+    <h3>A Concrete GlobalMart Threshold Plan</h3>
+    <pre><span class="cm">Bronze Autoloader task      → RUN_DURATION_SECONDS > 300   (normally ~2 min)</span>
+<span class="cm">Silver SCD2 merge tasks     → RUN_DURATION_SECONDS > 600   (normally ~5-8 min)</span>
+<span class="cm">Gold fact_sales refresh     → RUN_DURATION_SECONDS > 900   (normally ~10 min; feeds live dashboards)</span></pre>
+    <div class="highlight-box" style="margin-top:14px;">
+      <p>Set thresholds from the last 10-20 runs' <strong>real</strong> durations, at roughly 2-3x the normal ceiling. Too tight → alert fatigue from normal variance. Too loose → it never fires before something's badly wrong.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 26: FULL RECAP -->
+  <div class="slide slide-content">
+    <h3>The Full Live-Demo Script, End to End</h3>
+    <ol class="order-list">
+      <li>Jobs &amp; Pipelines → Jobs → Create Job</li>
+      <li>Task name <code>orchestration</code> · Type <code>Notebook</code> · Source <code>Workspace</code> · browse to the path</li>
+      <li>Compute → Add new cluster → name it → deselect Photon → node type Standard_DS3_v2</li>
+      <li>Libraries tab → add anything actually imported beyond runtime defaults</li>
+      <li>Parameters tab → <code>catalog_name</code> = real catalog. Never a key/secret/password/token here</li>
+      <li>Notifications → failure always; duration warning for anything dashboard-facing</li>
+      <li>Retry policy → 2 retries, 2 min interval — after confirming idempotency</li>
+      <li>Health / metric thresholds → set from real observed run times</li>
+      <li>Run now — watch the task graph, cluster logs, duration live</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 27: CLOSING -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Wrap-Up</div>
+    <h2>What's Next</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      You'll be handed a real GlobalMart notebook and asked to orchestrate it yourself — applying every decision from today, not just clicking defaults.
+    </p>
+    <div class="three-col" style="margin-top:32px; max-width:860px;">
+      <div class="card">
+        <h4>Recap</h4>
+        <p>Task setup, job clusters, Photon, libraries, safe parameters, notifications, retries, thresholds.</p>
+      </div>
+      <div class="card">
+        <h4>Before You Start</h4>
+        <p>Re-read Day 10 ILT 2's DAG concepts if orchestrating more than one task — <code>depends_on</code> wasn't this session's job.</p>
+      </div>
+      <div class="card">
+        <h4>Closing Check</h4>
+        <p>Your Silver MERGE task has retries on. Someone asks why that's safe here but wasn't safe before a real bug got fixed earlier this course. What do you say?</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>
