@@ -1,0 +1,14 @@
+customer_id,first_name,last_name,email,city,state,created_at
+CUST-001,Arjun,Sharma,arjun.sharma@email.com,Mumbai,Maharashtra,2025-01-10
+CUST-002,Priya,Nair,priya.nair@email.com,Bengaluru,Karnataka,2025-01-12
+CUST-003,Rahul,Verma,rahul.vermaemail.com,Delhi,Delhi,2025-01-15
+CUST-004,Sneha,Patel,sneha.patel@email.com,Ahmedabad,Gujarat,2025-01-18
+CUST-005,Karan,Mehta,karan.mehta@email.com,Pune,Maharashtra,2025-01-20
+CUST-006,Ananya,Reddy,ananya.reddy@email.com,Hyderabad,Telangana,2025-02-01
+CUST-007,Vikram,Singh,vikram.singh@email.com,Jaipur,Rajasthan,2025-02-05
+CUST-008,Divya,Kumar,divya.kumar@email.com,Chennai,Tamil Nadu,2025-02-10
+CUST-009,Rohit,Joshi,rohit.joshi@email.com,Kolkata,,2025-02-14
+CUST-010,Meera,Iyer,meera.iyer@email.com,Bengaluru,Karnataka,2025-02-20
+CUST-011,Aditya,Bose,aditya.bose@email.com,Mumbai,Maharashtra,2025-03-01
+CUST-012,Kavya,Das,kavya.das@email.com,Hyderabad,Telangana,2025-03-05
+CUST-007,Vikram,Singh,vikram.singh@email.com,Jaipur,Rajasthan,2025-02-05

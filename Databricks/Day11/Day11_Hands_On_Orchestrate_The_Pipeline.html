@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 11 — Hands-On: Orchestrate the GlobalMart Pipeline</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
+  }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 40px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 740px; margin: 0 auto 26px; }
+  .hero .cta { display: inline-block; background: var(--accent); color: #0f172a; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+  .hero .cta:hover { background: #5fd0ff; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
+
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .time-badge { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid rgba(245,158,11,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: none; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 780px; margin-bottom: 30px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 800px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+  .card.small { padding: 14px 16px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  details.hint { background: #14243d; border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; padding: 4px 0; }
+  details.hint summary { cursor: pointer; padding: 12px 18px; font-size: 13.5px; font-weight: 700; color: var(--accent2); list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.hint summary::-webkit-details-marker { display: none; }
+  details.hint summary::before { content: '💡'; }
+  details.hint[open] summary { border-bottom: 1px solid var(--border); }
+  details.hint .hint-body { padding: 14px 18px 16px; font-size: 14px; color: #cbd5e1; line-height: 1.7; }
+  details.hint .hint-body p + p { margin-top: 10px; }
+
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 15px; margin-right: 10px; flex-shrink: 0; }
+
+  .checklist-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; color: #cbd5e1; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--good); flex-shrink: 0; cursor: pointer; }
+  .checklist-item label { cursor: pointer; }
+
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-red { background: #7f1d1d; color: #fecaca; }
+
+  /* DAG DIAGRAM */
+  .dag { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  .dag-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dag-node { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .dag-node.bronze { border-color: #a3623a; color: #e8b795; }
+  .dag-node.silver { border-color: #94a3b8; color: #e2e8f0; }
+  .dag-node.gold { border-color: #d1ac4f; color: #f3dc9c; }
+  .dag-arrow { color: var(--muted); font-size: 18px; }
+
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 11 · HANDS-ON — ORCHESTRATE THE PIPELINE</div>
+    <div class="links">
+      <a href="#howitworks" class="navlink">How It Works</a>
+      <a href="#dataset" class="navlink">The Dataset</a>
+      <a href="#phase1" class="navlink">Phase 1 · By Hand</a>
+      <a href="#phase2" class="navlink">Phase 2 · Build the Job</a>
+      <a href="#phase3" class="navlink">Phase 3 · Second Load</a>
+      <a href="#reference" class="navlink">Notebook Reference</a>
+      <a href="#checklist" class="navlink">Checklist</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Day 11 Hands-On · Builds on ILT 1 (Jobs &amp; Pipelines Walkthrough)</div>
+  <h1>Orchestrate the GlobalMart Pipeline</h1>
+  <p class="lead">You've watched the instructor build a Job live in ILT 1. Now you build the real thing — a 7-task Bronze → Silver → Gold pipeline for 3 new tables, first run entirely by hand so you understand exactly what each notebook does, then wired into a real Databricks Workflow so the second batch of data runs itself.</p>
+  <div class="meta-row">
+    <span class="meta-pill">📦 3 tables — customers, orders, transactions</span>
+    <span class="meta-pill">📓 7 notebooks — 3 Bronze, 3 Silver, 1 Gold</span>
+    <span class="meta-pill">🔁 2 batches — first load by hand, second load via orchestration</span>
+  </div>
+  <div style="margin-top:28px;"><a href="#howitworks" class="cta">Start Reading ↓</a></div>
+</header>
+
+<!-- ============================================================ -->
+<!-- HOW THIS WORKS -->
+<!-- ============================================================ -->
+<section class="content" id="howitworks">
+  <div class="wrap">
+    <div class="section-tag">Before You Open Databricks</div>
+    <h2 class="section-title">How This Works</h2>
+    <p class="section-intro">Three phases, in order. Don't skip ahead to Phase 2 before Phase 1 is genuinely done — Phase 2 only makes sense once you've felt, by hand, what each of the 7 notebooks actually does.</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <h4><span class="phase-num">1</span>By Hand</h4>
+        <p>Get the first batch of data into ADLS, mount it, and run all 7 notebooks yourself, one at a time, in the right order. This is where you actually learn what Bronze/Silver/Gold do for these 3 tables — no orchestration yet.</p>
+      </div>
+      <div class="card">
+        <h4><span class="phase-num">2</span>Build the Job</h4>
+        <p>Take those same 7 notebooks and wire them into a real Databricks Workflow — one task per notebook, dependencies matching the DAG you just ran by hand, parameters matching each notebook's widgets exactly.</p>
+      </div>
+      <div class="card">
+        <h4><span class="phase-num">3</span>Second Load</h4>
+        <p>Drop a second batch of files into the <em>same</em> ADLS folders — no notebook edits. Run the Job and watch it pick up only the new data, on its own.</p>
+      </div>
+    </div>
+
+    <div class="highlight-box warn">
+      <p><b>Why do Phase 1 manually at all, if we're just going to automate it in Phase 2?</b> Because a Job that runs notebooks you don't understand is a black box you can't debug when it fails at 2 AM. Phase 1 is where you build the mental model; Phase 2 is where you stop needing to click "Run" yourself every time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- THE DATASET -->
+<!-- ============================================================ -->
+<section class="content" id="dataset">
+  <div class="wrap">
+    <div class="section-tag">What You're Given</div>
+    <h2 class="section-title">The Dataset — 3 Tables, 2 Batches Each</h2>
+    <p class="section-intro">Everything's already provided in <code>Databricks/Day11/orchestration/</code> — you're not generating any data yourself, just moving it into ADLS at the right point in each phase.</p>
+
+    <table class="spec">
+      <tr><th>Table</th><th>First-load file</th><th>Rows</th><th>Second-load file</th><th>Rows</th><th>What changes in batch 2</th></tr>
+      <tr><td><code>customers</code></td><td><code>customers_01.csv</code></td><td>13</td><td><code>customers_02.csv</code></td><td>6</td><td>1 existing customer's email changes (CUST-002) + new customers — a real SCD1 update, not just new rows</td></tr>
+      <tr><td><code>orders</code></td><td><code>orders_01.csv</code></td><td>12</td><td><code>orders_02.csv</code></td><td>6</td><td>New orders, some against existing customers, some against the new ones from batch 2</td></tr>
+      <tr><td><code>transactions</code></td><td><code>transactions_01.csv</code></td><td>12</td><td><code>transactions_02.csv</code></td><td>5</td><td>New transactions linked to the new orders</td></tr>
+    </table>
+
+    <div class="highlight-box" style="margin-top:18px;">
+      <p><b>Where to find them:</b> <code>Databricks/Day11/orchestration/datasets-first-load/</code> and <code>datasets-second-load/</code>. Don't touch <code>datasets-second-load/</code> until Phase 3 — using it early defeats the point of watching orchestration pick up new data on its own.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 1 -->
+<!-- ============================================================ -->
+<section class="content" id="phase1">
+  <div class="wrap">
+    <div class="section-tag">Phase 1 <span class="time-badge">⏱ do this first, no shortcuts</span></div>
+    <h2 class="section-title">Run the First Load by Hand</h2>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 6px;">Step A — New ADLS Folder</h3>
+    <p class="section-intro" style="margin-bottom:10px;">Create a <strong>new</strong> folder for this lab — don't drop these files into the main GlobalMart <code>raw-data/</code> folder you've used all course. Keeping this lab's practice data separate means nothing here can collide with the real pipeline you already built.</p>
+    <div class="order-list">
+      <li>In your ADLS container, create a new folder — e.g. <code>orchestration-lab/</code> — and inside it, three subfolders: <code>customers/</code>, <code>orders/</code>, <code>transactions/</code>.</li>
+      <li>Upload the 3 first-load CSVs from <code>datasets-first-load/</code>, one file into its matching subfolder (<code>customers_01.csv</code> → <code>orchestration-lab/customers/</code>, and so on).</li>
+    </div>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 6px;">Step B — Mount It</h3>
+    <p class="section-intro" style="margin-bottom:10px;">Same mounting pattern from Day 4 — a new mount point dedicated to this lab, not reusing your existing GlobalMart mount.</p>
+<pre style="background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:16px 20px;overflow-x:auto;font-family:'Cascadia Code',Consolas,monospace;font-size:13px;color:#e6edf3;">MOUNT_POINT = "/mnt/&lt;yourname&gt;_orchestration_lab"
+STORAGE_ACCOUNT = "YOUR_STORAGE_ACCOUNT_NAME"
+CONTAINER = "YOUR_CONTAINER_NAME"
+<span style="color:#6e7681;font-style:italic;"># mount as taught in Day 4 -- same dbutils.fs.mount() pattern, new mount point</span></pre>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 6px;">Step C — Run Bronze (any order — all 3 are independent)</h3>
+    <div class="order-list">
+      <li>Open <code>notebooks/bronze/01_bronze_customers.ipynb</code>. Update the <code>source_path</code> widget default to your new mount/ADLS path, then run every cell top to bottom.</li>
+      <li>Do the same for <code>02_bronze_orders.ipynb</code> and <code>03_bronze_transactions.ipynb</code>.</li>
+      <li>Each notebook's Step 3 prints a row count — confirm you see 13 customers, 12 orders, 12 transactions in Bronze before moving on.</li>
+    </div>
+    <div class="highlight-box">
+      <p><b>Notice the ingestion pattern:</b> Bronze uses <code>COPY INTO</code>, not a plain file read — it tracks which files it's already ingested. That's the mechanism that makes Phase 3 work later: re-run the same notebook after dropping new files, and only the new files get picked up.</p>
+    </div>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 6px;">Step D — Run Silver <span class="pill pill-red">order matters here</span></h3>
+    <div class="order-list">
+      <li><code>04_silver_customers.ipynb</code> first — it only depends on Bronze Customers.</li>
+      <li><code>05_silver_orders.ipynb</code> second — it does a referential-integrity check against <code>silver.customers</code>, so that table must exist and be populated first.</li>
+      <li><code>06_silver_transactions.ipynb</code> third — same reason, it checks against <code>silver.orders</code>.</li>
+    </div>
+    <details class="hint">
+      <summary>Why does this order actually matter?</summary>
+      <div class="hint-body">
+        <p>Each Silver notebook doesn't just clean its own table — <code>05</code> and <code>06</code> also verify that every row's foreign key actually exists in the Silver table it depends on, before merging. Run <code>06</code> before <code>05</code> and every transaction's referential-integrity check runs against an empty or stale <code>silver.orders</code> — you'd see rows incorrectly flagged as orphaned that aren't really orphaned at all.</p>
+        <p>This exact dependency chain — <code>customers → orders → transactions</code> — is what you'll wire up explicitly as <code>depends_on</code> in Phase 2's Workflow, so Databricks enforces the order for you instead of you having to remember it.</p>
+      </div>
+    </details>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 6px;">Step E — Run Gold</h3>
+    <div class="order-list">
+      <li><code>07_gold_fact_sales.ipynb</code> — joins all three Silver tables and MERGEs into <code>gold.fact_sales</code>. Run it last, after all three Silver notebooks have completed.</li>
+      <li>Its Step 5 verify cell prints a revenue-by-status breakdown — sanity-check the row count matches your transaction count.</li>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Phase 1 Checkpoint</div>
+      <p>Before moving to Phase 2, confirm: <code>bronze.customers/orders/transactions</code> each have their expected first-load row count, <code>silver.customers/orders/transactions</code> exist and are populated, and <code>gold.fact_sales</code> has one row per transaction. If any of these is missing, don't build the Workflow yet — fix it by hand first.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 2 -->
+<!-- ============================================================ -->
+<section class="content" id="phase2">
+  <div class="wrap">
+    <div class="section-tag">Phase 2 <span class="time-badge">⏱ builds directly on ILT 1</span></div>
+    <h2 class="section-title">Build the Real Workflow</h2>
+    <p class="section-intro">Same screens as ILT 1's live demo — Jobs &amp; Pipelines → Create Job — except this time you're building 7 tasks with real dependencies between them, not one demo task.</p>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 10px;">The Dependency Graph</h3>
+    <div class="dag">
+      <div class="dag-row">
+        <div class="dag-node bronze">bronze_customers</div>
+        <div class="dag-arrow">&rarr;</div>
+        <div class="dag-node silver">silver_customers</div>
+        <div class="dag-arrow">&rarr;</div>
+        <div class="dag-node silver">silver_orders</div>
+        <div class="dag-arrow">&rarr;</div>
+        <div class="dag-node silver">silver_transactions</div>
+        <div class="dag-arrow">&rarr;</div>
+        <div class="dag-node gold">gold_fact_sales</div>
+      </div>
+      <div class="dag-row" style="margin-left:180px;">
+        <div class="dag-node bronze">bronze_orders</div>
+        <div class="dag-arrow">&#8599;</div>
+        <span style="font-size:12px; color:var(--muted);">feeds silver_orders directly too</span>
+      </div>
+      <div class="dag-row" style="margin-left:390px;">
+        <div class="dag-node bronze">bronze_transactions</div>
+        <div class="dag-arrow">&#8599;</div>
+        <span style="font-size:12px; color:var(--muted);">feeds silver_transactions directly too</span>
+      </div>
+    </div>
+
+    <table class="spec" style="margin-top:20px;">
+      <tr><th>Task</th><th><code>depends_on</code></th><th>Why</th></tr>
+      <tr><td><code>bronze_customers</code></td><td>— (none)</td><td>Reads its own ADLS folder, no dependency</td></tr>
+      <tr><td><code>bronze_orders</code></td><td>— (none)</td><td>Same — the 3 Bronze tasks fan out in parallel</td></tr>
+      <tr><td><code>bronze_transactions</code></td><td>— (none)</td><td>Same</td></tr>
+      <tr><td><code>silver_customers</code></td><td><code>bronze_customers</code></td><td>Only reads Bronze customers</td></tr>
+      <tr><td><code>silver_orders</code></td><td><code>bronze_orders</code>, <code>silver_customers</code></td><td>Reads Bronze orders <em>and</em> checks referential integrity against Silver customers</td></tr>
+      <tr><td><code>silver_transactions</code></td><td><code>bronze_transactions</code>, <code>silver_orders</code></td><td>Same pattern, one level down</td></tr>
+      <tr><td><code>gold_fact_sales</code></td><td><code>silver_customers</code>, <code>silver_orders</code>, <code>silver_transactions</code></td><td>Joins all three Silver tables — needs all of them done first</td></tr>
+    </table>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:26px 0 10px;">Build Steps</h3>
+    <div class="order-list">
+      <li>Jobs &amp; Pipelines → Create Job. Name the job something you'll recognize, e.g. <code>globalmart_orchestration_lab</code>.</li>
+      <li>Create all 7 tasks — one per notebook, task names matching the table names above (<code>bronze_customers</code>, <code>silver_orders</code>, etc.) so your <code>depends_on</code> references read cleanly.</li>
+      <li>For each task: Type <code>Notebook</code>, Source <code>Workspace</code>, path pointing at the matching notebook under <code>Databricks/Day11/orchestration/notebooks/</code>.</li>
+      <li>Set <code>depends_on</code> for each task exactly per the table above — this is what makes Databricks run the 3 Bronze tasks in parallel, then wait, then run Silver in the right order, then Gold last.</li>
+      <li>Compute: one shared job cluster for the whole job (Add new cluster, same settings as ILT 1 — Standard_DS3_v2, Photon deselected) is enough for a dataset this size.</li>
+      <li><b>Parameters — match each notebook's widget names exactly.</b> See the table below.</li>
+    </div>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:26px 0 10px;">Parameters, Per Notebook</h3>
+    <table class="spec">
+      <tr><th>Notebook</th><th>Widget name</th><th>What to set it to</th></tr>
+      <tr><td>Bronze (all 3)</td><td><code>catalog</code></td><td>your real catalog name</td></tr>
+      <tr><td>Bronze (all 3)</td><td><code>schema</code></td><td><code>bronze</code></td></tr>
+      <tr><td>Bronze (all 3)</td><td><code>source_path</code></td><td>your mounted path's matching subfolder, e.g. <code>/mnt/&lt;yourname&gt;_orchestration_lab/customers/</code></td></tr>
+      <tr><td>Bronze (all 3)</td><td><code>batch_id</code></td><td>a label for this run, e.g. <code>batch_001</code> — free text, used only for your own tracking</td></tr>
+      <tr><td>Silver / Gold (all 4)</td><td><code>catalog</code></td><td>same catalog as Bronze</td></tr>
+      <tr><td>Silver (all 3)</td><td><code>source_schema</code> / <code>target_schema</code></td><td><code>bronze</code> / <code>silver</code></td></tr>
+      <tr><td>Gold</td><td><code>source_schema</code> / <code>target_schema</code></td><td><code>silver</code> / <code>gold</code></td></tr>
+    </table>
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><b>Remember ILT 1's rule:</b> <code>catalog</code>, <code>schema</code>, <code>source_path</code> are all fine as parameters — none of them are secret. Nothing in this lab needs a credential parameter at all, since ADLS access goes through your existing mount, not a raw key typed into a Job.</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Phase 2 Checkpoint</div>
+      <p>Run the Job now, once, even though it's the same data you already loaded by hand. Every Bronze task's <code>COPY INTO</code> should report <b>0 files copied</b> (already ingested in Phase 1), and every Silver/Gold MERGE should be a no-op — same row counts as Phase 1 ended with. This proves the Job is correctly wired <em>before</em> you introduce new data in Phase 3.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 3 -->
+<!-- ============================================================ -->
+<section class="content" id="phase3">
+  <div class="wrap">
+    <div class="section-tag">Phase 3 <span class="time-badge">⏱ the payoff</span></div>
+    <h2 class="section-title">Second Load, Fully Orchestrated</h2>
+    <p class="section-intro">No notebook edits, no manual runs. This is the moment the whole lab has been building toward.</p>
+
+    <div class="order-list">
+      <li>Upload the 3 files from <code>datasets-second-load/</code> into the <b>same</b> ADLS subfolders you used in Phase 1 — <code>customers_02.csv</code> alongside <code>customers_01.csv</code>, and so on. Same folders, don't create new ones.</li>
+      <li>Go to your Job and click <b>Run now</b> — or, if you set up a schedule, just wait for it.</li>
+      <li>Watch the run's task graph live. Confirm the 3 Bronze tasks start together, then Silver runs in order, then Gold runs last — exactly the dependency graph from Phase 2, enforced automatically this time.</li>
+    </div>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 10px;">What to Actually Look For</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h4>In Bronze</h4>
+        <p>Each <code>COPY INTO</code> result should now show <b>non-zero</b> <code>num_files_copied</code>/<code>num_rows_inserted</code> — only the second-load file, not the first-load file again.</p>
+      </div>
+      <div class="card">
+        <h4>In Silver customers</h4>
+        <p><code>CUST-002</code>'s email should now show the new domain from <code>customers_02.csv</code> — proof the SCD1 <code>MERGE</code> updated an existing row instead of inserting a duplicate.</p>
+      </div>
+      <div class="card">
+        <h4>In Silver orders/transactions</h4>
+        <p>Row counts should grow by exactly the second-load file's new row count — verify the referential-integrity checks didn't flag any of the new orders/transactions as orphaned.</p>
+      </div>
+      <div class="card">
+        <h4>In Gold fact_sales</h4>
+        <p>Row count should grow by the new transaction count, and the revenue-by-status breakdown should reflect the new orders' statuses.</p>
+      </div>
+    </div>
+
+    <div class="highlight-box success" style="margin-top:18px;">
+      <p><b>This is the whole point:</b> the exact same 7 notebooks, the exact same Job, no code changed anywhere — and it correctly picked up only what was new, updated the one customer whose data actually changed, and left everything else untouched. That's what "orchestrated" means in practice, not just in theory.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- NOTEBOOK REFERENCE -->
+<!-- ============================================================ -->
+<section class="content" id="reference">
+  <div class="wrap">
+    <div class="section-tag">Reference</div>
+    <h2 class="section-title">All 7 Notebooks, at a Glance</h2>
+    <table class="spec">
+      <tr><th>#</th><th>Notebook</th><th>Target table</th><th>Pattern</th><th>Depends on</th></tr>
+      <tr><td>1</td><td><code>bronze/01_bronze_customers.ipynb</code></td><td><code>bronze.customers</code></td><td><code>COPY INTO</code></td><td>—</td></tr>
+      <tr><td>2</td><td><code>bronze/02_bronze_orders.ipynb</code></td><td><code>bronze.orders</code></td><td><code>COPY INTO</code></td><td>—</td></tr>
+      <tr><td>3</td><td><code>bronze/03_bronze_transactions.ipynb</code></td><td><code>bronze.transactions</code></td><td><code>COPY INTO</code></td><td>—</td></tr>
+      <tr><td>4</td><td><code>silver/04_silver_customers.ipynb</code></td><td><code>silver.customers</code></td><td>Dedupe + DQ (valid email) + SCD1 <code>MERGE</code></td><td>Task 1</td></tr>
+      <tr><td>5</td><td><code>silver/05_silver_orders.ipynb</code></td><td><code>silver.orders</code></td><td>Status standardization + RI check + SCD1 <code>MERGE</code></td><td>Task 2, Task 4</td></tr>
+      <tr><td>6</td><td><code>silver/06_silver_transactions.ipynb</code></td><td><code>silver.transactions</code></td><td>Cast + quarantine negatives + RI check + SCD1 <code>MERGE</code></td><td>Task 3, Task 5</td></tr>
+      <tr><td>7</td><td><code>gold/07_gold_fact_sales.ipynb</code></td><td><code>gold.fact_sales</code></td><td>3-way join + <code>MERGE</code></td><td>Task 4, 5, 6</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CHECKLIST -->
+<!-- ============================================================ -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Before You Call This Done</div>
+    <h2 class="section-title">Final Checklist</h2>
+    <div class="checklist-card">
+      <div class="checklist-item"><input type="checkbox" id="c1"><label for="c1">New ADLS folder created, separate from the main course's <code>raw-data/</code></label></div>
+      <div class="checklist-item"><input type="checkbox" id="c2"><label for="c2">Mounted at a new, dedicated mount point</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c3"><label for="c3">All 7 notebooks run by hand once, in the correct order, against the first-load data</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c4"><label for="c4">Job built with all 7 tasks and the correct <code>depends_on</code> graph</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c5"><label for="c5">Parameters set per notebook, matching widget names exactly</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c6"><label for="c6">Job run once against the already-loaded data — confirmed 0 new rows everywhere</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c7"><label for="c7">Second-load files uploaded into the same ADLS subfolders</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c8"><label for="c8">Job re-run, task graph observed live, dependency order confirmed correct</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c9"><label for="c9"><code>CUST-002</code>'s updated email confirmed in <code>silver.customers</code> — proof of a real SCD1 update, not just an insert</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c10"><label for="c10"><code>gold.fact_sales</code> row count grew by exactly the second-load transaction count</label></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 11 · Hands-On: Orchestrate the Pipeline
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>

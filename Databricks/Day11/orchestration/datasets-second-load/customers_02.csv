@@ -1,0 +1,7 @@
+customer_id,first_name,last_name,email,city,state,created_at
+CUST-002,Priya,Nair,priya.nair@newdomain.com,Bengaluru,Karnataka,2025-01-12
+CUST-005,Karan,Mehta,karan.mehta@email.com,Mumbai,Maharashtra,2025-01-20
+CUST-013,Ravi,Chopra,ravi.chopra@email.com,Delhi,Delhi,2025-04-01
+CUST-014,Anita,Sinha,anita.sinha@email.com,Pune,Maharashtra,2025-04-02
+CUST-015,Sanjay,Gupta,sanjay.gupta@email.com,Chennai,Tamil Nadu,2025-04-03
+CUST-016,Pooja,Verma,pooja.verma@email.com,Kolkata,West Bengal,2025-04-04

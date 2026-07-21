@@ -1,0 +1,6 @@
+transaction_id,order_id,quantity,unit_price,total_amount,payment_mode,created_at
+TXN-013,ORD-013,2,2500.00,5000.00,Credit Card,2025-04-01
+TXN-014,ORD-014,1,7800.00,7800.00,UPI,2025-04-02
+TXN-015,ORD-015,3,450.00,1350.00,Debit Card,2025-04-03
+TXN-016,ORD-013,2,1200.00,2400.00,Net Banking,2025-04-04
+TXN-017,ORD-014,1,5500.00,5500.00,Credit Card,2025-04-05
