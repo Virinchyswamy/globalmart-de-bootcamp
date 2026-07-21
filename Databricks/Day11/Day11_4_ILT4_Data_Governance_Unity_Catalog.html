@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 11 | ILT 4 — Data Governance &amp; Unity Catalog</title>
+<style>
+  :root {
+    --bg: #1f1128;
+    --bg2: #2a1a38;
+    --bg3: #351f47;
+    --border: #4a3358;
+    --gold: #e8b64c;
+    --pink: #ff6fae;
+    --mint: #6be3c3;
+    --text: #f5ebe0;
+    --muted: #b8a3c9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--bg2); border-bottom: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: var(--gold); letter-spacing: 1px; }
+  nav .logo span { color: var(--pink); }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 6px 16px;
+    border-radius: 20px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: var(--gold); color: var(--bg); }
+  nav .slide-counter { font-size: 13px; color: var(--muted); }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 64px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover {
+    background: radial-gradient(circle at 50% 30%, #4a2a63 0%, var(--bg) 70%);
+    text-align: center; align-items: center;
+  }
+  .slide-cover h1 { font-size: 46px; font-weight: 800; color: var(--gold); margin: 14px 0 10px; }
+  .slide-cover .subtitle { font-size: 19px; color: var(--muted); max-width: 620px; }
+  .slide-cover .badge {
+    margin-top: 22px; background: var(--pink); color: #2a0e1e; font-weight: 700;
+    padding: 6px 18px; border-radius: 20px; font-size: 13px;
+  }
+
+  .slide-section { background: var(--bg2); }
+  .slide-section h2 { font-size: 34px; font-weight: 800; color: var(--gold); margin-bottom: 6px; }
+  .slide-section .section-tag { color: var(--pink); font-size: 13px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700; }
+  .slide-section .lede { color: var(--muted); max-width: 680px; margin-top: 10px; font-size: 15px; }
+
+  .slide-content { background: var(--bg); }
+  .slide-content h3 { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+  .slide-content .kicker { color: var(--pink); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+
+  /* --- COMPONENTS --- */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: center; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+
+  .card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .card h4 { color: var(--gold); margin-bottom: 8px; font-size: 14px; }
+  .card p, .card li { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+  .card .job { color: var(--pink); font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+
+  .bubble {
+    background: var(--bg3); border: 2px solid var(--gold); border-radius: 18px;
+    padding: 14px 20px; margin-top: 16px; position: relative;
+  }
+  .bubble p { font-size: 14px; line-height: 1.65; color: var(--text); }
+  .bubble .tag { color: var(--gold); font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .bubble.pink { border-color: var(--pink); }
+  .bubble.mint { border-color: var(--mint); }
+
+  pre {
+    background: #150c1c; border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 12.5px; line-height: 1.6; color: #f1e6f5;
+  }
+  .kw { color: var(--pink); font-weight: bold; }
+  .fn { color: var(--mint); }
+  .str { color: var(--gold); }
+
+  table.gtable {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px;
+  }
+  table.gtable th {
+    background: var(--pink); color: #2a0e1e; padding: 8px 12px; text-align: left; font-size: 12.5px;
+  }
+  table.gtable td {
+    border: 1px solid var(--border); padding: 7px 12px; color: var(--text);
+    background: var(--bg2);
+  }
+  table.gtable tr:nth-child(even) td { background: #251733; }
+
+  /* --- DRAWINGS --- */
+  .rope-divider { display: flex; justify-content: center; margin: 18px 0; }
+
+  .bouncer-wrap { display: flex; justify-content: center; }
+
+  .building { display: flex; flex-direction: column; gap: 10px; }
+  .metastore-box {
+    border: 3px dashed var(--gold); border-radius: 16px; padding: 18px;
+  }
+  .metastore-label { color: var(--gold); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .catalog-box {
+    background: var(--bg3); border: 2px solid var(--pink); border-radius: 12px; padding: 14px;
+  }
+  .catalog-label { color: var(--pink); font-weight: 800; font-size: 13px; margin-bottom: 10px; }
+  .schema-row { display: flex; gap: 10px; }
+  .schema-box {
+    flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px;
+  }
+  .schema-label { color: var(--mint); font-weight: 700; font-size: 12px; margin-bottom: 6px; }
+  .table-chip {
+    display: inline-block; background: var(--bg); border: 1px solid var(--border);
+    color: var(--muted); font-size: 10.5px; padding: 2px 8px; border-radius: 10px; margin: 2px 2px 0 0;
+  }
+
+  .footer-note { color: var(--muted); font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 11 · ILT 4 — Data Governance <span>&amp; the Data Bouncer</span></div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 8</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <div class="bouncer-wrap">
+      <svg width="130" height="150" viewBox="0 0 130 150">
+        <ellipse cx="65" cy="118" rx="46" ry="28" fill="#e8b64c"/>
+        <rect x="30" y="60" width="70" height="60" rx="18" fill="#e8b64c"/>
+        <line x1="45" y1="72" x2="70" y2="98" stroke="#1f1128" stroke-width="6" stroke-linecap="round"/>
+        <line x1="85" y1="72" x2="60" y2="98" stroke="#1f1128" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="65" cy="38" r="32" fill="#f5ebe0"/>
+        <rect x="34" y="32" width="24" height="14" rx="6" fill="#1f1128"/>
+        <rect x="72" y="32" width="24" height="14" rx="6" fill="#1f1128"/>
+        <line x1="58" y1="38" x2="72" y2="38" stroke="#1f1128" stroke-width="3"/>
+        <path d="M60 54 L65 60 L70 54 L65 50 Z" fill="#ff6fae"/>
+      </svg>
+    </div>
+    <h1>Data Governance &amp; Unity Catalog</h1>
+    <p class="subtitle">Every data platform needs a bouncer. Meet yours — and learn the five things it's actually checking before it waves anyone through.</p>
+    <div class="badge">DAY 11 · ILT 4</div>
+  </div>
+
+  <!-- SLIDE 2: THE PROBLEM -->
+  <div class="slide slide-content">
+    <div class="kicker">Without a bouncer</div>
+    <h3>A Data Party With No One At the Door</h3>
+    <div class="grid-5" style="margin-top:14px;">
+      <div class="card"><div class="job">😵 No map</div><p>Nobody knows what tables exist, so people rebuild the same "customer lifetime value" three different (wrong) ways.</p></div>
+      <div class="card"><div class="job">🙈 No logbook</div><p>A record got viewed by... someone? No idea. No way to ever find out.</p></div>
+      <div class="card"><div class="job">🧵 No thread</div><p>Nobody knows what feeds a dashboard — one schema change and four reports silently go blank.</p></div>
+      <div class="card"><div class="job">🪪 No single badge</div><p>Every tool keeps its own guest list. An employee leaves, and IT forgets to remove them from 3 out of 5 systems.</p></div>
+      <div class="card"><div class="job">🚪 One door, no rooms</div><p>The only options are "see the whole table" or "see nothing." No way to share 90% and protect one column.</p></div>
+    </div>
+    <div class="bubble pink" style="margin-top:18px;"><span class="tag">The pattern</span><p>Every single one of these is a governance problem — none of them are "just get a better tool" problems. That's what a bouncer actually does: give the party structure, not just a velvet rope.</p></div>
+  </div>
+
+  <!-- SLIDE 3: THE 5 JOBS -->
+  <div class="slide slide-content">
+    <div class="kicker">The bouncer's job description</div>
+    <h3>Five Jobs, One Bouncer — Unity Catalog</h3>
+    <div class="grid-5" style="margin-top:14px;">
+      <div class="card"><div class="job">🔍 Discovery</div><p><strong>Knows the venue by heart.</strong> Catalog Explorer — search "customer," find every matching table in seconds, comments and all.</p></div>
+      <div class="card"><div class="job">📋 Audit</div><p><strong>Keeps a logbook.</strong> Every query, every grant, is auto-logged in <code>system.access.audit</code> — nobody writes logging code.</p></div>
+      <div class="card"><div class="job">🧬 Lineage</div><p><strong>Remembers who invited whom.</strong> Automatic upstream/downstream map — see what feeds a table before you touch it.</p></div>
+      <div class="card"><div class="job">🪪 Identity</div><p><strong>One badge, every door.</strong> Users &amp; groups defined once, synced from Azure AD/Okta — not re-typed per tool.</p></div>
+      <div class="card"><div class="job">🔑 Access</div><p><strong>Decides who's on the list.</strong> <code>GRANT</code>/<code>REVOKE</code> at catalog, schema, table — down to a row or column.</p></div>
+    </div>
+    <div class="bubble" style="margin-top:18px;"><span class="tag">Real example</span><p>New hire at a 200-analyst bank types "risk score" into Catalog Explorer, finds the real table in seconds — no week of Slack archaeology first.</p></div>
+  </div>
+
+  <!-- SLIDE 4: ARCHITECTURE -->
+  <div class="slide slide-content">
+    <div class="kicker">The building the bouncer guards</div>
+    <h3>Metastore &rarr; Catalog &rarr; Schema &rarr; Table</h3>
+    <div class="grid-2" style="margin-top:10px;">
+      <div class="building">
+        <div class="metastore-box">
+          <div class="metastore-label">Metastore — the whole building (one per region)</div>
+          <div class="catalog-box">
+            <div class="catalog-label">Catalog — one floor: "gbmart"</div>
+            <div class="schema-row">
+              <div class="schema-box"><div class="schema-label">bronze</div><span class="table-chip">customers</span><span class="table-chip">orders</span></div>
+              <div class="schema-box"><div class="schema-label">silver</div><span class="table-chip">customers</span><span class="table-chip">orders</span></div>
+              <div class="schema-box"><div class="schema-label">gold</div><span class="table-chip">dim_customer</span><span class="table-chip">fact_sales</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px;"><h4>Managed vs. External</h4><p><strong>Managed</strong> = the bouncer owns the furniture — <code>DROP TABLE</code> deletes the data too. <strong>External</strong> = the bouncer just has the keys to a room you own — <code>DROP TABLE</code> only removes the sign on the door.</p></div>
+        <div class="card"><h4>Storage Credential + External Location</h4><p>The keycard system: a <strong>Storage Credential</strong> (<code>ecomprojectscredentials</code>) authenticates to the cloud account — no raw key ever pasted into a notebook. An <strong>External Location</strong> (<code>gbmart-ext-loc</code>) says exactly which path it can reach.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: RBAC -->
+  <div class="slide slide-content">
+    <div class="kicker">Getting in the door</div>
+    <h3>The Guest List — RBAC</h3>
+    <div class="grid-2" style="margin-top:10px;">
+      <div>
+        <svg width="180" height="130" viewBox="0 0 180 130">
+          <rect x="40" y="10" width="90" height="110" rx="6" fill="#2a1a38" stroke="#e8b64c" stroke-width="3"/>
+          <rect x="55" y="0" width="60" height="18" rx="4" fill="#e8b64c"/>
+          <line x1="55" y1="35" x2="115" y2="35" stroke="#b8a3c9" stroke-width="3"/>
+          <line x1="55" y1="50" x2="115" y2="50" stroke="#b8a3c9" stroke-width="3"/>
+          <line x1="55" y1="65" x2="100" y2="65" stroke="#b8a3c9" stroke-width="3"/>
+          <line x1="55" y1="80" x2="115" y2="80" stroke="#b8a3c9" stroke-width="3"/>
+          <path d="M56 47 l4 5 l8 -10" stroke="#6be3c3" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M56 77 l4 5 l8 -10" stroke="#6be3c3" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <p style="color:var(--muted); font-size:14px; margin-bottom:12px;">RBAC answers one question: <strong style="color:var(--text);">"Can this group reach this table at all?"</strong> — a yes/no gate. Grant once at the schema level, and it covers every table added later too.</p>
+<pre><span class="kw">GRANT USE CATALOG</span> ON CATALOG gbmart TO `analysts`;
+<span class="kw">GRANT SELECT</span> ON SCHEMA gbmart.gold TO `analysts`;
+<span class="kw">REVOKE SELECT</span> ON SCHEMA gbmart.gold FROM `analysts`;</pre>
+        <div class="bubble mint" style="margin-top:12px;"><span class="tag">But</span><p>RBAC can't say <em>"only this analyst's own region"</em> or <em>"every column except email."</em> For that, the bouncer needs a wristband system — Fine-Grained Access Control, next.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: FGAC -->
+  <div class="slide slide-content">
+    <div class="kicker">Once you're already inside</div>
+    <h3>The VIP Wristband — Fine-Grained Access Control</h3>
+    <div class="grid-2" style="margin-top:10px;">
+      <div>
+        <svg width="200" height="110" viewBox="0 0 200 110">
+          <path d="M20 55 Q60 20 100 55 Q140 90 180 55" fill="none" stroke="#ff6fae" stroke-width="14" stroke-linecap="round"/>
+          <rect x="80" y="38" width="40" height="34" rx="8" fill="#e8b64c"/>
+          <text x="100" y="60" font-size="14" text-anchor="middle" fill="#1f1128" font-weight="bold">US</text>
+        </svg>
+        <p style="color:var(--muted); font-size:13px; margin-top:6px;">Same table, same door — the wristband decides which rows/columns you actually see once you're through it.</p>
+      </div>
+      <div>
+<pre><span class="kw">CREATE FUNCTION</span> region_filter(region <span class="kw">STRING</span>)
+<span class="kw">RETURNS BOOLEAN RETURN</span> region = <span class="str">'US'</span>;
+
+<span class="kw">ALTER TABLE</span> your_table
+<span class="kw">SET ROW FILTER</span> region_filter <span class="kw">ON</span> (region);</pre>
+        <p style="color:var(--muted); font-size:13px; margin:10px 0 4px;">Attach once — <strong style="color:var(--text);">every</strong> reader, every tool, is filtered automatically. Column masks work the same way, just on values instead of rows (next slide).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: MASKING -->
+  <div class="slide slide-content">
+    <div class="kicker">The fake-ID trick, but legal</div>
+    <h3>Data Masking</h3>
+    <div class="grid-2" style="margin-top:10px;">
+      <div>
+        <svg width="200" height="120" viewBox="0 0 200 120">
+          <rect x="10" y="10" width="180" height="100" rx="12" fill="#2a1a38" stroke="#6be3c3" stroke-width="3"/>
+          <circle cx="45" cy="55" r="22" fill="#4a3358"/>
+          <rect x="80" y="35" width="90" height="10" rx="4" fill="#e8b64c"/>
+          <rect x="80" y="50" width="70" height="14" rx="5" fill="#ff6fae" opacity="0.35" filter="url(#blur)"/>
+          <text x="115" y="60" font-size="9" text-anchor="middle" fill="#ff6fae" font-weight="bold">*** @ ***.com</text>
+          <defs><filter id="blur"><feGaussianBlur stdDeviation="2.5"/></filter></defs>
+        </svg>
+      </div>
+      <div>
+        <p style="color:var(--muted); font-size:14px; margin-bottom:10px;">Same mechanism as a row filter, but it swaps the <em>value</em> instead of hiding the row — the table stays queryable, the sensitive bit doesn't.</p>
+        <table class="gtable">
+          <tr><th>Column</th><th>What the reader sees</th></tr>
+          <tr><td>Email</td><td><code>***@example.com</code></td></tr>
+          <tr><td>PAN / SSN</td><td><code>XXXXX1234X</code></td></tr>
+          <tr><td>Salary</td><td>Bucketed (<code>"50k–75k"</code>) or <code>NULL</code></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="bubble" style="margin-top:14px;"><span class="tag">Today's practice</span><p>Everything we actually build together runs on your own <code>main.YOUR_SCHEMA</code> — never on the shared <code>gbmart</code> tables. Full walkthrough is in <code>Day11_4_ILT4_Data_Governance_Unity_Catalog.ipynb</code>.</p></div>
+  </div>
+
+  <!-- SLIDE 8: SCENARIO + RECAP -->
+  <div class="slide slide-content">
+    <div class="kicker">All five jobs, one shift</div>
+    <h3>The Hospital After-Party</h3>
+    <table class="gtable" style="margin-top:6px;">
+      <tr><th>Need</th><th>Unity Catalog mechanism</th></tr>
+      <tr><td>Billing, research, admin all share one dataset</td><td>RBAC — one <code>GRANT</code> per team's group, one authoritative table</td></tr>
+      <tr><td>Cardiology analyst shouldn't see oncology records</td><td>Row filter keyed on department</td></tr>
+      <tr><td>SSN / DOB / address hidden from research</td><td>Dynamic masking — same column, different value per reader</td></tr>
+      <tr><td>Regulator asks "who viewed this patient's data?"</td><td>Audit log — already recorded, nothing extra to build</td></tr>
+    </table>
+    <div class="grid-3" style="margin-top:18px;">
+      <div class="card"><div class="job">🏛️ Recap</div><p>5 pillars. One consistent object model. RBAC gets you through the door; FGAC decides what you see once inside.</p></div>
+      <div class="card"><div class="job">🎤 Closing check</div><p>Name the 5 pillars. One sentence: RBAC vs. FGAC. One sentence: managed vs. external table.</p></div>
+      <div class="card"><div class="job">➡️ Up next</div><p>Day 11 Hands-On — Orchestrate the Pipeline.</p></div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

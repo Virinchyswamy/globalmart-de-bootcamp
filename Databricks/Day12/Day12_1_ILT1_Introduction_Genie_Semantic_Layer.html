@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 12 | ILT 1 — Introduction to Genie &amp; Semantic Layer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; color: #38bdf8; letter-spacing: 1px; }
+  nav .controls { display: flex; gap: 10px; align-items: center; }
+  nav button {
+    background: #334155; border: none; color: #e2e8f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  nav button:hover { background: #38bdf8; color: #0f172a; }
+  nav .slide-counter { font-size: 13px; color: #94a3b8; }
+
+  /* --- SLIDES --- */
+  .deck { padding-top: 60px; }
+  .slide {
+    display: none; min-height: 100vh; padding: 48px 60px;
+    animation: fadeIn 0.3s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* --- SLIDE TYPES --- */
+  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); text-align: center; align-items: center; }
+  .slide-cover h1 { font-size: 46px; font-weight: 800; color: #38bdf8; margin-bottom: 12px; }
+  .slide-cover .subtitle { font-size: 19px; color: #94a3b8; max-width: 660px; }
+  .slide-cover .badge { margin-top: 20px; background: #1d4ed8; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+
+  .slide-section { background: #1e293b; }
+  .slide-section h2 { font-size: 34px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+  .slide-section .section-tag { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; }
+
+  .slide-content { background: #0f172a; }
+  .slide-content h3 { font-size: 25px; font-weight: 700; color: #f8fafc; margin-bottom: 18px; }
+
+  .slide-demo { background: #0c1a2e; border-left: 4px solid #f59e0b; }
+  .slide-demo h3 { font-size: 22px; color: #f59e0b; margin-bottom: 6px; }
+  .slide-demo .demo-label { color: #78716c; font-size: 13px; margin-bottom: 20px; }
+
+  .slide-interactive { background: #10192e; border-left: 4px solid #a855f7; }
+  .slide-interactive h3 { font-size: 24px; color: #c084fc; margin-bottom: 6px; }
+  .slide-interactive .demo-label { color: #78716c; font-size: 13px; margin-bottom: 18px; }
+
+  /* --- COMPONENTS --- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 18px 22px;
+  }
+  .card h4 { color: #38bdf8; margin-bottom: 10px; font-size: 15px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13.5px; line-height: 1.65; }
+  .card ul, .card ol { padding-left: 16px; }
+
+  .highlight-box {
+    background: #1a2e4a; border: 1px solid #3b82f6; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .highlight-box.warn { background: #2d1b0e; border-color: #f59e0b; }
+  .highlight-box.success { background: #0d2d1a; border-color: #22c55e; }
+  .highlight-box.purple { background: #241a3d; border-color: #a855f7; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 16px 18px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 12.5px; line-height: 1.65; color: #e6edf3;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .col { color: #79c0ff; }
+  .tbl { color: #ffa657; }
+
+  .pill {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin: 2px;
+  }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-purple { background: #6b21a8; color: #e9d5ff; }
+
+  .order-list { counter-reset: steps; list-style: none; padding: 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 14px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+
+  table.sql-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;
+  }
+  table.sql-table th {
+    background: #1d4ed8; color: #fff; padding: 8px 12px; text-align: left;
+  }
+  table.sql-table td {
+    border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1;
+    background: #111827;
+  }
+  table.sql-table tr:nth-child(even) td { background: #0f172a; }
+
+  /* --- INTERACTIVE WIDGETS --- */
+  .chat-mock { background: #0a1120; border: 1px solid #1e293b; border-radius: 14px; padding: 20px; }
+  .chat-bubble { border-radius: 14px; padding: 12px 16px; margin-bottom: 12px; font-size: 14px; line-height: 1.6; max-width: 90%; }
+  .chat-bubble.user { background: #1d4ed8; color: #fff; margin-left: auto; border-bottom-right-radius: 2px; }
+  .chat-bubble.genie { background: #1e293b; border: 1px solid #a855f7; border-bottom-left-radius: 2px; }
+  .genie-tag { color: #c084fc; font-weight: 700; font-size: 12px; margin-bottom: 6px; }
+  .reveal-btn {
+    background: #a855f7; color: #fff; border: none; padding: 8px 16px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px;
+  }
+  .reveal-btn:hover { background: #9333ea; }
+  .reveal-box { display: none; margin-top: 10px; }
+  .reveal-box.show { display: block; animation: fadeIn 0.3s ease; }
+  .genie-result { display: none; color: #86efac; font-weight: 700; font-size: 16px; margin-top: 10px; }
+  .genie-result.show { display: block; animation: fadeIn 0.3s ease; }
+
+  .switch-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .switch { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .slider {
+    position: absolute; cursor: pointer; inset: 0; background: #334155; border-radius: 28px; transition: 0.2s;
+  }
+  .switch .slider::before {
+    content: ""; position: absolute; height: 20px; width: 20px; left: 4px; bottom: 4px;
+    background: #fff; border-radius: 50%; transition: 0.2s;
+  }
+  .switch input:checked + .slider { background: #a855f7; }
+  .switch input:checked + .slider::before { transform: translateX(24px); }
+  .switch-label { font-size: 14px; font-weight: 700; color: #c084fc; }
+
+  .role-btns { display: flex; gap: 10px; margin-bottom: 16px; }
+  .role-btn {
+    background: #1e293b; border: 1px solid #334155; color: #cbd5e1; padding: 8px 18px;
+    border-radius: 20px; font-size: 13px; cursor: pointer;
+  }
+  .role-btn.active { background: #a855f7; border-color: #a855f7; color: #fff; }
+
+  .power-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .power-card {
+    background: #1e293b; border: 1px solid #a855f7; border-radius: 12px; padding: 16px 18px;
+  }
+  .power-card .num { color: #c084fc; font-size: 12px; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; }
+  .power-card h4 { color: #f8fafc; font-size: 14.5px; margin-bottom: 8px; }
+  .power-card p { color: #94a3b8; font-size: 13px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DAY 12 · ILT 1 — Genie &amp; Semantic Layer</div>
+  <div class="controls">
+    <button onclick="changeSlide(-1)">&#8592; Prev</button>
+    <span class="slide-counter" id="counter">1 / 16</span>
+    <button onclick="changeSlide(1)">Next &#8594;</button>
+  </div>
+</nav>
+
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active">
+    <h1>Genie &amp; the Semantic Layer</h1>
+    <p class="subtitle">You already know how to talk to an AI. Today: what happens when you point one at a real, governed data warehouse instead of the open internet.</p>
+    <div class="badge">Day 12 &nbsp;·&nbsp; ILT 1 &nbsp;·&nbsp; Standalone Module</div>
+    <div style="margin-top:36px; color:#475569; font-size:13px;">
+      Genie's Real Powers · The Semantic Layer Trick · Governance Follows You In · Sample Questions · What We Can Script Today
+    </div>
+  </div>
+
+  <!-- SLIDE 2: NOT JUST A CHATBOT -->
+  <div class="slide slide-content">
+    <h3>This Isn't Small Talk With a Chatbot</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:16px; max-width:820px;">You've used AI chat before. It's trained on the internet and it can be wrong with total confidence. Genie is a different animal — on purpose.</p>
+    <table class="sql-table">
+      <tr><th></th><th>Generic AI chat</th><th>Databricks Genie</th></tr>
+      <tr><td><strong>Where the answer comes from</strong></td><td>Its training data — a statistical guess, however confident it sounds</td><td>A real SQL query it just ran against your real governed tables</td></tr>
+      <tr><td><strong>Can you check its work?</strong></td><td>Not really — you're trusting the output</td><td>Yes — it shows you the exact SQL it ran, every time</td></tr>
+      <tr><td><strong>What data can it see?</strong></td><td>Whatever it was trained on, plus whatever you paste in</td><td>Only the catalog/schema/tables you scoped into its Genie Space — nothing else</td></tr>
+      <tr><td><strong>Does it respect who's asking?</strong></td><td>No concept of "who" at all</td><td>Yes — row filters and column masks from Unity Catalog apply automatically (Slide 7)</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 3: INTERACTIVE DEMO -->
+  <div class="slide slide-interactive">
+    <h3>🧞 Watch Genie Actually Answer Something</h3>
+    <div class="demo-label">Click through this like you would in the real Genie chat UI</div>
+    <div class="chat-mock">
+      <div class="chat-bubble user">"What was our top-selling category last month, and what discount are we giving on it?"</div>
+      <div class="chat-bubble genie">
+        <div class="genie-tag">🧞 GENIE</div>
+        <p style="color:#cbd5e1; font-size:13px;">Let me check <code>gbmart.gold.vw_monthly_category_sales</code>...</p>
+        <button class="reveal-btn" onclick="toggleReveal('sql-demo-1', this, 'Hide the SQL', 'Reveal the SQL Genie Actually Ran')">Reveal the SQL Genie Actually Ran</button>
+        <div id="sql-demo-1" class="reveal-box">
+<pre><span class="kw">SELECT</span> category, <span class="fn">SUM</span>(total_revenue) <span class="kw">AS</span> revenue, <span class="fn">AVG</span>(avg_discount_given) <span class="kw">AS</span> avg_discount
+<span class="kw">FROM</span> gbmart.gold.vw_monthly_category_sales
+<span class="kw">WHERE</span> year = <span class="str">2026</span> <span class="kw">AND</span> month = <span class="str">6</span>
+<span class="kw">GROUP BY</span> category
+<span class="kw">ORDER BY</span> revenue <span class="kw">DESC LIMIT</span> <span class="str">1</span>;</pre>
+          <div class="genie-result show">→ Home &amp; Kitchen — ₹18.4L revenue, 6.2% average discount</div>
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box purple" style="margin-top:14px;"><p><strong style="color:#c084fc;">Notice what didn't happen:</strong> nobody wrote a <code>GROUP BY</code>. Genie didn't invent that number either — it queried an already-built, already-trusted Gold view. That's the whole trick, and it's exactly what Section 2 is about.</p></div>
+  </div>
+
+  <!-- SLIDE 4: HOW IT WORKS -->
+  <div class="slide slide-content">
+    <h3>What Actually Happens Behind the Scenes</h3>
+    <div class="three-col">
+      <div class="card">
+        <h4>1. Ask</h4>
+        <p>Plain English, into the Genie chat UI. No SQL, no join logic, no table names required.</p>
+      </div>
+      <div class="card">
+        <h4>2. Genie Interprets</h4>
+        <p>Reads the Genie Space's metadata — table/column names, comments, sample questions, instructions — to work out which tables, columns, and joins answer it.</p>
+      </div>
+      <div class="card">
+        <h4>3. SQL + Answer</h4>
+        <p>Runs real SQL against a real SQL warehouse, under your real Unity Catalog permissions, and shows both the SQL and the result.</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:18px;">
+      <p>A <strong style="color:#38bdf8;">Genie Space</strong> is a scoped, curated subset of a catalog — deliberately narrower than "the whole catalog," so the LLM isn't guessing across hundreds of unrelated tables. Set up entirely by clicking through Catalog Explorer &rarr; Genie &rarr; New Space — <strong>not by running code</strong>. The matching hands-on for that UI setup is a separate, later session against the real <code>gbmart</code> Gold layer; nothing in today's notebook creates one.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: UNIQUE POWERS -->
+  <div class="slide slide-content">
+    <h3>What Actually Makes Genie Different — Six Real Features</h3>
+    <div class="power-grid">
+      <div class="power-card"><div class="num">01</div><h4>🔍 Shows its work</h4><p>Every answer comes with the real SQL. Nothing is a black box — a data engineer can verify exactly what ran.</p></div>
+      <div class="power-card"><div class="num">02</div><h4>💬 Remembers the thread</h4><p>Follow-up questions ("now break that down by region") build on the previous question's context — a real conversation, not one-shot Q&amp;A.</p></div>
+      <div class="power-card"><div class="num">03</div><h4>📊 Auto-visualizes</h4><p>Genie doesn't just return a table — it can generate a chart from the result shape automatically, no separate BI step.</p></div>
+      <div class="power-card"><div class="num">04</div><h4>✅ Trusted assets</h4><p>Admins can pin specific verified queries as ground truth. Once a question is answered right, it can be locked in — not re-guessed every time.</p></div>
+      <div class="power-card"><div class="num">05</div><h4>🎯 Scoped per audience</h4><p>A catalog can have multiple Genie Spaces — one for Finance, one for Ops — each seeing only the tables curated for them.</p></div>
+      <div class="power-card"><div class="num">06</div><h4>🔒 Governance-native</h4><p>It's not a separate system that might leak data — it queries <em>through</em> Unity Catalog, so every grant, row filter, and mask still applies. Next slide.</p></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: SECTION TAG - GOVERNANCE FOLLOWS YOU IN -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">The Part Most People Miss</div>
+    <h2>Genie Doesn't Get a Bypass</h2>
+    <p style="color:#94a3b8; max-width:640px; margin-top:12px; font-size:15px;">
+      Everything you learned about row filters and column masks in ILT 4 applies to Genie automatically — because Genie isn't a side door, it's just another reader querying through the same warehouse.
+    </p>
+  </div>
+
+  <!-- SLIDE 7: INTERACTIVE ROLE TOGGLE -->
+  <div class="slide slide-interactive">
+    <h3>🔒 Try It: Same Question, Two Different Readers</h3>
+    <div class="demo-label">Pick who's asking Genie — the underlying table and the question never change</div>
+    <div class="two-col">
+      <div>
+        <div class="role-btns">
+          <button class="role-btn active" id="role-btn-support" onclick="setRole('support')">I'm Support</button>
+          <button class="role-btn" id="role-btn-pii" onclick="setRole('pii')">I'm in <code>pii_readers</code></button>
+        </div>
+        <div class="chat-bubble user">"What's this customer's email address?"</div>
+        <div class="chat-bubble genie">
+          <div class="genie-tag">🧞 GENIE</div>
+          <div id="roleAnswer" style="color:#f8fafc; font-size:16px; font-weight:700;">***@example.com</div>
+          <p id="roleExplain" style="color:#94a3b8; font-size:12.5px; margin-top:6px;">Masked — this reader isn't in the <code>pii_readers</code> group that the column mask checks for.</p>
+        </div>
+      </div>
+      <div>
+        <div class="highlight-box purple">
+          <p><strong style="color:#c084fc;">Same table. Same mask function. Same Genie Space.</strong> The only thing that changed is who's logged in — because the mask is attached to the <em>column</em> in Unity Catalog, not to Genie. Genie has no way to see the unmasked value even if it wanted to; the data warehouse itself never hands it over.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: WHY RAW NAMES AREN'T ENOUGH -->
+  <div class="slide slide-content">
+    <h3>Two Raw Facts About <code>fact_sales</code></h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">A column named <code>Sales_amount</code> (type <code>decimal</code>), and a column named <code>Actual_price</code> (type <code>decimal</code>). To an LLM — or a new analyst — those names alone answer none of the questions that matter.</p>
+    <table class="sql-table">
+      <tr><th></th><th>Without a semantic layer</th><th>With a semantic layer</th></tr>
+      <tr><td><code>Sales_amount</code></td><td>Just a decimal column. Safe to SUM? Pre- or post-discount? Unknown.</td><td>"Revenue in INR for this order line item — quantity &times; discounted price. Safe to SUM."</td></tr>
+      <tr><td><code>Actual_price</code></td><td>Just a decimal column. Looks summable like any other number.</td><td>"Original list price per unit, in INR. Non-additive — never SUM directly across products."</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 9: INTERACTIVE SEMANTIC LAYER TOGGLE -->
+  <div class="slide slide-interactive">
+    <h3>🗺️ Flip the Semantic Layer On and Off</h3>
+    <div class="demo-label">Same column. Same table. Watch what an LLM can actually work with.</div>
+    <div class="switch-row">
+      <label class="switch">
+        <input type="checkbox" id="semToggle" onchange="toggleSemantic()">
+        <span class="slider"></span>
+      </label>
+      <span class="switch-label" id="semStateLabel">Semantic Layer: OFF</span>
+    </div>
+    <div id="semOff">
+<pre>col_name          data_type    comment
+Actual_price      decimal      <span class="cm">(none)</span></pre>
+      <div class="highlight-box warn"><p><strong style="color:#f59e0b;">What Genie can do with this:</strong> guess. Is it safe to SUM? Pre- or post-discount? What currency? Nothing here says.</p></div>
+    </div>
+    <div id="semOn" style="display:none;">
+<pre>col_name          data_type    comment
+Actual_price      decimal      <span class="str">"Original list price per unit, in INR, before discount.
+                               Non-additive -- never SUM/AVG directly across products."</span></pre>
+      <div class="highlight-box success"><p><strong style="color:#22c55e;">What Genie can do with this:</strong> answer confidently, and correctly — the rule is attached to the column itself, not tribal knowledge someone has to remember to mention.</p></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: FIVE INGREDIENTS -->
+  <div class="slide slide-content">
+    <h3>Five Ingredients of a Good Semantic Layer</h3>
+    <table class="sql-table">
+      <tr><th>Ingredient</th><th>What it looks like</th><th>GlobalMart example</th></tr>
+      <tr><td>Clear table comments</td><td>What the table represents, its grain</td><td>"One row per order line item — GlobalMart's core sales fact table"</td></tr>
+      <tr><td>Clear column comments</td><td>What a column means, safe to aggregate?</td><td><code>Sales_amount</code>: safe to SUM. <code>Actual_price</code>: never SUM directly.</td></tr>
+      <tr><td>Certified views, descriptive names</td><td>Pre-built answers, named so the question is obvious</td><td><code>vw_monthly_category_sales</code>, <code>vw_regional_sales</code></td></tr>
+      <tr><td>Unambiguous column names</td><td>Avoid cryptic abbreviations</td><td><code>Discounted_price</code>, not <code>disc_prc</code></td></tr>
+      <tr><td>Sample questions + example SQL</td><td>Worked question &rarr; SQL pairs</td><td>Slide 14</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 11: GLOBALMART'S EXISTING ARTIFACTS -->
+  <div class="slide slide-content">
+    <h3>GlobalMart Already Has 2 Semantic-Layer Artifacts</h3>
+    <div class="two-col">
+      <div>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Day 7 HOL 2 built two real Gold views on top of <code>fact_sales</code> — neither built with Genie in mind. They exist because category managers and regional ops leads needed one agreed-upon number to report against.</p>
+        <table class="sql-table">
+          <tr><th>View</th><th>What it answers</th></tr>
+          <tr><td><code>vw_monthly_category_sales</code></td><td>Year/month/category revenue, quantity, orders, avg. discount</td></tr>
+          <tr><td><code>vw_regional_sales</code></td><td>State/city revenue, orders, customers, avg. order value</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="highlight-box success">
+          <p><strong style="color:#22c55e;">That is precisely what a semantic layer is.</strong> A Genie Space built on <code>gbmart.gold</code> would point straight at these two views for exactly the questions they already answer — instead of asking Genie to reconstruct the same join and <code>GROUP BY</code> from raw <code>fact_sales</code>, every single time. This is also literally the query Slide 3's demo used.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: WHAT WE CAN SCRIPT -->
+  <div class="slide slide-demo">
+    <h3>The Part We CAN Script Today</h3>
+    <div class="demo-label">Genie Space setup is UI-only. Table + column comments underneath it are real, runnable SQL.</div>
+    <div class="two-col">
+      <div>
+<pre>YOUR_SCHEMA = <span class="str">"main.YOUR_SCHEMA"</span>
+PRACTICE_TABLE = <span class="kw">f</span><span class="str">"{YOUR_SCHEMA}.fact_sales_practice"</span>
+
+<span class="cm"># CREATE OR REPLACE -- idempotent, safe to re-run</span>
+spark.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"""CREATE OR REPLACE TABLE {PRACTICE_TABLE}
+    AS SELECT * FROM gbmart.gold.fact_sales LIMIT 100"""</span>)</pre>
+      </div>
+      <div>
+        <div class="highlight-box success"><p><strong style="color:#22c55e;">The only touch against the real table anywhere in this notebook</strong> — one read-only <code>SELECT ... LIMIT 100</code>. Every <code>COMMENT</code>/<code>ALTER TABLE</code> statement runs against your own practice copy, never the real one.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: ADD COMMENTS -->
+  <div class="slide slide-demo">
+    <h3>Add Real Table + Column Comments</h3>
+    <div class="demo-label">Must stay additivity-correct — a wrong comment is worse than no comment</div>
+    <table class="sql-table">
+      <tr><th>Measure</th><th>Additivity</th><th>What the comment must say</th></tr>
+      <tr><td><code>Quantity_purchased</code></td><td>Additive</td><td>Safe to SUM across any dimension</td></tr>
+      <tr><td><code>Sales_amount</code></td><td>Additive</td><td>Safe to SUM — this is the revenue measure</td></tr>
+      <tr><td><code>Actual_price</code></td><td>Non-additive</td><td>Never SUM/AVG directly across products</td></tr>
+      <tr><td><code>Discounted_price</code></td><td>Non-additive</td><td>Derive avg. selling price as <code>SUM(Sales_amount)/SUM(Quantity_purchased)</code></td></tr>
+    </table>
+<pre style="margin-top:14px;">spark.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"COMMENT ON TABLE {PRACTICE_TABLE} IS '...'"</span>)
+
+<span class="kw">for</span> column_name, comment_text <span class="kw">in</span> column_comments.<span class="fn">items</span>():
+    spark.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"ALTER TABLE {PRACTICE_TABLE} ALTER COLUMN {column_name} COMMENT '{comment_text}'"</span>)</pre>
+  </div>
+
+  <!-- SLIDE 14: SAMPLE QUESTIONS -->
+  <div class="slide slide-content">
+    <h3>Sample Questions — Bootstrapping Genie's Matching</h3>
+    <p style="color:#94a3b8; font-size:14px; margin-bottom:12px;">Illustrative only — not executed in this session. Every sample question maps to one of the two already-built Gold views, not a fresh query against raw <code>fact_sales</code>.</p>
+    <table class="sql-table">
+      <tr><th>Sample question</th><th>Maps to</th></tr>
+      <tr><td>"What was our revenue by category last month?"</td><td><code>SELECT category, SUM(total_revenue) FROM vw_monthly_category_sales ... GROUP BY category</code></td></tr>
+      <tr><td>"Which states generate the most revenue?"</td><td><code>SELECT state, SUM(total_revenue) FROM vw_regional_sales GROUP BY state ORDER BY total_revenue DESC</code></td></tr>
+      <tr><td>"What is our average discount by category?"</td><td><code>SELECT category, AVG(avg_discount_given) FROM vw_monthly_category_sales GROUP BY category</code></td></tr>
+      <tr><td>"How many orders came from each region?"</td><td><code>SELECT state, city, total_orders FROM vw_regional_sales</code></td></tr>
+    </table>
+    <div class="highlight-box purple" style="margin-top:14px;"><p><strong style="color:#c084fc;">This is Power #4 from Slide 5 in action</strong> — a worked question/SQL pair registered on a Genie Space becomes a Trusted Asset: Genie leans on a known-good pattern instead of reconstructing the join from scratch, every time someone asks something similar.</p></div>
+  </div>
+
+  <!-- SLIDE 15: KEY TAKEAWAYS -->
+  <div class="slide slide-section">
+    <div class="section-tag">Wrap-Up</div>
+    <h2>Key Takeaways</h2>
+    <div class="three-col" style="margin-top:24px;">
+      <div class="card">
+        <h4>🧞 Genie is grounded, not guessing</h4>
+        <ul>
+          <li>Real SQL, real warehouse, real Unity Catalog permissions — shown, not hidden</li>
+          <li>Multi-turn, auto-charts, Trusted Assets, multiple scoped spaces per audience</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔒 Governance follows the data in</h4>
+        <ul>
+          <li>Row filters and column masks apply to Genie automatically — no bypass, no extra config</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🗺️ The semantic layer is the tuning knob</h4>
+        <ul>
+          <li>Comments must be additivity-correct — a wrong one is worse than none</li>
+          <li><code>vw_monthly_category_sales</code> / <code>vw_regional_sales</code> are already real artifacts</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:16px;"><p><strong style="color:#38bdf8;">Up next:</strong> a separate, later hands-on — setting up a real Genie Space on the <code>gbmart.gold</code> layer, live in the workspace UI.</p></div>
+  </div>
+
+  <!-- SLIDE 16: SELF-CHECK -->
+  <div class="slide slide-section" style="text-align:center; align-items:center;">
+    <div class="section-tag">Closing Check</div>
+    <h2>Before You Go</h2>
+    <div class="three-col" style="margin-top:28px; max-width:900px;">
+      <div class="card"><h4>1</h4><p>Name 2 of Genie's 6 real powers beyond "it answers questions."</p></div>
+      <div class="card"><h4>2</h4><p>Why does a masked column stay masked even when Genie is asking, not a human?</p></div>
+      <div class="card"><h4>3</h4><p>Name the 2 existing GlobalMart semantic-layer views, and what each one answers.</p></div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function changeSlide(dir) { showSlide(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+
+  function toggleReveal(id, btn, hideText, showText) {
+    const el = document.getElementById(id);
+    const showing = el.classList.toggle('show');
+    btn.textContent = showing ? hideText : showText;
+  }
+
+  function toggleSemantic() {
+    const on = document.getElementById('semToggle').checked;
+    document.getElementById('semOff').style.display = on ? 'none' : 'block';
+    document.getElementById('semOn').style.display = on ? 'block' : 'none';
+    document.getElementById('semStateLabel').textContent = 'Semantic Layer: ' + (on ? 'ON' : 'OFF');
+  }
+
+  function setRole(role) {
+    const answer = document.getElementById('roleAnswer');
+    const explain = document.getElementById('roleExplain');
+    if (role === 'pii') {
+      answer.textContent = 'sara.ahmed@example.com';
+      explain.innerHTML = 'Full value — this reader IS in the <code>pii_readers</code> group the mask checks for.';
+    } else {
+      answer.textContent = '***@example.com';
+      explain.innerHTML = "Masked — this reader isn't in the <code>pii_readers</code> group that the column mask checks for.";
+    }
+    document.getElementById('role-btn-support').classList.toggle('active', role === 'support');
+    document.getElementById('role-btn-pii').classList.toggle('active', role === 'pii');
+  }
+</script>
+</body>
+</html>

@@ -219,21 +219,21 @@
       <li>Upload the 3 first-load CSVs from <code>datasets-first-load/</code>, one file into its matching subfolder (<code>customers_01.csv</code> → <code>orchestration-lab/customers/</code>, and so on).</li>
     </div>
 
-    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 6px;">Step B — Mount It</h3>
-    <p class="section-intro" style="margin-bottom:10px;">Same mounting pattern from Day 4 — a new mount point dedicated to this lab, not reusing your existing GlobalMart mount.</p>
-<pre style="background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:16px 20px;overflow-x:auto;font-family:'Cascadia Code',Consolas,monospace;font-size:13px;color:#e6edf3;">MOUNT_POINT = "/mnt/&lt;yourname&gt;_orchestration_lab"
-STORAGE_ACCOUNT = "YOUR_STORAGE_ACCOUNT_NAME"
-CONTAINER = "YOUR_CONTAINER_NAME"
-<span style="color:#6e7681;font-style:italic;"># mount as taught in Day 4 -- same dbutils.fs.mount() pattern, new mount point</span></pre>
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 6px;">Step B — No New Mount Needed</h3>
+    <p class="section-intro" style="margin-bottom:10px;"><code>orchestration-lab/</code> lives inside the <b>same container</b> you already mounted in Day 4 — it's just a new folder, not a new storage account. Nothing to mount here; the notebooks verify your existing mount is visible and fail fast with a clear error if it isn't.</p>
+<pre style="background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:16px 20px;overflow-x:auto;font-family:'Cascadia Code',Consolas,monospace;font-size:13px;color:#e6edf3;"><span style="color:#6e7681;font-style:italic;"># If dbutils.fs.mounts() doesn't already show your Day 4 mount point,</span>
+<span style="color:#6e7681;font-style:italic;"># go run Day 4's mounting notebook first -- this lab deliberately never</span>
+<span style="color:#6e7681;font-style:italic;"># re-mounts or re-embeds a storage account key.</span>
+MOUNT_POINT = "/mnt/&lt;yourname&gt;_gbmart_data"   <span style="color:#6e7681;font-style:italic;"># your existing Day 4 mount</span></pre>
 
     <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 6px;">Step C — Run Bronze (any order — all 3 are independent)</h3>
     <div class="order-list">
-      <li>Open <code>notebooks/bronze/01_bronze_customers.ipynb</code>. Update the <code>source_path</code> widget default to your new mount/ADLS path, then run every cell top to bottom.</li>
-      <li>Do the same for <code>02_bronze_orders.ipynb</code> and <code>03_bronze_transactions.ipynb</code>.</li>
+      <li>Open <code>notebooks/bronze/01_bronze_customers.ipynb</code>. Set the <code>mount_point</code> widget to your existing Day 4 mount, and confirm <code>source_folder</code> matches where you uploaded the files (<code>orchestration-lab/customers</code> by default), then run every cell top to bottom.</li>
+      <li>Do the same for <code>02_bronze_orders.ipynb</code> and <code>03_bronze_transactions.ipynb</code> (their <code>source_folder</code> defaults already point at <code>orchestration-lab/orders</code> and <code>orchestration-lab/transactions</code>).</li>
       <li>Each notebook's Step 3 prints a row count — confirm you see 13 customers, 12 orders, 12 transactions in Bronze before moving on.</li>
     </div>
     <div class="highlight-box">
-      <p><b>Notice the ingestion pattern:</b> Bronze uses <code>COPY INTO</code>, not a plain file read — it tracks which files it's already ingested. That's the mechanism that makes Phase 3 work later: re-run the same notebook after dropping new files, and only the new files get picked up.</p>
+      <p><b>Notice the ingestion pattern:</b> Bronze uses <b>Autoloader</b> (<code>cloudFiles</code>) with <code>trigger(availableNow=True)</code> — the same mechanism as every other Bronze table you've built this course, not <code>COPY INTO</code>. Autoloader's own checkpoint tracks which files it's already ingested. That's what makes Phase 3 work later: re-run the same notebook after dropping new files, and only the new files get picked up.</p>
     </div>
 
     <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 6px;">Step D — Run Silver <span class="pill pill-red">order matters here</span></h3>
@@ -323,19 +323,20 @@ CONTAINER = "YOUR_CONTAINER_NAME"
       <tr><th>Notebook</th><th>Widget name</th><th>What to set it to</th></tr>
       <tr><td>Bronze (all 3)</td><td><code>catalog</code></td><td>your real catalog name</td></tr>
       <tr><td>Bronze (all 3)</td><td><code>schema</code></td><td><code>bronze</code></td></tr>
-      <tr><td>Bronze (all 3)</td><td><code>source_path</code></td><td>your mounted path's matching subfolder, e.g. <code>/mnt/&lt;yourname&gt;_orchestration_lab/customers/</code></td></tr>
+      <tr><td>Bronze (all 3)</td><td><code>mount_point</code></td><td>your existing Day 4 mount, e.g. <code>/mnt/&lt;yourname&gt;_gbmart_data</code> — same for all 3, this is not a new mount</td></tr>
+      <tr><td>Bronze (all 3)</td><td><code>source_folder</code></td><td>the matching subfolder, e.g. <code>orchestration-lab/customers</code></td></tr>
       <tr><td>Bronze (all 3)</td><td><code>batch_id</code></td><td>a label for this run, e.g. <code>batch_001</code> — free text, used only for your own tracking</td></tr>
       <tr><td>Silver / Gold (all 4)</td><td><code>catalog</code></td><td>same catalog as Bronze</td></tr>
       <tr><td>Silver (all 3)</td><td><code>source_schema</code> / <code>target_schema</code></td><td><code>bronze</code> / <code>silver</code></td></tr>
       <tr><td>Gold</td><td><code>source_schema</code> / <code>target_schema</code></td><td><code>silver</code> / <code>gold</code></td></tr>
     </table>
     <div class="highlight-box warn" style="margin-top:16px;">
-      <p><b>Remember ILT 1's rule:</b> <code>catalog</code>, <code>schema</code>, <code>source_path</code> are all fine as parameters — none of them are secret. Nothing in this lab needs a credential parameter at all, since ADLS access goes through your existing mount, not a raw key typed into a Job.</p>
+      <p><b>Remember ILT 1's rule:</b> <code>catalog</code>, <code>schema</code>, <code>mount_point</code>, <code>source_folder</code> are all fine as parameters — none of them are secret. Nothing in this lab needs a credential parameter at all, since ADLS access goes through your existing mount, not a raw key typed into a Job.</p>
     </div>
 
     <div class="checkpoint">
       <div class="cp-tag">✓ Phase 2 Checkpoint</div>
-      <p>Run the Job now, once, even though it's the same data you already loaded by hand. Every Bronze task's <code>COPY INTO</code> should report <b>0 files copied</b> (already ingested in Phase 1), and every Silver/Gold MERGE should be a no-op — same row counts as Phase 1 ended with. This proves the Job is correctly wired <em>before</em> you introduce new data in Phase 3.</p>
+      <p>Run the Job now, once, even though it's the same data you already loaded by hand. Every Bronze task's Autoloader stream should report <b>0 new rows written</b> (its checkpoint already tracked every file from Phase 1), and every Silver/Gold MERGE should be a no-op — same row counts as Phase 1 ended with. This proves the Job is correctly wired <em>before</em> you introduce new data in Phase 3.</p>
     </div>
   </div>
 </section>
@@ -359,7 +360,7 @@ CONTAINER = "YOUR_CONTAINER_NAME"
     <div class="grid-2">
       <div class="card">
         <h4>In Bronze</h4>
-        <p>Each <code>COPY INTO</code> result should now show <b>non-zero</b> <code>num_files_copied</code>/<code>num_rows_inserted</code> — only the second-load file, not the first-load file again.</p>
+        <p>Each Autoloader stream should now write <b>non-zero</b> new rows — only from the second-load file, since the checkpoint already knows it ingested the first-load file.</p>
       </div>
       <div class="card">
         <h4>In Silver customers</h4>
@@ -390,9 +391,9 @@ CONTAINER = "YOUR_CONTAINER_NAME"
     <h2 class="section-title">All 7 Notebooks, at a Glance</h2>
     <table class="spec">
       <tr><th>#</th><th>Notebook</th><th>Target table</th><th>Pattern</th><th>Depends on</th></tr>
-      <tr><td>1</td><td><code>bronze/01_bronze_customers.ipynb</code></td><td><code>bronze.customers</code></td><td><code>COPY INTO</code></td><td>—</td></tr>
-      <tr><td>2</td><td><code>bronze/02_bronze_orders.ipynb</code></td><td><code>bronze.orders</code></td><td><code>COPY INTO</code></td><td>—</td></tr>
-      <tr><td>3</td><td><code>bronze/03_bronze_transactions.ipynb</code></td><td><code>bronze.transactions</code></td><td><code>COPY INTO</code></td><td>—</td></tr>
+      <tr><td>1</td><td><code>bronze/01_bronze_customers.ipynb</code></td><td><code>bronze.customers</code></td><td>Autoloader (<code>cloudFiles</code>)</td><td>—</td></tr>
+      <tr><td>2</td><td><code>bronze/02_bronze_orders.ipynb</code></td><td><code>bronze.orders</code></td><td>Autoloader (<code>cloudFiles</code>)</td><td>—</td></tr>
+      <tr><td>3</td><td><code>bronze/03_bronze_transactions.ipynb</code></td><td><code>bronze.transactions</code></td><td>Autoloader (<code>cloudFiles</code>)</td><td>—</td></tr>
       <tr><td>4</td><td><code>silver/04_silver_customers.ipynb</code></td><td><code>silver.customers</code></td><td>Dedupe + DQ (valid email) + SCD1 <code>MERGE</code></td><td>Task 1</td></tr>
       <tr><td>5</td><td><code>silver/05_silver_orders.ipynb</code></td><td><code>silver.orders</code></td><td>Status standardization + RI check + SCD1 <code>MERGE</code></td><td>Task 2, Task 4</td></tr>
       <tr><td>6</td><td><code>silver/06_silver_transactions.ipynb</code></td><td><code>silver.transactions</code></td><td>Cast + quarantine negatives + RI check + SCD1 <code>MERGE</code></td><td>Task 3, Task 5</td></tr>

@@ -27,8 +27,8 @@ this depend on, how long will it take, what does it produce":
 | **Duration** | ~2.5 hours (2 sessions) |
 ```
 
-**Real excerpt — Day 12 ILT 1** uses a slightly different column set, oriented
-around what's real vs. practice-only (`Day12_1_ILT1_Data_Governance_Unity_Catalog.ipynb`):
+**Real excerpt — Day 11 ILT 4** uses a slightly different column set, oriented
+around what's real vs. practice-only (`Day11_4_ILT4_Data_Governance_Unity_Catalog.ipynb`):
 ```markdown
 | **Calendar slot** | Day 12 · 9:30 AM–10:30 AM · ILT |
 | **Duration** | 60 minutes |
@@ -154,7 +154,7 @@ artifacts" HOLs, fill-in-the-blank for "did you understand these results" HOLs.
 
 ## 7. Self-Check (ILTs, optional variant of Submission Checklist)
 
-**Real excerpt — Day 12 ILT 1:**
+**Real excerpt — Day 11 ILT 4:**
 ```markdown
 ## Self-Check
 - [ ] I can name all 4 levels of the Unity Catalog hierarchy, in order.

@@ -86,8 +86,8 @@ spark.sql("DESCRIBE HISTORY harsh_kumar01_npmentorskool_onmicrosoft_com.bronze.o
 No `pipelines.start_update()`, no `jobs.run_now()` anywhere near it — read-only
 metadata and plain `SELECT`s only.
 
-**Real precedent — Day 12 ILT 1**, `GRANT`/`REVOKE` shown as illustrative
-syntax, never executed (`Day12_1_ILT1_Data_Governance_Unity_Catalog.ipynb`):
+**Real precedent — Day 11 ILT 4**, `GRANT`/`REVOKE` shown as illustrative
+syntax, never executed (`Day11_4_ILT4_Data_Governance_Unity_Catalog.ipynb`):
 ```
 > The GRANT/REVOKE statements above are illustrative syntax only, shown
 > against the practice schema naming pattern — nothing in this notebook
@@ -133,7 +133,7 @@ table, every other student's and the instructor's very next query is
 filtered/masked too — mid-class, with no warning, and it doesn't expire on
 its own (it needs an explicit `DROP` to undo).
 
-**Real precedent — Day 12 ILT 1** (`Day12_1_ILT1_Data_Governance_Unity_Catalog.ipynb`):
+**Real precedent — Day 11 ILT 4** (`Day11_4_ILT4_Data_Governance_Unity_Catalog.ipynb`):
 ```python
 # --- Practice schema setup -- isolates this demo from the real gbmart catalog --
 # Replace YOUR_SCHEMA with something unique to you if you run this again later
