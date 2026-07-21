@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 12 — Hands-On: Grant It Two Ways (UI + Code)</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
+  }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 40px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 740px; margin: 0 auto 26px; }
+  .hero .cta { display: inline-block; background: var(--accent); color: #0f172a; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+  .hero .cta:hover { background: #5fd0ff; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
+
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .time-badge { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid rgba(245,158,11,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: none; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 780px; margin-bottom: 30px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  details.hint { background: #14243d; border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; padding: 4px 0; }
+  details.hint summary { cursor: pointer; padding: 12px 18px; font-size: 13.5px; font-weight: 700; color: var(--accent2); list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.hint summary::-webkit-details-marker { display: none; }
+  details.hint summary::before { content: '💡'; }
+  details.hint[open] summary { border-bottom: 1px solid var(--border); }
+  details.hint .hint-body { padding: 14px 18px 16px; font-size: 14px; color: #cbd5e1; line-height: 1.7; }
+  details.hint .hint-body p + p { margin-top: 10px; }
+
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 15px; margin-right: 10px; flex-shrink: 0; }
+
+  .checklist-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; color: #cbd5e1; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--good); flex-shrink: 0; cursor: pointer; }
+  .checklist-item label { cursor: pointer; }
+
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+
+  pre.code-block {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+    padding: 16px 20px; overflow-x: auto; font-family: 'Cascadia Code', Consolas, monospace;
+    font-size: 13px; color: #e6edf3; margin-top: 10px;
+  }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+
+  .doc-link-card { background: var(--panel); border: 1.5px solid var(--accent2); border-radius: 12px; padding: 18px 22px; margin-top: 16px; }
+  .doc-link-card a.doc-link { font-size: 15px; font-weight: 700; word-break: break-all; }
+  .research-q { counter-reset: rq; list-style: none; margin-top: 14px; }
+  .research-q li { counter-increment: rq; padding: 12px 0 12px 40px; position: relative; font-size: 14.5px; color: #cbd5e1; border-bottom: 1px solid var(--border); }
+  .research-q li:last-child { border-bottom: none; }
+  .research-q li::before { content: "Q" counter(rq); position: absolute; left: 0; top: 10px; background: var(--accent2); color: #fff; font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 12 · HOL 1 — PERMISSIONS: UI + CODE</div>
+    <div class="links">
+      <a href="#howitworks" class="navlink">How It Works</a>
+      <a href="#readfirst" class="navlink">Read First</a>
+      <a href="#phase1" class="navlink">Phase 1 · UI</a>
+      <a href="#phase2" class="navlink">Phase 2 · Code</a>
+      <a href="#phase3" class="navlink">Phase 3 · Real gbmart</a>
+      <a href="#reference" class="navlink">Reference</a>
+      <a href="#checklist" class="navlink">Checklist</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Day 12 Hands-On · Builds on Day 11 ILT 4 (Data Governance &amp; Unity Catalog)</div>
+  <h1>Grant It Two Ways</h1>
+  <p class="lead">ILT 4 showed you real <code>GRANT</code>/<code>REVOKE</code> syntax and told you, on purpose, that none of it actually ran. Today it runs — once by clicking through Catalog Explorer, once by SQL — on the exact same table, so you can watch both levers move the exact same needle.</p>
+  <div class="meta-row">
+    <span class="meta-pill">🖱️ Phase 1 — the Permissions tab UI</span>
+    <span class="meta-pill">💻 Phase 2 — real <code>GRANT</code>/<code>REVOKE</code> SQL</span>
+    <span class="meta-pill">🔍 Phase 3 — read the real <code>gbmart</code> grants</span>
+  </div>
+  <div style="margin-top:28px;"><a href="#howitworks" class="cta">Start Reading ↓</a></div>
+</header>
+
+<!-- ============================================================ -->
+<!-- HOW THIS WORKS -->
+<!-- ============================================================ -->
+<section class="content" id="howitworks">
+  <div class="wrap">
+    <div class="section-tag">Before You Open Databricks</div>
+    <h2 class="section-title">How This Works</h2>
+    <p class="section-intro">Three phases. Phase 1 happens entirely in the UI — no notebook open yet. Phases 2 and 3 happen in the companion notebook, <code>Day12_2_HOL1_Unity_Catalog_Permissions_UI_and_Code.ipynb</code> — run its Setup cell first, before you do anything below.</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <h4><span class="phase-num">1</span>By Mouse</h4>
+        <p>Open Catalog Explorer, find your practice table, click into its Permissions tab, and grant a privilege — zero SQL typed.</p>
+      </div>
+      <div class="card">
+        <h4><span class="phase-num">2</span>By Code</h4>
+        <p>Back in the notebook: read that same grant with <code>SHOW GRANTS</code>, revoke it with SQL, then grant it back with SQL — same table, same privilege, same principal.</p>
+      </div>
+      <div class="card">
+        <h4><span class="phase-num">3</span>Compare to Real Gold</h4>
+        <p>Read-only <code>SHOW GRANTS</code> against the real <code>gbmart</code> catalog, schema, and table — see what access actually exists on the layer you've been building all course.</p>
+      </div>
+    </div>
+
+    <div class="highlight-box warn">
+      <p><b>Why bother proving UI and code are "the same"?</b> Because in a real job, you'll usually reach for whichever is faster in the moment — a quick one-off grant via the UI, a batch of grants scripted in a setup notebook. If you don't trust that they're the same underlying mechanism, you'll end up double-checking everything twice. Today removes that doubt.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- READ FIRST -->
+<!-- ============================================================ -->
+<section class="content" id="readfirst">
+  <div class="wrap">
+    <div class="section-tag">Required, Not Optional <span class="time-badge">📖 ~10 min</span></div>
+    <h2 class="section-title">Read the Real Databricks Docs First</h2>
+    <p class="section-intro">Everything you've learned about permissions so far — ILT 4, this page — is us teaching you a slice of a bigger real reference. Before you touch Catalog Explorer, go read the actual page Unity Catalog's privilege model is documented on. You can't answer the 4 questions below from memory alone; you have to actually find them on the page.</p>
+
+    <div class="doc-link-card">
+      <a class="doc-link" href="https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/" target="_blank" rel="noopener">docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/</a>
+      <p style="color:var(--muted); font-size:13px; margin-top:6px;">"Manage privileges in Unity Catalog" — the real, current Databricks reference page.</p>
+    </div>
+
+    <ol class="research-q">
+      <li>ILT 4 only taught you 4 securable object types — catalog, schema, table, function. The real doc lists far more. Find at least <b>3 more</b> object types you can grant privileges on that ILT 4 never mentioned. (Hint: one of them is exactly what Day 1's HOL used for raw file access instead of a raw storage key.)</li>
+      <li>You don't have to be the object's owner to grant a privilege on it. The doc names <b>3 other</b> categories of principal who can also grant/revoke. What are they?</li>
+      <li>Transferring <em>ownership</em> of an object has a stricter rule than granting a privilege on it. According to the doc, what's the one thing you're <b>not</b> allowed to do when transferring ownership of a view, function, or model — unless you're a metastore admin?</li>
+      <li>Find the exact SQL syntax the doc uses for a <code>GRANT</code> statement that targets a <b>schema</b>, not a table. Does it match the shape ILT 4 taught you, or is there a difference worth noting?</li>
+    </ol>
+
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><b>Why this matters beyond today:</b> a slide deck (including this one) is a snapshot, written at some point in time. The real docs are the thing that's actually current. Getting comfortable pulling up Databricks' own reference and finding a specific answer in it — not just skimming — is a real skill you'll use on the job every time this course's material inevitably falls a little behind the product.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 1 -->
+<!-- ============================================================ -->
+<section class="content" id="phase1">
+  <div class="wrap">
+    <div class="section-tag">Phase 1 <span class="time-badge">🖱️ mouse only, no SQL</span></div>
+    <h2 class="section-title">Grant It From the UI</h2>
+    <p class="section-intro">Before this: run the companion notebook's <b>Setup</b> cell — it creates <code>main.YOUR_SCHEMA.practice_customers</code>, the table you'll grant access to below.</p>
+
+    <div class="order-list">
+      <li>Open <b>Catalog Explorer</b> from the left sidebar.</li>
+      <li>Navigate to <code>main</code> → your practice schema (<code>YOUR_SCHEMA</code>) → <code>practice_customers</code>.</li>
+      <li>Click the <b>Permissions</b> tab at the top of the table's page.</li>
+      <li>Click <b>Grant</b>.</li>
+      <li>In the principal field, type <code>account users</code> — this is a built-in Unity Catalog group meaning "everyone in this account." It always exists, so there's nothing to set up first.</li>
+      <li>Check the <b>SELECT</b> privilege, then click <b>Grant</b>.</li>
+    </div>
+
+    <div class="highlight-box">
+      <p><b>Why <code>account users</code> and not a named colleague?</b> It's a real, built-in group every Databricks account already has — guaranteed to exist regardless of your specific workspace setup, so this step never blocks on "does that group exist yet."</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Phase 1 Checkpoint</div>
+      <p>The Permissions tab should now list a new row: <code>account users</code> — <code>SELECT</code>. Don't move on until you can see it there, in the UI, with your own eyes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 2 -->
+<!-- ============================================================ -->
+<section class="content" id="phase2">
+  <div class="wrap">
+    <div class="section-tag">Phase 2 <span class="time-badge">💻 back in the notebook</span></div>
+    <h2 class="section-title">Read It, Revoke It, Grant It Back — All by Code</h2>
+    <p class="section-intro">Open <code>Day12_2_HOL1_Unity_Catalog_Permissions_UI_and_Code.ipynb</code> and run the Phase 2 cells in order.</p>
+
+    <div class="order-list">
+      <li><b>Read it:</b> <code>SHOW GRANTS ON TABLE main.YOUR_SCHEMA.practice_customers</code> — the grant your UI click just created should appear here immediately.</li>
+      <li><b>Revoke it:</b> <code>REVOKE SELECT ON TABLE ... FROM \`account users\`</code> — then <code>SHOW GRANTS</code> again; the row should be gone.</li>
+      <li><b>Grant it back:</b> <code>GRANT SELECT ON TABLE ... TO \`account users\`</code> — the exact syntax ILT 4 showed you as illustrative-only. <code>SHOW GRANTS</code> one more time — it should look identical to what Phase 1's UI click produced.</li>
+    </div>
+
+<pre class="code-block"><span class="kw">REVOKE SELECT</span> <span class="kw">ON TABLE</span> main.YOUR_SCHEMA.practice_customers <span class="kw">FROM</span> `account users`;
+<span class="kw">GRANT SELECT</span> <span class="kw">ON TABLE</span> main.YOUR_SCHEMA.practice_customers <span class="kw">TO</span> `account users`;</pre>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Phase 2 Checkpoint</div>
+      <p>You should have seen <code>SHOW GRANTS</code> output the same privilege row three times: once from your UI click, once confirming it was gone after the code <code>REVOKE</code>, and once confirming it was back after the code <code>GRANT</code>. If the third result doesn't match the first, re-run the cells in order — a skipped cell is the usual cause.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 3 -->
+<!-- ============================================================ -->
+<section class="content" id="phase3">
+  <div class="wrap">
+    <div class="section-tag">Phase 3 <span class="time-badge">🔍 read-only, real gbmart</span></div>
+    <h2 class="section-title">What Access Actually Exists on Real Gold</h2>
+    <p class="section-intro">Run the notebook's Phase 3 cell — the exact same <code>SHOW GRANTS</code> mechanism you just used on your own tiny table, now pointed at <code>gbmart</code>, <code>gbmart.gold</code>, and <code>gbmart.gold.fact_sales</code>.</p>
+
+    <div class="highlight-box warn">
+      <p><b>If you see a permission error here, that's expected.</b> Unity Catalog only lets you read grants on objects you own or administer — most learner accounts aren't owner/admin on the real <code>gbmart</code> catalog. The notebook cell wraps this in <code>try/except</code> and prints a clear message instead of failing. That message <em>is</em> the lesson: it's the exact same access-control model you just exercised on your own table, now protecting you from seeing something you're not entitled to see.</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Phase 3 Checkpoint</div>
+      <p>Either you see real grant rows for <code>gbmart</code>, or you see the graceful permission-boundary message — both are a correct, complete run of this phase.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- REFERENCE -->
+<!-- ============================================================ -->
+<section class="content" id="reference">
+  <div class="wrap">
+    <div class="section-tag">Reference</div>
+    <h2 class="section-title">Privileges, at a Glance</h2>
+    <table class="spec">
+      <tr><th>Privilege</th><th>Grants the ability to...</th></tr>
+      <tr><td><code>USE CATALOG</code></td><td>"Step into" a catalog at all — necessary but not sufficient on its own</td></tr>
+      <tr><td><code>USE SCHEMA</code></td><td>Step into a schema — same idea, one level down</td></tr>
+      <tr><td><code>SELECT</code></td><td>Read rows from a table or view</td></tr>
+      <tr><td><code>MODIFY</code></td><td><code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>/<code>MERGE</code> rows</td></tr>
+      <tr><td><code>CREATE TABLE</code> / <code>CREATE SCHEMA</code> / <code>CREATE FUNCTION</code></td><td>Create new objects of that type inside the parent</td></tr>
+      <tr><td><code>ALL PRIVILEGES</code></td><td>Every privilege valid at that level, combined</td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><b>Further reading (optional, not required to finish this HOL):</b> Databricks' own <a href="https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/" target="_blank" rel="noopener">"Manage privileges in Unity Catalog"</a> doc covers every privilege type and object level in more depth than today's session needed — worth a skim if you want the full picture beyond <code>SELECT</code>/<code>MODIFY</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CHECKLIST -->
+<!-- ============================================================ -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Before You Call This Done</div>
+    <h2 class="section-title">Final Checklist</h2>
+    <div class="checklist-card">
+      <div class="checklist-item"><input type="checkbox" id="c0"><label for="c0">Read the real Databricks privileges doc and answered all 4 Read First questions — not skipped</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c1"><label for="c1">Ran the companion notebook's Setup cell before touching the UI</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c2"><label for="c2">Granted <code>SELECT</code> to <code>account users</code> on <code>practice_customers</code> via Catalog Explorer's Permissions tab</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c3"><label for="c3">Confirmed that grant in <code>SHOW GRANTS</code> output, from code</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c4"><label for="c4">Revoked it via SQL, confirmed it disappeared</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c5"><label for="c5">Granted it back via SQL, confirmed it matched the original UI-created row</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c6"><label for="c6">Ran the real, read-only <code>SHOW GRANTS</code> checks against <code>gbmart</code></label></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 12 · Hands-On: Grant It Two Ways (UI + Code)
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>

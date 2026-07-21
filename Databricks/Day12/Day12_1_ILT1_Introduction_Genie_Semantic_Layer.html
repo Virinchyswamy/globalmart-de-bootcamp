@@ -198,7 +198,7 @@
       <tr><th></th><th>Generic AI chat</th><th>Databricks Genie</th></tr>
       <tr><td><strong>Where the answer comes from</strong></td><td>Its training data — a statistical guess, however confident it sounds</td><td>A real SQL query it just ran against your real governed tables</td></tr>
       <tr><td><strong>Can you check its work?</strong></td><td>Not really — you're trusting the output</td><td>Yes — it shows you the exact SQL it ran, every time</td></tr>
-      <tr><td><strong>What data can it see?</strong></td><td>Whatever it was trained on, plus whatever you paste in</td><td>Only the catalog/schema/tables you scoped into its Genie Space — nothing else</td></tr>
+      <tr><td><strong>What data can it see?</strong></td><td>Whatever it was trained on, plus whatever you paste in</td><td>Only the catalog/schema/tables you scoped into its Genie Agent — nothing else</td></tr>
       <tr><td><strong>Does it respect who's asking?</strong></td><td>No concept of "who" at all</td><td>Yes — row filters and column masks from Unity Catalog apply automatically (Slide 7)</td></tr>
     </table>
   </div>
@@ -236,7 +236,7 @@
       </div>
       <div class="card">
         <h4>2. Genie Interprets</h4>
-        <p>Reads the Genie Space's metadata — table/column names, comments, sample questions, instructions — to work out which tables, columns, and joins answer it.</p>
+        <p>Reads the Genie Agent's metadata — table/column names, comments, sample questions, instructions — to work out which tables, columns, and joins answer it.</p>
       </div>
       <div class="card">
         <h4>3. SQL + Answer</h4>
@@ -244,8 +244,9 @@
       </div>
     </div>
     <div class="highlight-box" style="margin-top:18px;">
-      <p>A <strong style="color:#38bdf8;">Genie Space</strong> is a scoped, curated subset of a catalog — deliberately narrower than "the whole catalog," so the LLM isn't guessing across hundreds of unrelated tables. Set up entirely by clicking through Catalog Explorer &rarr; Genie &rarr; New Space — <strong>not by running code</strong>. The matching hands-on for that UI setup is a separate, later session against the real <code>gbmart</code> Gold layer; nothing in today's notebook creates one.</p>
+      <p>A <strong style="color:#38bdf8;">Genie Agent</strong> is a scoped, curated subset of a catalog — deliberately narrower than "the whole catalog," so the LLM isn't guessing across hundreds of unrelated tables. Set up entirely by clicking through the workspace UI — Genie Agents in the sidebar &rarr; New &rarr; choose data sources &rarr; Create — <strong>not by running code</strong>. The matching hands-on for that UI setup is a separate, later session against the real <code>gbmart</code> Gold layer; nothing in today's notebook creates one.</p>
     </div>
+    <div class="highlight-box" style="margin-top:12px; border-color:#f59e0b;"><p><strong style="color:#f59e0b;">Go verify this yourself:</strong> Databricks' own docs at <code>docs.databricks.com/aws/en/genie/set-up</code> state plainly — "Genie Agents were formerly known as Genie Spaces." If your workspace still shows the old name somewhere, that's expected; rollouts aren't instant. Docs, not slides, are the source of truth for what's current.</p></div>
   </div>
 
   <!-- SLIDE 5: UNIQUE POWERS -->
@@ -256,7 +257,7 @@
       <div class="power-card"><div class="num">02</div><h4>💬 Remembers the thread</h4><p>Follow-up questions ("now break that down by region") build on the previous question's context — a real conversation, not one-shot Q&amp;A.</p></div>
       <div class="power-card"><div class="num">03</div><h4>📊 Auto-visualizes</h4><p>Genie doesn't just return a table — it can generate a chart from the result shape automatically, no separate BI step.</p></div>
       <div class="power-card"><div class="num">04</div><h4>✅ Trusted assets</h4><p>Admins can pin specific verified queries as ground truth. Once a question is answered right, it can be locked in — not re-guessed every time.</p></div>
-      <div class="power-card"><div class="num">05</div><h4>🎯 Scoped per audience</h4><p>A catalog can have multiple Genie Spaces — one for Finance, one for Ops — each seeing only the tables curated for them.</p></div>
+      <div class="power-card"><div class="num">05</div><h4>🎯 Scoped per audience</h4><p>A catalog can have multiple Genie Agents — one for Finance, one for Ops — each seeing only the tables curated for them.</p></div>
       <div class="power-card"><div class="num">06</div><h4>🔒 Governance-native</h4><p>It's not a separate system that might leak data — it queries <em>through</em> Unity Catalog, so every grant, row filter, and mask still applies. Next slide.</p></div>
     </div>
   </div>
@@ -289,7 +290,7 @@
       </div>
       <div>
         <div class="highlight-box purple">
-          <p><strong style="color:#c084fc;">Same table. Same mask function. Same Genie Space.</strong> The only thing that changed is who's logged in — because the mask is attached to the <em>column</em> in Unity Catalog, not to Genie. Genie has no way to see the unmasked value even if it wanted to; the data warehouse itself never hands it over.</p>
+          <p><strong style="color:#c084fc;">Same table. Same mask function. Same Genie Agent.</strong> The only thing that changed is who's logged in — because the mask is attached to the <em>column</em> in Unity Catalog, not to Genie. Genie has no way to see the unmasked value even if it wanted to; the data warehouse itself never hands it over.</p>
         </div>
       </div>
     </div>
@@ -357,7 +358,7 @@ Actual_price      decimal      <span class="str">"Original list price per unit, 
       </div>
       <div>
         <div class="highlight-box success">
-          <p><strong style="color:#22c55e;">That is precisely what a semantic layer is.</strong> A Genie Space built on <code>gbmart.gold</code> would point straight at these two views for exactly the questions they already answer — instead of asking Genie to reconstruct the same join and <code>GROUP BY</code> from raw <code>fact_sales</code>, every single time. This is also literally the query Slide 3's demo used.</p>
+          <p><strong style="color:#22c55e;">That is precisely what a semantic layer is.</strong> A Genie Agent built on <code>gbmart.gold</code> would point straight at these two views for exactly the questions they already answer — instead of asking Genie to reconstruct the same join and <code>GROUP BY</code> from raw <code>fact_sales</code>, every single time. This is also literally the query Slide 3's demo used.</p>
         </div>
       </div>
     </div>
@@ -366,7 +367,7 @@ Actual_price      decimal      <span class="str">"Original list price per unit, 
   <!-- SLIDE 12: WHAT WE CAN SCRIPT -->
   <div class="slide slide-demo">
     <h3>The Part We CAN Script Today</h3>
-    <div class="demo-label">Genie Space setup is UI-only. Table + column comments underneath it are real, runnable SQL.</div>
+    <div class="demo-label">Genie Agent setup is UI-only. Table + column comments underneath it are real, runnable SQL.</div>
     <div class="two-col">
       <div>
 <pre>YOUR_SCHEMA = <span class="str">"main.YOUR_SCHEMA"</span>
@@ -410,7 +411,7 @@ spark.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"""
       <tr><td>"What is our average discount by category?"</td><td><code>SELECT category, AVG(avg_discount_given) FROM vw_monthly_category_sales GROUP BY category</code></td></tr>
       <tr><td>"How many orders came from each region?"</td><td><code>SELECT state, city, total_orders FROM vw_regional_sales</code></td></tr>
     </table>
-    <div class="highlight-box purple" style="margin-top:14px;"><p><strong style="color:#c084fc;">This is Power #4 from Slide 5 in action</strong> — a worked question/SQL pair registered on a Genie Space becomes a Trusted Asset: Genie leans on a known-good pattern instead of reconstructing the join from scratch, every time someone asks something similar.</p></div>
+    <div class="highlight-box purple" style="margin-top:14px;"><p><strong style="color:#c084fc;">This is Power #4 from Slide 5 in action</strong> — a worked question/SQL pair registered on a Genie Agent becomes a Trusted Asset: Genie leans on a known-good pattern instead of reconstructing the join from scratch, every time someone asks something similar.</p></div>
   </div>
 
   <!-- SLIDE 15: KEY TAKEAWAYS -->
@@ -439,7 +440,7 @@ spark.<span class="fn">sql</span>(<span class="kw">f</span><span class="str">"""
         </ul>
       </div>
     </div>
-    <div class="highlight-box" style="margin-top:16px;"><p><strong style="color:#38bdf8;">Up next:</strong> a separate, later hands-on — setting up a real Genie Space on the <code>gbmart.gold</code> layer, live in the workspace UI.</p></div>
+    <div class="highlight-box" style="margin-top:16px;"><p><strong style="color:#38bdf8;">Up next:</strong> a separate, later hands-on — setting up a real Genie Agent on the <code>gbmart.gold</code> layer, live in the workspace UI.</p></div>
   </div>
 
   <!-- SLIDE 16: SELF-CHECK -->

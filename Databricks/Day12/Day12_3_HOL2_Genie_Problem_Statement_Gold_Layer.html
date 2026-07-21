@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 12 — Hands-On: The Genie Problem Statement</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b; --purple: #a855f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--purple), var(--accent)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--purple); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
+  }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #241a3d 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--purple); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 40px; background: linear-gradient(120deg, #f8fafc, var(--purple) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 760px; margin: 0 auto 26px; }
+  .hero .cta { display: inline-block; background: var(--purple); color: #fff; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+  .hero .cta:hover { background: #9333ea; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
+
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .time-badge { background: rgba(168,85,247,0.15); color: var(--purple); border: 1px solid rgba(168,85,247,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: none; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 780px; margin-bottom: 30px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--purple); font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box.purple { background: #241a3d; border-color: var(--purple); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: var(--purple); color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--purple); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  details.hint { background: #14243d; border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; padding: 4px 0; }
+  details.hint summary { cursor: pointer; padding: 12px 18px; font-size: 13.5px; font-weight: 700; color: var(--accent2); list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.hint summary::-webkit-details-marker { display: none; }
+  details.hint summary::before { content: '💡'; }
+  details.hint[open] summary { border-bottom: 1px solid var(--border); }
+  details.hint .hint-body { padding: 14px 18px 16px; font-size: 14px; color: #cbd5e1; line-height: 1.7; }
+  details.hint .hint-body p + p { margin-top: 10px; }
+
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--accent2)); color: #fff; font-weight: 800; font-size: 15px; margin-right: 10px; flex-shrink: 0; }
+
+  .checklist-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; color: #cbd5e1; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--good); flex-shrink: 0; cursor: pointer; }
+  .checklist-item label { cursor: pointer; }
+
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
+  .pill-purple { background: #6b21a8; color: #e9d5ff; }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+
+  .reflect-box { background: var(--panel); border: 1px dashed var(--border); border-radius: 12px; padding: 18px 22px; margin-top: 14px; }
+  .reflect-box textarea { width: 100%; margin-top: 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-family: inherit; font-size: 13.5px; min-height: 70px; }
+
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+
+  .doc-link-card { background: var(--panel); border: 1.5px solid var(--purple); border-radius: 12px; padding: 18px 22px; margin-top: 16px; }
+  .doc-link-card a.doc-link { font-size: 15px; font-weight: 700; word-break: break-all; color: var(--purple); }
+  .research-q { counter-reset: rq; list-style: none; margin-top: 14px; }
+  .research-q li { counter-increment: rq; padding: 12px 0 12px 40px; position: relative; font-size: 14.5px; color: #cbd5e1; border-bottom: 1px solid var(--border); }
+  .research-q li:last-child { border-bottom: none; }
+  .research-q li::before { content: "Q" counter(rq); position: absolute; left: 0; top: 10px; background: var(--purple); color: #fff; font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 12 · HOL 2 — THE GENIE PROBLEM STATEMENT</div>
+    <div class="links">
+      <a href="#theproblem" class="navlink">The Problem</a>
+      <a href="#readfirst" class="navlink">Read First</a>
+      <a href="#phase1" class="navlink">Phase 1 · Build</a>
+      <a href="#phase2" class="navlink">Phase 2 · Known-Good</a>
+      <a href="#phase3" class="navlink">Phase 3 · Break It</a>
+      <a href="#alsotry" class="navlink">Also Try This</a>
+      <a href="#checklist" class="navlink">Checklist</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Day 12 Hands-On · Builds on ILT 1 (Genie &amp; Semantic Layer)</div>
+  <h1>GlobalMart's VP of Sales Wants Answers, Not Tickets</h1>
+  <p class="lead">She used to file a ticket every time she wanted one number out of Gold, wait a day, and get back a screenshot she couldn't drill into. Your job today: give her — and anyone like her — a real, working way to ask GlobalMart's Gold layer questions in plain English, live, no data engineer required.</p>
+  <div class="meta-row">
+    <span class="meta-pill">🧞 A real Genie Agent, over real <code>gbmart.gold</code></span>
+    <span class="meta-pill">✅ 4 known-good questions, guaranteed to work</span>
+    <span class="meta-pill">🔎 5+ questions of your own — go find where it breaks</span>
+  </div>
+  <div style="margin-top:28px;"><a href="#theproblem" class="cta">Read the Problem ↓</a></div>
+</header>
+
+<!-- ============================================================ -->
+<!-- THE PROBLEM -->
+<!-- ============================================================ -->
+<section class="content" id="theproblem">
+  <div class="wrap">
+    <div class="section-tag">The Problem Statement</div>
+    <h2 class="section-title">No SQL, No Wait, No Ticket</h2>
+    <p class="section-intro">This is the deferred hands-on ILT 1 promised: <em>"Set Up Genie on Gold Layer — Descriptions + Natural Language Queries."</em> Everything in that session was rehearsed on a safe practice copy. Today you build the real thing, on the real <code>gbmart.gold</code> layer — because a Genie Agent doesn't write to a single row of table data, it only creates a new, personal, curated view into tables you can already read.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>🎯 Who you're building this for</h4>
+        <p>GlobalMart's VP of Sales, a category manager, a regional ops lead — none of them write SQL, all of them have a real question most weeks. Right now, every one of those questions becomes a ticket in your team's queue.</p>
+      </div>
+      <div class="card">
+        <h4>🧩 What "solved" looks like</h4>
+        <p>A Genie Agent where any of them can type a question in plain English and get back a real, correct answer — sourced from data you already trust, not a guess.</p>
+      </div>
+    </div>
+
+    <div class="highlight-box purple" style="margin-top:16px;">
+      <p><b>This is not fully open-ended.</b> You're given 4 questions Genie is guaranteed to answer correctly (Phase 2) as your foundation — then you're expected to go past them and find at least 5 questions of your own that test where Genie actually struggles (Phase 3). Getting the 4 right is the floor, not the finish line.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- READ FIRST -->
+<!-- ============================================================ -->
+<section class="content" id="readfirst">
+  <div class="wrap">
+    <div class="section-tag">Required, Not Optional <span class="time-badge">📖 ~10 min</span></div>
+    <h2 class="section-title">Read the Real Genie Docs First</h2>
+    <p class="section-intro">ILT 1 taught you the ideas. It didn't teach you the current product surface — because docs move faster than any slide deck can keep up with. Go read both pages below before you touch the UI in Phase 1.</p>
+
+    <div class="doc-link-card">
+      <a class="doc-link" href="https://docs.databricks.com/aws/en/genie/" target="_blank" rel="noopener">docs.databricks.com/aws/en/genie/</a>
+      <p style="color:var(--muted); font-size:13px; margin-top:6px;">The Genie overview — what the product actually covers today.</p>
+    </div>
+    <div class="doc-link-card">
+      <a class="doc-link" href="https://docs.databricks.com/aws/en/genie/set-up" target="_blank" rel="noopener">docs.databricks.com/aws/en/genie/set-up</a>
+      <p style="color:var(--muted); font-size:13px; margin-top:6px;">"Set up a Genie Agent" — the real, current click-path and configuration reference. This is what Phase 1 below is actually built from.</p>
+    </div>
+
+    <ol class="research-q">
+      <li>The overview page splits "Genie" into 3 distinct things, not 1. What are they, and which one is this entire hands-on session actually about?</li>
+      <li>You've been calling the object you're about to build a "Genie Agent" all session. Find the exact sentence in the docs that tells you what it used to be called — and notice that this HOL and ILT 1 both had to be corrected to match, mid-course, because of exactly this.</li>
+      <li>The setup page lists 4 things a data analyst configures on a Genie Agent — Unity Catalog scope is one. Name the other 3.</li>
+      <li>What does the doc say happens if you don't provide enough of your own sample/common questions when setting one up? (This should change how much effort you put into Phase 2 below.)</li>
+    </ol>
+
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><b>Why this one's worth taking seriously:</b> you just found, by reading, that this exact product renamed itself since this course's slides were first written. That's not a hypothetical "docs matter" lesson — it's the thing that actually happened to the material you're using right now. Next time something in this course looks slightly off from what you see on screen, the docs are where you go to find out which one is current.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 1 -->
+<!-- ============================================================ -->
+<section class="content" id="phase1">
+  <div class="wrap">
+    <div class="section-tag">Phase 1 <span class="time-badge">🖱️ Genie Agents → New</span></div>
+    <h2 class="section-title">Build the Genie Agent</h2>
+    <p class="section-intro">Entirely UI-driven — this is the one part of Genie that genuinely can't be scripted in a notebook, exactly as ILT 1 told you.</p>
+
+    <div class="order-list">
+      <li>Click <b>Genie Agents</b> in the left sidebar.</li>
+      <li>Click <b>New</b> in the upper-right corner.</li>
+      <li>Choose your data sources, all from <code>gbmart.gold</code>: <code>fact_sales</code>; the dimension tables — <code>dim_customer</code>, <code>dim_product</code>, <code>dim_address</code>, <code>dim_payment_method</code>, <code>dim_orders</code>, <code>dim_date</code>; and the two certified views — <code>vw_monthly_category_sales</code>, <code>vw_regional_sales</code>. Click <b>Create</b>.</li>
+      <li>In the Agent's own <b>Instructions</b> field, write a short brief for Genie: what GlobalMart sells, what grain <code>fact_sales</code> is at, and a pointer that the two certified views already answer the most common questions — don't make Genie rediscover that from raw joins every time.</li>
+    </div>
+
+    <div class="highlight-box">
+      <p><b>Important distinction, so you don't accidentally touch shared metadata:</b> the instructions you're writing here live on the <em>Genie Agent itself</em> — it's yours, personal, and doesn't touch the real <code>gbmart</code> tables at all. This is different from the <code>ALTER TABLE ... COMMENT</code> statements ILT 1 had you practice — those stayed on a throwaway practice copy on purpose, and still do. Nothing in this Agent setup writes to a real Gold table's metadata.</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Phase 1 Checkpoint</div>
+      <p>Your Genie Agent exists, lists all 8 objects above in its scope, and has a description written in your own words — not left blank.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 2 -->
+<!-- ============================================================ -->
+<section class="content" id="phase2">
+  <div class="wrap">
+    <div class="section-tag">Phase 2 <span class="time-badge">✅ guaranteed to work</span></div>
+    <h2 class="section-title">Register the Known-Good Questions</h2>
+    <p class="section-intro">These 4 question→SQL pairs were drafted back in ILT 1's Section 5, specifically so you'd have them ready for this exact step. Type each question into your Genie Agent's Sample Questions / Instructions area, alongside its SQL, then actually ask Genie each one in the chat and confirm the answer.</p>
+
+    <table class="spec">
+      <tr><th>Sample question</th><th>Maps to</th></tr>
+      <tr><td>"What was our revenue by category last month?"</td><td><code>SELECT category, SUM(total_revenue) FROM vw_monthly_category_sales WHERE ... GROUP BY category</code></td></tr>
+      <tr><td>"Which states generate the most revenue?"</td><td><code>SELECT state, SUM(total_revenue) FROM vw_regional_sales GROUP BY state ORDER BY total_revenue DESC</code></td></tr>
+      <tr><td>"What is our average discount by category?"</td><td><code>SELECT category, AVG(avg_discount_given) FROM vw_monthly_category_sales GROUP BY category</code></td></tr>
+      <tr><td>"How many orders came from each region?"</td><td><code>SELECT state, city, total_orders FROM vw_regional_sales</code></td></tr>
+    </table>
+
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><b>Why these 4 specifically:</b> every one of them maps to a certified view someone already built and trusts — <code>vw_monthly_category_sales</code> or <code>vw_regional_sales</code> from Day 7 HOL 2. Registering them as sample questions is exactly what turns Genie's guessing into pattern-matching against something known-good.</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Phase 2 Checkpoint</div>
+      <p>All 4 questions asked in the live Genie chat, all 4 answers match what the SQL above would actually return.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 3 -->
+<!-- ============================================================ -->
+<section class="content" id="phase3">
+  <div class="wrap">
+    <div class="section-tag">Phase 3 <span class="time-badge">🔎 the actual assignment</span></div>
+    <h2 class="section-title">Now Go Break It</h2>
+    <p class="section-intro">4 known-good questions prove Genie <em>can</em> work. They don't prove you understand it. Ask at least <b>5 questions nobody wrote SQL for ahead of time</b> — pick from the prompts below, or invent your own.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>🔗 Force a real join</h4>
+        <p>Ask something neither certified view answers alone — e.g. "which customers in the top-revenue state also got the biggest average discount?" Does Genie combine both views correctly, or does it guess a shortcut?</p>
+      </div>
+      <div class="card">
+        <h4>❓ Be deliberately ambiguous</h4>
+        <p>Ask something with more than one reasonable reading — e.g. "what's our biggest category?" (biggest by revenue? by units? by order count?). Does Genie ask you to clarify, or silently pick one and hope?</p>
+      </div>
+      <div class="card">
+        <h4>🔒 Touch a governed column</h4>
+        <p>If you completed <code>Day12_2_HOL1</code>, you already know <code>dim_customer</code> has real PII columns in scope for masking (<code>email</code>, <code>phone_number</code>). Ask Genie for a customer's email directly — watch it respect the exact same governance you just practiced, with zero extra setup on your part.</p>
+      </div>
+      <div class="card">
+        <h4>📉 Ask something that doesn't exist</h4>
+        <p>Ask for a number that genuinely isn't in scope — e.g. "what's our profit margin by category?" if margin isn't a column anywhere in scope. Does Genie say so honestly, or invent something that looks plausible?</p>
+      </div>
+    </div>
+
+    <div class="reflect-box">
+      <p><b>Reflection — fill this in as you go, not after:</b> for each of your 5+ questions, note what you asked, what Genie did, and whether it was right, wrong, or honestly uncertain. Patterns across your 5 are more interesting than any single result.</p>
+      <textarea placeholder="Question 1: ...&#10;What Genie did: ...&#10;Verdict: ..."></textarea>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Phase 3 Checkpoint</div>
+      <p>At least 5 self-written questions asked and logged, with at least one genuine "Genie got this wrong (or refused, or asked for clarification)" moment — if all 5 landed perfectly on the first try, your questions weren't hard enough yet. Try again.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ALSO TRY THIS -->
+<!-- ============================================================ -->
+<section class="content" id="alsotry">
+  <div class="wrap">
+    <div class="section-tag">Also Try This</div>
+    <h2 class="section-title">Feed It Fresh Data</h2>
+    <p class="section-intro">Everything above ran against whatever's already sitting in Gold. Go back to <code>Databricks/Day11/orchestration/</code> and re-run (or extend) your Day 11 orchestration Job.</p>
+    <div class="highlight-box purple">
+      <p><b>The payoff line:</b> any new row that Job lands in a Gold table is immediately something the same Genie Agent can be asked about — no new Space, no new setup, no waiting. That's the actual point of pairing orchestration with Genie: fresh data and self-serve answers are the same pipeline, not two separate projects.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CHECKLIST -->
+<!-- ============================================================ -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Before You Call This Done</div>
+    <h2 class="section-title">Final Checklist</h2>
+    <div class="checklist-card">
+      <div class="checklist-item"><input type="checkbox" id="c0"><label for="c0">Read both real Genie docs and answered all 4 Read First questions — not skipped</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c1"><label for="c1">Genie Agent created over <code>fact_sales</code>, its 6 dimensions, and both certified views</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c2"><label for="c2">Agent instructions written — not left blank, and not an <code>ALTER TABLE COMMENT</code> on real <code>gbmart</code></label></div>
+      <div class="checklist-item"><input type="checkbox" id="c3"><label for="c3">All 4 known-good sample questions registered and confirmed correct in the live chat</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c4"><label for="c4">5+ self-written questions asked, at least one exposing a real limitation</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c5"><label for="c5">Reflection notes filled in for each self-written question</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c6"><label for="c6">(Optional) Re-ran the Day 11 orchestration Job and asked Genie about the new data</label></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 12 · Hands-On: The Genie Problem Statement
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>
