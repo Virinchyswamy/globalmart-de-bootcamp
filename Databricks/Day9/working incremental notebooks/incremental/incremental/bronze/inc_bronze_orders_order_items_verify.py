@@ -76,8 +76,10 @@
 
 # MAGIC %md
 # MAGIC ## Check 5 — Total Row Count on bronze.order_items
-# MAGIC Should be `126,036` (unchanged), or `126,038` if the order_items insert
-# MAGIC was run — same 1:1 relationship as orders.
+# MAGIC Should be `377,866` (unchanged), or `377,868` if the order_items insert
+# MAGIC was run. order_items is NOT 1:1 with orders -- it's one row per line item,
+# MAGIC and a single order can have multiple line items (hence ~3x the row count
+# MAGIC of orders).
 
 # COMMAND ----------
 

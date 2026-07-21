@@ -356,8 +356,10 @@
     <div class="highlight-box">
       <p>
         <b>About those row-count numbers:</b> at authoring time, the stated baseline was <code>126,036</code>
-        orders (<code>126,038</code> once the 2 new orders land) and <code>126,036</code> order_items (unchanged,
-        or <code>126,038</code> if the matching order_items insert was also run (order_items is 1:1 with orders in this dataset)). Those are the pipeline's
+        orders (<code>126,038</code> once the 2 new orders land) and <code>377,866</code> order_items (unchanged,
+        or <code>377,868</code> if the matching order_items insert was also run). order_items is <b>not</b> 1:1
+        with orders — it's one row per line item, and orders average ~3 line items each, hence the ~3x row count.
+        Those are the pipeline's
         <i>reference</i> numbers from when this lab was written — not something to hardcode or assert against. The
         real cohort table keeps growing as other students and instructor demos run against it, so always verify
         live with <code>COUNT(*)</code>, exactly the way Check 3 does it.
