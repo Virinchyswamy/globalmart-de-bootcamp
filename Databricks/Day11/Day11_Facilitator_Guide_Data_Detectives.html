@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 11 — Data Detectives: Facilitator Guide</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--bad), var(--warn)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--bad); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
+  }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  .warn-banner { background: #2d1e0e; border-bottom: 2px solid var(--warn); text-align: center; padding: 12px 20px; font-size: 13.5px; font-weight: 700; color: var(--warn); letter-spacing: 0.5px; }
+
+  .hero { text-align: center; padding: 50px 24px 40px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--bad); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 36px; color: #f8fafc; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 15.5px; max-width: 740px; margin: 0 auto 10px; }
+
+  section.content { padding: 50px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .section-title { font-size: 26px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15px; max-width: 780px; margin-bottom: 26px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .card h4 { color: var(--accent); font-size: 14.5px; margin-bottom: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13.5px; }
+  .card ul { padding-left: 16px; margin-top: 6px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 8px 12px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 8px 12px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  /* CASE REVEAL */
+  .reveal-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; margin-bottom: 8px; }
+  .reveal-card .case-header { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .reveal-card .case-badge { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; color: #0f172a; flex-shrink: 0; }
+  .reveal-card h3 { font-size: 18px; }
+  .reveal-answer { background: #0d2d1a; border: 1px solid var(--good); border-radius: 10px; padding: 14px 18px; margin: 14px 0; }
+  .reveal-answer .tag { color: var(--good); font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .reveal-answer p { font-size: 14px; color: #cbd5e1; line-height: 1.7; }
+  .strong-shallow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+  @media (max-width: 800px) { .strong-shallow { grid-template-columns: 1fr; } }
+  .strong-shallow .col-strong { background: #0d2d1a; border: 1px solid var(--good); border-radius: 10px; padding: 14px 16px; }
+  .strong-shallow .col-shallow { background: #2d1e0e; border: 1px solid var(--warn); border-radius: 10px; padding: 14px 16px; }
+  .strong-shallow h5 { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .strong-shallow .col-strong h5 { color: var(--good); }
+  .strong-shallow .col-shallow h5 { color: var(--warn); }
+  .strong-shallow ul { padding-left: 16px; font-size: 13px; color: #cbd5e1; }
+  .strong-shallow li { margin-bottom: 5px; }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 14px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border);
+    font-size: 13.5px; color: #cbd5e1; line-height: 1.6;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #7f1d1d; color: #fff; min-width: 22px; height: 22px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  footer { text-align: center; padding: 40px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="warn-banner">⚠️ FACILITATOR-ONLY — DO NOT SHARE THIS FILE WITH LEARNERS ⚠️</div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 11 · FACILITATOR GUIDE — DATA DETECTIVES</div>
+    <div class="links">
+      <a href="#logistics" class="navlink">Logistics &amp; Assignment</a>
+      <a href="#reveals" class="navlink">The 6 Reveals</a>
+      <a href="#debrief" class="navlink">Debrief Questions</a>
+      <a href="#closing" class="navlink">Closing Script</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Everything the learner-facing file deliberately withholds</div>
+  <h1>Data Detectives — Facilitator Guide</h1>
+  <p class="lead">The real cause for all 6 cases, the room logistics for a real 23-learner cohort, a Strong-vs-Shallow rubric per case, and a debrief question bank built around the fact that each case landed on 3-4 different people who researched it independently.</p>
+</header>
+
+<!-- ============================================================ -->
+<!-- LOGISTICS -->
+<!-- ============================================================ -->
+<section class="content" id="logistics">
+  <div class="wrap">
+    <div class="section-tag">Before the Room Fills</div>
+    <h2 class="section-title">Logistics &amp; Case Assignment</h2>
+
+    <div class="highlight-box warn">
+      <p><b>90-minute slot, 4:00-5:30 PM, replacing that day's Tredence Internal Sessions block.</b> Start on time — there's no slack built in.</p>
+    </div>
+
+    <table class="spec" style="margin-top:18px;">
+      <tr><th>Block</th><th>Minutes</th><th>Facilitator does</th></tr>
+      <tr><td>Welcome + assignment</td><td>5</td><td>Explain the format in ~90 seconds, then count off 1-6 around the whole room (not per table), wrapping as needed. Don't overthink the count-off — just go seat to seat.</td></tr>
+      <tr><td>Solo research</td><td>30</td><td>Circulate. If someone's stuck, nudge toward the research prompts in their case file — never name the real cause, even indirectly.</td></tr>
+      <tr><td>Solo story-writing</td><td>15</td><td>Keep circulating. A learner who finishes early should re-read their clues, not sit idle — ask "which clue does your theory explain worst?"</td></tr>
+      <tr><td>Find your case siblings</td><td>10</td><td>Call out "everyone with the same number, find each other now." Expect some noisy re-shuffling — that's fine, keep it moving.</td></tr>
+      <tr><td>Report-out</td><td>20</td><td>One rep per case (6 total), ~3 min each including a 30-second facilitator follow-up question. Keep strict time — 6 × ~3.3 min = 20 min, no slack.</td></tr>
+      <tr><td>The reveal + wrap-up</td><td>10</td><td>Reveal all 6 real causes rapid-fire (see below), then the closing script.</td></tr>
+    </table>
+
+    <h3 style="font-size:16px; color:var(--accent2); margin:24px 0 8px;">Case Assignment for a Real 23-Learner, 6-Table Room</h3>
+    <p style="color:var(--muted); font-size:13.5px; margin-bottom:10px;">Count off 1 through 6 in seat order around the whole room (not reset per table). Verified against the actual 5-tables-of-4 + 1-table-of-3 layout — no table ends up with two learners on the same case, since 6 doesn't divide evenly into 4.</p>
+    <table class="spec">
+      <tr><th>Table</th><th>Seats</th><th>Cases at this table</th></tr>
+      <tr><td>Table 1 (4 seats)</td><td>1-4</td><td>A, B, C, D</td></tr>
+      <tr><td>Table 2 (4 seats)</td><td>5-8</td><td>E, F, A, B</td></tr>
+      <tr><td>Table 3 (4 seats)</td><td>9-12</td><td>C, D, E, F</td></tr>
+      <tr><td>Table 4 (4 seats)</td><td>13-16</td><td>A, B, C, D</td></tr>
+      <tr><td>Table 5 (4 seats)</td><td>17-20</td><td>E, F, A, B</td></tr>
+      <tr><td>Table 6 (3 seats)</td><td>21-23</td><td>C, D, E</td></tr>
+    </table>
+    <p style="color:var(--muted); font-size:13px; margin-top:10px;">Final distribution: A×4, B×4, C×4, D×4, E×4, F×3 = 23. F (Air Guitar) is intentionally the lightest case — fine, mirrors Day 8's own uneven split.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- REVEALS -->
+<!-- ============================================================ -->
+<section class="content" id="reveals">
+  <div class="wrap">
+    <div class="section-tag">The Answer Key</div>
+    <h2 class="section-title">All 6 Real Causes, With Evaluation Rubrics</h2>
+    <p class="section-intro">Use the Strong/Shallow columns to evaluate report-outs live, and to know what to push on if a group's theory is close but incomplete.</p>
+
+    <!-- CASE A -->
+    <div class="reveal-card">
+      <div class="case-header"><div class="case-badge" style="background:#38bdf8;">A</div><h3>Major Eating Federation</h3></div>
+      <div class="reveal-answer">
+        <div class="tag">Real Cause</div>
+        <p>Two contestants with near-identical names ("R. Deshmukh" and "R. Deshmukhh") got conflated in the roster. The "impossible" total isn't one person's real number — it's the combined total of two different athletes' results, merged under one row because the near-duplicate name wasn't caught. This is a real, common data-quality failure mode: <b>entity resolution</b> — matching records by name instead of a stable unique ID.</p>
+      </div>
+      <div class="strong-shallow">
+        <div class="col-strong"><h5>Strong</h5><ul><li>Notices the impossible total ≈ sum of two real entries</li><li>Catches the near-duplicate name spelling</li><li>Names "no stable unique ID" as the structural problem, not just "a typo"</li></ul></div>
+        <div class="col-shallow"><h5>Shallow</h5><ul><li>"Maybe he trained really hard" / assumes it's a real feat</li><li>Says "data entry error" without identifying which entry or why</li><li>Never engages with the near-duplicate-name clue at all</li></ul></div>
+      </div>
+    </div>
+
+    <!-- CASE B -->
+    <div class="reveal-card">
+      <div class="case-header"><div class="case-badge" style="background:#facc15;">B</div><h3>Golden Comb Apiary Co-op</h3></div>
+      <div class="reveal-answer">
+        <div class="tag">Real Cause</div>
+        <p><b>Colony Collapse Disorder (CCD)</b> — a real, documented phenomenon (widely reported since ~2006) where worker bees abandon a hive en masse, leaving the queen and brood behind, with no single agreed cause. Research generally implicates a combination of Varroa mites, pesticide exposure (especially neonicotinoids), disease, and colony stress — not one clean answer.</p>
+      </div>
+      <div class="strong-shallow">
+        <div class="col-strong"><h5>Strong</h5><ul><li>Names CCD specifically</li><li>Acknowledges multiple contributing factors, doesn't force one cause</li><li>Connects "queen/brood present, workers gone" directly to CCD's defining symptom</li></ul></div>
+        <div class="col-shallow"><h5>Shallow</h5><ul><li>Picks one cause (e.g. "pesticides") as definitively settled</li><li>Doesn't explain why workers specifically vanished vs. the whole hive dying</li><li>Treats it as regional weather/disease without naming the actual phenomenon</li></ul></div>
+      </div>
+    </div>
+
+    <!-- CASE C -->
+    <div class="reveal-card">
+      <div class="case-header"><div class="case-badge" style="background:#a78bfa;">C</div><h3>Long Wing Racing Pigeon Club</h3></div>
+      <div class="reveal-answer">
+        <div class="tag">Real Cause</div>
+        <p>A <b>geomagnetic storm / solar flare</b> disrupted the pigeons' magnetic-field-based navigation that day. This is a real, studied phenomenon — racing pigeon federations and researchers have documented mass "smashes" (bad race days with heavy losses) correlated with solar/geomagnetic activity, even in otherwise clear weather.</p>
+      </div>
+      <div class="strong-shallow">
+        <div class="col-strong"><h5>Strong</h5><ul><li>Identifies this as environmental/atmospheric, not local weather</li><li>Names solar or geomagnetic disruption specifically</li><li>Explains why it hit every loft simultaneously despite clear skies</li></ul></div>
+        <div class="col-shallow"><h5>Shallow</h5><ul><li>Blames generic "bad luck" or predators</li><li>Doesn't explain why it was room-wide/every-loft, not one route</li><li>Ignores the "weather was fine" clue entirely</li></ul></div>
+      </div>
+    </div>
+
+    <!-- CASE D -->
+    <div class="reveal-card">
+      <div class="case-header"><div class="case-badge" style="background:#f472b6;">D</div><h3>Locked In Escape Experiences</h3></div>
+      <div class="reveal-answer">
+        <div class="tag">Real Cause</div>
+        <p><b>Daylight Saving Time's "spring forward" clock jump</b> broke naive timestamp-difference math. On the day clocks skip forward an hour, a session that starts at 1:45 AM and looks like it "ends" at 1:20 AM (because 2:00-3:00 AM never happened on the clock) produces a negative or nonsensical <code>end_time - start_time</code>. It recurs every year because DST happens every year, on a similar calendar date.</p>
+      </div>
+      <div class="strong-shallow">
+        <div class="col-strong"><h5>Strong</h5><ul><li>Names DST explicitly</li><li>Explains clocks "skip" an hour, breaking naive subtraction</li><li>Connects this directly to why it recurs annually on a similar date</li></ul></div>
+        <div class="col-shallow"><h5>Shallow</h5><ul><li>"Maybe staff made the puzzles easier that week"</li><li>Doesn't address the negative-duration clue at all</li><li>Doesn't explain the yearly recurrence</li></ul></div>
+      </div>
+    </div>
+
+    <!-- CASE E -->
+    <div class="reveal-card">
+      <div class="case-header"><div class="case-badge" style="background:#4ade80;">E</div><h3>Great Glen Highland Games Association</h3></div>
+      <div class="reveal-answer">
+        <div class="tag">Real Cause</div>
+        <p>Caber toss is scored on how close to a straight <b>12-o'clock rotation/landing angle</b> the caber flips — <b>not distance thrown</b>. A shorter, perfectly-turned toss outscores a longer one that lands crooked or doesn't fully flip. The data team assumed "bigger number wins," like every other throwing event, and built the ranking with the wrong column's semantics — this isn't a data error at all, it's a <b>domain-knowledge/business-logic</b> error.</p>
+      </div>
+      <div class="strong-shallow">
+        <div class="col-strong"><h5>Strong</h5><ul><li>Correctly states caber toss's real scoring rule (rotation/angle, not distance)</li><li>Recognizes this as a wrong assumption, not corrupted data</li><li>Explains why the same logic works fine for hammer/weight throw but not this event</li></ul></div>
+        <div class="col-shallow"><h5>Shallow</h5><ul><li>Assumes the distance numbers themselves got swapped/corrupted</li><li>Doesn't identify the actual real scoring rule</li><li>Treats it as a one-off data entry mistake rather than a systemic assumption</li></ul></div>
+      </div>
+    </div>
+
+    <!-- CASE F -->
+    <div class="reveal-card">
+      <div class="case-header"><div class="case-badge" style="background:#fb923c;">F</div><h3>World Air Guitar Championship</h3></div>
+      <div class="reveal-answer">
+        <div class="tag">Real Cause</div>
+        <p>A non-competitive "Warm-Up" exhibition segment's audience-hype scores got recorded in the <b>same "score" column</b> as the real judged competitive rounds, since the spreadsheet has no field distinguishing round type. Averaging that column blends two incompatible kinds of scores. (World Air Guitar Championship is a real event, Oulu, Finland, since 1996 — with a real official judging term, "airness.")</p>
+      </div>
+      <div class="strong-shallow">
+        <div class="col-strong"><h5>Strong</h5><ul><li>Spots the "Warm-Up" label in the evidence table as the smoking gun</li><li>Names this a schema/source-mixing problem, not a judging problem</li><li>Proposes a fix (a round-type or is_competitive flag)</li></ul></div>
+        <div class="col-shallow"><h5>Shallow</h5><ul><li>Assumes one judge was biased or made an error</li><li>Doesn't notice the "Warm-Up" round label at all</li><li>Doesn't connect the single unlabeled "score" column to the mixing problem</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DEBRIEF QUESTIONS -->
+<!-- ============================================================ -->
+<section class="content" id="debrief">
+  <div class="wrap">
+    <div class="section-tag">If Time Allows / For the Reveal</div>
+    <h2 class="section-title">Debrief Question Bank</h2>
+    <p class="section-intro">Built around the fact that each case landed on 3-4 different people who researched it completely independently.</p>
+    <div class="order-list">
+      <li>For any case where multiple reps presented conflicting theories: "You both researched this independently — what specifically made you land on different explanations? Which clue tipped it for you?"</li>
+      <li>Case A specifically: "What would you actually need to check in a real database to confirm two rows got merged, rather than just suspecting it?"</li>
+      <li>Case D specifically: ask both learners who found DST and learners who didn't to defend their theory against "why does this happen at roughly the same time every single year?" — the yearly-recurrence clue is the one a shallow theory always skips.</li>
+      <li>Case E specifically: "If this isn't a data quality bug at all, whose job was it to catch this before the ranking query got built?" — a good prompt for "talk to domain experts before assuming standard semantics."</li>
+      <li>General, ask the whole room: "Which of your case's clues did your own theory explain worst? Would you have caught that gap without this question?"</li>
+      <li>General closing: "Every single one of today's 'broken data' stories turned out to have a completely ordinary, findable explanation once you understood the domain. How often do you think that's true at a real job, versus data actually just being wrong?"</li>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CLOSING SCRIPT -->
+<!-- ============================================================ -->
+<section class="content" id="closing">
+  <div class="wrap">
+    <div class="section-tag">Say This Out Loud</div>
+    <h2 class="section-title">Closing Script</h2>
+    <div class="highlight-box success">
+      <p>"Day 5 taught you a rule: don't assume a strange-looking row is broken data before you've actually investigated — some patterns that look wrong are valid business rules, and some that look clean are silently broken. Every single case today was that exact same rule, just wearing a costume. A merged pigeon-racing record instead of a merged customer record. A misunderstood caber-toss scoring rule instead of a misunderstood shipping-cost variance. The industry changes. The discipline — investigate before you decide — doesn't."</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 11 · Data Detectives, Facilitator Guide (Not for Learner Distribution)
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>

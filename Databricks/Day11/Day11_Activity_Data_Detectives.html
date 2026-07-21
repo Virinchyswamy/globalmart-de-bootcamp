@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 11 — Data Detectives: The Case of the Impossible Numbers</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav {
+    position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a {
+    text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap;
+  }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 40px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16.5px; max-width: 740px; margin: 0 auto 26px; }
+  .hero .cta { display: inline-block; background: var(--accent); color: #0f172a; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+  .hero .cta:hover { background: #5fd0ff; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
+
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .time-badge { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid rgba(245,158,11,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: none; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 780px; margin-bottom: 30px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li {
+    counter-increment: steps; display: flex; align-items: flex-start;
+    gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14.5px; color: #cbd5e1; line-height: 1.65;
+  }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before {
+    content: counter(steps);
+    background: #1d4ed8; color: #fff; min-width: 26px; height: 26px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  .checklist-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; color: #cbd5e1; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--good); flex-shrink: 0; cursor: pointer; }
+  .checklist-item label { cursor: pointer; }
+
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; margin: 2px 4px 2px 0; }
+  .pill-blue { background: #1d4ed8; color: #bfdbfe; }
+  .pill-green { background: #15803d; color: #bbf7d0; }
+  .pill-amber { background: #92400e; color: #fde68a; }
+  .pill-purple { background: #5b21b6; color: #ddd6fe; }
+  .pill-pink { background: #9d174d; color: #fbcfe8; }
+  .pill-teal { background: #115e59; color: #99f6e4; }
+
+  /* MYSTERY CASE FILE */
+  .case-file { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 28px 30px; margin-bottom: 8px; }
+  .case-file .case-header { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; flex-wrap: wrap; }
+  .case-file .case-badge { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 17px; color: #0f172a; flex-shrink: 0; }
+  .case-file h3 { font-size: 19px; color: var(--text); }
+  .case-file .case-sub { color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .case-file .story p { color: #cbd5e1; font-size: 14.5px; line-height: 1.75; margin: 16px 0; }
+  .case-file h4.clues-title { font-size: 14px; color: var(--accent2); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .clue-list { list-style: none; margin: 0; }
+  .clue-list li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 13.5px; color: #cbd5e1; }
+  .clue-list li:last-child { border-bottom: none; }
+  .clue-list li::before { content: '🔎'; flex-shrink: 0; }
+  .research-box { background: #1a1030; border: 1px dashed var(--accent2); border-radius: 10px; padding: 14px 18px; margin-top: 16px; }
+  .research-box b { color: var(--accent2); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .research-box ul { margin-top: 8px; padding-left: 18px; }
+  .research-box li { font-size: 13.5px; color: var(--muted); padding: 4px 0; }
+  .theory-box { border: 2px dashed var(--border); border-radius: 10px; padding: 18px; margin-top: 16px; min-height: 70px; }
+  .theory-box .theory-label { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 11 · INDIVIDUAL ACTIVITY — DATA DETECTIVES</div>
+    <div class="links">
+      <a href="#howitworks" class="navlink">How It Works</a>
+      <a href="#research" class="navlink">How to Research</a>
+      <a href="#caseA" class="navlink">A · Eating</a>
+      <a href="#caseB" class="navlink">B · Bees</a>
+      <a href="#caseC" class="navlink">C · Pigeons</a>
+      <a href="#caseD" class="navlink">D · Escape Room</a>
+      <a href="#caseE" class="navlink">E · Caber Toss</a>
+      <a href="#caseF" class="navlink">F · Air Guitar</a>
+      <a href="#checklist" class="navlink">What a Strong Theory Covers</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">4:00–5:30 PM · Individual Activity · No Instructor-Provided Answer</div>
+  <h1>Data Detectives: The Case of the Impossible Numbers</h1>
+  <p class="lead">Every dataset below comes from a real, legitimate industry — just one you've probably never worked in. Something in each one has gone strange: a number that shouldn't be possible, a pattern that makes no sense, a leaderboard that seems backwards. You don't get told why. Your job is to research the industry itself — properly, for real, online — until you know enough about how it actually works to explain what most likely happened, and defend that theory out loud.</p>
+  <div class="meta-row">
+    <span class="meta-pill">🕵️ 6 cases, cycled 1-per-person around the room</span>
+    <span class="meta-pill">🔬 Minimum 30 min of real research, no shortcuts</span>
+    <span class="meta-pill">⏱ 90 minutes total, ends with a live reveal</span>
+  </div>
+  <div style="margin-top:28px;"><a href="#howitworks" class="cta">Start Reading ↓</a></div>
+</header>
+
+<!-- ============================================================ -->
+<!-- HOW THIS WORKS -->
+<!-- ============================================================ -->
+<section class="content" id="howitworks">
+  <div class="wrap">
+    <div class="section-tag">Before You Do Anything Else</div>
+    <h2 class="section-title">How This Works</h2>
+    <p class="section-intro">Read this whole section before you open a browser tab.</p>
+
+    <div class="highlight-box warn">
+      <p><b>This is individual, same as Day 8.</b> Your table is a seat, not a team. The facilitator will count off 1 through 6 around the whole room, wrapping as needed — that number is your case. The same case will land on 3-4 other people scattered around the room, not necessarily at your table. That's intentional: later, you'll compare notes with exactly those people, and probably not agree.</p>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <h4>1 · Research (30 min)</h4>
+        <p>Read your case file below. Then go actually learn about the real industry it's set in — not the anomaly, the <em>industry</em>. How it's really scored, run, regulated, measured. The anomaly will start making sense once you understand the domain, not before.</p>
+      </div>
+      <div class="card">
+        <h4>2 · Write Your Theory (15 min)</h4>
+        <p>Connect what you researched to the clues in your case file. Write your best explanation for what actually happened — in plain language, like you're explaining it to someone who wasn't there.</p>
+      </div>
+      <div class="card">
+        <h4>3 · Compare &amp; Reveal (35 min)</h4>
+        <p>Find the others who got your same case number, compare theories for a few minutes, then one of you presents your group's best theory to the whole room. Facilitator reveals what actually happened after all 6 have gone.</p>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="margin-top:20px;">
+      <p><b>Why no answer key up front.</b> On the job, nobody will hand you an explanation for a weird number either — you'll have to go figure out enough about the business and the domain to make a case for what happened, then defend it when someone pushes back. That's the actual skill this hour is practicing. The reveal at the end isn't a test you pass or fail — it's there so you find out how close real research got you, and where the gap was.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- HOW TO RESEARCH -->
+<!-- ============================================================ -->
+<section class="content" id="research">
+  <div class="wrap">
+    <div class="section-tag">Phase 1 <span class="time-badge">⏱ 30 min minimum</span></div>
+    <h2 class="section-title">How to Actually Research This</h2>
+    <p class="section-intro">"Look it up" isn't a plan. Work through these, in order, for whichever industry you were assigned:</p>
+    <div class="order-list">
+      <li><b>Learn how the industry actually measures/scores/records the thing your anomaly is about.</b> Is there an official body, a standard rulebook, a sanctioning organization? Most of these industries have one — find it.</li>
+      <li><b>Learn what's considered normal.</b> What's a typical, realistic value for the number in your case file? Knowing what's normal is what lets you spot exactly how the anomaly deviates from it.</li>
+      <li><b>Look for a real event, rule, or quirk specific to this industry that could plausibly explain the pattern.</b> This is the actual research — not guessing, finding something real that fits.</li>
+      <li><b>Re-read your clues one more time</b> once you know the domain. At least one clue will suddenly make a lot more sense than it did on first read.</li>
+    </div>
+    <div class="highlight-box success">
+      <p><b>A good theory names a specific, real, checkable cause</b> — not "the data must be wrong somehow." "The data must be wrong somehow" is true of every mystery ever and explains nothing. Your job is to say <em>how</em> and <em>why</em>, in a way someone could actually go verify.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CASE A -->
+<!-- ============================================================ -->
+<section class="content" id="caseA">
+  <div class="wrap">
+    <div class="case-file">
+      <div class="case-header">
+        <div class="case-badge" style="background:#38bdf8;">A</div>
+        <div>
+          <h3>The Major Eating Federation — Competitive Eating</h3>
+          <div class="case-sub">Case Assigned To: 4 Detectives Around the Room</div>
+        </div>
+      </div>
+      <div class="story">
+        <p>Payal was updating the official leaderboard for last month's Founder's Day Classic when one row made her stop scrolling. A contestant's recorded total for the 10-minute event was nearly double the current world record — for anything, in any eating discipline, ever recorded by the Federation. Everyone remembers who actually won that day. It wasn't this number.</p>
+      </div>
+      <h4 class="clues-title">Clues</h4>
+      <ul class="clue-list">
+        <li>The impossible total appears exactly once, for exactly one event, for exactly one contestant.</li>
+        <li>That same contestant's totals at every <em>other</em> event that season are completely normal.</li>
+        <li>Two names on the Federation's full roster differ by a single character — a repeated letter, an extra space, nothing a human would notice scanning a list.</li>
+        <li>The impossible total is suspiciously close to the <em>sum</em> of two other real contestants' totals from that same event.</li>
+      </ul>
+      <table class="spec">
+        <tr><th>Contestant</th><th>Event</th><th>Date</th><th>Recorded Total</th></tr>
+        <tr><td>R. Deshmukh</td><td>Founder's Day Classic</td><td>Mar 14</td><td>18.5</td></tr>
+        <tr><td>R. Deshmukhh</td><td>Founder's Day Classic</td><td>Mar 14</td><td>41.5</td></tr>
+        <tr><td>K. Osei</td><td>Founder's Day Classic</td><td>Mar 14</td><td>23.0</td></tr>
+        <tr><td>R. Deshmukh</td><td>Summer Qualifier</td><td>Jun 02</td><td>19.0</td></tr>
+      </table>
+      <div class="research-box">
+        <b>Research this</b>
+        <ul>
+          <li>How is competitive eating actually officiated and verified? Is there a real sanctioning body?</li>
+          <li>What's a realistic human record for an event like this — what's the actual current world record?</li>
+          <li>How do organizations typically tell apart two athletes with very similar names in official records?</li>
+        </ul>
+      </div>
+      <div class="theory-box"><span class="theory-label">Your theory</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CASE B -->
+<!-- ============================================================ -->
+<section class="content" id="caseB">
+  <div class="wrap">
+    <div class="case-file">
+      <div class="case-header">
+        <div class="case-badge" style="background:#facc15;">B</div>
+        <div>
+          <h3>Golden Comb Apiary Co-operative — Beekeeping</h3>
+          <div class="case-sub">Case Assigned To: 4 Detectives Around the Room</div>
+        </div>
+      </div>
+      <div class="story">
+        <p>Aman was double-checking the co-op's quarterly harvest numbers when the Northfield region's report stopped him cold. Every single hive in Northfield produced roughly 90% less honey than last year. Fifteen kilometers away, in Eastbrook — same climate, same season, same co-op — yields look completely normal. Nobody sprayed anything unusual in Northfield. Nobody changed how the hives were managed. The bees just... didn't come back with much.</p>
+      </div>
+      <h4 class="clues-title">Clues</h4>
+      <ul class="clue-list">
+        <li>The drop hit every hive in the region, not just one or two — and it happened in one season, not gradually over years.</li>
+        <li>Worker bee population counts in the hive logs dropped sharply mid-season, not slowly.</li>
+        <li>The co-op's own pesticide-application records show nothing unusual logged for Northfield that season.</li>
+        <li>Beekeepers reported finding hives with the queen and some brood still present, but far fewer worker bees than expected — almost like the workers simply never returned.</li>
+      </ul>
+      <table class="spec">
+        <tr><th>Region</th><th>Hive ID</th><th>Yield Last Year (kg)</th><th>Yield This Year (kg)</th></tr>
+        <tr><td>Northfield</td><td>NF-04</td><td>38</td><td>4</td></tr>
+        <tr><td>Northfield</td><td>NF-11</td><td>41</td><td>3</td></tr>
+        <tr><td>Eastbrook</td><td>EB-04</td><td>39</td><td>37</td></tr>
+        <tr><td>Eastbrook</td><td>EB-11</td><td>40</td><td>42</td></tr>
+      </table>
+      <div class="research-box">
+        <b>Research this</b>
+        <ul>
+          <li>What large-scale phenomena have historically caused sudden regional honeybee population crashes?</li>
+          <li>Is there a name for a situation where worker bees leave and simply don't return, but the queen/brood remain?</li>
+          <li>What do experts generally agree — and disagree — about, when it comes to the cause?</li>
+        </ul>
+      </div>
+      <div class="theory-box"><span class="theory-label">Your theory</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CASE C -->
+<!-- ============================================================ -->
+<section class="content" id="caseC">
+  <div class="wrap">
+    <div class="case-file">
+      <div class="case-header">
+        <div class="case-badge" style="background:#a78bfa;">C</div>
+        <div>
+          <h3>Long Wing Racing Pigeon Club</h3>
+          <div class="case-sub">Case Assigned To: 4 Detectives Around the Room</div>
+        </div>
+      </div>
+      <div class="story">
+        <p>Hritin was logging results for the club's biggest race of the year — 400km, dozens of lofts entered — when he noticed almost every single bird came home late. Not one unlucky loft. Nearly all of them, on the same day, by roughly the same margin. A few dozen birds across different lofts never came home at all. The weather that day was clear. Visibility was fine. Nothing about the race conditions looked unusual on paper.</p>
+      </div>
+      <h4 class="clues-title">Clues</h4>
+      <ul class="clue-list">
+        <li>Average return time for this one race is more than double the club's five-year average.</li>
+        <li>The pattern hit every loft entered, not a specific handler or a specific route.</li>
+        <li>Weather logs for race day show clear skies, mild wind, good visibility — nothing that normally slows birds down.</li>
+        <li>The "lost bird" count (never returned at all) for this single race is unusually high compared to every other race that season.</li>
+      </ul>
+      <table class="spec">
+        <tr><th>Race Date</th><th>Loft</th><th>Birds Released</th><th>Birds Returned</th><th>Avg Return (5yr norm)</th><th>Avg Return (this race)</th></tr>
+        <tr><td>Sep 08</td><td>Loft 12</td><td>20</td><td>16</td><td>4.2 hrs</td><td>9.8 hrs</td></tr>
+        <tr><td>Sep 08</td><td>Loft 19</td><td>18</td><td>14</td><td>4.5 hrs</td><td>10.1 hrs</td></tr>
+        <tr><td>Aug 11</td><td>Loft 12</td><td>20</td><td>20</td><td>4.2 hrs</td><td>4.0 hrs</td></tr>
+      </table>
+      <div class="research-box">
+        <b>Research this</b>
+        <ul>
+          <li>How do racing pigeons actually find their way home over long distances?</li>
+          <li>What natural, non-weather phenomena are documented to interfere with long-distance animal navigation?</li>
+          <li>Is there anything datable/newsworthy that tends to disrupt navigation systems more broadly on a specific day?</li>
+        </ul>
+      </div>
+      <div class="theory-box"><span class="theory-label">Your theory</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CASE D -->
+<!-- ============================================================ -->
+<section class="content" id="caseD">
+  <div class="wrap">
+    <div class="case-file">
+      <div class="case-header">
+        <div class="case-badge" style="background:#f472b6;">D</div>
+        <div>
+          <h3>Locked In Escape Experiences</h3>
+          <div class="case-sub">Case Assigned To: 4 Detectives Around the Room</div>
+        </div>
+      </div>
+      <div class="story">
+        <p>Harsh was reviewing solve-time analytics for the flagship "Vault of Secrets" room when the weekly chart looked flat-out broken. For exactly one week, average solve times crash to almost nothing — a few entries in the raw log even show a <em>negative</em> duration, which obviously can't happen in real life. No puzzles changed that week. Staff logs show totally normal group sizes and totally normal-looking gameplay. And strangely, the same broken week shows up again the following year, right around the same dates.</p>
+      </div>
+      <h4 class="clues-title">Clues</h4>
+      <ul class="clue-list">
+        <li>The anomaly is confined to one specific week each year, not random.</li>
+        <li>A handful of raw log rows show <code>end_time − start_time</code> as a negative number.</li>
+        <li>No puzzle, staffing, or pricing changes were logged during the affected week.</li>
+        <li>Groups who played that week reported totally normal experiences when asked — nothing felt different to them.</li>
+      </ul>
+      <table class="spec">
+        <tr><th>Date</th><th>Group</th><th>Start Time</th><th>End Time</th><th>Recorded Duration</th></tr>
+        <tr><td>Mar 08</td><td>G-118</td><td>02:15</td><td>02:52</td><td>-8 min</td></tr>
+        <tr><td>Mar 08</td><td>G-119</td><td>03:00</td><td>03:41</td><td>-19 min</td></tr>
+        <tr><td>Mar 15</td><td>G-141</td><td>02:10</td><td>02:55</td><td>45 min</td></tr>
+      </table>
+      <div class="research-box">
+        <b>Research this</b>
+        <ul>
+          <li>What happens to clocks in many countries on specific dates, twice a year? What date does one of those changes fall on?</li>
+          <li>If a system just subtracts one clock-reading timestamp from another, what could go wrong on exactly that kind of date?</li>
+          <li>Why would this same problem recur on a similar date every single year, automatically?</li>
+        </ul>
+      </div>
+      <div class="theory-box"><span class="theory-label">Your theory</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CASE E -->
+<!-- ============================================================ -->
+<section class="content" id="caseE">
+  <div class="wrap">
+    <div class="case-file">
+      <div class="case-header">
+        <div class="case-badge" style="background:#4ade80;">E</div>
+        <div>
+          <h3>Great Glen Highland Games Association — Caber Toss</h3>
+          <div class="case-sub">Case Assigned To: 4 Detectives Around the Room</div>
+        </div>
+      </div>
+      <div class="story">
+        <p>Santosh was building the season leaderboard when the rankings came out backwards from what everyone at the games actually remembered. The athlete with the shortest recorded caber toss of the year is ranked champion. The athlete whose toss went the farthest by a wide margin is sitting near the bottom of the table. Every other throwing event at the same games — hammer throw, weight throw — ranks in exactly the order everyone expects. Just this one event looks wrong.</p>
+      </div>
+      <h4 class="clues-title">Clues</h4>
+      <ul class="clue-list">
+        <li>Only the caber toss leaderboard is scrambled — every other event ranks normally.</li>
+        <li>The ranking logic used for every event, including caber toss, is identical: sort by recorded number, biggest wins.</li>
+        <li>The athlete ranked champion has, by far, the shortest recorded distance in the caber toss table.</li>
+        <li>Officials at the actual event insist the champion's toss was, by their own judging, clearly the best of the day.</li>
+      </ul>
+      <table class="spec">
+        <tr><th>Athlete</th><th>Event</th><th>Recorded Distance (m)</th><th>Season Rank</th></tr>
+        <tr><td>D. Fraser</td><td>Caber Toss</td><td>3.1</td><td>1</td></tr>
+        <tr><td>M. Ainsley</td><td>Caber Toss</td><td>6.8</td><td>7</td></tr>
+        <tr><td>D. Fraser</td><td>Hammer Throw</td><td>28.4</td><td>2</td></tr>
+      </table>
+      <div class="research-box">
+        <b>Research this</b>
+        <ul>
+          <li>How is a caber toss actually judged in real Highland Games competition?</li>
+          <li>Is "distance thrown" even the primary thing being scored? What does a genuinely perfect toss require?</li>
+          <li>Why would "bigger distance = better," which works for hammer throw, be the wrong assumption specifically for this event?</li>
+        </ul>
+      </div>
+      <div class="theory-box"><span class="theory-label">Your theory</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CASE F -->
+<!-- ============================================================ -->
+<section class="content" id="caseF">
+  <div class="wrap">
+    <div class="case-file">
+      <div class="case-header">
+        <div class="case-badge" style="background:#fb923c;">F</div>
+        <div>
+          <h3>World Air Guitar Championship — National Qualifier</h3>
+          <div class="case-sub">Case Assigned To: 3 Detectives Around the Room</div>
+        </div>
+      </div>
+      <div class="story">
+        <p>Bysani was compiling the national qualifier's final scores when one round's numbers looked completely out of place — nearly double the average of every other round that night, across every judge, for every contestant who played it. Nobody who was actually in the room that evening remembers that round being unusually spectacular. If anything, people remember it as the loosest, most relaxed part of the night.</p>
+      </div>
+      <h4 class="clues-title">Clues</h4>
+      <ul class="clue-list">
+        <li>Exactly one round's scores are far higher than every other round's, across every judge.</li>
+        <li>The unusually high scores all come from one contiguous block of the evening's judging sheets.</li>
+        <li>The night's official program included a "just for fun," not-officially-judged segment scheduled right before the real competitive rounds began.</li>
+        <li>The scoring spreadsheet has exactly one column labeled "score" — nothing distinguishes what kind of round it was.</li>
+      </ul>
+      <table class="spec">
+        <tr><th>Round</th><th>Contestant</th><th>Judge</th><th>Score</th></tr>
+        <tr><td>Round 1</td><td>P. Nair</td><td>Judge A</td><td>7.2</td></tr>
+        <tr><td>Warm-Up</td><td>Audience Volunteer</td><td>Judge A</td><td>9.8</td></tr>
+        <tr><td>Round 2</td><td>P. Nair</td><td>Judge B</td><td>7.5</td></tr>
+      </table>
+      <div class="research-box">
+        <b>Research this</b>
+        <ul>
+          <li>What are the real, official judging criteria for competitive air guitar? (Yes — it's a real, official sport, with an official-sounding scoring term.)</li>
+          <li>Do events like this typically run a non-competitive/exhibition segment alongside the real competition on the same night?</li>
+          <li>What tends to happen when two very differently-scored kinds of rounds end up in the same spreadsheet column?</li>
+        </ul>
+      </div>
+      <div class="theory-box"><span class="theory-label">Your theory</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CHECKLIST -->
+<!-- ============================================================ -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Before You Present</div>
+    <h2 class="section-title">What a Strong Theory Covers</h2>
+    <div class="checklist-card">
+      <div class="checklist-item"><input type="checkbox" id="c1"><label for="c1">Names a specific, real cause — not "the data must be wrong somehow"</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c2"><label for="c2">Explains <b>every</b> clue in the case file, not just the headline anomaly</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c3"><label for="c3">Is grounded in something you actually found while researching the real industry — not a guess</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c4"><label for="c4">Could be checked/verified by someone else, in principle</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c5"><label for="c5">You can explain it out loud in under a minute, to someone who's never heard of this case</label></div>
+    </div>
+
+    <div class="highlight-box success" style="margin-top:24px;">
+      <p><b>This is the same discipline Day 5 asked of you.</b> Back then, the rule was: don't assume a strange-looking row is broken data before you've actually investigated it — some patterns that look wrong are valid, and some that look clean are silently broken. Today's version of that same rule, just dressed up as a pigeon-racing mystery instead of a DQ scan.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 11 · Data Detectives (Individual Activity)
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>
