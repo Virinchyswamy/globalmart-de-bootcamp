@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supply Chain Pipeline — Steps Only (No Code)</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b; --purple: #a855f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.62; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.88em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--purple)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav { position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 10px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 12.5px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 2px; flex-wrap: wrap; }
+  nav.topnav .links a { text-decoration: none; color: var(--muted); font-size: 11.5px; font-weight: 600; padding: 5px 9px; border-radius: 20px; transition: all 0.2s; white-space: nowrap; }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  .hero { text-align: center; padding: 58px 24px 42px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
+  .hero h1 { font-size: 34px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 14px; }
+  .hero p.lead { color: var(--muted); font-size: 15.5px; max-width: 760px; margin: 0 auto 22px; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12px; padding: 5px 13px; border-radius: 20px; }
+
+  section.content { padding: 44px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .part-tag { background: rgba(168,85,247,0.15); color: var(--purple); border: 1px solid rgba(168,85,247,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .section-title { font-size: 24px; margin-bottom: 8px; }
+  .section-intro { color: var(--muted); font-size: 14px; max-width: 780px; margin-bottom: 20px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+  .card h4 { color: var(--accent); font-size: 13.5px; margin-bottom: 6px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 13px 17px; margin-top: 12px; }
+  .highlight-box p { font-size: 13px; line-height: 1.65; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box.purple { background: #241a3d; border-color: var(--purple); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 14px 0; }
+  .order-list li { counter-increment: steps; display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; color: #cbd5e1; line-height: 1.55; }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before { content: counter(steps); background: #1d4ed8; color: #fff; min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 7px 10px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 7px 10px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 10px; padding: 13px 18px; margin-top: 16px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 11.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 5px; }
+  .checkpoint p { color: #cbd5e1; font-size: 13px; line-height: 1.6; }
+
+  .task-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin-top: 16px; }
+  .task-card .task-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .task-card .task-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; color: #fff; font-weight: 800; font-size: 12.5px; flex-shrink: 0; background: var(--accent2); }
+  .task-card h4 { font-size: 15.5px; color: #f8fafc; }
+
+  details.dq-real { background: #14243d; border: 1px solid var(--border); border-radius: 10px; margin-top: 10px; padding: 3px 0; }
+  details.dq-real summary { cursor: pointer; padding: 10px 16px; font-size: 13px; font-weight: 700; color: var(--accent2); list-style: none; }
+  details.dq-real summary::-webkit-details-marker { display: none; }
+  details.dq-real summary::before { content: '📋 '; }
+  details.dq-real[open] summary { border-bottom: 1px solid var(--border); }
+  details.dq-real .body { padding: 12px 16px 14px; font-size: 13px; color: #cbd5e1; line-height: 1.6; }
+
+  .answer-box { background: #241a3d; border: 1.5px solid var(--purple); border-radius: 10px; padding: 12px 16px; margin-top: 10px; }
+  .answer-box .tag { color: var(--purple); font-weight: 800; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+  .answer-box p { font-size: 13px; color: #cbd5e1; line-height: 1.6; }
+
+  .dag { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .dag-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .dag-node { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 13px; font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .dag-node.bronze { border-color: #a3623a; color: #e8b795; }
+  .dag-node.silver { border-color: #94a3b8; color: #e2e8f0; }
+  .dag-node.gold { border-color: #d1ac4f; color: #f3dc9c; }
+  .dag-arrow { color: var(--muted); font-size: 16px; }
+
+  footer { text-align: center; padding: 36px 24px; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">SUPPLY CHAIN PIPELINE · STEPS ONLY</div>
+    <div class="links">
+      <a href="#setup" class="navlink">Setup</a>
+      <a href="#a1-bronze" class="navlink">A1 Bronze</a>
+      <a href="#a1-silver" class="navlink">A1 Silver</a>
+      <a href="#a1-model" class="navlink">A1 Model</a>
+      <a href="#a1-gold" class="navlink">A1 Gold</a>
+      <a href="#a2-bronze" class="navlink">A2 Inc. Bronze</a>
+      <a href="#a2-silver" class="navlink">A2 Inc. Silver</a>
+      <a href="#a2-gold" class="navlink">A2 Fact Refresh</a>
+      <a href="#a2-genie" class="navlink">A2 Genie</a>
+      <a href="#a2-workflow" class="navlink">A2 Workflow</a>
+      <a href="#checklist" class="navlink">Checklist</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Day 12 · Two-Part Assessment · What To Do, Not the Code</div>
+  <h1>Supply Chain Pipeline — Steps Only</h1>
+  <p class="lead">Same order, same real DQ findings, same checkpoints as the full walkthrough — but every step here tells you which mechanism/setting/technique to reach for and why, not the exact syntax. Write the code yourself; this is the "what to enable and when" map.</p>
+  <div class="meta-row">
+    <span class="meta-pill">🎯 gbmart.bronze_as / silver_as / gold_as</span>
+    <span class="meta-pill">📦 4 tables — suppliers, shipping_tier, carriers, shipments</span>
+    <span class="meta-pill">⭐ Star Schema — 3 dims, 1 fact, 2 agg tables</span>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<!-- SETUP -->
+<!-- ============================================================ -->
+<section class="content" id="setup">
+  <div class="wrap">
+    <div class="section-tag">Before Anything</div>
+    <h2 class="section-title">Namespace, Data Package, What "Done" Looks Like</h2>
+    <div class="highlight-box warn">
+      <p><b>Namespace is not the main course's.</b> Every table here uses <code>&lt;catalog&gt;.bronze_as</code> / <code>silver_as</code> / <code>gold_as</code> — separate from the main <code>bronze</code>/<code>silver</code>/<code>gold</code> schemas, same <code>gbmart</code> catalog.</p>
+    </div>
+    <div class="order-list">
+      <li>Download all 7 resources before writing anything: the 3 CSVs, the Postgres setup script, the Data Dictionary, the Data Model image, and the Gold Star Schema workbook.</li>
+      <li>Read the Data Dictionary and Star Schema fully before touching Bronze — Task 3's questions assume you already understand the grain and the keys.</li>
+      <li>Create a new ADLS folder for this domain (e.g. <code>supply-chain/</code>) with one subfolder per CSV source. Reuse your existing Day 4 mount — don't create a new one.</li>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- A1 — BRONZE -->
+<!-- ============================================================ -->
+<section class="content" id="a1-bronze">
+  <div class="wrap">
+    <div class="section-tag"><span class="part-tag">Assessment 1</span> Task 1 — Bronze Layer</div>
+    <h2 class="section-title">3 Autoloader Tables + 1 Lakeflow Connect Table</h2>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">1</span><h4>suppliers, shipping_tier, carriers — Autoloader</h4></div>
+      <div class="order-list">
+        <li>Set up an Autoloader read against each CSV source folder — this is what satisfies "handles new files without manual triggers and adapts to schema changes."</li>
+        <li>Point the schema location and checkpoint location at a dedicated per-table subfolder — never share one checkpoint across tables.</li>
+        <li>Set the schema-evolution behavior to fail on a new column rather than silently accept it — the requirement here is explicit: alert, don't quietly adapt.</li>
+        <li>Trigger the write to run once against whatever's currently in the folder, then stop — the "process what's here right now, don't keep streaming" trigger mode, same one used everywhere else in this course (<code>availableNow=True</code>).</li>
+      </div>
+      <div class="answer-box">
+        <div class="tag">Input 5 — what to set</div>
+        <p>The schema-evolution mode that fails and alerts on a new column, not the one that silently adds it — set it explicitly, don't leave it at Autoloader's default (which does the opposite).</p>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">1b</span><h4>A real gotcha in <code>suppliers.csv</code> specifically</h4></div>
+      <p style="font-size:13.5px;">One supplier's address field genuinely has a line break embedded inside it. Read with default CSV options and Spark splits that single row into two records at the newline — <b>you'll silently get 11 rows in Bronze instead of 10</b>, and nothing looks obviously wrong until you count.</p>
+      <div class="order-list">
+        <li>Turn on the option that treats a quoted multi-line field as one value, and pair it with the matching quote-escape option — both together, not just one.</li>
+        <li>Check your row count against the source (10) as an explicit step before moving on to Silver, not after something downstream looks off.</li>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">2</span><h4>The <code>shipping_tier</code> column-name problem</h4></div>
+      <p style="font-size:13.5px;">The real header includes a column literally called <code>Cost (Rs)</code> — the parentheses and space aren't valid in a Delta column name without permanent backtick-escaping everywhere. Rename that one column to <code>cost_inr</code> (the confirmed target name, per the Data Dictionary) immediately after the Autoloader read, before the table write — a single rename step in the DataFrame, not a CSV edit.</p>
+    </div>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">3</span><h4>shipments — Postgres via Lakeflow Connect</h4></div>
+      <div class="order-list">
+        <li>Run the provided setup script in Supabase's SQL Editor to seed the real <code>shipments</code> table (120 rows) in Postgres.</li>
+        <li>Set up a Lakeflow Connect pipeline against that Postgres source, targeting <code>bronze_as.shipments</code> — same ingestion method already used for the main pipeline's Postgres tables.</li>
+        <li>Trigger the initial load and confirm the row count and visibility in Unity Catalog.</li>
+      </div>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Bronze Checkpoint</div>
+      <p>4 tables queryable: suppliers (10), shipping_tier (5), carriers (10), shipments (120).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- A1 — SILVER -->
+<!-- ============================================================ -->
+<section class="content" id="a1-silver">
+  <div class="wrap">
+    <div class="section-tag"><span class="part-tag">Assessment 1</span> Task 2 — Silver Layer</div>
+    <h2 class="section-title">Investigate Before Deciding — Per Table</h2>
+    <p class="section-intro">Same shape every Silver notebook in this course follows: scan for issues first, tag every row, decide Fix vs. Quarantine per issue category, then write. What follows is what's really in the source data.</p>
+
+    <details class="dq-real">
+      <summary>suppliers.csv — real findings (verified against the real answer notebook)</summary>
+      <div class="body">
+        <table class="spec">
+          <tr><th>Issue</th><th>Where</th><th>Decision</th><th>Why</th></tr>
+          <tr><td>Blank contact phone</td><td>2 rows</td><td><b>Flag, keep</b></td><td>Missing one field doesn't invalidate the whole record</td></tr>
+          <tr><td>Contact phone incomplete — only 7 digits</td><td>1 row</td><td><b>Flag</b> — cannot be corrected without the source</td><td>Not enough information in the row itself to fix it</td></tr>
+          <tr><td>Blank email</td><td>1 row</td><td><b>Fix</b> — cast blank string to real NULL</td><td>An empty string and a true NULL are different things downstream</td></tr>
+          <tr><td>Blank supplier type</td><td>1 row</td><td><b>Flag, keep</b></td><td>Categorization gap, not a usability blocker</td></tr>
+          <tr><td>Malformed email, missing the @ sign</td><td>1 row</td><td><b>Fix</b> — the correct value is confirmed by the business</td><td>Doesn't affect any other field's usability</td></tr>
+          <tr><td>City not in canonical form</td><td>1 row</td><td><b>Fix</b> — standardize to the canonical city name</td><td>GlobalMart's own canonical city naming, per the Data Dictionary</td></tr>
+          <tr><td>Active flag mixes two vocabularies (Y/N vs. True/False)</td><td>Across the table</td><td><b>Fix</b> — pick one representation and standardize every row to it</td><td>Two string vocabularies for the same boolean concept breaks any downstream filter</td></tr>
+          <tr><td>Address embeds city name and pincode inline</td><td>Several rows</td><td><b>Fix</b> — strip to street address only</td><td>Target column should hold street address only, per the Data Dictionary</td></tr>
+          <tr><td>Address's embedded city detail doesn't match the City column</td><td>1 row</td><td><b>Keep as-is</b> — business decision, not an error</td><td>A different but adjacent district, not a data defect worth correcting</td></tr>
+        </table>
+      </div>
+    </details>
+
+    <details class="dq-real">
+      <summary>shipping_tier.csv — real findings</summary>
+      <div class="body">
+        <table class="spec">
+          <tr><th>Issue</th><th>Where</th><th>Decision</th><th>Why</th></tr>
+          <tr><td>Availability flag mixes Yes / 0 / 1</td><td>Across the table</td><td><b>Fix</b> — standardize to one boolean representation</td><td>Three literal spellings of the same true/false idea</td></tr>
+          <tr><td>Tier name casing inconsistent (all-caps, lowercase, title case all appear)</td><td>Across the table</td><td><b>Fix</b> — standardize casing</td><td>Same tier should read identically everywhere it's grouped or displayed</td></tr>
+        </table>
+      </div>
+    </details>
+
+    <details class="dq-real">
+      <summary>carriers.csv — real findings</summary>
+      <div class="body">
+        <table class="spec">
+          <tr><th>Issue</th><th>Where</th><th>Decision</th><th>Why</th></tr>
+          <tr><td>Carrier type casing inconsistent (Air/AIR/air, Road/road)</td><td>Several rows</td><td><b>Fix</b> — standardize casing</td><td>Breaks any GROUP BY on type otherwise</td></tr>
+          <tr><td>Service region naming inconsistent (missing " India" suffix on some, lowercase on one)</td><td>Several rows</td><td><b>Fix</b> — standardize to one naming convention</td><td>Same reasoning — grouping by region needs one vocabulary</td></tr>
+          <tr><td>Missing contact email</td><td>2 rows</td><td><b>Flag, keep</b></td><td>Carrier still usable for shipment attribution without it</td></tr>
+          <tr><td>Missing active flag</td><td>1 row</td><td><b>Flag, keep</b>, with a documented default — investigate first</td><td>Row is otherwise complete; don't quarantine on an incomplete field alone</td></tr>
+        </table>
+      </div>
+    </details>
+
+    <details class="dq-real">
+      <summary>shipments (Postgres, 120 rows) — verified against the real, executed answer notebook</summary>
+      <div class="body">
+        <table class="spec">
+          <tr><th>Issue</th><th>Rows</th><th>Decision</th><th>Why</th></tr>
+          <tr><td>Actual arrival timestamp earlier than dispatch timestamp</td><td>5</td><td><b>Quarantine</b> — to a dedicated quarantine table</td><td>Logically impossible — verified the gaps are 1-3 days with no consistent pattern, ruling out a timezone artifact</td></tr>
+          <tr><td>Carrier ID doesn't exist in the carrier reference data</td><td>3</td><td><b>Flag</b> with a data-note tag, keep in Silver</td><td>Everything else about the shipment is valid; Task 4 explicitly wants these kept with a null carrier reference, not dropped</td></tr>
+          <tr><td>Order ID doesn't resolve against the main course's order data</td><td>3</td><td><b>Flag, document</b></td><td>Order ID isn't a dimension key in this star schema at all — worth a note, not a blocker</td></tr>
+          <tr><td>Shipping cost diverges from the tier's expected rate</td><td><b>3</b> (the real executed notebook's own investigation found 3, not the 5 sometimes quoted elsewhere — trust the live-run number)</td><td><b>Flag</b> with a data-note tag, keep in Silver</td><td>Could be a legitimate surcharge/discount, flagged for billing reconciliation, not assumed to be a defect</td></tr>
+          <tr><td>Weight is null</td><td>2, both the same shipping tier (In-store Pickup)</td><td><b>Keep as valid</b> — not a DQ issue at all</td><td>No physical parcel moves for in-store pickup</td></tr>
+        </table>
+        <div class="highlight-box success" style="margin-top:10px;"><p><b>The number that matters:</b> 120 raw rows minus the 5 impossible-timeline rows sent to quarantine = <b>115 valid rows</b> — this is the exact figure the Time Travel question later assumes.</p></div>
+      </div>
+    </details>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">4</span><h4>Input 10 — the Time Travel restore skill check</h4></div>
+      <p style="font-size:13.5px; margin-bottom:8px;">A separate scenario: an update script wrongly nulled <code>carrier_id</code> on all 115 rows instead of just the 3 that were actually orphaned, and you can't do a full table restore because it would erase a column you've since added.</p>
+      <div class="order-list">
+        <li>First, look at the table's version history to find the exact version right before the bad update ran.</li>
+        <li>Then run a MERGE where the "source" side is a query against the table <i>at that earlier version</i> — this is Delta Time Travel, querying a specific historical snapshot directly.</li>
+        <li>Match on the shipment's ID, and only update <code>carrier_id</code> where it's currently null but had a real value in that earlier snapshot — that scopes the fix to exactly the 112 wrongly-affected rows.</li>
+        <li>Because this is a targeted MERGE and not a full <code>RESTORE TABLE</code>, every other column you've since added — including the one you can't afford to lose — is left completely untouched.</li>
+      </div>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Silver Checkpoint</div>
+      <p>4 clean Silver tables, DQ findings documented with investigation notes per table, quarantined rows traceable to one issue category each.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- A1 — MODEL -->
+<!-- ============================================================ -->
+<section class="content" id="a1-model">
+  <div class="wrap">
+    <div class="section-tag"><span class="part-tag">Assessment 1</span> Task 3 — Dimensional Model</div>
+    <h2 class="section-title">Read the Provided Star Schema Before You Build Anything</h2>
+    <p class="section-intro">Conceptual, not code — the schema is already designed for you in the downloaded workbook. You're demonstrating you understand why it's shaped the way it is.</p>
+    <div class="grid-2">
+      <div class="card"><h4>Why not <code>dim_order_items</code>?</h4><p>Those columns describe a transactional event (one order line), not a stable business entity — they change with every order rather than slowly over time. That's fact-table material, not dimension material.</p></div>
+      <div class="card"><h4>Why Kimball star schema here?</h4><p>Tight timeline, analysts querying via SQL, a well-understood and stable source schema — this combination favors fast, analyst-friendly querying over the audit/integration overhead Data Vault or Inmon would add for a benefit this brief doesn't ask for.</p></div>
+    </div>
+    <div class="highlight-box">
+      <p>Before Task 4, write down for yourself: the fact table's grain, which keys are surrogate vs. natural, and which foreign keys are allowed to be null — this last one directly foreshadows the orphaned-carrier handling coming up.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- A1 — GOLD -->
+<!-- ============================================================ -->
+<section class="content" id="a1-gold">
+  <div class="wrap">
+    <div class="section-tag"><span class="part-tag">Assessment 1</span> Task 4 — Gold Layer</div>
+    <h2 class="section-title">3 Dimensions, 1 Fact, 2 Aggregated Tables</h2>
+    <div class="highlight-box warn"><p><b>Correction:</b> both agg objects should be real materialized Delta tables, not SQL views — write and save them like you would any other table. That means you'll need to re-run these two steps after every incremental load to keep them current.</p></div>
+
+    <table class="spec">
+      <tr><th>Object</th><th>Built from</th><th>Notes</th></tr>
+      <tr><td><code>dim_supplier</code></td><td>Silver suppliers</td><td>Give it a surrogate key hashed from the natural ID</td></tr>
+      <tr><td><code>dim_carrier</code></td><td>Silver carriers</td><td>Same pattern</td></tr>
+      <tr><td><code>dim_shipping_tier</code></td><td>Silver shipping tier</td><td>Same pattern</td></tr>
+      <tr><td><code>fact_shipments</code></td><td>Silver shipments + all 3 dims</td><td>One row per shipment</td></tr>
+      <tr><td><code>agg_carrier_performance</code> (Delta table)</td><td>fact_shipments</td><td>Delivered shipments only</td></tr>
+      <tr><td><code>agg_tier_analysis</code> (Delta table)</td><td>fact_shipments</td><td>All shipments</td></tr>
+    </table>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">A</span><h4>The two derived delivery metrics</h4></div>
+      <div class="order-list">
+        <li>Add a "delay in days" column — the difference between actual arrival and expected arrival.</li>
+        <li>Add an "on time" flag — whether actual arrival happened on or before expected arrival.</li>
+        <li>Gate both behind "actual arrival is not null" — a shipment still in transit has nothing to report yet, so both should stay null for it rather than guessing.</li>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">B</span><h4>The orphaned-carrier join — keep the row, null the key</h4></div>
+      <div class="order-list">
+        <li>Join shipments to the carrier dimension using a <b>left</b> join, not inner — this is exactly what lets the 3 unresolvable-carrier shipments stay in the fact table with a null carrier key instead of vanishing.</li>
+        <li>Join to the supplier and shipping-tier dimensions with an <b>inner</b> join — every shipment does have a valid supplier and tier, so there's no need for the defensive left join there.</li>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">C</span><h4>The two aggregation tables</h4></div>
+      <div class="order-list">
+        <li><code>agg_carrier_performance</code>: group the fact table by carrier, filtered to Delivered shipments only, computing shipment count, average delay, average cost, and on-time rate per carrier.</li>
+        <li><code>agg_tier_analysis</code>: group by shipping tier across every shipment regardless of status, computing shipment count, average actual cost, and delay/on-time performance per tier.</li>
+        <li>Write and save both as real Delta tables, same as the fact table — not views. That means you re-run these two steps to refresh them after every incremental load, rather than getting a free automatic refresh.</li>
+      </div>
+    </div>
+
+    <div class="highlight-box success">
+      <p><b>Real, verified output from an actual run of this exact pipeline</b> — use this to sanity-check your own numbers, not to skip building it yourself: <code>agg_carrier_performance</code> shows XpressBees with 14 delivered shipments (highest — matches Input 17), and the CAR-99 orphaned-carrier group nets exactly 3 shipments with a null carrier row. <code>agg_tier_analysis</code> shows In-store Pickup at 28 total shipments (matches Input 18), followed by Standard (26), Express (24), Overnight (20), Local Delivery (17) — 28+26+24+20+17 = 115, matching Silver's clean row total.</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Assessment 1 Complete</div>
+      <p>All dims + fact + both agg tables queryable. This is the state Assessment 2 assumes already exists.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- A2 — INCREMENTAL BRONZE -->
+<!-- ============================================================ -->
+<section class="content" id="a2-bronze">
+  <div class="wrap">
+    <div class="section-tag"><span class="part-tag">Assessment 2</span> Task 1 — Incremental Bronze</div>
+    <h2 class="section-title">CDF On, New Files In, Schema Actually Evolves This Time</h2>
+
+    <div class="order-list">
+      <li><b>Enable Change Data Feed on all 3 Bronze tables first</b> — a one-time table property flip, done before any incremental file is uploaded.</li>
+      <li>Upload the incremental supplier and carrier CSVs to the exact same ADLS subfolders as before — same paths, new files.</li>
+      <li>Run the incremental SQL script in Supabase, then trigger a new Lakeflow Connect run to pull the new/updated shipment rows.</li>
+    </div>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">A</span><h4>The schema-evolution fix</h4></div>
+      <p style="font-size:13.5px;">The source team added a new column that wasn't there in the first batch. Since Bronze was deliberately set to fail on a new column, this failure is the alert working as designed — not a bug. The fix: flip the schema-evolution setting to the mode that <i>adds</i> the new column automatically instead of failing on it, and re-run. No <code>ALTER TABLE</code>, no table-definition edit — Autoloader handles it. The 10 rows already in the table from the first batch will show the new column as null, since schema evolution never backfills history, it only opens the door going forward.</p>
+    </div>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">B</span><h4>The checkpoint-deletion disaster (understand it, no need to reproduce it)</h4></div>
+      <p style="font-size:13.5px; margin-bottom:6px;">A conceptual scenario: the checkpoint and schema-location folders got deleted by an unrelated cleanup job, then someone re-runs Autoloader against a folder that now has both the original file and the new incremental file sitting in it.</p>
+      <div class="order-list">
+        <li>With no checkpoint, Autoloader has no memory of what it already loaded — it treats the whole folder as brand new and reprocesses everything, including the original file a second time. Since Bronze appends rather than merges, this means duplicated rows, not just the expected new ones.</li>
+        <li>With the schema location also gone, Autoloader has to re-infer the schema from scratch by sampling files — if it samples inconsistently, the "agreed" column types can silently drift with no history to catch it.</li>
+        <li>The real production fix: keep checkpoint and schema-location paths in a protected path that generic cleanup/retention jobs are explicitly excluded from, ideally with its own access controls.</li>
+      </div>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Incremental Bronze Checkpoint</div>
+      <p>CDF enabled on all 3 tables. Suppliers +3 (new column populated only for the new rows), carriers +2, shipments +10 new/8 updated.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- A2 — INCREMENTAL SILVER -->
+<!-- ============================================================ -->
+<section class="content" id="a2-silver">
+  <div class="wrap">
+    <div class="section-tag"><span class="part-tag">Assessment 2</span> Task 2 — Incremental Silver</div>
+    <h2 class="section-title">CDF Read → Dedup → SCD1/SCD2 MERGE</h2>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">A</span><h4>Read only what changed</h4></div>
+      <div class="order-list">
+        <li>Read the Bronze table's change feed rather than the whole table — starting from the version you last processed, not from the beginning.</li>
+        <li>Keep only the change types that represent a row's current state — new inserts and the "after" side of an update. Drop the "before" side of updates and any deletes, since those aren't the state you want reflected in Silver.</li>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">B</span><h4>The 4-vs-3-rows MERGE failure, and the fix</h4></div>
+      <p style="font-size:13.5px; margin-bottom:6px;">The change feed can return more rows than the source file had, if one record changed more than once within the same read window. MERGE fails the moment two source rows target the same existing row.</p>
+      <div class="order-list">
+        <li><b>Cause:</b> the same natural key appears twice in the change-feed output because it was updated twice before Silver's last run picked it up.</li>
+        <li><b>Fix, before the MERGE runs:</b> deduplicate the change rows by the natural key, keeping only the one with the highest commit version per key — a ranking window function, not a manual filter.</li>
+        <li><b>Which row wins:</b> always the latest one, by commit version — that's the state SCD1 is supposed to reflect.</li>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <div class="task-head"><span class="task-num">C</span><h4>SCD1 vs. SCD2, same target table</h4></div>
+      <div class="order-list">
+        <li><b>SCD1 (what you already built):</b> match on the natural key alone, update every column in place when matched, insert when not — latest state always wins, no history kept.</li>
+        <li><b>SCD2 (the new requirement, for one specific column's history):</b> match on the natural key <i>and</i> "this is the current row" together. When the tracked column's value has actually changed, don't update the existing row — close it out by marking it no-longer-current and stamping an end date, then insert a brand-new row carrying the new value, marked current, with a fresh start date.</li>
+        <li>The real difference isn't which MERGE keyword you use — it's the match condition and what happens on a match: overwrite in place (SCD1) vs. close-and-insert-new (SCD2), on the very same table.</li>
+      </div>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Incremental Silver Checkpoint</div>
+      <p>Suppliers = 12 rows, carriers = 11 rows, shipments = 125 rows. Confirm the carrier change feed read exactly 2 rows from Bronze before the MERGE.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- A2 — FACT REFRESH -->
+<!-- ============================================================ -->
+<section class="content" id="a2-gold">
+  <div class="wrap">
+    <div class="section-tag"><span class="part-tag">Assessment 2</span> Task 3 — Refresh Fact Table</div>
+    <h2 class="section-title">Same Gold Notebook, Zero Changes</h2>
+    <p class="section-intro">Re-run the exact Gold notebook from Assessment 1. It should just work.</p>
+
+    <div class="answer-box">
+      <div class="tag">Why no code change is needed</div>
+      <p>The two delivery-timeliness columns are recomputed from Silver's current state on every single Gold run — they're derived, not carried forward from a previous run. Once a shipment's actual arrival gets filled in via Silver's own MERGE, the very next Gold run naturally computes real values for it instead of null, because the derivation logic runs fresh every time, for every row it touches. Nothing about that logic needed to know "this is run 2."</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Fact Refresh Checkpoint</div>
+      <p>The 5 shipments that moved from in-transit to delivered now show real delay/on-time values, not null. The real Gold notebook builds the fact table and both agg tables as one sequence of steps in a single file — re-running that whole notebook refreshes all three together. But since all three are materialized Delta tables, not views, that refresh only happens when you actually re-run the notebook, not automatically the moment Silver changes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- A2 — GENIE -->
+<!-- ============================================================ -->
+<section class="content" id="a2-genie">
+  <div class="wrap">
+    <div class="section-tag"><span class="part-tag">Assessment 2</span> Genie Code — Analyze the Gold Layer</div>
+    <h2 class="section-title">Let the Agent Write the Queries, You Verify Them</h2>
+    <div class="order-list">
+      <li>In a notebook cell, invoke Genie Code and reference the relevant Gold table by name for each question — don't write the query yourself.</li>
+      <li>Ask each of the three business questions one at a time, letting Genie Code generate and execute its own code for each.</li>
+      <li>After all three are answered, ask Genie Code to summarize the notebook using its summary command.</li>
+      <li>Pick at least one answer and independently write your own query in a separate cell to confirm it matches.</li>
+    </div>
+    <div class="highlight-box purple">
+      <p>The point isn't whether Genie Code can write SQL — it can. It's whether you pointed it at the right table and whether you verified its output instead of trusting it blindly.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- A2 — WORKFLOW -->
+<!-- ============================================================ -->
+<section class="content" id="a2-workflow">
+  <div class="wrap">
+    <div class="section-tag"><span class="part-tag">Assessment 2</span> Orchestrating the Pipeline</div>
+    <h2 class="section-title">Batch 03, Fully Automated</h2>
+
+    <div class="dag">
+      <div class="dag-row">
+        <div class="dag-node bronze">Bronze Suppliers</div><div class="dag-arrow">&rarr;</div>
+        <div class="dag-node silver">Silver Suppliers</div><div class="dag-arrow">&rarr;</div>
+        <div class="dag-node gold">Gold (fact + agg tables)</div>
+      </div>
+      <div class="dag-row">
+        <div class="dag-node bronze">Bronze Carriers</div><div class="dag-arrow">&rarr;</div>
+        <div class="dag-node silver">Silver Carriers</div><div class="dag-arrow">&#8599;</div>
+      </div>
+      <div class="dag-row">
+        <div class="dag-node bronze">Bronze Shipments</div><div class="dag-arrow">&rarr;</div>
+        <div class="dag-node silver">Silver Shipments</div><div class="dag-arrow">&#8599;</div>
+      </div>
+    </div>
+
+    <div class="order-list" style="margin-top:16px;">
+      <li>Build a Workflow with one task per notebook (3 Bronze, 3 Silver, 1 Gold), wired with dependencies exactly matching the diagram above.</li>
+      <li>Add catalog and schema as <b>job parameters</b> on the Workflow itself — nothing about the environment should be hardcoded inside any notebook.</li>
+      <li>Upload the batch-03 incremental files to ADLS and run the batch-03 SQL script in Supabase.</li>
+      <li>Trigger the Workflow and watch it complete Bronze → Silver → Gold with no manual steps in between.</li>
+    </div>
+
+    <div class="answer-box">
+      <div class="tag">Why not All-Purpose Compute for this Job</div>
+      <p>It stays active after the job finishes instead of shutting itself down — pure idle cost on an unattended pipeline, for zero benefit. A job-scoped cluster type is the right choice here specifically because it terminates the instant the run ends.</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Orchestration Checkpoint</div>
+      <p>DAG matches the diagram, all tasks green on a real run, job parameters visible and populated, fact table reflects batch 03's new shipments.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CHECKLIST -->
+<!-- ============================================================ -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Before You Submit Either Assessment</div>
+    <h2 class="section-title">Full Checklist</h2>
+    <table class="spec">
+      <tr><th>Assessment 1</th><th>Assessment 2</th></tr>
+      <tr><td>☐ 4 Bronze tables, real row counts confirmed</td><td>☐ CDF enabled before any incremental file touched</td></tr>
+      <tr><td>☐ Bad column name renamed before Delta write</td><td>☐ New column present, null for original rows</td></tr>
+      <tr><td>☐ 4 Silver tables, DQ findings documented per table</td><td>☐ Dedup logic in place before every MERGE</td></tr>
+      <tr><td>☐ 5-row timeline-quarantine, 115 valid shipment rows</td><td>☐ SCD1 <i>and</i> SCD2 both understood/applied for carriers</td></tr>
+      <tr><td>☐ 3 dims + fact + 2 agg tables in Gold (real Delta tables, not views)</td><td>☐ Fact refresh re-populates the previously-null rows</td></tr>
+      <tr><td>☐ Orphaned-carrier rows kept, null key, not dropped</td><td>☐ Genie Code answered all 3 questions + 1 manual cross-check</td></tr>
+      <tr><td>☐ All File Upload inputs have real screenshots attached</td><td>☐ Workflow: correct DAG, job params, batch 03 green run</td></tr>
+    </table>
+  </div>
+</section>
+
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 12 · Supply Chain Pipeline, Steps Only
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>

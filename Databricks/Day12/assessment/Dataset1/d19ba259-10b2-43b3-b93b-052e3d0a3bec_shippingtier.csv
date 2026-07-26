@@ -1,0 +1,6 @@
+ShippingTierID,TierName,Cost (Rs),MaxDeliveryDays,IsAvailableOnline
+SHP-001,Standard,100,5,Yes
+SHP-002,EXPRESS,200,2,Yes
+SHP-003,overnight,450,1,Yes
+SHP-004,In-store Pickup,0,0,0
+SHP-005,Local Delivery,50,3,1

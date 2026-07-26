@@ -1,0 +1,262 @@
+HOW TO USE THIS FILE
+=====================
+In Wayground, choose "Create with prompt or text" (not "Upload"). Paste the PROMPT line below into the prompt/instruction box if there is one. Then paste the QUESTION TEXT block into the text box, and generate.
+
+If Wayground's AI rewrites or invents new questions instead of using these exact ones, it's almost certainly hitting a length limit on one pass — paste ROUND 1, ROUND 2, and ROUND 3 as three separate generations instead of all 40 at once (each round is clearly marked below and can be copy-pasted on its own).
+
+=====================
+PROMPT (paste this first, if there's a separate prompt box)
+=====================
+Create a multiple-choice quiz using EXACTLY the questions, options, and correct answers given below — do not invent new questions, do not change the wording, do not change which option is correct. Each question has exactly 4 options and exactly one correct answer, marked with an asterisk (*) at the start of the correct option. Keep the questions in the same order. Set the time limit to 30 seconds per question.
+
+=====================
+QUESTION TEXT — ROUND 1: DATABRICKS TECH (20 questions)
+=====================
+
+1. What is Delta Lake primarily built on top of?
+A) CSV files
+*B) Apache Parquet
+C) Avro
+D) ORC
+
+2. Which SQL syntax lets you query a Delta table at an earlier version (Time Travel)?
+A) ROLLBACK TABLE
+*B) SELECT ... VERSION AS OF
+C) SHOW SNAPSHOT
+D) RESTORE HISTORY
+
+3. In the medallion architecture, which layer holds raw data closest to source format?
+A) Gold
+B) Silver
+*C) Bronze
+D) Platinum
+
+4. Which Databricks feature incrementally processes new files as they land in cloud storage?
+A) COPY INTO only
+*B) Auto Loader (cloudFiles)
+C) Delta Sharing
+D) Unity Catalog Volumes
+
+5. In Unity Catalog's hierarchy, what sits directly above schema?
+A) Table
+*B) Catalog
+C) Metastore
+D) Workspace
+
+6. Which command compacts small files to improve read performance on a Delta table?
+A) VACUUM
+*B) OPTIMIZE
+C) ANALYZE
+D) REPAIR TABLE
+
+7. What does the VACUUM command do?
+A) Compacts small files
+*B) Removes old unreferenced data files past the retention window
+C) Grants table permissions
+D) Creates a new table version
+
+8. Which Delta feature lets a reader see only row-level changes since a given version?
+A) Time Travel
+*B) Change Data Feed (CDF)
+C) Z-Ordering
+D) Liquid Clustering
+
+9. What does ACID stand for in Delta Lake transactions?
+*A) Atomicity, Consistency, Isolation, Durability
+B) Access, Control, Identity, Data
+C) Aggregate, Compute, Index, Delta
+D) Authentication, Compliance, Integrity, Delta
+
+10. Which SQL statement gives a principal a privilege in Unity Catalog?
+A) ALLOW
+*B) GRANT
+C) ENABLE
+D) PERMIT
+
+11. What's the key difference between a Managed table and an External table?
+A) Managed tables can't be queried with SQL
+*B) Dropping a Managed table deletes its data; dropping an External table doesn't
+C) External tables don't support ACID transactions
+D) There is no real difference
+
+12. Which Databricks compute engine accelerates Spark at the vectorized query-execution layer?
+A) Tungsten
+*B) Photon
+C) Catalyst
+D) Delta Engine Classic
+
+13. Which native Unity Catalog mechanism restricts which rows a user/group can see, for every reader?
+A) Dynamic View
+*B) Row Filter
+C) Column Mask
+D) Access Connector
+
+14. What does a Column Mask do in Unity Catalog?
+A) Hides an entire table
+*B) Returns a transformed/redacted value for one column, enforced for every reader
+C) Permanently deletes sensitive columns
+D) Encrypts the whole catalog
+
+15. What is a Genie Agent (formerly called a Genie Space) primarily used for?
+A) Automating cluster autoscaling
+*B) Letting business users ask natural-language questions and get SQL-generated answers
+C) Managing Git repositories
+D) Encrypting Delta tables at rest
+
+16. In Databricks Jobs, what lets one task wait for another task to finish before it runs?
+A) trigger
+*B) depends_on
+C) schedule
+D) cluster_policy
+
+17. What does trigger(availableNow=True) do in a Structured Streaming write?
+A) Runs the stream continuously, forever
+*B) Processes all currently available data once, then stops
+C) Only triggers on a fixed schedule
+D) Only triggers when manually clicked in the UI
+
+18. What is the purpose of a Storage Credential in Unity Catalog?
+A) It stores a user's login password
+*B) A keyless, UC-managed identity that authenticates to a cloud storage account
+C) It's a Wi-Fi credential for the classroom
+D) It's only used for row filters
+
+19. What does SCD Type 2 track that SCD Type 1 does not?
+A) Nothing, they're the same
+*B) Historical versions of a row over time (effective_start_date / effective_end_date)
+C) Only the single most recent value
+D) Deleted rows only
+
+20. Which command shows the full version history of commits made to a Delta table?
+A) SHOW HISTORY
+*B) DESCRIBE HISTORY
+C) LOG TABLE
+D) SHOW VERSIONS
+
+=====================
+QUESTION TEXT — ROUND 2: BATCH TRIVIA / FUNNY (15 questions)
+=====================
+
+1. What was Santosh's actual crime that earned him the nickname "Santoshwa"?
+*A) Sitting closest to Virinchy's desk
+B) Secretly being a cricket commentator
+C) Stealing Yogesh's WiFi
+D) Being the fourth member of the secret Telugu spy ring
+
+2. What excuse did Karthick give when caught reading a message under his desk?
+A) "Weather update, sir"
+*B) "Cricket score, sir" — on a day with no match
+C) "Homework from another course, sir"
+D) "I was checking if Ganadeep's code even compiles"
+
+3. What was Ganadeep actually building all those sleep-deprived nights?
+A) A real-time data pipeline
+*B) A secret Teams group
+C) A time machine
+D) A better excuse for missing his train
+
+4. What two words do Santosh and Sushant say that always turn out to be true?
+A) "Task pending"
+*B) "Hojayega, sir"
+C) "Server down"
+D) "WiFi issue"
+
+5. What was Pratik and Saket's secret lookout code phrase?
+*A) "Virinchy is here" / "Roger that"
+B) "Code red, hide the phone"
+C) "Abort mission, abort mission"
+D) "The eagle has landed"
+
+6. What does Hritin say right after confidently claiming "Got it, got it, understood"?
+A) Nothing, he actually gets it
+*B) "Wait, so what were the steps again?"
+C) "Can I get an extension?"
+D) "Let me just ask Sukrit"
+
+7. What is Kamal famous for in the classroom?
+A) Loudly announcing every finished task
+*B) Finishing tasks silently and never telling a soul
+C) Never finishing a single task
+D) Quietly doing everyone else's tasks too
+
+8. According to Sushant's unproven theory, how does Aviskar vanish from his seat?
+*A) He teleports between songs
+B) He has an identical twin
+C) He uses Kamal's silence as camouflage
+D) He's actually a hologram
+
+9. It took Virinchy three whole weeks to notice what about Nikshitha?
+A) She sits next to Prishita
+*B) She types with her left hand
+C) She never speaks in class
+D) She's actually two people
+
+10. What does Prishita say every time Sneha tries to drag her to a hangout?
+A) "I have a headache"
+*B) "Ask Nikshitha"
+C) "Ask Virinchy"
+D) "Maybe next batch"
+
+11. What did Sneha message the group chat after spotting Virinchy at the mall?
+A) "SIR IS BUYING A LAPTOP"
+*B) "GUYS I SAW SIR AT THE MALL HE WEARS NORMAL CLOTHES"
+C) "SIR HAS A SECRET LIFE"
+D) "SIR WAS WITH GANADEEP"
+
+12. What did Payal hand Yogesh the day his WiFi died for good, without being asked?
+A) Her lunch
+*B) Her hotspot
+C) Her notes
+D) A strongly worded complaint to IT
+
+13. In the QuickCart Wars, what did Amardeep propose that united Sukrit and Gaurav for the first time ever?
+A) A coin toss
+*B) A streaming + batch hybrid design (they agreed it was worse than both of theirs)
+C) Giving up and ordering food instead
+D) Asking Virinchy to just declare a winner
+
+14. What was Harsh's signature move whenever he made a mistake?
+A) Quietly blaming Gaurav
+*B) Announcing it like breaking news: "I have broken the pipeline"
+C) Pretending nothing happened
+D) Immediately restarting his laptop and hoping
+
+15. How did Sujit say goodbye on his last day?
+A) A heartfelt five-minute speech
+*B) "Okay, bye guys"
+C) A full farewell PowerPoint deck
+D) He just vanished, Aviskar-style
+
+=====================
+QUESTION TEXT — ROUND 3: RIDDLES (5 questions)
+=====================
+
+1. "I am not your source data, but I remember every version of myself — delete rows and I can still show you who I was yesterday. What am I?"
+A) A CSV file
+*B) A Delta Table
+C) A Google Sheet
+D) A Genie Agent
+
+2. "Three layers deep, I refine what's raw. My name is a precious metal, but nobody's ever mined me. What layer am I?"
+A) Bronze
+B) Silver
+*C) Gold
+D) Platinum
+
+3. "I flow endlessly like a river — but say the magic words 'availableNow' and I finish my journey and stop. What am I?"
+A) A batch job
+*B) A streaming query
+C) A cluster
+D) A notebook
+
+4. "I open doors with a GRANT and close them with a REVOKE — but I never actually touch a single row of your data. What governs like me?"
+A) A firewall
+*B) Unity Catalog privileges
+C) A VPN
+D) A row filter
+
+5. "I sit closest to the front, get checked on the most, and answer to a name that was never technically mine. Who — or what — am I?"
+*A) Santosh (a.k.a. Santoshwa)
+B) Aviskar's disappearing chair
+C) The secret Teams group
+D) Kamal's silence

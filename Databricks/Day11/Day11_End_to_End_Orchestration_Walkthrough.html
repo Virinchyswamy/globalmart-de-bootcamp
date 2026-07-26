@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 11 — End-to-End Orchestration Walkthrough</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav { position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a { text-decoration: none; color: var(--muted); font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 20px; transition: all 0.2s; white-space: nowrap; }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 38px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16px; max-width: 760px; margin: 0 auto 26px; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
+  .hero .cta { display: inline-block; margin-top: 28px; background: var(--accent); color: #0f172a; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+
+  section.content { padding: 52px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .time-badge { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid rgba(245,158,11,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .section-title { font-size: 27px; margin-bottom: 10px; }
+  .section-intro { color: var(--muted); font-size: 15px; max-width: 780px; margin-bottom: 26px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .card h4 { color: var(--accent); font-size: 14.5px; margin-bottom: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 13.5px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-top: 14px; }
+  .highlight-box p { font-size: 13.5px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 16px 0; }
+  .order-list li { counter-increment: steps; display: flex; align-items: flex-start; gap: 13px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: #cbd5e1; line-height: 1.6; }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before { content: counter(steps); background: #1d4ed8; color: #fff; min-width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 8px 11px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 8px 11px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 16px 20px; margin-top: 18px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .checkpoint p { color: #cbd5e1; font-size: 13.5px; line-height: 1.7; }
+
+  .notebook-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px 26px; margin-top: 18px; }
+  .notebook-card .nb-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+  .notebook-card .nb-num { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; color: #fff; font-weight: 800; font-size: 14px; flex-shrink: 0; }
+  .nb-num.bronze { background: #a3623a; }
+  .nb-num.silver { background: #64748b; }
+  .nb-num.gold { background: #b8860b; }
+  .notebook-card h4 { font-size: 16.5px; color: #f8fafc; }
+  .notebook-card .nb-file { color: var(--muted); font-size: 12px; font-family: 'Cascadia Code', Consolas, monospace; margin-bottom: 14px; }
+
+  pre.code-block { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 14px 18px; overflow-x: auto; font-family: 'Cascadia Code', Consolas, monospace; font-size: 12.5px; line-height: 1.6; color: #e6edf3; margin: 10px 0; }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+
+  .cell-step { margin-top: 14px; }
+  .cell-step h5 { font-size: 13.5px; color: var(--accent2); margin-bottom: 4px; }
+  .cell-step p { font-size: 13.5px; color: #cbd5e1; margin-bottom: 4px; }
+
+  .dag { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .dag-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dag-node { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .dag-node.bronze { border-color: #a3623a; color: #e8b795; }
+  .dag-node.silver { border-color: #94a3b8; color: #e2e8f0; }
+  .dag-node.gold { border-color: #d1ac4f; color: #f3dc9c; }
+  .dag-arrow { color: var(--muted); font-size: 17px; }
+
+  .checklist-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: #cbd5e1; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--good); flex-shrink: 0; cursor: pointer; }
+  .checklist-item label { cursor: pointer; }
+
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">DAY 11 · END-TO-END ORCHESTRATION WALKTHROUGH</div>
+    <div class="links">
+      <a href="#prereq" class="navlink">Prereqs</a>
+      <a href="#bronze" class="navlink">Bronze</a>
+      <a href="#silver" class="navlink">Silver</a>
+      <a href="#gold" class="navlink">Gold</a>
+      <a href="#workflow" class="navlink">Workflow</a>
+      <a href="#run1" class="navlink">Idempotent Run</a>
+      <a href="#incremental" class="navlink">Incremental Load</a>
+      <a href="#reference" class="navlink">Reference</a>
+      <a href="#checklist" class="navlink">Checklist</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Day 11 · Orchestration Lab · Complete Reference</div>
+  <h1>Every Step, Bronze to Gold, Start to Finish</h1>
+  <p class="lead">One file covering the whole thing in order: new ADLS folder → mount check → all 3 Bronze notebooks cell by cell → all 3 Silver notebooks (with the DQ decisions spelled out) → the Gold join+MERGE → building the real Workflow → the idempotent proof-run → the incremental second load. Nothing skipped, nothing assumed already known.</p>
+  <div class="meta-row">
+    <span class="meta-pill">📦 3 tables — customers, orders, transactions</span>
+    <span class="meta-pill">📓 7 notebooks — 3 Bronze, 3 Silver, 1 Gold</span>
+    <span class="meta-pill">🔁 First load by hand, then fully orchestrated incremental load</span>
+  </div>
+  <div><a href="#prereq" class="cta">Start ↓</a></div>
+</header>
+
+<!-- ============================================================ -->
+<!-- PREREQUISITES -->
+<!-- ============================================================ -->
+<section class="content" id="prereq">
+  <div class="wrap">
+    <div class="section-tag">Before Any Notebook Runs</div>
+    <h2 class="section-title">Folder, Mount, Files</h2>
+
+    <h3 style="font-size:16px; color:var(--accent2); margin:20px 0 6px;">Step A — New ADLS Folder (don't touch the main course data)</h3>
+    <div class="order-list">
+      <li>In your ADLS container, create a new folder — <code>orchestration-lab/</code> — with three subfolders inside it: <code>customers/</code>, <code>orders/</code>, <code>transactions/</code>.</li>
+      <li>Upload the 3 first-load CSVs from <code>Databricks/Day11/orchestration/datasets-first-load/</code>: <code>customers_01.csv</code> → <code>orchestration-lab/customers/</code>, <code>orders_01.csv</code> → <code>orchestration-lab/orders/</code>, <code>transactions_01.csv</code> → <code>orchestration-lab/transactions/</code>.</li>
+      <li>Leave <code>datasets-second-load/</code> untouched for now — that's for the incremental section near the end of this page.</li>
+    </div>
+
+    <h3 style="font-size:16px; color:var(--accent2); margin:20px 0 6px;">Step B — Reuse Your Existing Mount, Don't Create a New One</h3>
+    <p class="section-intro" style="margin-bottom:8px;"><code>orchestration-lab/</code> lives inside the same container you mounted back on Day 4. Every notebook below verifies that mount exists — none of them mount anything themselves, and none of them ever ask you to paste a storage key.</p>
+    <pre class="code-block"><span class="cm"># If dbutils.fs.mounts() doesn't already list your Day 4 mount, go run</span>
+<span class="cm"># Day 4's mounting notebook first. This lab deliberately never re-mounts.</span>
+MOUNT_POINT = "/mnt/&lt;yourname&gt;_gbmart_data"</pre>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Prereq Checkpoint</div>
+      <p>3 files uploaded into 3 correctly-named subfolders, existing Day 4 mount confirmed live via <code>dbutils.fs.mounts()</code>. Nothing else needs to exist yet — the notebooks create the catalog/schema/tables themselves.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- BRONZE -->
+<!-- ============================================================ -->
+<section class="content" id="bronze">
+  <div class="wrap">
+    <div class="section-tag">First Load — Bronze <span class="time-badge">⏱ any order, all 3 independent</span></div>
+    <h2 class="section-title">3 Notebooks, Same Autoloader Pattern</h2>
+    <p class="section-intro">Every Bronze notebook here uses <code>cloudFiles</code> Autoloader with <code>trigger(availableNow=True)</code> — the same mechanism as every other Bronze table this course has built, not <code>COPY INTO</code>. Its own checkpoint tracks which files it's already ingested, which is what makes the incremental section later work with zero code changes.</p>
+
+    <div class="notebook-card">
+      <div class="nb-head"><span class="nb-num bronze">1</span><h4>Bronze — Customers</h4></div>
+      <div class="nb-file">bronze/01_bronze_customers.ipynb → target: {catalog}.bronze.customers</div>
+      <div class="cell-step">
+        <h5>Step 1 — Setup</h5>
+        <p>Sets 5 widgets: <code>catalog</code>, <code>schema</code> (default <code>bronze</code>), <code>mount_point</code>, <code>source_folder</code> (default <code>orchestration-lab/customers</code>), <code>batch_id</code>. Builds <code>SOURCE_PATH</code>, <code>CHECKPOINT_PATH</code>, and <code>SCHEMA_PATH</code> from those.</p>
+        <p>Verifies the mount exists — <code>raise RuntimeError</code> if not, rather than silently re-mounting. Lists the files actually sitting in the source folder. Creates the catalog and <code>bronze</code> schema if they don't exist yet.</p>
+      </div>
+      <div class="cell-step">
+        <h5>Step 2 — Ingest with Autoloader</h5>
+        <p>Reads CSV via <code>cloudFiles</code>, infers column types, adds 3 tracking columns: <code>_source_file</code>, <code>_batch_id</code>, <code>_ingested_at</code>. Columns arriving: <code>customer_id, first_name, last_name, email, city, state, created_at</code> — already snake_case, no rename needed later. Writes with <code>trigger(availableNow=True)</code> — processes what's there right now, then stops.</p>
+      </div>
+      <div class="cell-step">
+        <h5>Step 3 — Verify</h5>
+        <p>Prints total row count and displays rows ordered by <code>_ingested_at</code>. A second cell groups by <code>_source_file</code> — confirms exactly which file(s) landed. <b>Expect 13 rows</b> after this first run.</p>
+      </div>
+    </div>
+
+    <div class="notebook-card">
+      <div class="nb-head"><span class="nb-num bronze">2</span><h4>Bronze — Orders</h4></div>
+      <div class="nb-file">bronze/02_bronze_orders.ipynb → target: {catalog}.bronze.orders</div>
+      <p style="font-size:13.5px; color:#cbd5e1;">Identical structure to Bronze Customers — same 3 steps, same widget shape, just <code>source_folder</code> defaults to <code>orchestration-lab/orders</code> and the target table is <code>bronze.orders</code>. Columns arriving: <code>order_id, customer_id, order_date, status, created_at</code>. <b>Expect 12 rows</b> after this run.</p>
+    </div>
+
+    <div class="notebook-card">
+      <div class="nb-head"><span class="nb-num bronze">3</span><h4>Bronze — Transactions</h4></div>
+      <div class="nb-file">bronze/03_bronze_transactions.ipynb → target: {catalog}.bronze.transactions</div>
+      <p style="font-size:13.5px; color:#cbd5e1;">Same pattern again, <code>source_folder</code> defaults to <code>orchestration-lab/transactions</code>, target <code>bronze.transactions</code>. Columns arriving: <code>transaction_id, order_id, quantity, unit_price, total_amount, payment_mode, created_at</code>. <b>Expect 12 rows</b> after this run.</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Bronze Checkpoint</div>
+      <p><code>bronze.customers</code> = 13 rows, <code>bronze.orders</code> = 12 rows, <code>bronze.transactions</code> = 12 rows. Confirm all three before moving to Silver — Silver's dedup logic assumes Bronze already has at least one full batch in it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SILVER -->
+<!-- ============================================================ -->
+<section class="content" id="silver">
+  <div class="wrap">
+    <div class="section-tag">First Load — Silver <span class="time-badge">⏱ order matters: customers → orders → transactions</span></div>
+    <h2 class="section-title">Dedup → DQ Scan → Decide → Transform → SCD1 MERGE</h2>
+    <p class="section-intro">Every Silver notebook follows the same investigate-then-decide shape from Day 5: tag every row with its DQ issue first, decide Fix/Flag/Quarantine per issue type, then MERGE. Orders and Transactions add a referential-integrity check against the Silver table one level up — which is exactly why the run order isn't optional here.</p>
+
+    <div class="notebook-card">
+      <div class="nb-head"><span class="nb-num silver">4</span><h4>Silver — Customers (SCD1)</h4></div>
+      <div class="nb-file">silver/04_silver_customers.ipynb → target: {catalog}.silver.customers · depends on: Bronze Customers only</div>
+      <div class="cell-step"><h5>Step 1-2 — Setup, Read &amp; Dedup</h5><p>Widgets: <code>catalog</code>, <code>source_schema</code>, <code>target_schema</code>. Reads all of <code>bronze.customers</code>, dedupes by <code>customer_id</code> keeping the row with the latest <code>_ingested_at</code> — this is what makes a second run correctly pick up only the newest profile per customer.</p></div>
+      <div class="cell-step"><h5>Step 3-4 — DQ Scan &amp; Decision</h5><p>Tags <code>NULL_CUSTOMER_ID</code>, <code>MISSING_EMAIL</code>, <code>INVALID_EMAIL_FORMAT</code>. Decision: <code>NULL_CUSTOMER_ID</code> → <b>Quarantine</b> (no usable key). Missing/invalid email → <b>Flag, keep the row</b> (email is one field, not the whole record).</p></div>
+      <div class="cell-step"><h5>Step 5 — Transform</h5><p>Builds <code>full_name</code> from first+last, casts <code>created_at</code> to a real date, stamps <code>_silver_updated_at</code>.</p></div>
+      <div class="cell-step"><h5>Step 6-7 — Create Table &amp; MERGE</h5><p><code>CREATE TABLE IF NOT EXISTS</code> with columns <code>customer_id, full_name, first_name, last_name, email, city, state, created_at, _dq_issue, _silver_updated_at</code>. SCD1 MERGE on <code>customer_id</code> — this exact statement is what picks up batch 2's email change later, unchanged.</p></div>
+    </div>
+
+    <div class="notebook-card">
+      <div class="nb-head"><span class="nb-num silver">5</span><h4>Silver — Orders (SCD1)</h4></div>
+      <div class="nb-file">silver/05_silver_orders.ipynb → target: {catalog}.silver.orders · depends on: Bronze Orders <b>and</b> Silver Customers</div>
+      <div class="cell-step"><h5>Step 1-2 — Setup, Read &amp; Dedup</h5><p>Dedupes by <code>order_id</code>, latest <code>_ingested_at</code> wins.</p></div>
+      <div class="cell-step"><h5>Step 3-4 — DQ Scan &amp; Decision</h5><p><code>status</code> gets <code>initcap()</code>'d (source mixes casing: <code>delivered</code>, <code>PLACED</code>, <code>Shipped</code>). A left join against <code>silver.customers</code> checks referential integrity. Decision: <code>NULL_ORDER_ID</code> → Quarantine. <code>ORPHANED_CUSTOMER_ID</code> (no match in Silver customers) → Quarantine — the missing customer might just not have loaded yet.</p></div>
+      <div class="cell-step"><h5>Step 5-6 — Create Table &amp; MERGE</h5><p>Columns: <code>order_id, customer_id, order_date, status, created_at, _silver_updated_at</code>. SCD1 MERGE on <code>order_id</code>.</p></div>
+    </div>
+
+    <div class="notebook-card">
+      <div class="nb-head"><span class="nb-num silver">6</span><h4>Silver — Transactions (SCD1)</h4></div>
+      <div class="nb-file">silver/06_silver_transactions.ipynb → target: {catalog}.silver.transactions · depends on: Bronze Transactions <b>and</b> Silver Orders</div>
+      <div class="cell-step"><h5>Step 1-2 — Setup, Read &amp; Dedup</h5><p>Dedupes by <code>transaction_id</code>. Casts <code>quantity</code>/<code>unit_price</code>/<code>total_amount</code> explicitly — a contract Silver guarantees regardless of what Autoloader happened to infer.</p></div>
+      <div class="cell-step"><h5>Step 3-4 — DQ Scan &amp; Decision</h5><p>Referential check against <code>silver.orders</code>. Decision: <code>NULL_TRANSACTION_ID</code> → Quarantine. <code>ORPHANED_ORDER_ID</code> → Quarantine. <code>NEGATIVE_TOTAL_AMOUNT</code> → Quarantine for this lab's data (flagged as a real-refund exception worth investigating in a live system, not assumed).</p></div>
+      <div class="cell-step"><h5>Step 5-6 — Create Table &amp; MERGE</h5><p>Columns: <code>transaction_id, order_id, quantity, unit_price, total_amount, payment_mode, created_at, _silver_updated_at</code>. SCD1 MERGE on <code>transaction_id</code>.</p></div>
+    </div>
+
+    <details class="highlight-box" style="cursor:pointer;">
+      <summary style="cursor:pointer; color:var(--accent2); font-weight:700; font-size:13.5px;">Why does the customers → orders → transactions order actually matter?</summary>
+      <p style="margin-top:8px;">05 and 06 don't just clean their own table — they verify every row's foreign key exists in the Silver table one level up, before merging. Run 06 before 05 and the transaction RI check runs against an empty or stale <code>silver.orders</code>, incorrectly flagging valid rows as orphaned. This exact dependency chain is what gets wired as <code>depends_on</code> in the Workflow section below, so Databricks enforces the order instead of you having to remember it by hand.</p>
+    </details>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Silver Checkpoint</div>
+      <p>All three Silver tables exist and are populated, in the order customers → orders → transactions. If any RI check flagged unexpected quarantines, it's almost always an ordering mistake — re-run in the correct sequence before moving on.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- GOLD -->
+<!-- ============================================================ -->
+<section class="content" id="gold">
+  <div class="wrap">
+    <div class="section-tag">First Load — Gold <span class="time-badge">⏱ run last, after all 3 Silver tables exist</span></div>
+    <h2 class="section-title">Join Chain → Surrogate Key → MERGE</h2>
+
+    <div class="notebook-card">
+      <div class="nb-head"><span class="nb-num gold">7</span><h4>Gold — fact_sales</h4></div>
+      <div class="nb-file">gold/07_gold_fact_sales.ipynb → target: {catalog}.gold.fact_sales · depends on: all 3 Silver tables</div>
+      <div class="cell-step"><h5>Step 1-2 — Setup, Read Silver Tables</h5><p><code>silver.transactions</code> drives the grain — one fact row per transaction. Orders and customers get joined in to enrich, not to drive row count.</p></div>
+      <div class="cell-step"><h5>Step 3 — Build Fact Rows</h5><p><code>transactions → orders</code> on <code>order_id</code> (<b>inner</b> — every transaction must have a real order; Silver already quarantined anything that didn't). <code>orders → customers</code> on <code>customer_id</code> (<b>left</b>, defensive re-check — Silver orders already verified this customer existed at ingestion time; this join catches only the rare case it's since been removed, without dropping the transaction). A sanity-check cell counts rows where that defensive join didn't match — expected 0.</p></div>
+      <div class="cell-step"><h5>Step 4 — Surrogate Key</h5><p><code>fact_sales_sk = sha2(transaction_id, 256)</code> — same shape as Day 7's <code>sha2(order_item_id, 256)</code>.</p></div>
+      <div class="cell-step"><h5>Step 5-6 — Create Table &amp; MERGE</h5><p>Columns: <code>fact_sales_sk, transaction_id, order_id, customer_id, order_date, status, payment_mode, quantity, unit_price, total_amount</code>. MERGE on <code>fact_sales_sk</code> — deliberately MERGE, not Day 7's <code>overwrite</code>, since this table needs to support the incremental second run without reprocessing everything.</p></div>
+      <div class="cell-step"><h5>Step 7 — Verify</h5><p>Total row count, revenue-by-status breakdown, and <code>DESCRIBE HISTORY</code> limited to the last 4 versions — confirms this run actually wrote a new MERGE commit.</p></div>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Gold Checkpoint — First Load Complete</div>
+      <p><code>gold.fact_sales</code> should have one row per valid first-load transaction. This is the end of the manual first-load walkthrough — everything from here on is about wiring these same 7 notebooks into a real, automated Workflow.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- WORKFLOW -->
+<!-- ============================================================ -->
+<section class="content" id="workflow">
+  <div class="wrap">
+    <div class="section-tag">Build the Real Workflow</div>
+    <h2 class="section-title">Same 7 Notebooks, Wired With Dependencies</h2>
+
+    <div class="dag">
+      <div class="dag-row">
+        <div class="dag-node bronze">bronze_customers</div>
+        <div class="dag-arrow">&rarr;</div>
+        <div class="dag-node silver">silver_customers</div>
+        <div class="dag-arrow">&rarr;</div>
+        <div class="dag-node silver">silver_orders</div>
+        <div class="dag-arrow">&rarr;</div>
+        <div class="dag-node silver">silver_transactions</div>
+        <div class="dag-arrow">&rarr;</div>
+        <div class="dag-node gold">gold_fact_sales</div>
+      </div>
+      <div class="dag-row" style="margin-left:180px;">
+        <div class="dag-node bronze">bronze_orders</div>
+        <div class="dag-arrow">&#8599;</div>
+        <span style="font-size:12px; color:var(--muted);">feeds silver_orders directly too</span>
+      </div>
+      <div class="dag-row" style="margin-left:390px;">
+        <div class="dag-node bronze">bronze_transactions</div>
+        <div class="dag-arrow">&#8599;</div>
+        <span style="font-size:12px; color:var(--muted);">feeds silver_transactions directly too</span>
+      </div>
+    </div>
+
+    <table class="spec" style="margin-top:18px;">
+      <tr><th>Task</th><th><code>depends_on</code></th></tr>
+      <tr><td><code>bronze_customers</code> / <code>bronze_orders</code> / <code>bronze_transactions</code></td><td>— (none, run in parallel)</td></tr>
+      <tr><td><code>silver_customers</code></td><td><code>bronze_customers</code></td></tr>
+      <tr><td><code>silver_orders</code></td><td><code>bronze_orders</code>, <code>silver_customers</code></td></tr>
+      <tr><td><code>silver_transactions</code></td><td><code>bronze_transactions</code>, <code>silver_orders</code></td></tr>
+      <tr><td><code>gold_fact_sales</code></td><td><code>silver_customers</code>, <code>silver_orders</code>, <code>silver_transactions</code></td></tr>
+    </table>
+
+    <h3 style="font-size:16px; color:var(--accent2); margin:22px 0 8px;">Parameters, Per Notebook</h3>
+    <table class="spec">
+      <tr><th>Notebook</th><th>Widget</th><th>Value</th></tr>
+      <tr><td>Bronze (all 3)</td><td><code>catalog</code> / <code>schema</code></td><td>your real catalog / <code>bronze</code></td></tr>
+      <tr><td>Bronze (all 3)</td><td><code>mount_point</code></td><td>your existing Day 4 mount — same for all 3</td></tr>
+      <tr><td>Bronze (all 3)</td><td><code>source_folder</code></td><td>matching subfolder, e.g. <code>orchestration-lab/customers</code></td></tr>
+      <tr><td>Bronze (all 3)</td><td><code>batch_id</code></td><td>free text, e.g. <code>batch_001</code></td></tr>
+      <tr><td>Silver (all 3)</td><td><code>catalog</code> / <code>source_schema</code> / <code>target_schema</code></td><td>your catalog / <code>bronze</code> / <code>silver</code></td></tr>
+      <tr><td>Gold</td><td><code>catalog</code> / <code>source_schema</code> / <code>target_schema</code></td><td>your catalog / <code>silver</code> / <code>gold</code></td></tr>
+    </table>
+
+    <div class="highlight-box">
+      <p>Compute: one shared job cluster for all 7 tasks (Standard_DS3_v2, Photon deselected) is enough for this dataset's size. None of the parameters above are secret — no credential parameter is needed anywhere, since ADLS access goes through the existing mount.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- IDEMPOTENT RUN -->
+<!-- ============================================================ -->
+<section class="content" id="run1">
+  <div class="wrap">
+    <div class="section-tag">Prove It Before Trusting It</div>
+    <h2 class="section-title">Run the Job Once Against Data It's Already Seen</h2>
+    <p class="section-intro">Same data you just loaded by hand. Run the Job now anyway.</p>
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Idempotency Checkpoint</div>
+      <p>Every Bronze task's Autoloader stream should write <b>0 new rows</b> — the checkpoint already knows it ingested the first-load files. Every Silver/Gold MERGE should be a no-op — same row counts as the manual first load ended with. This proves the Job is correctly wired before new data enters the picture.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- INCREMENTAL -->
+<!-- ============================================================ -->
+<section class="content" id="incremental">
+  <div class="wrap">
+    <div class="section-tag">Second Load — Fully Orchestrated</div>
+    <h2 class="section-title">New Data, Same Notebooks, Zero Edits</h2>
+
+    <div class="order-list">
+      <li>Upload the 3 files from <code>datasets-second-load/</code> into the <b>same</b> ADLS subfolders used for the first load — <code>customers_02.csv</code> alongside <code>customers_01.csv</code>, and so on. Same folders, not new ones.</li>
+      <li>Run the Job — <code>Run now</code>, or wait for a schedule if you set one up.</li>
+      <li>Watch the task graph live: 3 Bronze tasks start together, Silver runs in dependency order, Gold runs last.</li>
+    </div>
+
+    <h3 style="font-size:16px; color:var(--accent2); margin:22px 0 10px;">What Changes in Each Layer</h3>
+    <div class="grid-2">
+      <div class="card"><h4>Bronze</h4><p>Each Autoloader stream now writes <b>non-zero</b> new rows — only from the second-load file. <code>customers</code> +6, <code>orders</code> +6, <code>transactions</code> +5.</p></div>
+      <div class="card"><h4>Silver Customers</h4><p><code>CUST-002</code>'s email should now show the new domain from <code>customers_02.csv</code> — proof the SCD1 MERGE updated an existing row, not inserted a duplicate.</p></div>
+      <div class="card"><h4>Silver Orders / Transactions</h4><p>Row counts grow by exactly the second-load file's new row count. Verify the RI checks didn't flag any new orders/transactions as orphaned — they shouldn't, since the new customers/orders they depend on landed in the same run, earlier in the dependency chain.</p></div>
+      <div class="card"><h4>Gold fact_sales</h4><p>Row count grows by the new transaction count. Revenue-by-status breakdown reflects the new orders' statuses.</p></div>
+    </div>
+
+    <div class="highlight-box success" style="margin-top:16px;">
+      <p><b>This is the actual payoff:</b> the exact same 7 notebooks, the exact same Job, no code changed anywhere — and it correctly picked up only what was new, updated the one customer whose data actually changed, and left everything else untouched. Bronze uses Autoloader's own checkpoint to know what it already saw; Silver and Gold use SCD1 MERGE keyed on the natural/surrogate key to know what to update vs. insert. Neither mechanism needed to be told "this is run 2" — they just are what they are, every time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- REFERENCE -->
+<!-- ============================================================ -->
+<section class="content" id="reference">
+  <div class="wrap">
+    <div class="section-tag">Reference</div>
+    <h2 class="section-title">All 7 Notebooks, at a Glance</h2>
+    <table class="spec">
+      <tr><th>#</th><th>Notebook</th><th>Target</th><th>Pattern</th><th>Depends on</th></tr>
+      <tr><td>1</td><td><code>bronze/01_bronze_customers.ipynb</code></td><td><code>bronze.customers</code></td><td>Autoloader (<code>cloudFiles</code>)</td><td>—</td></tr>
+      <tr><td>2</td><td><code>bronze/02_bronze_orders.ipynb</code></td><td><code>bronze.orders</code></td><td>Autoloader (<code>cloudFiles</code>)</td><td>—</td></tr>
+      <tr><td>3</td><td><code>bronze/03_bronze_transactions.ipynb</code></td><td><code>bronze.transactions</code></td><td>Autoloader (<code>cloudFiles</code>)</td><td>—</td></tr>
+      <tr><td>4</td><td><code>silver/04_silver_customers.ipynb</code></td><td><code>silver.customers</code></td><td>Dedupe + DQ (valid email) + SCD1 MERGE</td><td>Task 1</td></tr>
+      <tr><td>5</td><td><code>silver/05_silver_orders.ipynb</code></td><td><code>silver.orders</code></td><td>Status standardization + RI check + SCD1 MERGE</td><td>Task 2, Task 4</td></tr>
+      <tr><td>6</td><td><code>silver/06_silver_transactions.ipynb</code></td><td><code>silver.transactions</code></td><td>Cast + quarantine negatives + RI check + SCD1 MERGE</td><td>Task 3, Task 5</td></tr>
+      <tr><td>7</td><td><code>gold/07_gold_fact_sales.ipynb</code></td><td><code>gold.fact_sales</code></td><td>3-way join + MERGE</td><td>Task 4, 5, 6</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CHECKLIST -->
+<!-- ============================================================ -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Before You Call This Done</div>
+    <h2 class="section-title">Final Checklist</h2>
+    <div class="checklist-card">
+      <div class="checklist-item"><input type="checkbox" id="c1"><label for="c1">New ADLS folder + 3 subfolders created, first-load files uploaded</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c2"><label for="c2">All 3 Bronze notebooks run by hand — 13 / 12 / 12 rows confirmed</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c3"><label for="c3">All 3 Silver notebooks run in order (customers → orders → transactions), no unexpected quarantines</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c4"><label for="c4">Gold notebook run, one fact row per valid transaction, sanity check = 0</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c5"><label for="c5">Workflow built, 7 tasks, <code>depends_on</code> matches the DAG above</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c6"><label for="c6">Job run once against already-loaded data — confirmed 0 new rows everywhere</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c7"><label for="c7">Second-load files uploaded into the same subfolders, Job re-run</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c8"><label for="c8"><code>CUST-002</code>'s updated email confirmed in <code>silver.customers</code></label></div>
+      <div class="checklist-item"><input type="checkbox" id="c9"><label for="c9"><code>gold.fact_sales</code> row count grew by exactly the second-load transaction count</label></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  GlobalMart Data Engineering Bootcamp — Day 11 · End-to-End Orchestration Walkthrough
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>

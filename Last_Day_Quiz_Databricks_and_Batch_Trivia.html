@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Last Day Quiz — Databricks + Batch Trivia</title>
+<style>
+  :root {
+    --bg: #14181f;
+    --bg2: #1b212b;
+    --panel: #202834;
+    --border: #303b4a;
+    --amber: #e8a33d;
+    --amber-soft: #c98a35;
+    --text: #ece4d6;
+    --muted: #9aa3b2;
+    --cyan: #5fc9e8;
+    --pink: #ff8fb1;
+    --purple: #b48cf0;
+    --good: #6fd68a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: radial-gradient(ellipse at 50% -10%, #2a2318 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+    padding: 0 20px 80px;
+  }
+  .page { max-width: 820px; margin: 0 auto; }
+
+  header.hero { text-align: center; padding: 70px 0 40px; }
+  header.hero .kicker { color: var(--amber); font-size: 12.5px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+  header.hero h1 { font-size: 34px; font-weight: 800; margin-bottom: 12px; }
+  header.hero p { color: var(--muted); font-size: 15px; max-width: 560px; margin: 0 auto; }
+
+  .stats { display: flex; justify-content: center; gap: 14px; margin-top: 26px; flex-wrap: wrap; }
+  .stat-pill { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 8px 18px; font-size: 13px; font-weight: 700; }
+  .stat-pill.tech { color: var(--cyan); }
+  .stat-pill.funny { color: var(--pink); }
+  .stat-pill.riddle { color: var(--purple); }
+
+  .note {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 20px; margin: 30px 0 10px; font-size: 13.5px; color: var(--muted); line-height: 1.7;
+  }
+  .note b { color: var(--text); }
+
+  section.round { margin-top: 56px; }
+  .round-head { text-align: center; margin-bottom: 30px; }
+  .round-head .tag { font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; display: inline-block; margin-bottom: 10px; }
+  .round-head.tech .tag { background: rgba(95,201,232,0.15); color: var(--cyan); border: 1px solid rgba(95,201,232,0.4); }
+  .round-head.funny .tag { background: rgba(255,143,177,0.15); color: var(--pink); border: 1px solid rgba(255,143,177,0.4); }
+  .round-head.riddle .tag { background: rgba(180,140,240,0.15); color: var(--purple); border: 1px solid rgba(180,140,240,0.4); }
+  .round-head h2 { font-size: 24px; font-weight: 800; }
+  .round-head p { color: var(--muted); font-size: 13.5px; margin-top: 6px; }
+
+  .qcard { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; }
+  .qcard .qnum { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 12px; font-weight: 800; margin-right: 10px; flex-shrink: 0; }
+  .tech .qcard .qnum { background: var(--cyan); color: #0d2530; }
+  .funny .qcard .qnum { background: var(--pink); color: #3d0f1e; }
+  .riddle .qcard .qnum { background: var(--purple); color: #211238; }
+  .qcard .qtext { font-size: 16px; font-weight: 600; display: flex; align-items: flex-start; margin-bottom: 14px; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 36px; }
+  @media (max-width: 640px) { .options { grid-template-columns: 1fr; } }
+  .opt { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13.5px; color: #c7cdd8; display: flex; gap: 8px; }
+  .opt .letter { font-weight: 800; color: var(--muted); flex-shrink: 0; }
+  .opt.correct { background: rgba(111,214,138,0.1); border-color: var(--good); color: var(--text); }
+  .opt.correct .letter { color: var(--good); }
+  .opt.correct::after { content: "✓"; margin-left: auto; color: var(--good); font-weight: 800; }
+
+  footer { text-align: center; color: #5a6577; font-size: 11.5px; letter-spacing: 1px; text-transform: uppercase; margin-top: 70px; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="hero">
+    <div class="kicker">Last Day &middot; Tredence &middot; Wayground Quiz</div>
+    <h1>The Final Round</h1>
+    <p>20 real Databricks questions, 15 questions only this batch could answer, and 5 riddles to close it out. Answer key included — correct answers are marked with a ✓.</p>
+    <div class="stats">
+      <span class="stat-pill tech">🧠 20 Databricks Tech</span>
+      <span class="stat-pill funny">😂 15 Batch Trivia</span>
+      <span class="stat-pill riddle">🧩 5 Riddles</span>
+    </div>
+  </header>
+
+  <div class="note">
+    <b>For Virinchy, before you build this in Wayground:</b> this page is the full answer key, formatted for you to read/copy while building the quiz manually in the Wayground editor. A companion file, <code>Last_Day_Quiz_Wayground_Import.csv</code>, sits alongside this one with the same 40 questions in a generic Question/Option A–D/Correct-Answer spreadsheet shape — I couldn't verify Wayground's exact required column headers from their docs (their help center didn't return the article), so before relying on it, open Wayground's own "Import from Spreadsheet" screen, download <i>their</i> template, and compare the header row against the CSV — rename columns if they don't match exactly. Manual entry from this page is the guaranteed-to-work fallback either way.
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ROUND 1: TECH -->
+  <!-- ============================================================ -->
+  <section class="round tech">
+    <div class="round-head tech">
+      <span class="tag">Round 1 · 20 Questions</span>
+      <h2>Databricks, For Real This Time</h2>
+      <p>No trick questions — just everything you should walk out the door knowing cold.</p>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">1</span>What is Delta Lake primarily built on top of?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> CSV files</div>
+        <div class="opt correct"><span class="letter">B.</span> Apache Parquet</div>
+        <div class="opt"><span class="letter">C.</span> Avro</div>
+        <div class="opt"><span class="letter">D.</span> ORC</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">2</span>Which SQL syntax lets you query a Delta table as it existed at an earlier version (Time Travel)?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> ROLLBACK TABLE</div>
+        <div class="opt correct"><span class="letter">B.</span> SELECT ... VERSION AS OF</div>
+        <div class="opt"><span class="letter">C.</span> SHOW SNAPSHOT</div>
+        <div class="opt"><span class="letter">D.</span> RESTORE HISTORY</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">3</span>In the medallion architecture, which layer holds raw data closest to the original source format?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Gold</div>
+        <div class="opt"><span class="letter">B.</span> Silver</div>
+        <div class="opt correct"><span class="letter">C.</span> Bronze</div>
+        <div class="opt"><span class="letter">D.</span> Platinum</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">4</span>Which Databricks feature incrementally and efficiently processes new files as they land in cloud storage?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> COPY INTO only</div>
+        <div class="opt correct"><span class="letter">B.</span> Auto Loader (cloudFiles)</div>
+        <div class="opt"><span class="letter">C.</span> Delta Sharing</div>
+        <div class="opt"><span class="letter">D.</span> Unity Catalog Volumes</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">5</span>In Unity Catalog's object hierarchy, what sits directly above "schema"?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Table</div>
+        <div class="opt correct"><span class="letter">B.</span> Catalog</div>
+        <div class="opt"><span class="letter">C.</span> Metastore</div>
+        <div class="opt"><span class="letter">D.</span> Workspace</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">6</span>Which command compacts small files into larger ones to improve read performance on a Delta table?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> VACUUM</div>
+        <div class="opt correct"><span class="letter">B.</span> OPTIMIZE</div>
+        <div class="opt"><span class="letter">C.</span> ANALYZE</div>
+        <div class="opt"><span class="letter">D.</span> REPAIR TABLE</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">7</span>What does the VACUUM command actually do?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Compacts small files</div>
+        <div class="opt correct"><span class="letter">B.</span> Permanently removes old, unreferenced data files past the retention window</div>
+        <div class="opt"><span class="letter">C.</span> Grants table permissions</div>
+        <div class="opt"><span class="letter">D.</span> Creates a new table version</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">8</span>Which Delta Lake feature lets a downstream reader see only the row-level inserts/updates/deletes since a given version?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Time Travel</div>
+        <div class="opt correct"><span class="letter">B.</span> Change Data Feed (CDF)</div>
+        <div class="opt"><span class="letter">C.</span> Z-Ordering</div>
+        <div class="opt"><span class="letter">D.</span> Liquid Clustering</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">9</span>What does ACID stand for, in the context of Delta Lake transactions?</div>
+      <div class="options">
+        <div class="opt correct"><span class="letter">A.</span> Atomicity, Consistency, Isolation, Durability</div>
+        <div class="opt"><span class="letter">B.</span> Access, Control, Identity, Data</div>
+        <div class="opt"><span class="letter">C.</span> Aggregate, Compute, Index, Delta</div>
+        <div class="opt"><span class="letter">D.</span> Authentication, Compliance, Integrity, Delta</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">10</span>Which SQL statement gives a principal a privilege in Unity Catalog?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> ALLOW</div>
+        <div class="opt correct"><span class="letter">B.</span> GRANT</div>
+        <div class="opt"><span class="letter">C.</span> ENABLE</div>
+        <div class="opt"><span class="letter">D.</span> PERMIT</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">11</span>What's the key difference between a Managed table and an External table in Unity Catalog?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Managed tables can't be queried with SQL</div>
+        <div class="opt correct"><span class="letter">B.</span> Dropping a Managed table deletes its data; dropping an External table doesn't</div>
+        <div class="opt"><span class="letter">C.</span> External tables don't support ACID transactions</div>
+        <div class="opt"><span class="letter">D.</span> There is no real difference</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">12</span>Which Databricks compute engine accelerates Spark at the vectorized query-execution layer?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Tungsten</div>
+        <div class="opt correct"><span class="letter">B.</span> Photon</div>
+        <div class="opt"><span class="letter">C.</span> Catalyst</div>
+        <div class="opt"><span class="letter">D.</span> Delta Engine Classic</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">13</span>Which native Unity Catalog mechanism restricts which rows of a table a given user/group can see, enforced automatically for every reader?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Dynamic View</div>
+        <div class="opt correct"><span class="letter">B.</span> Row Filter</div>
+        <div class="opt"><span class="letter">C.</span> Column Mask</div>
+        <div class="opt"><span class="letter">D.</span> Access Connector</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">14</span>What does a Column Mask do in Unity Catalog?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Hides an entire table</div>
+        <div class="opt correct"><span class="letter">B.</span> Returns a transformed/redacted value for one column, enforced for every reader</div>
+        <div class="opt"><span class="letter">C.</span> Permanently deletes sensitive columns</div>
+        <div class="opt"><span class="letter">D.</span> Encrypts the whole catalog</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">15</span>What is a Databricks Genie Agent (formerly called a Genie Space) primarily used for?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Automating cluster autoscaling</div>
+        <div class="opt correct"><span class="letter">B.</span> Letting business users ask natural-language questions and get SQL-generated answers</div>
+        <div class="opt"><span class="letter">C.</span> Managing Git repositories</div>
+        <div class="opt"><span class="letter">D.</span> Encrypting Delta tables at rest</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">16</span>In Databricks Jobs, what lets one task wait for another task to finish before it runs?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> trigger</div>
+        <div class="opt correct"><span class="letter">B.</span> depends_on</div>
+        <div class="opt"><span class="letter">C.</span> schedule</div>
+        <div class="opt"><span class="letter">D.</span> cluster_policy</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">17</span>What does <code>trigger(availableNow=True)</code> do in a Structured Streaming write?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Runs the stream continuously, forever</div>
+        <div class="opt correct"><span class="letter">B.</span> Processes all currently available data once, then stops</div>
+        <div class="opt"><span class="letter">C.</span> Only triggers on a fixed schedule</div>
+        <div class="opt"><span class="letter">D.</span> Only triggers when manually clicked in the UI</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">18</span>What is the purpose of a Storage Credential in Unity Catalog?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> It stores a user's login password</div>
+        <div class="opt correct"><span class="letter">B.</span> A keyless, UC-managed identity that authenticates to a cloud storage account</div>
+        <div class="opt"><span class="letter">C.</span> It's a Wi-Fi credential for the classroom</div>
+        <div class="opt"><span class="letter">D.</span> It's only used for row filters</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">19</span>What does SCD Type 2 track that SCD Type 1 does not?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Nothing — they're the same</div>
+        <div class="opt correct"><span class="letter">B.</span> Historical versions of a row over time (effective_start_date / effective_end_date)</div>
+        <div class="opt"><span class="letter">C.</span> Only the single most recent value</div>
+        <div class="opt"><span class="letter">D.</span> Deleted rows only</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">20</span>Which command shows the full version history of commits made to a Delta table?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> SHOW HISTORY</div>
+        <div class="opt correct"><span class="letter">B.</span> DESCRIBE HISTORY</div>
+        <div class="opt"><span class="letter">C.</span> LOG TABLE</div>
+        <div class="opt"><span class="letter">D.</span> SHOW VERSIONS</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ROUND 2: FUNNY / STORY -->
+  <!-- ============================================================ -->
+  <section class="round funny">
+    <div class="round-head funny">
+      <span class="tag">Round 2 · 15 Questions</span>
+      <h2>Only This Batch Could Pass This</h2>
+      <p>Straight from "What I Saw From the Front of the Room." All options are funny. Only one is true.</p>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">1</span>What was Santosh's actual crime that earned him the nickname "Santoshwa"?</div>
+      <div class="options">
+        <div class="opt correct"><span class="letter">A.</span> Sitting closest to Virinchy's desk</div>
+        <div class="opt"><span class="letter">B.</span> Secretly being a cricket commentator</div>
+        <div class="opt"><span class="letter">C.</span> Stealing Yogesh's WiFi</div>
+        <div class="opt"><span class="letter">D.</span> Being the fourth member of the secret Telugu spy ring</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">2</span>What excuse did Karthick give when caught reading a message under his desk?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> "Weather update, sir"</div>
+        <div class="opt correct"><span class="letter">B.</span> "Cricket score, sir" — on a day with no match</div>
+        <div class="opt"><span class="letter">C.</span> "Homework from another course, sir"</div>
+        <div class="opt"><span class="letter">D.</span> "I was checking if Ganadeep's code even compiles"</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">3</span>What was Ganadeep actually building all those sleep-deprived nights?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> A real-time data pipeline</div>
+        <div class="opt correct"><span class="letter">B.</span> A secret Teams group</div>
+        <div class="opt"><span class="letter">C.</span> A time machine</div>
+        <div class="opt"><span class="letter">D.</span> A better excuse for missing his train</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">4</span>What two words does Santosh (and Sushant) say that always, somehow, turn out to be true?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> "Task pending"</div>
+        <div class="opt correct"><span class="letter">B.</span> "Hojayega, sir"</div>
+        <div class="opt"><span class="letter">C.</span> "Server down"</div>
+        <div class="opt"><span class="letter">D.</span> "WiFi issue"</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">5</span>What was Pratik and Saket's secret lookout code phrase?</div>
+      <div class="options">
+        <div class="opt correct"><span class="letter">A.</span> "Virinchy is here" / "Roger that"</div>
+        <div class="opt"><span class="letter">B.</span> "Code red, hide the phone"</div>
+        <div class="opt"><span class="letter">C.</span> "Abort mission, abort mission"</div>
+        <div class="opt"><span class="letter">D.</span> "The eagle has landed"</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">6</span>What does Hritin say right after confidently claiming "Got it, got it, understood"?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Nothing — he actually gets it</div>
+        <div class="opt correct"><span class="letter">B.</span> "Wait, so what were the steps again?"</div>
+        <div class="opt"><span class="letter">C.</span> "Can I get an extension?"</div>
+        <div class="opt"><span class="letter">D.</span> "Let me just ask Sukrit"</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">7</span>What is Kamal famous for in the classroom?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Loudly announcing every finished task</div>
+        <div class="opt correct"><span class="letter">B.</span> Finishing tasks silently and never telling a soul</div>
+        <div class="opt"><span class="letter">C.</span> Never finishing a single task</div>
+        <div class="opt"><span class="letter">D.</span> Quietly doing everyone else's tasks too</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">8</span>According to Sushant's official (completely unproven) theory, how does Aviskar vanish from his seat?</div>
+      <div class="options">
+        <div class="opt correct"><span class="letter">A.</span> He teleports between songs</div>
+        <div class="opt"><span class="letter">B.</span> He has an identical twin</div>
+        <div class="opt"><span class="letter">C.</span> He uses Kamal's silence as camouflage</div>
+        <div class="opt"><span class="letter">D.</span> He's actually a hologram</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">9</span>It took Virinchy three whole weeks to notice WHAT about Nikshitha?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> She sits next to Prishita</div>
+        <div class="opt correct"><span class="letter">B.</span> She types with her left hand</div>
+        <div class="opt"><span class="letter">C.</span> She never speaks in class</div>
+        <div class="opt"><span class="letter">D.</span> She's actually two people</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">10</span>What does Prishita say every time Sneha tries to drag her to a hangout?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> "I have a headache"</div>
+        <div class="opt correct"><span class="letter">B.</span> "Ask Nikshitha"</div>
+        <div class="opt"><span class="letter">C.</span> "Ask Virinchy"</div>
+        <div class="opt"><span class="letter">D.</span> "Maybe next batch"</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">11</span>What did Sneha immediately message the group chat after spotting Virinchy at the mall?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> "SIR IS BUYING A LAPTOP"</div>
+        <div class="opt correct"><span class="letter">B.</span> "GUYS I SAW SIR AT THE MALL HE WEARS NORMAL CLOTHES"</div>
+        <div class="opt"><span class="letter">C.</span> "SIR HAS A SECRET LIFE"</div>
+        <div class="opt"><span class="letter">D.</span> "SIR WAS WITH GANADEEP"</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">12</span>What did Payal hand Yogesh the day his WiFi died for good, without even being asked?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Her lunch</div>
+        <div class="opt correct"><span class="letter">B.</span> Her hotspot</div>
+        <div class="opt"><span class="letter">C.</span> Her notes</div>
+        <div class="opt"><span class="letter">D.</span> A strongly worded complaint letter to IT</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">13</span>In the legendary "QuickCart Wars," what did Amardeep propose that got Sukrit and Gaurav to agree on something for the first time ever?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Settling it with a coin toss</div>
+        <div class="opt correct"><span class="letter">B.</span> A streaming + batch hybrid design (they agreed it was worse than both of theirs)</div>
+        <div class="opt"><span class="letter">C.</span> Giving up and ordering food instead</div>
+        <div class="opt"><span class="letter">D.</span> Asking Virinchy to just declare a winner</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">14</span>What was Harsh's signature move whenever he made a mistake?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Quietly blaming Gaurav</div>
+        <div class="opt correct"><span class="letter">B.</span> Announcing it like breaking news: "I have broken the pipeline"</div>
+        <div class="opt"><span class="letter">C.</span> Pretending nothing happened</div>
+        <div class="opt"><span class="letter">D.</span> Immediately restarting his laptop and hoping</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">15</span>How did Sujit say goodbye on his last day?</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> A heartfelt five-minute speech</div>
+        <div class="opt correct"><span class="letter">B.</span> "Okay, bye guys"</div>
+        <div class="opt"><span class="letter">C.</span> A full farewell PowerPoint deck</div>
+        <div class="opt"><span class="letter">D.</span> He just vanished, Aviskar-style</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ROUND 3: RIDDLES -->
+  <!-- ============================================================ -->
+  <section class="round riddle">
+    <div class="round-head riddle">
+      <span class="tag">Round 3 · 5 Riddles</span>
+      <h2>Think Before You Buzz</h2>
+      <p>Four data-flavored riddles, and one that's purely about this room.</p>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">1</span>"I am not your source data, but I remember every version of myself — delete rows and I can still show you who I was yesterday. What am I?"</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> A CSV file</div>
+        <div class="opt correct"><span class="letter">B.</span> A Delta Table</div>
+        <div class="opt"><span class="letter">C.</span> A Google Sheet</div>
+        <div class="opt"><span class="letter">D.</span> A Genie Agent</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">2</span>"Three layers deep, I refine what's raw. My name is a precious metal, but nobody's ever mined me. What layer am I?"</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> Bronze</div>
+        <div class="opt"><span class="letter">B.</span> Silver</div>
+        <div class="opt correct"><span class="letter">C.</span> Gold</div>
+        <div class="opt"><span class="letter">D.</span> Platinum</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">3</span>"I flow endlessly like a river — but say the magic words 'availableNow' and I finish my journey and stop. What am I?"</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> A batch job</div>
+        <div class="opt correct"><span class="letter">B.</span> A streaming query</div>
+        <div class="opt"><span class="letter">C.</span> A cluster</div>
+        <div class="opt"><span class="letter">D.</span> A notebook</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">4</span>"I open doors with a GRANT and close them with a REVOKE — but I never actually touch a single row of your data. What governs like me?"</div>
+      <div class="options">
+        <div class="opt"><span class="letter">A.</span> A firewall</div>
+        <div class="opt correct"><span class="letter">B.</span> Unity Catalog privileges</div>
+        <div class="opt"><span class="letter">C.</span> A VPN</div>
+        <div class="opt"><span class="letter">D.</span> A row filter</div>
+      </div>
+    </div>
+
+    <div class="qcard"><div class="qtext"><span class="qnum">5</span>"I sit closest to the front, get checked on the most, and somehow answer to a name that was never technically mine. Who — or what — am I?"</div>
+      <div class="options">
+        <div class="opt correct"><span class="letter">A.</span> Santosh (a.k.a. Santoshwa)</div>
+        <div class="opt"><span class="letter">B.</span> Aviskar's disappearing chair</div>
+        <div class="opt"><span class="letter">C.</span> The secret Teams group</div>
+        <div class="opt"><span class="letter">D.</span> Kamal's silence</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>Tredence &middot; Data Engineering Training &middot; Last Day</footer>
+
+</body>
+</html>

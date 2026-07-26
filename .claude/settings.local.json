@@ -10,7 +10,10 @@
       "Bash(ls \"c:/Yvirinchy/Chennai_batch/day 7/\")",
       "Read(//c/Yvirinchy/Chennai_batch/day 7/**)",
       "Bash(python *)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Skill(artifact-design)",
+      "Artifact",
+      "Bash(git add *)"
     ]
   }
 }

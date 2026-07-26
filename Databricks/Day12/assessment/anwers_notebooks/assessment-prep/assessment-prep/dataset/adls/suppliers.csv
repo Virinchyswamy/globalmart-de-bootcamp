@@ -1,0 +1,12 @@
+SupplierID,SupplierName,SupplierEmail,City,ContactPhone,SupplierType,IsActive,OfficeAddress
+SUP-01,Johnson & Co.,contact@johnsonco.com,Mumbai,,Electronics,Y,"45, BKC Complex, Mumbai 400051"
+SUP-02,Greenwood Supplies,info@greenwoodsupplies.in,Delhi,+91-9876543210,Apparel,Y,"32, Connaught Place, New Delhi 110001"
+SUP-03,Thompson Enterprises,supportthompsonent.com,Bangalore,+91-9123456789,Appliances,Y,"Plot 14, Electronic City Phase 1, Bengaluru 560100"
+SUP-04,Baker & Sons,sales@bakerandsons.com,Hyderabad,+91 123 456,Food,N,"8-2-293/82/A, Road No. 36, Hyderabad 500033"
+SUP-05,Miller Industries,contact@millerindustries.in,Chennai,+91-8765432109,Sports,Y,"12/A, Anna Salai
+Chennai 600002"
+SUP-06,Smith & Partners,,Kolkata,+91-7654321098,Beauty,Y,"15, Park Street"
+SUP-07,Anderson Goods,support@andersongoods.in,Pune,+91-6543210987,Electronics,True,"Plot No. 7, Hinjewadi Phase-II, Pune"
+SUP-08,Brown Trading,contact@browntrading.com,Ahmedabad,,Apparel,False,"Block C, GIFT City, Gandhinagar 382355"
+SUP-09,Davis Holdings,info@davisholdings.com,Jaipur,+91-5432109876,,True,"C-Scheme, Tonk Road, Jaipur 302015"
+SUP-10,Wilson Solutions,contact@wilsonsolutions.in,Bengaluru,+91-4321098765,Appliances,False,"No. 5, MG Road"

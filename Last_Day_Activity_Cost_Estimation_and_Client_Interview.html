@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Last Day Activity — Cost Estimation + Client Interview Roleplay</title>
+<style>
+  :root {
+    --bg: #0f172a; --bg2: #111827; --panel: #1e293b; --panel2: #24324a;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+    --accent2: #818cf8; --good: #22c55e; --bad: #f87171; --warn: #f59e0b; --purple: #a855f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+  code { background: #1e293b; border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.9em; color: #7dd3fc; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--purple)); z-index: 300; width: 0%; transition: width 0.1s; }
+  nav.topnav { position: sticky; top: 0; z-index: 200; background: rgba(15,23,42,0.94); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  nav.topnav .inner { max-width: 1080px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  nav.topnav .brand { font-weight: 800; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
+  nav.topnav .links { display: flex; gap: 3px; flex-wrap: wrap; }
+  nav.topnav .links a { text-decoration: none; color: var(--muted); font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 20px; transition: all 0.2s; white-space: nowrap; }
+  nav.topnav .links a:hover, nav.topnav .links a.active { background: var(--panel2); color: var(--text); }
+
+  .hero { text-align: center; padding: 64px 24px 48px; background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 65%); }
+  .hero .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: 38px; background: linear-gradient(120deg, #f8fafc, var(--accent) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 16px; }
+  .hero p.lead { color: var(--muted); font-size: 16px; max-width: 740px; margin: 0 auto 26px; }
+  .hero .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .hero .meta-pill { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 12.5px; padding: 6px 14px; border-radius: 20px; }
+  .hero .cta { display: inline-block; margin-top: 28px; background: var(--accent); color: #0f172a; font-weight: 700; padding: 12px 26px; border-radius: 10px; text-decoration: none; font-size: 14.5px; }
+
+  section.content { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section.content:nth-of-type(even) { background: var(--bg2); }
+  .section-tag { color: var(--accent2); font-size: 12.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .time-badge { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid rgba(245,158,11,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .purple-badge { background: rgba(168,85,247,0.15); color: var(--purple); border: 1px solid rgba(168,85,247,0.4); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .section-title { font-size: 28px; margin-bottom: 12px; }
+  .section-intro { color: var(--muted); font-size: 15.5px; max-width: 780px; margin-bottom: 30px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 800px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h4 { color: var(--accent); font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { color: #cbd5e1; font-size: 14px; }
+  .card ul, .card ol { padding-left: 18px; margin-top: 6px; }
+
+  .highlight-box { background: #14243d; border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .highlight-box p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+  .highlight-box.warn { background: #2d1e0e; border-color: var(--warn); }
+  .highlight-box.success { background: #0d2d1a; border-color: var(--good); }
+  .highlight-box.purple { background: #241a3d; border-color: var(--purple); }
+  .highlight-box b { color: var(--text); }
+
+  .order-list { counter-reset: steps; list-style: none; margin: 18px 0; }
+  .order-list li { counter-increment: steps; display: flex; align-items: flex-start; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; color: #cbd5e1; line-height: 1.65; }
+  .order-list li:last-child { border-bottom: none; }
+  .order-list li::before { content: counter(steps); background: #1d4ed8; color: #fff; min-width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+  table.spec th { background: var(--panel2); color: var(--accent); padding: 9px 13px; text-align: left; border: 1px solid var(--border); }
+  table.spec td { padding: 9px 13px; border: 1px solid var(--border); color: #cbd5e1; }
+  table.spec tr:nth-child(even) td { background: #16213a; }
+  table.spec.purple th { color: var(--purple); }
+
+  .checkpoint { background: rgba(34,197,94,0.08); border: 1.5px solid var(--good); border-radius: 12px; padding: 18px 22px; margin-top: 20px; }
+  .checkpoint .cp-tag { color: var(--good); font-weight: 800; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .checkpoint p { color: #cbd5e1; font-size: 14.5px; line-height: 1.7; }
+
+  .phase-num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0f172a; font-weight: 800; font-size: 15px; margin-right: 10px; flex-shrink: 0; }
+  .phase-num.purple { background: linear-gradient(135deg, var(--purple), var(--accent2)); }
+
+  .checklist-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; color: #cbd5e1; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--good); flex-shrink: 0; cursor: pointer; }
+  .checklist-item label { cursor: pointer; }
+
+  pre.code-block { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 16px 20px; overflow-x: auto; font-family: 'Cascadia Code', Consolas, monospace; font-size: 13px; color: #e6edf3; margin-top: 10px; }
+  .kw { color: #ff7b72; font-weight: bold; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+
+  .worksheet { background: var(--panel); border: 1.5px dashed var(--accent2); border-radius: 12px; padding: 20px 24px; margin-top: 16px; }
+  .worksheet h4 { color: var(--accent2); font-size: 15px; margin-bottom: 10px; }
+  .ws-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dotted var(--border); font-size: 14px; color: #cbd5e1; }
+  .ws-row:last-child { border-bottom: none; }
+  .ws-row .blank { color: var(--muted); font-family: 'Cascadia Code', Consolas, monospace; }
+  .ws-answer { color: var(--good); font-weight: 700; }
+
+  .round-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px 26px; margin-top: 18px; }
+  .round-card .round-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+  .round-card .round-num { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; background: var(--purple); color: #fff; font-weight: 800; font-size: 14px; flex-shrink: 0; }
+  .round-card h4 { font-size: 17px; color: #f8fafc; }
+  .round-meta { color: var(--muted); font-size: 12.5px; margin-bottom: 12px; }
+  .round-meta b { color: var(--accent2); }
+  .qlist { list-style: none; margin-top: 8px; }
+  .qlist li { padding: 7px 0 7px 22px; position: relative; font-size: 14px; color: #cbd5e1; border-bottom: 1px solid var(--border); }
+  .qlist li:last-child { border-bottom: none; }
+  .qlist li::before { content: "?"; position: absolute; left: 0; top: 7px; color: var(--purple); font-weight: 800; }
+
+  .rotation-table th { color: var(--purple) !important; }
+
+  footer { text-align: center; padding: 44px 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand">LAST DAY · LAST ACTIVITY</div>
+    <div class="links">
+      <a href="#intro" class="navlink">Start Here</a>
+      <a href="#part1" class="navlink">Part 1 · Cost Estimation</a>
+      <a href="#part2" class="navlink">Part 2 · Client Interview</a>
+      <a href="#checklist" class="navlink">Checklist</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Tredence · Data Engineering Training · Final Session</div>
+  <h1>Cost Estimation + Client Interview Roleplay</h1>
+  <p class="lead">Two closing exercises. Part 1 takes the cost-awareness concepts from ILT 3 and finally puts All-Purpose Compute head-to-head against Serverless, with real numbers. Part 2 is a live 2-vs-2 client interview panel, real names and real groups, on 5 Data Engineering topics picked specifically because they're what actually comes up in a job interview or a client engagement.</p>
+  <div class="meta-row">
+    <span class="meta-pill">💰 Part 1 — All-Purpose vs. Serverless, worked out</span>
+    <span class="meta-pill">🎤 Part 2 — 2 vs. 2 interview panels, 23 real names, 5 job-relevant DE topics</span>
+    <span class="meta-pill">⏱ Runs after the assessment, room until 6 PM</span>
+  </div>
+  <div><a href="#intro" class="cta">Start ↓</a></div>
+</header>
+
+<!-- ============================================================ -->
+<!-- INTRO -->
+<!-- ============================================================ -->
+<section class="content" id="intro">
+  <div class="wrap">
+    <div class="section-tag">Before You Start</div>
+    <h2 class="section-title">How Today Works</h2>
+    <p class="section-intro">Either part can run first — they're independent. Together they're the send-off: one closes a real gap left open in ILT 3, the other is pure practice for the conversations you'll actually be having on client engagements soon.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h4><span class="phase-num">1</span>Part 1 — Cost Estimation</h4>
+        <p>ILT 3 taught you what drives Databricks cost and worked out All-Purpose vs. Job Cluster in real numbers. It never did the All-Purpose vs. Serverless comparison directly — today it does, with the exact same arithmetic pattern you already know.</p>
+      </div>
+      <div class="card">
+        <h4><span class="phase-num purple">2</span>Part 2 — Client Interview Roleplay</h4>
+        <p>Real groups, real names — 6 groups of the 23 of you still here, 2 rounds each, 2 interviewers vs. 2 interviewees per round, on real Data Engineering topics that actually show up in job interviews and client work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 1 -->
+<!-- ============================================================ -->
+<section class="content" id="part1">
+  <div class="wrap">
+    <div class="section-tag">Part 1 <span class="time-badge">⏱ ~20–25 min</span></div>
+    <h2 class="section-title">All-Purpose Compute vs. Serverless — With Real Numbers This Time</h2>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 10px;">What You Already Know (ILT 3 Recap)</h3>
+    <div class="highlight-box">
+      <p><b>Two things carry forward directly:</b> DBU + cloud VM cost are two separate meters, billed by the minute, whether or not a cluster is doing useful work — and Serverless compute (SQL warehouses, serverless jobs) removes cluster startup/idle time from the equation entirely, because you pay for query execution, not for a cluster sitting around waiting. ILT 3 stated both facts but never ran the numbers side by side. That's today.</p>
+    </div>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:26px 0 10px;">The Direct Comparison</h3>
+    <table class="spec">
+      <tr><th></th><th>All-Purpose Compute</th><th>Serverless</th></tr>
+      <tr><td><b>Billing unit</b></td><td>DBU rate + separate cloud VM cost, per node</td><td>One blended usage-based rate — no separate VM line item</td></tr>
+      <tr><td><b>Idle-time cost</b></td><td>Full cost continues until <code>autotermination_minutes</code> kicks in</td><td>Effectively none — billed for active execution only</td></tr>
+      <tr><td><b>Startup latency</b></td><td>Cluster must spin up before the first command runs</td><td>Near-instant — no cluster provisioning wait</td></tr>
+      <tr><td><b>Node sizing</b></td><td>You choose node type/count — right-sizing is your job</td><td>Abstracted away — Databricks scales it for you</td></tr>
+      <tr><td><b>Best-fit workload</b></td><td>Interactive development, exploration, teaching sessions</td><td>Bursty, unpredictable, ad-hoc workloads — BI dashboards, occasional queries</td></tr>
+      <tr><td><b>Autotermination risk</b></td><td>You set it yourself; <code>0</code> means "never" — a real risk</td><td>Not applicable the same way — no persistent idle cluster to forget about</td></tr>
+    </table>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:26px 0 10px;">Worksheet: Run the Numbers on Two Real Scenarios</h3>
+    <p class="section-intro" style="margin-bottom:14px;">Same illustrative rates ILT 3 already used — <code>ILLUSTRATIVE_DBU_RATE_USD = 0.55</code>, <code>ILLUSTRATIVE_VM_RATE_USD_PER_HR = 0.90</code>, 4-node cluster → <code>hourly_cost(4) = $8.00/hour</code> for All-Purpose. Serverless gets one new illustrative blended rate: <code>$12.00/hour</code> of actual query execution — higher per hour (the convenience premium is real), but you're only ever billed for the hours actually spent running something.</p>
+
+    <div class="worksheet">
+      <h4>Scenario A — The BI Team's Ad-Hoc Queries</h4>
+      <p style="color:var(--muted); font-size:13.5px; margin-bottom:10px;">An All-Purpose cluster is kept running 8 hours/day "just in case," business days only (22 days/month) — but the team's actual query execution across the whole day totals only about 45 minutes (0.75 hours).</p>
+      <div class="ws-row"><span>All-Purpose, kept on 8h/day × 22 days</span><span class="ws-answer">$8.00 × 8 × 22 = $1,408 / month</span></div>
+      <div class="ws-row"><span>Serverless, billed only for the 0.75h actually used × 22 days</span><span class="ws-answer">$12.00 × 0.75 × 22 = $198 / month</span></div>
+      <div class="ws-row"><span><b>Serverless saves</b></span><span class="ws-answer">$1,210 / month (~86% less)</span></div>
+    </div>
+
+    <div class="worksheet">
+      <h4>Scenario B — The Nightly Batch Run</h4>
+      <p style="color:var(--muted); font-size:13.5px; margin-bottom:10px;">Reusing GlobalMart's own real figure from ILT 3: the nightly Bronze → Silver → Gold run takes 1.5 hours of actual processing. Someone left an All-Purpose cluster running 24/7 instead of using a Job Cluster.</p>
+      <div class="ws-row"><span>All-Purpose, left on 24/7 × 30 days (ILT 3's own number)</span><span class="ws-answer">$8.00 × 24 × 30 = $5,760 / month</span></div>
+      <div class="ws-row"><span>Serverless, billed for 1.5h actual processing × 30 days</span><span class="ws-answer">$12.00 × 1.5 × 30 = $540 / month</span></div>
+      <div class="ws-row"><span><b>Serverless saves vs. All-Purpose left on</b></span><span class="ws-answer">$5,220 / month (~91% less)</span></div>
+    </div>
+
+    <div class="highlight-box warn" style="margin-top:16px;">
+      <p><b>Honest callout, don't skip this:</b> for Scenario B specifically, ILT 3's own Job Cluster answer — $360/month — still beats Serverless's $540/month. For a workload with a fixed, predictable duration and a real schedule, a Job Cluster wins outright. Serverless's real edge is Scenario A: work that's bursty, unpredictable, or genuinely ad-hoc, where you can't cleanly schedule a job cluster around it in the first place. All-Purpose left running is the wrong answer in both scenarios — the interesting choice is Job Cluster vs. Serverless, not All-Purpose vs. either of them.</p>
+    </div>
+
+    <div class="checkpoint">
+      <div class="cp-tag">✓ Debrief</div>
+      <p>Ask the room: why did Serverless demolish All-Purpose in Scenario A but only "win" against a mistake (All-Purpose left on) in Scenario B? The answer is always idle time — Serverless has none, structurally. Close by pointing at <code>system.billing.usage</code> and <code>system.compute.clusters</code> (from ILT 3, Part 1) as where you'd actually pull real numbers like these on a client's live workspace.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 2 -->
+<!-- ============================================================ -->
+<section class="content" id="part2">
+  <div class="wrap">
+    <div class="section-tag">Part 2 <span class="purple-badge">🎤 2 vs. 2 · 2 rounds · 30 min prep · ~63–68 min total</span></div>
+    <h2 class="section-title">Client Interview Roleplay</h2>
+    <p class="section-intro">Harsh and Sujit already left the batch — this one's for the 23 of you still here, real names, real groups, worked out below. Nobody sits this out.</p>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:22px 0 10px;">The 5 Topics</h3>
+    <p class="section-intro" style="margin-bottom:10px;">Picked specifically because they're what actually gets asked in a Data Engineering interview or comes up on a real client engagement — not generic soft-skill questions.</p>
+    <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div class="card"><h4>1 · Medallion Architecture &amp; Data Modeling</h4><p>Bronze/Silver/Gold design decisions, SCD1 vs. SCD2, star schema grain, surrogate vs. natural keys</p></div>
+      <div class="card"><h4>2 · Data Quality &amp; Pipeline Reliability</h4><p>Investigate-before-deciding, fix/flag/quarantine, idempotency, silent data loss</p></div>
+      <div class="card"><h4>3 · Incremental Processing &amp; CDC</h4><p>Change Data Feed, Autoloader schema evolution, MERGE mechanics, checkpoint safety</p></div>
+      <div class="card"><h4>4 · Orchestration &amp; Production Operations</h4><p>Workflow DAGs, Job vs. All-Purpose clusters, 2 AM failure triage, Dead Letter Queues</p></div>
+    </div>
+    <div class="card" style="margin-top:12px;"><h4>5 · Cost, Performance &amp; Governance</h4><p>Serverless vs. Job Cluster, the biggest cost lever, row filters/column masks, PII safety — straight out of Part 1</p></div>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:26px 0 10px;">The Real Groups</h3>
+    <p class="section-intro" style="margin-bottom:10px;">Count off 1 through 6 in this order gives exactly this split — 5 groups of 4, one group of 3. Inside each group of 4: the first two named are Pair A, the last two are Pair B. Round 1 — Pair A interviews Pair B on Topic 1. Round 2 — Pair B interviews Pair A on Topic 2. Every person: one interviewer turn, one interviewee turn, two different topics.</p>
+    <table class="spec rotation-table">
+      <tr><th>Group</th><th>Members</th><th>Topic 1 (Round 1)</th><th>Topic 2 (Round 2)</th></tr>
+      <tr><td>1</td><td>Aman Verma, Heemansh Bhawsar <b>|</b> Prishita Shukla, Shivam Kumar</td><td>Medallion Architecture &amp; Data Modeling</td><td>Data Quality &amp; Pipeline Reliability</td></tr>
+      <tr><td>2</td><td>Aman Thapliyal, Hritin Raj <b>|</b> Raj Sharma, Sukrit Ghosh</td><td>Data Quality &amp; Pipeline Reliability</td><td>Incremental Processing &amp; CDC</td></tr>
+      <tr><td>3</td><td>Amardeep Meena, Kumar Pratik <b>|</b> Kamal Kumar, Sushant Kumar</td><td>Incremental Processing &amp; CDC</td><td>Orchestration &amp; Production Ops</td></tr>
+      <tr><td>4</td><td>Aviskar Dhavale, Gaurav Kumar <b>|</b> Sneha, Nikshitha</td><td>Orchestration &amp; Production Ops</td><td>Cost, Performance &amp; Governance</td></tr>
+      <tr><td>5</td><td>Bysani Karthik, Ganadeep <b>|</b> Saket Ranjan, Yogesh Patidar</td><td>Cost, Performance &amp; Governance</td><td>Medallion Architecture &amp; Data Modeling</td></tr>
+      <tr><td>6 (trio)</td><td>Devanand, Payal, Santosh — see below</td><td>Data Quality &amp; Pipeline Reliability</td><td>Orchestration &amp; Production Ops</td></tr>
+    </table>
+    <div class="highlight-box success" style="margin-top:14px;">
+      <p>Every one of the 5 topics lands as a Round 1 topic at least once and a Round 2 topic at least once across these 6 groups — real variety across the room for the closing demo, even though no single learner preps more than 2 topics.</p>
+    </div>
+
+    <div class="highlight-box purple">
+      <p><b>Group 6 — Devanand, Payal, Santosh — no clean 2-vs-2 split for 3 people.</b> Two options: if a co-facilitator is floating and available, have them sit in as this group's 4th person for both rounds — that restores a clean 2-vs-2 with zero exceptions anywhere in the room. If not, this group runs its own 3-round micro-schedule instead:</p>
+      <table class="spec" style="margin-top:10px;">
+        <tr><th>Round</th><th>Interviewing</th><th>Interviewee</th><th>Topic</th></tr>
+        <tr><td>A</td><td>Payal + Santosh</td><td>Devanand</td><td>Data Quality &amp; Pipeline Reliability</td></tr>
+        <tr><td>B</td><td>Devanand + Santosh</td><td>Payal</td><td>Orchestration &amp; Production Ops</td></tr>
+        <tr><td>C</td><td>Devanand + Payal</td><td>Santosh</td><td>Data Quality &amp; Pipeline Reliability</td></tr>
+      </table>
+      <p style="margin-top:8px;">Each of the 3 is interviewed exactly once and interviews twice — everyone still plays both roles, just not split perfectly 1-and-1 like the rest of the room. Round C runs a little past the other groups' finish — let it spill into the debrief window rather than compressing it.</p>
+    </div>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:26px 0 10px;">Prep Time — 30 Minutes, Before Any Round Starts</h3>
+    <div class="order-list">
+      <li>Post or read out the group table above so everyone knows their group, their pair, and both their topics up front.</li>
+      <li><b>Prepping as interviewer:</b> skim your interviewer-round topic's question bank below and pick the 2-3 questions you want to lead with — you don't need all 6, just enough for a real 8-minute conversation with follow-up.</li>
+      <li><b>Prepping as interviewee:</b> for your other topic, think through how you'd actually answer — not a script, just enough that you're not starting from zero when the round begins.</li>
+      <li>Both kinds of prep happen in the same 30-minute block, since everyone already knows both their topics and both their roles going in.</li>
+    </div>
+
+    <h3 style="font-size:17px; color:var(--accent2); margin:32px 0 6px;">Question Bank — By Topic</h3>
+    <p class="section-intro" style="margin-bottom:6px;">Interviewers: pick 2–3 from your topic's list, or invent your own in the same spirit. 8 minutes is enough for 2–3 questions with real follow-up, not a checklist.</p>
+
+    <div class="round-card">
+      <div class="round-head"><span class="round-num">1</span><h4>Medallion Architecture &amp; Data Modeling</h4></div>
+      <div class="round-meta">Design decisions — the ones that actually separate a job-ready DE from someone who's only followed a tutorial</div>
+      <ul class="qlist">
+        <li>Walk me through how you'd design the Bronze, Silver, and Gold layers for a completely new data domain you've never seen before.</li>
+        <li>When do you use SCD Type 1 versus SCD Type 2 for a dimension table? Give a real example of each.</li>
+        <li>What's the difference between a surrogate key and a natural key, and why do fact tables usually join dimensions on the surrogate key?</li>
+        <li>A teammate wants to build a dimension table straight from a transactional line-item table. Why would you push back?</li>
+        <li>How do you decide the grain of a fact table before writing a single line of code?</li>
+        <li>What makes a Kimball star schema the right — or wrong — choice for a given project? What do you actually ask the business before deciding?</li>
+      </ul>
+    </div>
+
+    <div class="round-card">
+      <div class="round-head"><span class="round-num">2</span><h4>Data Quality &amp; Pipeline Reliability</h4></div>
+      <div class="round-meta">The judgment calls that show up in almost every real DE role</div>
+      <ul class="qlist">
+        <li>Walk me through your process the moment a DQ scan flags something unexpected — what do you check before deciding fix, flag, or quarantine?</li>
+        <li>Give an example of data that "looks wrong" but is actually a valid business signal, not a defect.</li>
+        <li>What makes an ETL pipeline idempotent, and why does that matter when a job gets re-run after a failure?</li>
+        <li>Does a null value in a business-critical column always mean bad data? How do you tell the difference?</li>
+        <li>What's the real risk of quarantining a row versus flagging it and keeping it — how do you decide which applies?</li>
+        <li>A pipeline has been silently dropping rows for 3 weeks. How would you even discover that, and how do you stop it happening again?</li>
+      </ul>
+    </div>
+
+    <div class="round-card">
+      <div class="round-head"><span class="round-num">3</span><h4>Incremental Processing &amp; CDC</h4></div>
+      <div class="round-meta">The mechanics behind almost every production pipeline you'll actually touch</div>
+      <ul class="qlist">
+        <li>Explain Change Data Feed in plain language to someone who's only ever done full-table reloads.</li>
+        <li>What's the real difference between Autoloader's <code>addNewColumns</code> and <code>failOnNewColumns</code>, and when would you pick each?</li>
+        <li>Walk me through what a MERGE statement actually does, step by step, for a new row versus an updated row.</li>
+        <li>Your CDF read returns two rows for the same key in one batch. What causes that, and how do you fix it before it breaks your MERGE?</li>
+        <li>How do you know your Autoloader checkpoint is safe, and what happens if someone deletes it by accident?</li>
+        <li>What's the real-world difference between SCD1 and SCD2 in terms of what a business team can actually ask afterward?</li>
+      </ul>
+    </div>
+
+    <div class="round-card">
+      <div class="round-head"><span class="round-num">4</span><h4>Orchestration &amp; Production Operations</h4></div>
+      <div class="round-meta">What separates "it works on my cluster" from a real production pipeline</div>
+      <ul class="qlist">
+        <li>Walk me through how you'd design a Workflow DAG for a pipeline with 3 Bronze, 3 Silver, and 1 Gold notebook with real dependencies between them.</li>
+        <li>What's the difference between a Job Cluster and an All-Purpose Cluster, and why does that choice matter for a scheduled production pipeline?</li>
+        <li>A production Job fails at 2 AM. Walk me through your actual triage process, in order.</li>
+        <li>What's a Dead Letter Queue, and why would a production pipeline need one instead of just letting bad records fail the whole job?</li>
+        <li>How do you pass environment configuration — catalog, schema — into a Job without hardcoding anything into the notebook?</li>
+        <li>What's the real risk of running Bronze, Silver, and Gold notebooks manually every day instead of orchestrating them?</li>
+      </ul>
+    </div>
+
+    <div class="round-card">
+      <div class="round-head"><span class="round-num">5</span><h4>Cost, Performance &amp; Governance</h4></div>
+      <div class="round-meta">Straight out of Part 1 — the vocabulary has to actually show up here</div>
+      <ul class="qlist">
+        <li>When would you recommend Serverless over a Job Cluster, and when would you recommend the opposite?</li>
+        <li>What's the single biggest lever for reducing Databricks compute cost, and why does it matter more than almost anything else?</li>
+        <li>Explain the difference between a row filter and a column mask in Unity Catalog, with a real business scenario for each.</li>
+        <li>Why does compute usually dominate the bill over storage, and how would you explain that to a client who assumes storage is the expensive part?</li>
+        <li>What's the actual risk of leaving <code>autotermination_minutes</code> at 0 on a shared interactive cluster?</li>
+        <li>A client asks whether their PII data is safe. What do you actually check before answering that honestly?</li>
+      </ul>
+    </div>
+
+    <div class="checkpoint" style="margin-top:24px;">
+      <div class="cp-tag">✓ Closing the Room</div>
+      <p>No formal scoring today — this is a confidence-building send-off, not a graded assessment. After Round 2 (and the trio's Round C), invite 1–2 groups to demo a round live for everyone — pick ones covering different topics for variety. There's slack in the room until 6 PM, so let the demo run long if people are enjoying it, and leave time after for open Q&amp;A.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CHECKLIST -->
+<!-- ============================================================ -->
+<section class="content" id="checklist">
+  <div class="wrap">
+    <div class="section-tag">Facilitator Checklist</div>
+    <h2 class="section-title">Before You Call It a Wrap</h2>
+    <div class="checklist-card">
+      <div class="checklist-item"><input type="checkbox" id="c1"><label for="c1">Part 1: walked through the All-Purpose vs. Serverless comparison table</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c2"><label for="c2">Part 1: ran both worksheet scenarios, including the honest Job-Cluster-still-wins callout on Scenario B</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c3"><label for="c3">Part 2: all 6 groups confirmed against the real roster table (5 of 4, 1 trio), Pair A/B and both topics announced before prep starts</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c4"><label for="c4">Part 2: 30-minute prep time run in full before Round 1 starts</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c5"><label for="c5">Part 2: both rounds run, 8 min each minimum, role swap called between them</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c6"><label for="c6">Part 2: Devanand/Payal/Santosh's trio ran its 3-round schedule (or had a 4th sit in) — not left to improvise</label></div>
+      <div class="checklist-item"><input type="checkbox" id="c7"><label for="c7">1–2 groups demoed live for the room to close, ideally covering different topics</label></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Tredence · Data Engineering Training · Last Day, Last Activity
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('section.content');
+  const navLinks = document.querySelectorAll('.navlink');
+  const progressBar = document.getElementById('progressBar');
+
+  function onScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 120) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>

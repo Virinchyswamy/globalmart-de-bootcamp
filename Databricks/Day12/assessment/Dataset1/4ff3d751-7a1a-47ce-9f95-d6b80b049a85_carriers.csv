@@ -1,0 +1,11 @@
+CarrierID,CarrierName,CarrierType,ServiceRegion,ContactEmail,IsActive
+CAR-01,BlueDart,Air,North India,support@bluedart.com,Y
+CAR-02,DTDC,Road,Pan India,info@dtdc.com,Y
+CAR-03,Delhivery,road,Pan India,contact@delhivery.com,Y
+CAR-04,FedEx India,AIR,Pan India,,Y
+CAR-05,Ecom Express,Road,South India,support@ecomexpress.in,Y
+CAR-06,Shadowfax,Local,South,contact@shadowfax.in,Y
+CAR-07,XpressBees,Road,west india,info@xpressbees.com,Y
+CAR-08,Amazon Logistics,road,Pan India,amzl@amazon.in,Y
+CAR-09,Ekart,Road,East India,support@ekart.in,N
+CAR-10,Rivigo,air,North,,

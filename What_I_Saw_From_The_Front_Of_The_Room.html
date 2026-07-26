@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What I Saw From the Front of the Room</title>
+<style>
+  :root {
+    --bg: #14181f;
+    --bg2: #1b212b;
+    --panel: #202834;
+    --border: #303b4a;
+    --amber: #e8a33d;
+    --amber-soft: #c98a35;
+    --text: #ece4d6;
+    --muted: #9aa3b2;
+    --rule: #3a4556;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: radial-gradient(ellipse at 50% -10%, #2a2318 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+    line-height: 1.85;
+    padding: 0 20px;
+  }
+  .page {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 90px 0 100px;
+  }
+
+  .kicker {
+    text-align: center;
+    color: var(--amber);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 38px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+    color: var(--text);
+    text-wrap: balance;
+    margin-bottom: 14px;
+  }
+  .byline {
+    text-align: center;
+    color: var(--muted);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13.5px;
+    font-style: italic;
+    margin-bottom: 56px;
+  }
+
+  .lamp {
+    display: flex;
+    justify-content: center;
+    margin: 0 0 46px;
+  }
+  .lamp svg { filter: drop-shadow(0 0 22px rgba(232,163,61,0.25)); }
+
+  p { font-size: 18px; color: var(--text); margin-bottom: 22px; }
+  p.lede { color: #d9cfbd; }
+
+  h2.chapter {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--amber-soft);
+    margin: 52px 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  h2.chapter::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .divider {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 54px 0;
+    color: var(--amber-soft);
+  }
+  .divider span { width: 5px; height: 5px; border-radius: 50%; background: var(--amber-soft); opacity: 0.7; }
+  .divider span:nth-child(2) { opacity: 1; width: 6px; height: 6px; }
+
+  .signoff {
+    text-align: right;
+    font-style: italic;
+    color: var(--muted);
+    margin-top: 10px;
+    font-size: 17px;
+  }
+
+  footer {
+    text-align: center;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 11.5px;
+    color: #5a6577;
+    letter-spacing: 1px;
+    margin-top: 70px;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 30px; }
+    p { font-size: 16.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="kicker">A Private Note &middot; Tredence &middot; Batch Wrap-Up</div>
+  <h1>What I Saw From the Front of the Room</h1>
+  <p class="byline">by Virinchy, trainer</p>
+
+  <div class="lamp">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <defs>
+        <radialGradient id="glow" cx="50%" cy="35%" r="60%">
+          <stop offset="0%" stop-color="#f3c26b" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#f3c26b" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="45" cy="32" r="34" fill="url(#glow)"/>
+      <path d="M20 26 L70 26 L58 46 L32 46 Z" fill="#e8a33d"/>
+      <rect x="43" y="46" width="4" height="24" fill="#c98a35"/>
+      <ellipse cx="45" cy="72" rx="20" ry="4" fill="#c98a35"/>
+    </svg>
+  </div>
+
+  <p class="lede">Six weeks ago, I stood in front of twenty-five strangers and started talking about Bronze, Silver, and Gold like the words meant something to anybody but me. Nobody warned me that by week two I'd know exactly who was about to fall asleep, who was three seconds from raising a hand, and who had already found a way around whatever I'd just asked them to do.</p>
+  <p class="lede">This isn't the training material. This is everything else that happened while the training material was happening.</p>
+
+  <h2 class="chapter">The Quiet Ones</h2>
+  <p>Not everyone made noise. Aman Verma sat beside Gaurav for six straight weeks and mostly talked to no one else, surfacing only when he needed help — which he'd ask for, directly, and then go quiet again. Aman Thapliyal took longer to open up, but by the third week he'd folded himself into Shivam and Hemansh and Payal and Sukrit and Yogesh's corner of the room, solving problems alongside them — and, more often than he probably deserved, taking the blame whenever Shivam's own mistakes needed someone standing nearby to answer for them.</p>
+
+  <h2 class="chapter">The Secret Group</h2>
+  <p>It started, as far as I can tell, with Ganadeep. He always looked like he hadn't slept — not tired-sleepy, more like he'd been up half the night writing code nobody had asked him to write, quietly building toward something. What he was actually building, it turned out, was a Teams group. A secret one. Amardeep was in it. So was Devanand, somewhere between naps. So, eventually, was Karthick, who I caught red-handed one afternoon reading a message on his phone with the particular stillness of a man who knows he's been seen. Karthick and Ganadeep had a backup plan for exactly this — they'd switch to Telugu mid-sentence whenever they needed to say something I wasn't supposed to follow. I never did crack that code. I'm not sure I was meant to.</p>
+
+  <h2 class="chapter">The Ones Who Watched, and the One Nobody Could Watch</h2>
+  <p>Pratik sat beside Saket like a designated lookout, leaning slightly whenever I moved, ready to tip Saket off before I got close enough to see what was actually on his phone. Across the room, Pratik kept one eye on Hritin too — Hritin, who had a talent for nodding along to every instruction and then, without fail, doing it his own way first, and only asking how it was supposed to be done after he'd already found out the hard way.</p>
+  <p>Kamal was the opposite problem entirely. Kamal finished things. Quietly. Without telling anyone. I spent an embarrassing number of afternoons trying to guess the exact moment he was done with a task, because he'd never say — you just had to notice the stillness settle over his corner of the room.</p>
+  <p>And then there was Aviskar, who I could swear was playing a game with me without ever agreeing to it. I'd look away for ten seconds, look back, and his seat would be empty. I'd look away again, and he'd be back in it, headphones on, like nothing had happened. To this day I don't know where he went.</p>
+
+  <h2 class="chapter">Nicknames We Didn't Mean to Make Permanent</h2>
+  <p>Santosh sat closest to me of anyone in the room, which meant he got checked on more than anyone in the room, which meant that somewhere around week two "Santosh" quietly became "Santoshwa" and never changed back. He took it well. Mostly he just told me "hojayega" whenever I asked if something was under control — the same two words Sushant used, delivered with the same total lack of urgency, both of them somehow always right.</p>
+  <p>Nikshitha typed with her left hand the entire time, and it took me three full weeks to notice. Prishita noticed immediately, apparently, and used it as an excuse whenever Sneha tried to get her out for a hangout — "ask Nikshitha," she'd say, which nobody ever quite understood, including, I suspect, Nikshitha. Prishita mostly kept to herself. If I'm honest, I think she'd been listening to me talk for six weeks straight and needed the quiet more than she needed the hangout.</p>
+  <p>Sneha tried anyway. She said hello to everyone, every morning, and spent a worrying amount of her time messaging the group chat for answers instead of just asking me — which, in fairness, usually got her the answer faster.</p>
+
+  <h2 class="chapter">The Machines Rebelled, Regularly</h2>
+  <p>Yogesh's laptop and Yogesh's WiFi took turns failing him, and every time, Payal appeared — she was the one who decoded half the group's problems anyway, working through them with Hemansh before explaining the fix to Shivam, Sukrit, and Yogesh in turn, like a doctor doing rounds. When Yogesh's connection finally gave out for good one afternoon, Payal handed over her own hotspot without being asked. She was also, memorably, the one who spotted me at the mall afterward, in casual clothes, like I wasn't allowed to exist outside the training room.</p>
+  <p>Shivam had his own way of getting derailed — he'd start on the actual task, wander two steps sideways into something completely unrelated, and come back ten minutes later having taught himself something none of us had asked for, visibly thrilled about it. Sukrit ran the opposite operation: he'd collect every question his group had, walk them over to my desk one at a time, absorb the answers, and carry them back like a courier.</p>
+
+  <h2 class="chapter">Deadlines, Loopholes, and One Deep Voice</h2>
+  <p>Raj finished early almost every time, and used the extra time to go looking for the holes in whatever I'd just set — and he usually found one, then told me about it before I'd noticed it myself. Amardeep made a private rule for himself: no lunch until the task due at end of day was actually done, and he kept it, every time. Ganadeep, on one particular week, didn't make a single error — not one — which I only noticed because I kept waiting for the week to go wrong and it never did.</p>
+  <p>And then there was Gaurav's deep voice — deep enough that when he got up to present, I somehow ended up the nervous one in the room and he was the calm, confident teacher walking me through it. I don't know how that happened. It happened more than once.</p>
+
+  <h2 class="chapter">The QuickCart Wars</h2>
+  <p>The plan for the architecture activity was simple, on paper: everyone gets a scenario, everyone researches it alone, everyone designs their own solution, everyone presents, everyone defends. It worked exactly as planned for about six minutes.</p>
+  <p>Sukrit, Gaurav, and Amardeep had all drawn the same problem statement — QuickCart, the food-delivery scenario, three data sources, a transactional database, a stream of rider GPS pings, and a nightly merchant file. Three people, one scenario, three completely different architectures, and none of them willing to give an inch. Sukrit was convinced the GPS stream had to drive everything in real time or the whole exercise missed the point. Gaurav thought that was overengineering a delivery-time metric nobody needed to the second. Amardeep had a third design that borrowed pieces of both — which meant, for a good ten minutes, both of the other two turned on him instead.</p>
+  <p>What was supposed to be a three-minute pitch and a one-minute Q&amp;A turned into a forty-five-minute argument that had stopped being about slides and started being about who was right. It was one of the funniest things I've watched happen in that room — three grown engineers, standing their ground on a fictional food-delivery app like their actual jobs depended on it. I tried, more than once, to pull it back to schedule. I did not succeed. The first problem statement never actually got presented that day. I don't think anyone in the room minded.</p>
+
+  <h2 class="chapter">Small Things Worth Remembering</h2>
+  <p>There was the week everyone's first salary landed and was gone within days — nobody would admit exactly on what, but the sudden appearance of new shoes, new headphones, and one suspiciously good lunch order told me everything I needed to know.</p>
+  <p>And there was the evening Ganadeep left the office early for once — early, for him, being a genuinely rare event — sprinting out the door with just enough time, he thought, to make his train home. He didn't make it. He came in the next morning and told the story like it was someone else's fault entirely, which, knowing Ganadeep, it probably wasn't.</p>
+
+  <h2 class="chapter">The Ones Who Left First</h2>
+  <p>Harsh left before anyone else did. He was the funniest person in that room by a wide margin — genuinely the voice of the class, the one who could turn a bad Monday into something everyone was still laughing about by lunch — and the room was quieter without him long before I expected it to be. Sujit went next, the second empty seat, right between where Sushant and Aviskar used to sit.</p>
+
+  <div class="divider"><span></span><span></span><span></span></div>
+
+  <h2 class="chapter">What's Left</h2>
+  <p>There's a version of this training where none of the above happened — where twenty-five people came in, learned Bronze and Silver and Gold, and left. That version exists somewhere, on a certificate. It's not the one I actually watched happen. The one I watched happen had a secret Teams group, a code language in Telugu, a boy who vanished and reappeared from his own seat, a nickname that stuck, a hotspot handed over without being asked, and a room that somehow got quieter every time someone left it.</p>
+  <p>I don't know exactly when it stopped being twenty-five strangers and started being a batch. I just know it did, somewhere between the first "hojayega" and the last one.</p>
+
+  <p class="signoff">— Virinchy</p>
+
+</div>
+
+<footer>Tredence &middot; Data Engineering Training</footer>
+
+</body>
+</html>

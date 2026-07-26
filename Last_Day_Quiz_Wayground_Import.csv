@@ -1,0 +1,41 @@
+Question Text,Option A,Option B,Option C,Option D,Correct Answer,Time (seconds)
+What is Delta Lake primarily built on top of?,CSV files,Apache Parquet,Avro,ORC,B,30
+Which SQL syntax lets you query a Delta table at an earlier version (Time Travel)?,ROLLBACK TABLE,SELECT ... VERSION AS OF,SHOW SNAPSHOT,RESTORE HISTORY,B,30
+"In the medallion architecture, which layer holds raw data closest to source format?",Gold,Silver,Bronze,Platinum,C,30
+Which Databricks feature incrementally processes new files as they land in cloud storage?,COPY INTO only,Auto Loader (cloudFiles),Delta Sharing,Unity Catalog Volumes,B,30
+"In Unity Catalog's hierarchy, what sits directly above schema?",Table,Catalog,Metastore,Workspace,B,30
+Which command compacts small files to improve read performance on a Delta table?,VACUUM,OPTIMIZE,ANALYZE,REPAIR TABLE,B,30
+What does the VACUUM command do?,Compacts small files,Removes old unreferenced data files past retention window,Grants table permissions,Creates a new table version,B,30
+Which Delta feature lets a reader see only row-level changes since a given version?,Time Travel,Change Data Feed (CDF),Z-Ordering,Liquid Clustering,B,30
+What does ACID stand for in Delta Lake transactions?,"Atomicity, Consistency, Isolation, Durability","Access, Control, Identity, Data","Aggregate, Compute, Index, Delta","Authentication, Compliance, Integrity, Delta",A,30
+Which SQL statement gives a principal a privilege in Unity Catalog?,ALLOW,GRANT,ENABLE,PERMIT,B,30
+Key difference between a Managed table and an External table?,Managed tables can't be queried with SQL,Dropping Managed deletes data; dropping External doesn't,External tables don't support ACID,No real difference,B,30
+Which compute engine accelerates Spark at the vectorized execution layer?,Tungsten,Photon,Catalyst,Delta Engine Classic,B,30
+"Which native UC mechanism restricts which rows a user/group can see, for every reader?",Dynamic View,Row Filter,Column Mask,Access Connector,B,30
+What does a Column Mask do in Unity Catalog?,Hides an entire table,"Returns a transformed/redacted value for one column, for every reader",Permanently deletes sensitive columns,Encrypts the whole catalog,B,30
+What is a Genie Agent (formerly Genie Space) primarily used for?,Automating cluster autoscaling,Letting business users ask NL questions and get SQL-generated answers,Managing Git repositories,Encrypting Delta tables at rest,B,30
+"In Databricks Jobs, what lets one task wait for another to finish first?",trigger,depends_on,schedule,cluster_policy,B,30
+What does trigger(availableNow=True) do in a Structured Streaming write?,Runs continuously forever,"Processes all currently available data once, then stops",Only triggers on a fixed schedule,Only triggers when clicked manually,B,30
+What is the purpose of a Storage Credential in Unity Catalog?,Stores a user's login password,"A keyless, UC-managed identity that authenticates to a cloud storage account",A Wi-Fi credential,Only used for row filters,B,30
+What does SCD Type 2 track that SCD Type 1 does not?,"Nothing, they're the same",Historical versions of a row over time,Only the most recent value,Deleted rows only,B,30
+Which command shows the full version history of a Delta table's commits?,SHOW HISTORY,DESCRIBE HISTORY,LOG TABLE,SHOW VERSIONS,B,30
+What was Santosh's actual crime that earned him the nickname Santoshwa?,Sitting closest to Virinchy's desk,Secretly being a cricket commentator,Stealing Yogesh's WiFi,Being the fourth member of the secret Telugu spy ring,A,30
+What excuse did Karthick give when caught reading a message under his desk?,"Weather update, sir","Cricket score, sir (no match that day)","Homework from another course, sir",Checking if Ganadeep's code compiles,B,30
+What was Ganadeep actually building all those sleep-deprived nights?,A real-time data pipeline,A secret Teams group,A time machine,A better excuse for missing his train,B,30
+What two words do Santosh and Sushant say that always turn out to be true?,Task pending,"Hojayega, sir",Server down,WiFi issue,B,30
+What was Pratik and Saket's secret lookout code phrase?,Virinchy is here / Roger that,"Code red, hide the phone","Abort mission, abort mission",The eagle has landed,A,30
+"What does Hritin say right after confidently claiming Got it, got it, understood?","Nothing, he actually gets it","Wait, so what were the steps again?",Can I get an extension?,Let me just ask Sukrit,B,30
+What is Kamal famous for in the classroom?,Loudly announcing every finished task,Finishing tasks silently and never telling a soul,Never finishing a single task,Quietly doing everyone else's tasks too,B,30
+"Per Sushant's unproven theory, how does Aviskar vanish from his seat?",He teleports between songs,He has an identical twin,He uses Kamal's silence as camouflage,He's actually a hologram,A,30
+It took Virinchy three weeks to notice what about Nikshitha?,She sits next to Prishita,She types with her left hand,She never speaks in class,She's actually two people,B,30
+What does Prishita say every time Sneha tries to drag her to a hangout?,I have a headache,Ask Nikshitha,Ask Virinchy,Maybe next batch,B,30
+What did Sneha message the group chat after spotting Virinchy at the mall?,SIR IS BUYING A LAPTOP,GUYS I SAW SIR AT THE MALL HE WEARS NORMAL CLOTHES,SIR HAS A SECRET LIFE,SIR WAS WITH GANADEEP,B,30
+"What did Payal hand Yogesh the day his WiFi died for good, unasked?",Her lunch,Her hotspot,Her notes,A strongly worded complaint to IT,B,30
+"In the QuickCart Wars, what did Amardeep propose that united Sukrit and Gaurav for once?",A coin toss,A streaming + batch hybrid (they agreed it was worse than both of theirs),Giving up and ordering food,Asking Virinchy to declare a winner,B,30
+What was Harsh's signature move whenever he made a mistake?,Quietly blaming Gaurav,Announcing it like breaking news: I have broken the pipeline,Pretending nothing happened,Immediately restarting his laptop,B,30
+How did Sujit say goodbye on his last day?,A heartfelt five-minute speech,"Okay, bye guys",A full farewell PowerPoint deck,"He vanished, Aviskar-style",B,30
+"I am not your source data, but I remember every version of myself -- delete rows and I can still show you who I was yesterday. What am I?",A CSV file,A Delta Table,A Google Sheet,A Genie Agent,B,30
+"Three layers deep, I refine what's raw. My name is a precious metal, but nobody's ever mined me. What layer am I?",Bronze,Silver,Gold,Platinum,C,30
+I flow endlessly like a river -- but say availableNow and I finish my journey and stop. What am I?,A batch job,A streaming query,A cluster,A notebook,B,30
+I open doors with a GRANT and close them with a REVOKE -- but I never touch a single row of your data. What governs like me?,A firewall,Unity Catalog privileges,A VPN,A row filter,B,30
+"I sit closest to the front, get checked on the most, and answer to a name that was never technically mine. Who am I?",Santosh (a.k.a. Santoshwa),Aviskar's disappearing chair,The secret Teams group,Kamal's silence,A,30

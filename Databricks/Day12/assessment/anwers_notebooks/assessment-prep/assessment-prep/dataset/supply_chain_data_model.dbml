@@ -1,0 +1,49 @@
+// ============================================================
+// GlobalMart Supply Chain — Source Table Data Model
+// Paste this into https://dbdiagram.io/d
+// ============================================================
+
+Table suppliers [note: 'Source: ADLS Gen2 | Ingestion: Autoloader'] {
+  SupplierID     varchar   [pk, note: 'Format: SUP-01']
+  SupplierName   varchar
+  SupplierEmail  varchar   [note: 'nullable — some blank or malformed']
+  City           varchar
+  ContactPhone   varchar   [note: 'nullable']
+  SupplierType   varchar   [note: 'Electronics | Apparel | Appliances | Food | Sports | Beauty']
+  IsActive       varchar   [note: 'mixed values: Y/N, True/False']
+  OfficeAddress  varchar   [note: 'nullable — some embed city + pincode']
+}
+
+Table shipping_tier [note: 'Source: ADLS Gen2 | Ingestion: Autoloader'] {
+  ShippingTierID      varchar   [pk, note: 'Format: SHP-001']
+  TierName            varchar   [note: 'inconsistent casing in source']
+  cost_inr            integer   [note: 'Source column: "Cost (Rs)" — rename required at Bronze ingestion due to special characters']
+  MaxDeliveryDays     integer   [note: '0 for In-store Pickup']
+  IsAvailableOnline   varchar   [note: 'mixed values: Yes/No, 1/0']
+}
+
+Table carriers [note: 'Source: ADLS Gen2 | Ingestion: Autoloader'] {
+  CarrierID      varchar   [pk, note: 'Format: CAR-01']
+  CarrierName    varchar
+  CarrierType    varchar   [note: 'inconsistent casing: road, AIR, air']
+  ServiceRegion  varchar   [note: 'inconsistent values: South, west india, North']
+  ContactEmail   varchar   [note: 'nullable — optional field']
+  IsActive       varchar   [note: 'nullable — some records have NULL']
+}
+
+Table shipments [note: 'Source: Postgres (Supabase) | Ingestion: Lakeflow Connect | 120 rows'] {
+  ShipmentID       varchar     [pk, note: 'Format: SHP-10001']
+  OrderID          varchar     [not null, note: 'some reference non-existent orders (OR-990xxx)']
+  CarrierID        varchar     [not null, ref: > carriers.CarrierID, note: 'some reference CAR-99 (does not exist)']
+  SupplierID       varchar     [not null, ref: > suppliers.SupplierID]
+  ShippingTierID   varchar     [not null, ref: > shipping_tier.ShippingTierID]
+  ShipmentStatus   varchar     [note: 'Delivered | In Transit | Dispatched | Returned']
+  WarehouseCity    varchar
+  TrackingNumber   varchar
+  DispatchDate     timestamp
+  ExpectedArrival  timestamp
+  ActualArrival    timestamp   [note: 'nullable — NULL for in-transit; 5 rows have ActualArrival < DispatchDate']
+  WeightKg         decimal     [note: 'nullable — NULL for In-store Pickup (valid business rule)']
+  ShippingCostINR  decimal     [note: 'some rows do not match contracted tier rate']
+  updated_at       timestamp   [not null, note: 'CDC cursor — auto-updated by Postgres trigger on every change']
+}
