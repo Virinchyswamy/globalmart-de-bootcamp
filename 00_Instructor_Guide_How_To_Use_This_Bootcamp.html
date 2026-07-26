@@ -271,7 +271,7 @@
       </div>
       <div>
         <div class="highlight-box warn">
-          <p><strong style="color:#f59e0b;">Ingestion pathways — exactly 2, not 4.</strong> Postgres/Supabase CDC via Lakeflow Connect, and ADLS Autoloader — <strong>7 real Bronze tables total</strong> (<code>orders</code>, <code>order_items</code> via CDC; <code>customers</code>, <code>products</code>, <code>address</code>, <code>payments</code>, <code>payment_methods</code> via Autoloader). Day 3's REST API + GraphDB/Cypher content is a deliberate side-exploration — it lands in a <code>sandbox/</code> path and never touches <code>gbmart.bronze</code>.</p>
+          <p><strong style="color:#f59e0b;">Ingestion pathways — exactly 2, not 4.</strong> Postgres/Supabase CDC via Lakeflow Connect, and ADLS Autoloader — <strong>8 real Bronze tables total</strong> (<code>orders</code>, <code>order_items</code> via CDC; <code>customers</code>, <code>products</code>, <code>address</code>, <code>payments</code>, <code>payment_methods</code>, <code>returns</code> via Autoloader). Day 3's REST API + GraphDB/Cypher content is a deliberate side-exploration — it lands in a <code>sandbox/</code> path and never touches <code>gbmart.bronze</code>.</p>
         </div>
         <div class="highlight-box" style="margin-top:14px;">
           <p>If you ever see <strong>"4 sources"</strong> in older material, that's a holdover from an earlier design — Day 3 ILT 1 and Day 4 ILT 1 both correct it explicitly, on purpose, in front of the class.</p>
