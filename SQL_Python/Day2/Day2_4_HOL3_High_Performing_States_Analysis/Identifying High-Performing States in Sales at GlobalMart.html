@@ -5,163 +5,359 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Module 8 – High-Performing States | Day 2</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Yatra+One&display=swap');
+
+  :root {
+    --void:      #150705;
+    --surface:   #29110b;
+    --surface-2: #3a170f;
+    --line:      rgba(212,175,55,0.22);
+    --line-lit:  rgba(212,175,55,0.48);
+
+    --ink:       #fbf1de;
+    --ink-dim:   #dcbe9a;
+    --ink-faint: #8f6a4e;
+
+    --indigo:    #c81d25;
+    --violet2:   #f2b705;
+    --grad:      linear-gradient(120deg, #c81d25 0%, #f2a207 55%, #ffd700 100%);
+
+    --amber:     #f2b705;
+    --emerald:   #34d399;
+    --rose:      #ef4444;
+    --blue:      #ff9f6e;
+
+    --code-kw:   #ffd166;
+    --code-fn:   #ff9f6e;
+    --code-str:  #ffe4b8;
+    --code-cm:   #8f6a4e;
+    --code-col:  #ff8fa3;
+    --code-tbl:  #f2a207;
+
+    --font-display: "Teko", Georgia, "Times New Roman", serif;
+    --font-deco:    "Yatra One", "Teko", Georgia, serif;
+    --font-body:    -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono:    "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, "SF Mono", Consolas, "Liberation Mono", monospace;
+
+    --ease: cubic-bezier(.16,1,.3,1);
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
-  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; }
-  nav .logo { font-weight: 700; font-size: 14px; color: #22c55e; letter-spacing: 1px; }
-  nav .controls { display: flex; gap: 10px; align-items: center; }
-  nav button { background: #334155; border: none; color: #e2e8f0; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-  nav button:hover { background: #22c55e; color: #0f172a; }
-  nav .slide-counter { font-size: 13px; color: #94a3b8; }
-  .deck { padding-top: 60px; }
-  .slide { display: none; min-height: 100vh; padding: 40px 60px; animation: fadeIn 0.3s ease; }
-  .slide.active { display: flex; flex-direction: column; justify-content: center; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  .slide-cover { background: linear-gradient(135deg, #0f172a 0%, #0a2a12 100%); text-align: center; align-items: center; }
-  .slide-cover h1 { font-size: 38px; font-weight: 800; color: #22c55e; margin-bottom: 12px; }
-  .slide-cover .subtitle { font-size: 16px; color: #94a3b8; max-width: 620px; line-height: 1.7; }
-  .slide-cover .badge { margin-top: 16px; background: #082010; padding: 6px 18px; border-radius: 20px; font-size: 13px; }
-  .slide-section { background: #061208; }
-  .slide-section h2 { font-size: 28px; font-weight: 700; color: #22c55e; margin-bottom: 6px; }
-  .section-tag { color: #4b5563; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
-  .slide-content { background: #0f172a; }
-  .slide-content h3 { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
-  .slide-demo { background: #061208; border-left: 4px solid #22c55e; }
-  .slide-demo h3 { font-size: 21px; color: #22c55e; margin-bottom: 4px; }
-  .demo-label { color: #4b5563; font-size: 13px; margin-bottom: 14px; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-body); background: var(--void); color: var(--ink); overflow: hidden; height: 100vh; }
+  ::selection { background: var(--indigo); color: #fff3e0; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--violet2); outline-offset: 3px; border-radius: 4px; }
+
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(60% 50% at 15% 10%, rgba(200,29,37,0.16), transparent 60%),
+      radial-gradient(50% 45% at 90% 85%, rgba(242,183,5,0.12), transparent 60%);
+  }
+
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    display: flex; align-items: center; gap: 20px; padding: 14px 28px;
+    background: rgba(21,7,5,0.78); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid var(--line-lit);
+    box-shadow: 0 2px 20px rgba(0,0,0,.4);
+  }
+  .topbar .brand { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .topbar .brand .label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .topbar .brand .title { font-size: 13px; color: var(--ink-dim); font-weight: 500; }
+
+  .rail { flex: 1; display: flex; gap: 6px; align-items: center; height: 28px; }
+  .rail button { flex: 1; height: 6px; border-radius: 4px; border: none; cursor: pointer; background: var(--surface-2); position: relative; padding: 0; transition: transform .25s var(--ease); }
+  .rail button::after { content: ""; position: absolute; inset: 0; border-radius: 4px; background: var(--grad); transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); }
+  .rail button.done::after { transform: scaleX(1); }
+  .rail button.current::after { transform: scaleX(1); }
+  .rail button.current { box-shadow: 0 0 12px rgba(200,29,37,0.6); transform: scaleY(1.6); }
+  .rail button:hover { transform: scaleY(1.6); }
+  .rail button::before { content: attr(data-title); position: absolute; top: 18px; left: 50%; transform: translateX(-50%) translateY(-4px); background: var(--surface-2); border: 1px solid var(--line-lit); color: var(--ink); font-size: 10.5px; font-weight: 600; padding: 4px 10px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s var(--ease), transform .15s var(--ease); box-shadow: 0 6px 18px rgba(0,0,0,0.45); z-index: 10; }
+  .rail button:hover::before { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .topbar .tools { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .counter { font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; }
+  .icon-btn { background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); width: 32px; height: 32px; border-radius: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: background .2s, border-color .2s, transform .2s; }
+  .icon-btn:hover { background: var(--indigo); border-color: var(--indigo); transform: translateY(-1px); }
+
+  .deck { position: relative; z-index: 1; height: 100vh; padding-top: 62px; }
+  .slide { display: none; height: calc(100vh - 62px); padding: 44px 60px; overflow-y: auto; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; animation: rise .5s var(--ease); }
+  @keyframes rise { from { opacity: 0; transform: translateY(22px) scale(.985); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .slide.active { animation: none; } html { scroll-behavior: auto; } }
+
+  .section-tag { font-family: var(--font-deco); font-size: 13px; font-weight: 400; letter-spacing: 1.5px; text-transform: uppercase; color: var(--violet2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .section-tag::before { content: "\2726"; font-size: 12px; color: var(--violet2); text-shadow: 0 0 8px rgba(242,183,5,.6); }
+
+  .slide-cover { align-items: center; text-align: center; position: relative; margin: 14px; border: 1px solid var(--line-lit); border-radius: 20px; box-shadow: inset 0 0 0 6px rgba(0,0,0,.3), 0 0 70px rgba(242,183,5,.1); }
+  .slide-cover::before {
+    content: ""; position: absolute; top: 50%; left: 50%; width: 1000px; height: 1000px; transform: translate(-50%,-50%);
+    background: repeating-conic-gradient(from 0deg, rgba(255,215,0,0.05) 0deg 3deg, transparent 3deg 11deg);
+    border-radius: 50%; z-index: -2; pointer-events: none; animation: sunspin 100s linear infinite;
+  }
+  @keyframes sunspin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .slide-cover::before { animation: none; } }
+  .slide-cover .blob { position: absolute; border-radius: 50%; filter: blur(70px); z-index: -1; opacity: .5; animation: drift 16s ease-in-out infinite alternate; }
+  .slide-cover .blob.b1 { width: 460px; height: 460px; background: var(--indigo); top: -150px; left: -130px; }
+  .slide-cover .blob.b2 { width: 400px; height: 400px; background: var(--violet2); bottom: -170px; right: -110px; animation-delay: 3s; }
+  @keyframes drift { from { transform: translate(0,0) scale(1);} to { transform: translate(30px,-20px) scale(1.08);} }
+  @media (prefers-reduced-motion: reduce) { .slide-cover .blob { animation: none; } }
+
+  .slide-cover h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; font-size: clamp(40px, 5.8vw, 60px); line-height: 1.06; text-wrap: balance; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(0,0,0,.5)); margin-bottom: 14px; }
+  .slide-cover .subtitle { font-size: 16px; color: var(--ink-dim); max-width: 640px; line-height: 1.65; }
+  .slide-cover .badge { margin-top: 18px; background: var(--surface); border: 1px solid var(--line-lit); padding: 6px 18px; border-radius: 999px; font-size: 13px; color: var(--ink); display: inline-block; }
+
+  .slide-section h2 { font-family: var(--font-display); font-size: clamp(32px, 4.2vw, 44px); font-weight: 700; letter-spacing: .3px; text-transform: uppercase; color: var(--ink); margin-bottom: 6px; text-wrap: balance; }
+  .slide-content h3 { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--ink); margin-bottom: 14px; letter-spacing: .2px; text-transform: uppercase; }
+
+  .slide-demo { border-left: 3px solid var(--indigo); background: linear-gradient(90deg, rgba(200,29,37,0.06), transparent 30%); }
+  .slide-demo h3 { font-family: var(--font-display); font-size: 27px; font-weight: 600; text-transform: uppercase; letter-spacing: .2px; color: var(--ink); margin-bottom: 4px; }
+  .demo-label { color: var(--ink-faint); font-size: 12.5px; margin-bottom: 14px; font-family: var(--font-mono); }
+
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 18px; }
-  .card h4 { color: #22c55e; margin-bottom: 8px; font-size: 14px; }
-  .card p, .card li { color: #cbd5e1; font-size: 13px; line-height: 1.7; }
+
+  .card { position: relative; overflow: hidden; background: linear-gradient(180deg, var(--surface), rgba(18,16,28,0.6)); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; backdrop-filter: blur(6px); transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease); }
+  .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--grad); opacity: .5; }
+  .card:hover { transform: translateY(-3px); border-color: rgba(200,29,37,0.4); box-shadow: 0 14px 34px rgba(0,0,0,0.35); }
+  .card:hover::before { opacity: 1; }
+  .card h4 { color: var(--violet2); margin-bottom: 8px; font-size: 14px; font-family: var(--font-display); font-weight: 700; }
+  .card p, .card li { color: var(--ink-dim); font-size: 13px; line-height: 1.7; }
   .card ul { padding-left: 16px; }
-  .hl { background: #082010; border: 1px solid #22c55e; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
-  .hl.blue { background: #0c2a3f; border-color: #38bdf8; }
-  .hl.red { background: #2d0f0f; border-color: #ef4444; }
-  .hl.warn { background: #1a1200; border-color: #f59e0b; }
-  .hl p { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
-  pre { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 14px; overflow-x: auto; font-family: 'Cascadia Code','Consolas',monospace; font-size: 12.5px; line-height: 1.8; color: #e6edf3; }
-  .kw { color: #ff7b72; font-weight: bold; }
-  .fn { color: #d2a8ff; }
-  .str { color: #a5d6ff; }
-  .cm { color: #6e7681; font-style: italic; }
-  .col { color: #79c0ff; }
-  .tbl { color: #ffa657; }
+
+  .hl { background: rgba(200,29,37,0.07); border: 1px solid rgba(200,29,37,0.35); border-left: 3px solid var(--indigo); border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
+  .hl.blue { background: rgba(255,159,110,0.07); border-color: rgba(255,159,110,0.35); border-left-color: var(--blue); }
+  .hl.red { background: rgba(251,113,133,0.07); border-color: rgba(251,113,133,0.35); border-left-color: var(--rose); }
+  .hl.warn { background: rgba(251,191,36,0.07); border-color: rgba(251,191,36,0.35); border-left-color: var(--amber); }
+  .hl p { font-size: 13px; line-height: 1.7; color: var(--ink-dim); }
+  .hl strong { color: var(--ink); }
+
+  .code-block { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #0a0910; box-shadow: 0 16px 40px -18px rgba(0,0,0,0.6); margin-top: 8px; transition: border-color .2s var(--ease), box-shadow .2s var(--ease); }
+  .code-block:hover { border-color: var(--line-lit); box-shadow: 0 16px 40px -16px rgba(200,29,37,0.2); }
+  .code-block .code-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+  .code-head .db-tag { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); display: flex; align-items: center; gap: 6px; }
+  .code-head .db-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--indigo); box-shadow: 0 0 6px var(--indigo); }
+  .copy-btn { background: transparent; border: 1px solid var(--line); color: var(--ink-dim); font-size: 10.5px; padding: 3px 9px; border-radius: 6px; cursor: pointer; transition: all .2s; }
+  .copy-btn:hover { border-color: var(--violet2); color: var(--violet2); }
+  .copy-btn.copied { border-color: var(--emerald); color: var(--emerald); }
+
+  pre { padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.8; color: var(--ink); }
+  .kw { color: var(--code-kw); font-weight: 600; }
+  .fn { color: var(--code-fn); }
+  .str { color: var(--code-str); }
+  .cm { color: var(--code-cm); font-style: italic; }
+  .col { color: var(--code-col); }
+  .tbl { color: var(--code-tbl); }
+
   table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.t th { background: #082010; color: #4ade80; padding: 8px 12px; text-align: left; }
-  table.t td { border: 1px solid #1e293b; padding: 7px 12px; color: #cbd5e1; background: #111827; }
-  table.t tr:nth-child(even) td { background: #0f172a; }
-  .quiz-box { background: #082010; border: 1px solid #22c55e; padding: 14px; border-radius: 10px; margin: 10px 0; }
-  .quiz-q { font-size: 13px; color: #f8fafc; margin-bottom: 8px; }
-  .reveal-btn { background: #22c55e; color: #0f172a; padding: 7px 18px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; }
-  .quiz-answer { margin-top: 8px; color: #4ade80; font-size: 13px; line-height: 1.6; }
-  .over-demo { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
-  .over-card { flex: 1; min-width: 160px; background: #0a2a12; border: 1px solid #22c55e; border-radius: 8px; padding: 12px 14px; }
-  .over-card h5 { color: #4ade80; font-size: 13px; margin-bottom: 6px; }
-  .over-card p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
-  .state-yes { color: #4ade80; font-weight: 600; }
-  .state-no  { color: #f87171; font-weight: 600; }
+  table.t th { background: var(--surface-2); color: var(--violet2); padding: 8px 12px; text-align: left; font-weight: 700; border-bottom: 1px solid var(--line-lit); }
+  table.t td { border-bottom: 1px solid var(--line); padding: 7px 12px; color: var(--ink-dim); }
+  table.t tr:hover td { background: rgba(200,29,37,0.06); color: var(--ink); }
+
+  .quiz-box { position: relative; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--indigo); padding: 14px 14px 14px 46px; border-radius: 10px; margin: 10px 0; }
+  .quiz-box::before { content: "?"; position: absolute; left: 14px; top: 14px; width: 20px; height: 20px; border-radius: 50%; background: var(--emerald); color: #06110c; font-weight: 900; font-size: .76rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(52,211,153,0.5); }
+  .quiz-q { font-size: 13px; color: var(--ink); margin-bottom: 8px; }
+  .reveal-btn { background: var(--indigo); color: #fff; padding: 7px 18px; border-radius: 8px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; transition: transform .15s, background .15s; }
+  .reveal-btn:hover { background: var(--violet2); transform: translateY(-1px); }
+  .quiz-answer { margin-top: 8px; color: var(--emerald); font-size: 13px; line-height: 1.6; }
+
+  .over-demo { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+  .over-card { flex: 1; min-width: 160px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; transition: border-color .2s; }
+  .over-card.win { border-color: rgba(52,211,153,0.4); }
+  .over-card h5 { color: var(--violet2); font-size: 13px; margin-bottom: 6px; font-family: var(--font-display); }
+  .over-card p { font-size: 12px; color: var(--ink-dim); line-height: 1.5; }
+  .state-yes { color: var(--emerald); font-weight: 600; }
+  .state-no  { color: var(--rose); font-weight: 600; }
+
+  /* --- CTE pipeline flowchart --- */
+  .pipeline { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
+  .pipe-stage { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; flex-shrink: 0; text-align: center; padding: 12px 16px; transition: border-color .2s var(--ease), transform .2s var(--ease); }
+  .pipe-stage:hover { border-color: rgba(200,29,37,0.45); transform: translateY(-2px); }
+  .pipe-stage .stage-name { font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: var(--violet2); margin-bottom: 3px; white-space: nowrap; }
+  .pipe-stage .stage-rows { font-size: 10.5px; color: var(--ink-faint); line-height: 1.4; }
+  .pipe-stage.final { background: linear-gradient(180deg, rgba(200,29,37,0.16), rgba(18,16,28,0.6)); border-color: rgba(200,29,37,0.45); }
+  .pipe-stage.final .stage-name { color: var(--ink); }
+  .pipe-arrow { flex-shrink: 0; color: var(--ink-faint); font-size: 15px; }
+
+  /* --- window/partition visual: separate boxes vs one shared box --- */
+  .window-vis { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+  .window-panel { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--surface); }
+  .window-panel .wp-label { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 8px; font-family: var(--font-mono); }
+  .window-panel.split .wp-label { color: var(--rose); }
+  .window-panel.global .wp-label { color: var(--emerald); }
+  .wp-rows { display: flex; gap: 5px; flex-wrap: wrap; }
+  .wp-chip { font-size: 10.5px; font-family: var(--font-mono); padding: 3px 7px; border-radius: 5px; color: var(--ink-dim); background: var(--surface-2); }
+  .wp-box { border: 1.5px dashed rgba(251,113,133,0.5); border-radius: 8px; padding: 6px; display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px; }
+  .wp-box:last-child { margin-bottom: 0; }
+  .wp-box .wp-chip { background: rgba(251,113,133,0.1); color: #fca5a5; }
+  .window-panel.global .wp-box { border-color: rgba(52,211,153,0.5); padding: 8px; }
+  .window-panel.global .wp-box .wp-chip { background: rgba(52,211,153,0.1); color: #86efac; }
+
+  .toc-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(6,5,10,0.86); backdrop-filter: blur(10px); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px; }
+  .toc-overlay.open { display: flex; }
+  .toc-title { font-family: var(--font-display); font-size: 22px; font-weight: 800; margin-bottom: 22px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; max-width: 1100px; width: 100%; max-height: 62vh; overflow-y: auto; padding: 4px; }
+  .toc-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; text-align: left; color: var(--ink); transition: all .2s var(--ease); }
+  .toc-card:hover { border-color: var(--violet2); transform: translateY(-2px); background: var(--surface-2); }
+  .toc-card .idx { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+  .toc-card .ttl { font-size: 13px; font-weight: 600; margin-top: 4px; line-height: 1.4; }
+  .toc-hint { margin-top: 20px; font-size: 12px; color: var(--ink-faint); font-family: var(--font-mono); }
+
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--indigo); }
 </style>
 </head>
 <body>
-<nav>
-  <div class="logo">DAY 2 · MODULE 8 — High-Performing States</div>
-  <div class="controls">
-    <button onclick="changeSlide(-1)">&#8592; Prev</button>
-    <span class="slide-counter" id="counter"></span>
-    <button onclick="changeSlide(1)">Next &#8594;</button>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="label">🎬 Day 2 · Module 8 · Hands-On</div>
+    <div class="title">Identifying High-Performing States</div>
   </div>
-</nav>
-<div class="deck">
+  <div class="rail" id="rail" aria-label="Slide progress — click to jump"></div>
+  <div class="tools">
+    <span class="counter" id="counter">1 / 8</span>
+    <button class="icon-btn" id="tocBtn" title="All slides (G)">▦</button>
+    <button class="icon-btn" onclick="changeSlide(-1)" title="Previous (←)">‹</button>
+    <button class="icon-btn" onclick="changeSlide(1)" title="Next (→)">›</button>
+  </div>
+</div>
+
+<div class="deck" id="deck">
 
 <!-- SLIDE 1: COVER -->
-<div class="slide slide-cover active">
+<div class="slide slide-cover active" data-title="Cover">
+  <span class="blob b1"></span><span class="blob b2"></span>
   <h1>🗺️ Identifying High-Performing States</h1>
   <p class="subtitle">The Senior VP believes all states are doing well. Your job: use SQL to find which states actually beat the national average in sales — and which ones fall short.</p>
   <div class="badge">Module 8 &nbsp;·&nbsp; Day 2 &nbsp;·&nbsp; Advanced &nbsp;·&nbsp; 30 min self-paced</div>
   <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
-    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">AVG() OVER() — global average</span>
-    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">Empty OVER() trick</span>
-    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">3-CTE pattern</span>
-    <span style="background:#1e293b;padding:5px 12px;border-radius:20px;font-size:13px;color:#94a3b8;">WHERE on CTE result</span>
+    <span style="background:var(--surface);border:1px solid var(--line-lit);padding:5px 12px;border-radius:20px;font-size:13px;color:var(--ink-dim);">AVG() OVER() — global average</span>
+    <span style="background:var(--surface);border:1px solid var(--line-lit);padding:5px 12px;border-radius:20px;font-size:13px;color:var(--ink-dim);">Empty OVER() trick</span>
+    <span style="background:var(--surface);border:1px solid var(--line-lit);padding:5px 12px;border-radius:20px;font-size:13px;color:var(--ink-dim);">3-CTE pattern</span>
+    <span style="background:var(--surface);border:1px solid var(--line-lit);padding:5px 12px;border-radius:20px;font-size:13px;color:var(--ink-dim);">WHERE on CTE result</span>
   </div>
 </div>
 
 <!-- SLIDE 2: THE PROBLEM -->
-<div class="slide slide-section">
+<div class="slide slide-section" data-title="Is the VP Right?">
   <div class="section-tag">The Challenge</div>
   <h2>Is the VP Right? Are All States Performing Well? 🤔</h2>
-  <p style="color:#94a3b8;font-size:14px;margin-bottom:20px;">GlobalMart operates across 49+ states. The Senior VP is "optimistic about robust sales across all states." The data team needs to validate — or challenge — this belief.</p>
+  <p style="color:var(--ink-dim);font-size:14px;margin-bottom:20px;">GlobalMart operates across 49+ states. The Senior VP is "optimistic about robust sales across all states." The data team needs to validate — or challenge — this belief.</p>
   <div class="two-col">
     <div class="card">
       <h4>The Business Question</h4>
-      <p>Which states have <strong>average sales per transaction</strong> that exceed the national average?</p>
+      <p>Which states have <strong style="color:var(--ink);">average sales per transaction</strong> that exceed the national average?</p>
       <p style="margin-top:10px;">This identifies genuine outperformers from the noise — states that are actually above the benchmark, not just "doing OK."</p>
-      <p style="margin-top:10px;color:#22c55e;font-size:13px;">Spoiler: Only 13 states beat the national average. The VP may be surprised.</p>
+      <p style="margin-top:10px;color:var(--emerald);font-size:13px;">Spoiler: Only 13 states beat the national average. The VP may be surprised.</p>
     </div>
     <div class="card">
       <h4>The SQL Challenge</h4>
-      <p>To compare each state to the national average, we need the national average on <strong>every single row</strong> alongside the state's average.</p>
-      <p style="margin-top:10px;">The national average is computed from ALL states — not partitioned. This is the <strong>empty OVER()</strong> use case.</p>
-      <p style="margin-top:10px;font-family:monospace;font-size:12px;background:#0d1117;padding:8px;border-radius:6px;">AVG(sales) OVER() — no PARTITION BY, no ORDER BY</p>
+      <p>To compare each state to the national average, we need the national average on <strong style="color:var(--ink);">every single row</strong> alongside the state's average.</p>
+      <p style="margin-top:10px;">The national average is computed from ALL states — not partitioned. This is the <strong style="color:var(--ink);">empty OVER()</strong> use case.</p>
+      <p style="margin-top:10px;font-family:var(--font-mono);font-size:12px;background:var(--surface-2);padding:8px;border-radius:6px;color:var(--ink-dim);">AVG(sales) OVER() — no PARTITION BY, no ORDER BY</p>
     </div>
   </div>
   <div class="hl" style="margin-top:18px;">
-    <p><strong style="color:#22c55e;">Tables (no ex_ prefix — original GlobalMart dataset):</strong><br>
-    <code>transactions</code> &nbsp;·&nbsp; <code>orders</code> &nbsp;·&nbsp; <code>customers</code> &nbsp;·&nbsp; <code>locations_01</code></p>
+    <p><strong>Tables (no ex_ prefix — original GlobalMart dataset):</strong><br>
+    <code style="color:var(--code-col);font-family:var(--font-mono);">transactions</code> &nbsp;·&nbsp; <code style="color:var(--code-col);font-family:var(--font-mono);">orders</code> &nbsp;·&nbsp; <code style="color:var(--code-col);font-family:var(--font-mono);">customers</code> &nbsp;·&nbsp; <code style="color:var(--code-col);font-family:var(--font-mono);">locations_01</code></p>
   </div>
 </div>
 
 <!-- SLIDE 3: EMPTY OVER() EXPLAINED -->
-<div class="slide slide-content">
+<div class="slide slide-content" data-title="The Empty OVER()">
+  <div class="section-tag">Concept</div>
   <h3>🌍 The Empty OVER() — One Window That Covers Everything</h3>
   <div class="two-col">
     <div>
+      <div class="window-vis" aria-hidden="true">
+        <div class="window-panel split">
+          <div class="wp-label">Partition by state</div>
+          <div class="wp-box"><span class="wp-chip">TX row</span><span class="wp-chip">TX row</span></div>
+          <div class="wp-box"><span class="wp-chip">CA row</span><span class="wp-chip">CA row</span></div>
+          <div class="wp-box"><span class="wp-chip">WA row</span></div>
+        </div>
+        <div class="window-panel global">
+          <div class="wp-label">Empty over()</div>
+          <div class="wp-box"><span class="wp-chip">TX row</span><span class="wp-chip">TX row</span><span class="wp-chip">CA row</span><span class="wp-chip">CA row</span><span class="wp-chip">WA row</span></div>
+        </div>
+      </div>
       <div class="over-demo">
         <div class="over-card">
           <h5>OVER(PARTITION BY state)</h5>
           <p>Creates one window per state. Each window computes independently. You get a different AVG per state.</p>
-          <p style="margin-top:6px;color:#f87171;">Not what we want — this gives state average, not national.</p>
+          <p style="margin-top:6px;color:var(--rose);">Not what we want — this gives state average, not national.</p>
         </div>
-        <div class="over-card" style="border-color:#22c55e;">
+        <div class="over-card win">
           <h5>OVER() — empty</h5>
           <p>Creates ONE window covering ALL rows. Computes a single global value. That value appears on every row.</p>
-          <p style="margin-top:6px;color:#4ade80;">This is what we want — national average on every state row.</p>
+          <p style="margin-top:6px;color:var(--emerald);">This is what we want — national average on every state row.</p>
         </div>
       </div>
       <div class="hl" style="margin-top:14px;">
-        <p><strong style="color:#22c55e;">Visualize it:</strong><br>
-        Imagine 49 state rows. With <code>OVER()</code>, SQL puts the average of ALL 49 states' averages on each row. Now you can compare state vs. national in a simple WHERE clause.</p>
+        <p><strong>Visualize it:</strong><br>
+        Imagine 49 state rows. With <code style="color:var(--code-col);font-family:var(--font-mono);">OVER()</code>, SQL puts the average of ALL 49 states' averages on each row. Now you can compare state vs. national in a simple WHERE clause.</p>
       </div>
     </div>
     <div>
       <table class="t">
         <tr><th>state</th><th>state_avg_sales</th><th>national_avg (OVER())</th><th>above?</th></tr>
-        <tr><td>Texas</td><td>450.12</td><td style="color:#94a3b8;">220.45</td><td class="state-yes">✅ YES</td></tr>
-        <tr><td>Indiana</td><td>380.67</td><td style="color:#94a3b8;">220.45</td><td class="state-yes">✅ YES</td></tr>
-        <tr><td>California</td><td>290.33</td><td style="color:#94a3b8;">220.45</td><td class="state-yes">✅ YES</td></tr>
-        <tr><td>Washington</td><td>198.20</td><td style="color:#94a3b8;">220.45</td><td class="state-no">❌ NO</td></tr>
+        <tr><td>Texas</td><td>450.12</td><td style="color:var(--ink-faint);">220.45</td><td class="state-yes">✅ YES</td></tr>
+        <tr><td>Indiana</td><td>380.67</td><td style="color:var(--ink-faint);">220.45</td><td class="state-yes">✅ YES</td></tr>
+        <tr><td>California</td><td>290.33</td><td style="color:var(--ink-faint);">220.45</td><td class="state-yes">✅ YES</td></tr>
+        <tr><td>Washington</td><td>198.20</td><td style="color:var(--ink-faint);">220.45</td><td class="state-no">❌ NO</td></tr>
       </table>
-      <p style="color:#64748b;font-size:12px;margin-top:6px;">(Illustrative values — national_avg is the same on every row)</p>
+      <p style="color:var(--ink-faint);font-size:12px;margin-top:6px;">(Illustrative values — national_avg is the same on every row)</p>
       <div class="quiz-box" style="margin-top:12px;">
-        <p class="quiz-q">❓ If OVER() had no effect and just returned the avg per row, what would the national_avg column show for Texas?</p>
+        <p class="quiz-q">If OVER() had no effect and just returned the avg per row, what would the national_avg column show for Texas?</p>
         <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
-        <div class="quiz-answer" style="display:none"><p>✅ It would show Texas's own average (same as state_avg_sales). The magic of <code>OVER()</code> is that it uses ALL rows — not just the current state's rows — to compute one shared value.</p></div>
+        <div class="quiz-answer" style="display:none"><p>✅ It would show Texas's own average (same as state_avg_sales). The magic of <code style="color:var(--code-col);font-family:var(--font-mono);">OVER()</code> is that it uses ALL rows — not just the current state's rows — to compute one shared value.</p></div>
       </div>
     </div>
   </div>
 </div>
 
 <!-- SLIDE 4: BUILD STEP BY STEP -->
-<div class="slide slide-content">
+<div class="slide slide-content" data-title="Building the Solution">
+  <div class="section-tag">Walkthrough</div>
   <h3>Building the Solution — 3 CTEs, 3 Clear Steps</h3>
+  <div class="pipeline" aria-hidden="true">
+    <div class="pipe-stage">
+      <div class="stage-name">transactions + joins</div>
+      <div class="stage-rows">raw rows —<br>1 per transaction line</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="stage-name">TransactionData</div>
+      <div class="stage-rows">same rows<br>+ state column</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="stage-name">StateSummary</div>
+      <div class="stage-rows">~49 rows —<br>1 per state</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage">
+      <div class="stage-name">AvgSales</div>
+      <div class="stage-rows">~49 rows<br>+ national avg</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage final">
+      <div class="stage-name">final output</div>
+      <div class="stage-rows">13 rows —<br>states above avg</div>
+    </div>
+  </div>
   <div class="three-col">
     <div class="card">
       <h4>CTE 1 — TransactionData</h4>
       <p>Join transactions → orders → customers → locations_01 to get one row per transaction with its state.</p>
-      <p style="margin-top:8px;color:#64748b;font-size:12px;">Think of this as the "master dataset" — everything needed in one place.</p>
-      <pre style="font-size:11px;margin-top:8px;line-height:1.7;">
-<span class="kw">SELECT</span> <span class="tbl">t</span>.*,
+      <p style="margin-top:8px;color:var(--ink-faint);font-size:12px;">Think of this as the "master dataset" — everything needed in one place.</p>
+      <div class="code-block">
+        <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+        <pre style="font-size:11px;line-height:1.7;"><span class="kw">SELECT</span> <span class="tbl">t</span>.*,
   <span class="tbl">o</span>.<span class="col">order_purchase_date</span>,
   <span class="tbl">l</span>.<span class="col">state</span>
 <span class="kw">FROM</span> <span class="tbl">transactions</span> <span class="tbl">t</span>
@@ -171,13 +367,15 @@
     <span class="kw">ON</span> <span class="tbl">o</span>.<span class="col">Customer_ID</span> = <span class="tbl">c</span>.<span class="col">Customer_ID</span>
 <span class="kw">JOIN</span> <span class="tbl">locations_01</span> <span class="tbl">l</span>
     <span class="kw">ON</span> <span class="tbl">c</span>.<span class="col">postal_code</span> = <span class="tbl">l</span>.<span class="col">postal_code</span></pre>
+      </div>
     </div>
     <div class="card">
       <h4>CTE 2 — StateSummary</h4>
       <p>Aggregate to one row per state. Compute average sales per transaction for each state.</p>
-      <p style="margin-top:8px;color:#64748b;font-size:12px;">After this CTE, each state = one row with one sales value.</p>
-      <pre style="font-size:11px;margin-top:8px;line-height:1.7;">
-<span class="kw">SELECT</span>
+      <p style="margin-top:8px;color:var(--ink-faint);font-size:12px;">After this CTE, each state = one row with one sales value.</p>
+      <div class="code-block">
+        <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+        <pre style="font-size:11px;line-height:1.7;"><span class="kw">SELECT</span>
   <span class="col">state</span>,
   <span class="fn">AVG</span>(<span class="col">sales</span>) <span class="kw">AS</span> sales
 <span class="kw">FROM</span> TransactionData
@@ -185,38 +383,44 @@
 
 <span class="cm">-- Result: ~49 rows
 -- One average per state</span></pre>
+      </div>
     </div>
     <div class="card">
       <h4>CTE 3 — AvgSales</h4>
-      <p>Add the global national average using <code>AVG() OVER()</code> — one value for all rows.</p>
-      <p style="margin-top:8px;color:#64748b;font-size:12px;">Now every state row has: its own average AND the national benchmark side by side.</p>
-      <pre style="font-size:11px;margin-top:8px;line-height:1.7;">
-<span class="kw">SELECT</span> *,
+      <p>Add the global national average using <code style="color:var(--code-col);font-family:var(--font-mono);">AVG() OVER()</code> — one value for all rows.</p>
+      <p style="margin-top:8px;color:var(--ink-faint);font-size:12px;">Now every state row has: its own average AND the national benchmark side by side.</p>
+      <div class="code-block">
+        <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+        <pre style="font-size:11px;line-height:1.7;"><span class="kw">SELECT</span> *,
   <span class="cm">-- Empty OVER() = single global avg
   -- Same value on ALL state rows</span>
   <span class="fn">AVG</span>(<span class="col">sales</span>)
       <span class="kw">OVER</span>()
       <span class="kw">AS</span> avg_national_sales
 <span class="kw">FROM</span> StateSummary</pre>
+      </div>
     </div>
   </div>
   <div class="hl" style="margin-top:16px;">
-    <p><strong style="color:#22c55e;">Final SELECT:</strong> Filter WHERE sales &gt; avg_national_sales. That's it! The heavy lifting was done by the window function. The final query is just a comparison.</p>
-    <pre style="font-size:12.5px;margin-top:8px;">
-<span class="kw">SELECT</span> <span class="col">state</span>, <span class="col">sales</span>
+    <p><strong>Final SELECT:</strong> Filter WHERE sales &gt; avg_national_sales. That's it! The heavy lifting was done by the window function. The final query is just a comparison.</p>
+    <div class="code-block">
+      <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+      <pre style="font-size:12.5px;"><span class="kw">SELECT</span> <span class="col">state</span>, <span class="col">sales</span>
 <span class="kw">FROM</span> AvgSales
 <span class="kw">WHERE</span> <span class="col">sales</span> > <span class="col">avg_national_sales</span>; <span class="cm">-- numeric compare — works!</span></pre>
+    </div>
   </div>
 </div>
 
 <!-- SLIDE 5: FULL DEMO -->
-<div class="slide slide-demo">
+<div class="slide slide-demo" data-title="Live Demo — Full Solution">
+  <div class="section-tag">Live Demo</div>
   <h3>Live Demo — Full Solution: High-Performing States 🌟</h3>
   <div class="demo-label">Tables: transactions, orders, customers, locations_01 (no ex_ prefix) | mskl-masterclass</div>
   <div class="two-col">
-    <div>
-      <pre style="font-size:12px;line-height:1.78;">
-<span class="cm">-- CTE 1: Build master dataset with state per transaction</span>
+    <div class="code-block">
+      <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+      <pre style="font-size:12px;line-height:1.78;"><span class="cm">-- CTE 1: Build master dataset with state per transaction</span>
 <span class="kw">WITH</span> TransactionData <span class="kw">AS</span> (
     <span class="kw">SELECT</span>
         <span class="tbl">t</span>.*,
@@ -264,22 +468,24 @@ AvgSales <span class="kw">AS</span> (
     <div>
       <div class="card">
         <h4>Simpler WHERE — also works</h4>
-        <pre style="font-size:12px;margin-top:8px;">
-<span class="cm">-- You can also write it simply as:</span>
+        <div class="code-block">
+          <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+          <pre style="font-size:12px;"><span class="cm">-- You can also write it simply as:</span>
 <span class="kw">SELECT</span> <span class="col">state</span>, <span class="col">sales</span>
 <span class="kw">FROM</span> AvgSales
 <span class="kw">WHERE</span> <span class="col">sales</span> > <span class="col">avg_national_sales</span>;
 
 <span class="cm">-- The CASE WHEN version and this produce
 -- identical results. Both are correct.</span></pre>
+        </div>
       </div>
       <div class="quiz-box" style="margin-top:14px;">
-        <p class="quiz-q">❓ How many states have average sales above the national average?<br>a) 10 &nbsp; b) 11 &nbsp; c) 12 &nbsp; d) 13</p>
+        <p class="quiz-q">How many states have average sales above the national average?<br>a) 10 &nbsp; b) 11 &nbsp; c) 12 &nbsp; d) 13</p>
         <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
         <div class="quiz-answer" style="display:none"><p>✅ d) <strong>13 states</strong> — run the full query in SSMS and count the rows returned.</p></div>
       </div>
       <div class="quiz-box" style="margin-top:12px;">
-        <p class="quiz-q">❓ Which of these states are above the national average?<br>a) Texas &nbsp; b) Washington &nbsp; c) Indiana &nbsp; d) California</p>
+        <p class="quiz-q">Which of these states are above the national average?<br>a) Texas &nbsp; b) Washington &nbsp; c) Indiana &nbsp; d) California</p>
         <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
         <div class="quiz-answer" style="display:none">
           <p>✅ <span class="state-yes">Texas ✅ &nbsp; Indiana ✅ &nbsp; California ✅</span><br>
@@ -291,71 +497,77 @@ AvgSales <span class="kw">AS</span> (
 </div>
 
 <!-- SLIDE 6: WHY NOT SUBQUERY? -->
-<div class="slide slide-content">
+<div class="slide slide-content" data-title="Could We Use a Subquery Instead?">
+  <div class="section-tag">Comparison</div>
   <h3>❓ Could We Use a Subquery Instead?</h3>
   <div class="two-col">
     <div>
-      <p style="color:#94a3b8;font-size:13px;margin-bottom:12px;">Yes — here are two ways to get the same result:</p>
+      <p style="color:var(--ink-dim);font-size:13px;margin-bottom:12px;">Yes — here are two ways to get the same result:</p>
       <div class="card" style="margin-bottom:14px;">
         <h4>Option 1 — Subquery in WHERE</h4>
-        <pre style="font-size:11.5px;margin-top:8px;">
-<span class="kw">WHERE</span> sales > (
+        <div class="code-block">
+          <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+          <pre style="font-size:11.5px;"><span class="kw">WHERE</span> sales > (
     <span class="kw">SELECT</span> <span class="fn">AVG</span>(sales)
     <span class="kw">FROM</span> StateSummary
 )
 <span class="cm">-- Runs AVG() once as a scalar subquery
 -- Compares each state row to that scalar</span></pre>
+        </div>
       </div>
       <div class="card">
         <h4>Option 2 — Window Function (our approach)</h4>
-        <pre style="font-size:11.5px;margin-top:8px;">
-<span class="fn">AVG</span>(<span class="col">sales</span>) <span class="kw">OVER</span>() <span class="kw">AS</span> avg_national_sales
+        <div class="code-block">
+          <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+          <pre style="font-size:11.5px;"><span class="fn">AVG</span>(<span class="col">sales</span>) <span class="kw">OVER</span>() <span class="kw">AS</span> avg_national_sales
 <span class="cm">-- Computes the same value but puts it on
 -- every row as a visible column
 -- Then WHERE sales > avg_national_sales</span></pre>
+        </div>
       </div>
     </div>
     <div>
       <table class="t" style="margin-bottom:14px;">
         <tr><th>Aspect</th><th>Subquery</th><th>Window OVER()</th></tr>
-        <tr><td>Result correct?</td><td style="color:#4ade80;">✅</td><td style="color:#4ade80;">✅</td></tr>
-        <tr><td>Can see the national avg in output?</td><td style="color:#f87171;">❌ Hidden in WHERE</td><td style="color:#4ade80;">✅ Column visible</td></tr>
-        <tr><td>Reuse value without recalculating?</td><td style="color:#f87171;">❌ Need to re-subquery</td><td style="color:#4ade80;">✅ Already a column</td></tr>
-        <tr><td>Easy to add to output for audit?</td><td style="color:#f87171;">❌ Hard</td><td style="color:#4ade80;">✅ Already there</td></tr>
+        <tr><td>Result correct?</td><td class="state-yes">✅</td><td class="state-yes">✅</td></tr>
+        <tr><td>Can see the national avg in output?</td><td class="state-no">❌ Hidden in WHERE</td><td class="state-yes">✅ Column visible</td></tr>
+        <tr><td>Reuse value without recalculating?</td><td class="state-no">❌ Need to re-subquery</td><td class="state-yes">✅ Already a column</td></tr>
+        <tr><td>Easy to add to output for audit?</td><td class="state-no">❌ Hard</td><td class="state-yes">✅ Already there</td></tr>
       </table>
       <div class="hl">
-        <p><strong style="color:#22c55e;">Recommendation:</strong> In production reports, use the window function. It makes the national average visible and auditable in the output. With a subquery, the benchmark disappears — the reader can't verify what you compared against.</p>
+        <p><strong>Recommendation:</strong> In production reports, use the window function. It makes the national average visible and auditable in the output. With a subquery, the benchmark disappears — the reader can't verify what you compared against.</p>
       </div>
     </div>
   </div>
 </div>
 
 <!-- SLIDE 7: COMMON MISTAKES -->
-<div class="slide slide-content">
+<div class="slide slide-content" data-title="Common Mistakes">
+  <div class="section-tag">Reference</div>
   <h3>🚫 Common Mistakes — Module 8</h3>
   <table class="t" style="margin-bottom:16px;">
     <tr><th>Mistake</th><th>What Goes Wrong</th><th>Fix</th></tr>
-    <tr><td>AVG(sales) in SELECT without OVER()</td><td style="color:#f87171;">Error — can't use aggregate in SELECT without GROUP BY</td><td>Add OVER() to make it a window function</td></tr>
-    <tr><td>PARTITION BY state in OVER()</td><td style="color:#f87171;">Returns each state's own average — not national</td><td>Use empty OVER() for the global average</td></tr>
-    <tr><td>Filter too early (in StateSummary CTE)</td><td style="color:#f87171;">Filters before national avg is computed — wrong benchmark</td><td>Filter only in the final query after OVER()</td></tr>
-    <tr><td>Using ex_transactions instead of transactions</td><td style="color:#f87171;">Wrong dataset — Module 8 uses non-ex_ tables</td><td>Use: transactions, orders, customers, locations_01</td></tr>
-    <tr><td>Joining on wrong column names</td><td style="color:#f87171;">Case sensitivity: Order_ID vs order_id</td><td>Check data dictionary — note mixed case column names in transactions table</td></tr>
+    <tr><td>AVG(sales) in SELECT without OVER()</td><td class="state-no">Error — can't use aggregate in SELECT without GROUP BY</td><td>Add OVER() to make it a window function</td></tr>
+    <tr><td>PARTITION BY state in OVER()</td><td class="state-no">Returns each state's own average — not national</td><td>Use empty OVER() for the global average</td></tr>
+    <tr><td>Filter too early (in StateSummary CTE)</td><td class="state-no">Filters before national avg is computed — wrong benchmark</td><td>Filter only in the final query after OVER()</td></tr>
+    <tr><td>Using ex_transactions instead of transactions</td><td class="state-no">Wrong dataset — Module 8 uses non-ex_ tables</td><td>Use: transactions, orders, customers, locations_01</td></tr>
+    <tr><td>Joining on wrong column names</td><td class="state-no">Case sensitivity: Order_ID vs order_id</td><td>Check data dictionary — note mixed case column names in transactions table</td></tr>
   </table>
   <div class="hl warn" style="margin-top:4px;">
-    <p><strong style="color:#f59e0b;">⚠️ Table naming gotcha for Module 8:</strong><br>
-    Unlike Modules 6 and 7, Module 8 uses the <strong>original</strong> GlobalMart tables — no <code>ex_</code> prefix. Use <code>transactions</code>, <code>orders</code>, <code>customers</code>, <code>locations_01</code>. Running the query on <code>ex_transactions</code> will give different (wrong) results.</p>
+    <p><strong style="color:var(--amber);">⚠️ Table naming gotcha for Module 8:</strong><br>
+    Unlike Modules 6 and 7, Module 8 uses the <strong>original</strong> GlobalMart tables — no <code style="color:var(--code-col);font-family:var(--font-mono);">ex_</code> prefix. Use <code style="color:var(--code-col);font-family:var(--font-mono);">transactions</code>, <code style="color:var(--code-col);font-family:var(--font-mono);">orders</code>, <code style="color:var(--code-col);font-family:var(--font-mono);">customers</code>, <code style="color:var(--code-col);font-family:var(--font-mono);">locations_01</code>. Running the query on <code style="color:var(--code-col);font-family:var(--font-mono);">ex_transactions</code> will give different (wrong) results.</p>
   </div>
 </div>
 
 <!-- SLIDE 8: WRAP UP -->
-<div class="slide slide-section" style="text-align:center;align-items:center;">
-  <div class="section-tag">Summary</div>
+<div class="slide slide-section" data-title="Day 2 Complete" style="text-align:center;align-items:center;">
+  <div class="section-tag" style="justify-content:center;">Summary</div>
   <h2>Day 2 Complete 🎓</h2>
   <div class="three-col" style="margin-top:20px;max-width:900px;text-align:left;">
     <div class="card">
       <h4>Module 8 — Key Lesson</h4>
-      <p>Empty <code>OVER()</code> = one window over ALL rows = a global benchmark on every row. Filter in outer query.</p>
-      <p style="margin-top:8px;color:#4ade80;font-size:13px;">Result: 13 states above national average. Washington is NOT one of them.</p>
+      <p>Empty <code style="color:var(--code-col);font-family:var(--font-mono);">OVER()</code> = one window over ALL rows = a global benchmark on every row. Filter in outer query.</p>
+      <p style="margin-top:8px;color:var(--emerald);font-size:13px;">Result: 13 states above national average. Washington is NOT one of them.</p>
     </div>
     <div class="card">
       <h4>Day 2 Window Functions Mastery</h4>
@@ -374,23 +586,83 @@ AvgSales <span class="kw">AS</span> (
 </div>
 
 </div><!-- /deck -->
+
+<div class="toc-overlay" id="tocOverlay">
+  <div class="toc-title">All Slides</div>
+  <div class="toc-grid" id="tocGrid"></div>
+  <div class="toc-hint">← → navigate · G toggle grid · Esc close · swipe on touch</div>
+</div>
+
 <script>
-  let current = 0;
-  const slides = document.querySelectorAll('.slide');
+  const slides = Array.from(document.querySelectorAll('.slide'));
   const counter = document.getElementById('counter');
-  const total = slides.length;
+  const rail = document.getElementById('rail');
+  const tocOverlay = document.getElementById('tocOverlay');
+  const tocGrid = document.getElementById('tocGrid');
+  let current = 0;
+
+  slides.forEach((s, i) => {
+    const seg = document.createElement('button');
+    seg.setAttribute('aria-label', 'Go to slide ' + (i + 1) + ': ' + s.dataset.title);
+    seg.dataset.title = (i + 1) + '. ' + s.dataset.title;
+    seg.addEventListener('click', () => showSlide(i));
+    rail.appendChild(seg);
+
+    const card = document.createElement('button');
+    card.className = 'toc-card';
+    card.innerHTML = '<div class="idx">' + String(i + 1).padStart(2, '0') + '</div><div class="ttl">' + s.dataset.title + '</div>';
+    card.addEventListener('click', () => { showSlide(i); closeToc(); });
+    tocGrid.appendChild(card);
+  });
+  const railSegs = Array.from(rail.children);
+
   function showSlide(n) {
     slides[current].classList.remove('active');
-    current = (n + total) % total;
+    current = (n + slides.length) % slides.length;
     slides[current].classList.add('active');
-    counter.textContent = (current + 1) + ' / ' + total;
+    slides[current].scrollTop = 0;
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+    railSegs.forEach((seg, i) => {
+      seg.classList.toggle('done', i < current);
+      seg.classList.toggle('current', i === current);
+    });
   }
   function changeSlide(dir) { showSlide(current + dir); }
+  showSlide(0);
+
+  function openToc() { tocOverlay.classList.add('open'); }
+  function closeToc() { tocOverlay.classList.remove('open'); }
+  document.getElementById('tocBtn').addEventListener('click', () => { tocOverlay.classList.contains('open') ? closeToc() : openToc(); });
+  tocOverlay.addEventListener('click', e => { if (e.target === tocOverlay) closeToc(); });
+
   document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+    if (e.key === 'Escape') { closeToc(); return; }
+    if (e.key.toLowerCase() === 'g') { tocOverlay.classList.contains('open') ? closeToc() : openToc(); return; }
+    if (tocOverlay.classList.contains('open')) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp') { e.preventDefault(); changeSlide(-1); }
   });
-  counter.textContent = '1 / ' + total;
+
+  let touchX = null;
+  document.addEventListener('touchstart', e => { touchX = e.changedTouches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 60) changeSlide(dx < 0 ? 1 : -1);
+    touchX = null;
+  });
+
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pre = btn.closest('.code-block').querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1400);
+      });
+    });
+  });
 </script>
 </body>
 </html>
