@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beyond the Calendar — Activities & Impact</title>
+<style>
+  :root{
+    --bg:#0f1216; --panel:#171b21; --panel2:#1d222a; --border:#2a313c;
+    --text:#e7e9ec; --muted:#9aa3af; --accent:#e8a33d; --accent2:#5b9bd5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height:1.6; padding:0 20px 80px;
+  }
+  .wrap{max-width:980px;margin:0 auto;}
+  header{padding:56px 0 34px; text-align:center;}
+  .kicker{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;}
+  h1{font-size:clamp(28px,4vw,42px);font-weight:700;margin-bottom:12px;letter-spacing:-0.5px;}
+  header p{color:var(--muted);font-size:15.5px;max-width:640px;margin:0 auto;}
+
+  .stats{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin:34px 0 8px;}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 22px;text-align:center;min-width:120px;}
+  .stat .n{font-size:26px;font-weight:800;color:var(--accent);}
+  .stat .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+  h2.group{
+    font-size:12px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+    color:var(--accent2); margin:56px 0 18px; display:flex; align-items:center; gap:12px;
+  }
+  h2.group::after{content:"";flex:1;height:1px;background:var(--border);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:20px 22px; display:flex; flex-direction:column; gap:10px;
+  }
+  .card .top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .card h3{font-size:16px; font-weight:700;}
+  .tag{
+    font-size:10.5px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase;
+    padding:3px 9px; border-radius:999px; white-space:nowrap; flex-shrink:0;
+  }
+  .tag.game{background:#3d2f16;color:#f0b352;}
+  .tag.tool{background:#16303d;color:#6fc3f0;}
+  .tag.narration{background:#2a1d3a;color:#c79bf0;}
+  .tag.roleplay{background:#1d3a26;color:#7fd99a;}
+
+  .card .who{font-size:11.5px;color:var(--muted);}
+  .card .desc{font-size:13.5px;color:#c7ccd3;}
+  .card .impact{
+    margin-top:auto; padding-top:10px; border-top:1px dashed var(--border);
+    font-size:12.5px; color:var(--accent);
+  }
+  .card .impact b{color:#f4c47a;}
+
+  .story{
+    background:var(--panel2); border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:10px; padding:18px 22px; font-size:14px; color:#d3d7dc; margin-top:18px;
+  }
+  .story b{color:var(--text);}
+
+  footer{text-align:center;color:#5a6577;font-size:11.5px;letter-spacing:1px;text-transform:uppercase;margin-top:70px;}
+
+  @media (max-width:600px){ .grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">Tredence · Data Engineering Bootcamp · Chennai 2026</div>
+    <h1>Beyond the Calendar</h1>
+    <p>Every session on the master calendar was ILT or a graded HOL. Everything below is what got built <em>on top of</em> that — games, tools, roleplay, and narration used to make concepts stick and to close the batch out. All AI-assisted, all built for this specific room of 25.</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n">13</div><div class="l">Extra Artefacts</div></div>
+    <div class="stat"><div class="n">4</div><div class="l">Facilitated Activities</div></div>
+    <div class="stat"><div class="n">4</div><div class="l">Games / Quizzes</div></div>
+    <div class="stat"><div class="n">2</div><div class="l">Narrative Pieces</div></div>
+  </div>
+
+  <h2 class="group">Facilitated Activities (planned, in-room)</h2>
+  <div class="grid">
+
+    <div class="card">
+      <div class="top"><h3>Design Your Own Architecture</h3><span class="tag roleplay">Roleplay</span></div>
+      <div class="who">Day 8 · individual research + pitch, facilitator guide included</div>
+      <div class="desc">Each learner gets a brand-new company/problem statement they've never seen, researches the real platform services that fit, designs their own architecture solo, and pitches it to the whole room — no shared design this time.</div>
+      <div class="impact"><b>Impact:</b> turned into a 45-minute unscheduled argument between three engineers defending three different designs for the same brief — the exercise worked so well it broke its own clock.</div>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>Data Detectives</h3><span class="tag roleplay">Investigation</span></div>
+      <div class="who">Day 11 · "The Case of the Impossible Numbers" + facilitator guide</div>
+      <div class="desc">Real datasets from unfamiliar industries, each with something quietly broken — an impossible number, a backwards leaderboard. Learners research the industry itself until they can explain and defend a theory out loud.</div>
+      <div class="impact"><b>Impact:</b> shifted the room from "find the SQL bug" to genuine domain reasoning — data quality taught as detective work, not a checklist.</div>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>Capstone Star Schema Design</h3><span class="tag tool">Capstone</span></div>
+      <div class="who">Day 6 · end-of-day, no code, no Databricks</div>
+      <div class="desc">Just a blank textarea and the day's own concepts — grain, dimension design, SCD1 vs SCD2, additive/semi-additive measures — applied cold to a schema nobody has seen before.</div>
+      <div class="impact"><b>Impact:</b> a same-day proof point that modelling concepts actually transferred, not just survived to the exam.</div>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>Cost Estimation + Client Interview Roleplay</h3><span class="tag roleplay">Roleplay</span></div>
+      <div class="who">Last day · two-part closing exercise</div>
+      <div class="desc">Part 1: All-Purpose Compute vs. Serverless, real numbers, no hand-waving. Part 2: a live 2-vs-2 client interview panel on 5 topics picked specifically because they're what actually comes up in a real interview or client engagement.</div>
+      <div class="impact"><b>Impact:</b> closed the batch by rehearsing the actual conversations they'll have in their first client meeting, not just another Q&A.</div>
+    </div>
+
+  </div>
+
+  <h2 class="group">Games & Quizzes</h2>
+  <div class="grid">
+
+    <div class="card">
+      <div class="top"><h3>Databricks + Batch Trivia — The Final Round</h3><span class="tag game">Quiz</span></div>
+      <div class="who">Last day · Wayground-style live quiz</div>
+      <div class="desc">20 real Databricks questions, 15 questions only this specific batch could answer (running-joke callbacks from six weeks in the room), and 5 closing riddles.</div>
+      <div class="impact"><b>Impact:</b> full-room energy on the last day, and a quiz half the class could only answer because they'd actually lived the batch.</div>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>SQL Quest — GlobalMart SQL Challenge</h3><span class="tag game">Story game</span></div>
+      <div class="who">SQL & Python Day 1</div>
+      <div class="desc">"Sarah just joined GlobalMart as a Data Analyst intern. Her manager dropped 4 tasks before she even logged in." A story-driven SQL challenge instead of a plain exercise sheet, on Day 1 of the entire program.</div>
+      <div class="impact"><b>Impact:</b> gave total SQL beginners a narrative hook on day one instead of a blank query editor.</div>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>Type the Code</h3><span class="tag game">Typing drill</span></div>
+      <div class="who">SQL & Python Day 7</div>
+      <div class="desc">Learners type the actual SQL/Python syntax from memory; answers are checked token by token instead of just eyeballed.</div>
+      <div class="impact"><b>Impact:</b> turned syntax recall into a self-checked drill instead of a "does this look right" pass.</div>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>Imagine It · Translate It</h3><span class="tag game">Pipeline drill</span></div>
+      <div class="who">SQL & Python Day 7 — Pipeline Activity</div>
+      <div class="desc">A scored activity that has learners imagine a pipeline requirement in plain English, then translate it into working SQL/Python.</div>
+      <div class="impact"><b>Impact:</b> practiced the actual skill of going from business ask to code, not just code-to-output.</div>
+    </div>
+
+  </div>
+
+  <h2 class="group">Reusable Tools & Reference Builds</h2>
+  <div class="grid">
+
+    <div class="card">
+      <div class="top"><h3>SQL Playground — 30 Questions</h3><span class="tag tool">Practice tool</span></div>
+      <div class="who">SQL & Python · standing resource</div>
+      <div class="desc">A 30-question self-serve SQL practice set, usable independent of any single day's lesson.</div>
+      <div class="impact"><b>Impact:</b> gave learners an always-available bank to self-test against instead of only class-time practice.</div>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>SQL Masterclass — Full Revision (Day 1–4)</h3><span class="tag tool">Revision deck</span></div>
+      <div class="who">SQL & Python · "no SSMS needed, featuring your batchmates doing questionable things"</div>
+      <div class="desc">A full revision pass over the first four days' SQL, rebuilt with different examples than the original lessons so it isn't just re-reading the same slides.</div>
+      <div class="impact"><b>Impact:</b> gave a genuine spaced-repetition pass instead of a re-read, with in-jokes that kept a revision session from feeling like a chore.</div>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>End-to-End Orchestration Walkthrough</h3><span class="tag tool">Reference build</span></div>
+      <div class="who">Day 11 · one file, Bronze to Gold, start to finish</div>
+      <div class="desc">Every step in order — ADLS folder, mount check, all Bronze/Silver notebooks cell by cell, the Gold join + MERGE, the real Workflow build, the idempotent proof-run, the incremental second load. Nothing skipped or assumed.</div>
+      <div class="impact"><b>Impact:</b> a single ground-truth reference the batch (and future cohorts) can replay end to end without hunting across a dozen notebooks.</div>
+    </div>
+
+    <div class="card">
+      <div class="top"><h3>Orchestrate the GlobalMart Pipeline</h3><span class="tag tool">Hands-on build</span></div>
+      <div class="who">Day 11 · 7-task Bronze → Silver → Gold pipeline</div>
+      <div class="desc">Learners run a 7-task pipeline by hand first to understand what each notebook does, then wire the same thing into a real Databricks Workflow so the next batch of data runs itself.</div>
+      <div class="impact"><b>Impact:</b> the "aha" order — manual before automated — so orchestration lands as removing repeated work they've already felt, not an abstract feature.</div>
+    </div>
+
+  </div>
+
+  <h2 class="group">Concept Narration</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="top"><h3>The Legend of the Chennai Batch</h3><span class="tag narration">Narrative</span></div>
+      <div class="who">SQL & Python · standing batch resource</div>
+      <div class="desc">"A true* story of 25 brilliant, chaotic, occasionally napping data engineers who came to learn SQL and accidentally discovered themselves." A narrative wrap piece written about and for this specific batch.</div>
+      <div class="impact"><b>Impact:</b> gave the batch a shared story of itself — something a slide deck can't do, and something they'll actually remember six months from now.</div>
+    </div>
+    <div class="card">
+      <div class="top"><h3>What I Saw From the Front of the Room</h3><span class="tag narration">Narrative</span></div>
+      <div class="who">Databricks track · personal batch-wrap note</div>
+      <div class="desc">A trainer's-eye account of six weeks with this room — who solved problems quietly, who argued the loudest, what actually landed versus what was scheduled to land.</div>
+      <div class="impact"><b>Impact:</b> the qualitative read that a feedback form never captures — engagement, group dynamics, and which activities actually broke through, in the instructor's own words.</div>
+    </div>
+  </div>
+
+  <h2 class="group">The Clearest Evidence It Worked</h2>
+  <div class="story">
+    The <b>Design Your Own Architecture</b> activity on Day 8 was built to run as a tidy three-minute pitch and one-minute Q&A per learner. Three people drew the same problem statement — QuickCart, a food-delivery scenario — and produced three genuinely different architectures. Nobody would give an inch. What was supposed to be a few minutes turned into a <b>45-minute unscheduled debate</b> about whose design was actually right, and the day's schedule never recovered. That's not a failure of planning — it's the strongest signal in six weeks that the activity made them care about the answer, not just complete the exercise.
+  </div>
+
+  <footer>Tredence &middot; Data Engineering Training &middot; Prepared by Virinchy</footer>
+
+</div>
+</body>
+</html>

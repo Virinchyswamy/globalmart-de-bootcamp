@@ -5,454 +5,876 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 6 – Tracking Customer Purchase Patterns</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;--orange:#fb923c}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
-.nav-left{display:flex;align-items:center;gap:10px}
-.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
-.nav-title{font-size:12px;color:var(--muted);font-weight:500}
-.nav-right{display:flex;align-items:center;gap:8px}
-.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
-.nav-btn:hover{background:var(--a);color:#fff;border-color:var(--a)}
-.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
-.deck{padding-top:52px;height:100vh}
-.slide{display:none;height:calc(100vh - 52px);padding:28px 52px;flex-direction:column;justify-content:flex-start;gap:13px;overflow:hidden;animation:fadein .25s ease}
+:root{
+  --void:#08090c;--surface:#111318;--surface-2:#181b22;--line:#242832;--line-lit:#33394a;
+  --ink:#eef1f6;--ink-dim:#a8adba;--ink-faint:#6b7180;
+  --primary:#22d3ee;--secondary:#e879f9;--grad:linear-gradient(135deg,#22d3ee,#e879f9);
+  --green:#22c55e;--red:#ef4444;--violet:#8b5cf6;--amber:#f59e0b;
+  --code-kw:#ff8fab;--code-fn:#ffcf7a;--code-str:#8be9c5;--code-cm:#6b7180;--code-col:#7dd3fc;--code-tbl:#d3b3ff;
+  --font-display:'Sora',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+html,body{height:100%}
+body{font-family:var(--font-body);background:var(--void);color:var(--ink);overflow:hidden}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--line-lit);border-radius:10px}
+
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(8,9,12,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;z-index:200}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:26px;height:26px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#08090c}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-day{font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--primary);text-transform:uppercase}
+.brand-title{font-size:12px;color:var(--ink-dim);font-weight:500}
+.tools{display:flex;align-items:center;gap:10px}
+.counter{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);min-width:48px;text-align:center}
+.tbtn{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:12.5px;font-weight:600;transition:all .15s var(--ease)}
+.tbtn:hover{background:var(--primary);color:#08090c;border-color:var(--primary)}
+.tbtn.icon{padding:6px 10px}
+
+.rail{position:fixed;top:56px;left:0;right:0;height:4px;background:var(--surface);z-index:190;display:flex;gap:2px;padding:0 2px}
+.rail-seg{flex:1;background:var(--line);border-radius:2px;cursor:pointer;transition:background .2s}
+.rail-seg.done{background:var(--grad)}
+.rail-seg:hover{background:var(--line-lit)}
+
+.deck{padding-top:60px;height:100vh}
+.slide{display:none;height:calc(100vh - 60px);padding:26px 52px 22px;flex-direction:column;justify-content:flex-start;gap:12px;overflow:hidden;animation:fadein .3s var(--ease)}
 .slide.active{display:flex}
-@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-h1{font-size:2.1rem;font-weight:900;color:var(--a);line-height:1.1}
-h2{font-size:1.5rem;font-weight:800;color:var(--a);line-height:1.2}
-h3{font-size:.95rem;font-weight:700;color:var(--a2);margin-bottom:6px}
-p,li{font-size:.86rem;color:#c9d1d9;line-height:1.7}
-ul{padding-left:18px}li{margin-bottom:4px}
-.sub{font-size:.86rem;color:var(--muted);margin-top:4px}
-.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:13px 15px}
-.hl{background:rgba(59,130,246,.06);border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:10px 14px}
-.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
-.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
-.hl.yl{background:rgba(245,158,11,.06);border-color:var(--yellow)}
-.hl.pu{background:rgba(167,139,250,.06);border-color:var(--purple)}
-pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-family:'JetBrains Mono',monospace;font-size:.77rem;line-height:1.8;overflow-x:auto;white-space:pre}
-code{font-family:'JetBrains Mono',monospace;font-size:.79rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
-.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.nm{color:#ffa657}.var{color:#79c0ff}
-table{width:100%;border-collapse:collapse;font-size:.81rem}
-th{background:rgba(59,130,246,.12);color:var(--a2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;letter-spacing:.5px}
-td{padding:6px 10px;border-bottom:1px solid var(--border);color:#c9d1d9}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.slide-cover{justify-content:center;align-items:flex-start;position:relative;background:
+  radial-gradient(circle at 15% 20%,rgba(34,211,238,.14),transparent 45%),
+  radial-gradient(circle at 85% 75%,rgba(232,121,249,.13),transparent 45%)}
+
+h1{font-family:var(--font-display);font-size:2.3rem;font-weight:900;color:var(--ink);line-height:1.08;letter-spacing:-.5px}
+h1 .accent{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-family:var(--font-display);font-size:1.45rem;font-weight:800;color:var(--ink);line-height:1.2}
+h3{font-family:var(--font-display);font-size:.92rem;font-weight:700;color:var(--primary);margin-bottom:5px}
+p,li{font-size:.86rem;color:var(--ink-dim);line-height:1.62}
+ul{padding-left:18px}li{margin-bottom:3px}
+.sub{font-size:.89rem;color:var(--ink-dim);margin-top:4px;max-width:700px}
+.eyebrow{font-family:var(--font-mono);font-size:.66rem;font-weight:700;letter-spacing:2.5px;color:var(--secondary);text-transform:uppercase;margin-bottom:6px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.card:hover{border-color:var(--line-lit)}
+
+.highlight-box{background:rgba(34,211,238,.06);border-left:3px solid var(--primary);border-radius:0 10px 10px 0;padding:10px 14px}
+.highlight-box.warn{background:rgba(239,68,68,.06);border-color:var(--red)}
+.highlight-box.success{background:rgba(34,197,94,.06);border-color:var(--green)}
+.highlight-box.violet{background:rgba(139,92,246,.07);border-color:var(--violet)}
+.highlight-box.amber{background:rgba(245,158,11,.07);border-color:var(--amber)}
+
+.dialogue{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 15px;display:flex;flex-direction:column;gap:8px}
+.dline{font-size:.83rem;line-height:1.55;color:var(--ink-dim)}
+.dline strong{color:var(--primary)}
+.dline.b strong{color:var(--secondary)}
+
+.code-block{background:#0a0b10;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.code-head{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.code-head span{font-family:var(--font-mono);font-size:.64rem;color:var(--ink-faint);letter-spacing:1px;text-transform:uppercase}
+.copy-btn{background:transparent;border:1px solid var(--line);color:var(--ink-faint);padding:3px 10px;border-radius:6px;font-size:.64rem;cursor:pointer;font-family:var(--font-mono)}
+.copy-btn:hover{color:var(--primary);border-color:var(--primary)}
+pre{padding:10px 14px;font-family:var(--font-mono);font-size:.71rem;line-height:1.68;overflow-x:auto;white-space:pre;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.76rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--code-col)}
+.kw{color:var(--code-kw);font-weight:700}.fn{color:var(--code-fn)}.str{color:var(--code-str)}.cm{color:var(--code-cm);font-style:italic}.col,.var,.nm{color:var(--code-col)}
+
+/* ── LINE-BY-LINE EXPLAIN ── */
+.line-explain-toggle{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.35);color:var(--violet);padding:5px 14px;border-radius:8px;cursor:pointer;font-size:.73rem;font-weight:700;margin-top:1px;font-family:var(--font-body)}
+.line-explain-toggle:hover{background:rgba(139,92,246,.2)}
+.line-explain{display:none;margin-top:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 13px;max-height:230px;overflow-y:auto;flex-direction:column;gap:6px}
+.line-explain.show{display:flex}
+.line-row{display:flex;gap:9px;align-items:flex-start;font-size:.72rem}
+.line-code{font-family:var(--font-mono);background:rgba(255,255,255,.07);color:var(--code-col);padding:2px 7px;border-radius:5px;white-space:nowrap;flex-shrink:0;font-size:.68rem;max-width:38%;overflow-x:auto}
+.line-desc{color:var(--ink-dim);line-height:1.5;padding-top:1px}
+
+table{width:100%;border-collapse:collapse;font-size:.79rem}
+th{background:rgba(34,211,238,.1);color:var(--primary);padding:5px 9px;text-align:left;border-bottom:2px solid var(--line);font-size:.7rem;letter-spacing:.4px}
+td{padding:4px 9px;border-bottom:1px solid var(--line);color:var(--ink-dim)}
 tr:hover td{background:rgba(255,255,255,.02)}
 .ok{color:var(--green);font-weight:600}.no{color:var(--red)}
-.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:11px 15px}
-.quiz p{font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:9px}
-.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:5px 15px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.77rem;font-weight:700}
-.ans{display:none;margin-top:9px;padding:9px 12px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.82rem;color:#86efac;line-height:1.7}
-.num{display:inline-flex;align-items:center;justify-content:center;background:var(--a);color:#fff;width:22px;height:22px;border-radius:50%;font-size:.7rem;font-weight:800;flex-shrink:0}
-.step{display:flex;align-items:flex-start;gap:9px;margin-bottom:7px}
-.step p{margin:0;font-size:.83rem;color:#c9d1d9;padding-top:2px}
-.imp{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:#fca5a5}
-.tip{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:#86efac}
-.note{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:#93c5fd}
-.badge-row{display:flex;gap:7px;flex-wrap:wrap}
-.badge{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:3px 11px;font-size:.74rem;font-weight:600;color:var(--muted)}
-.sql-equiv{font-size:.72rem;color:var(--muted);font-style:italic;margin-top:2px}
+
+/* ── SQL APPROACH block (bigger than a preview — has a "why" paragraph) ── */
+.sql-approach{background:rgba(125,211,252,.05);border:1px solid rgba(125,211,252,.25);border-radius:12px;overflow:hidden}
+.sql-approach-head{display:flex;align-items:center;gap:9px;padding:9px 16px;background:rgba(125,211,252,.08);border-bottom:1px solid rgba(125,211,252,.2)}
+.sql-approach-badge{font-family:var(--font-mono);font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;background:#7dd3fc;color:#08090c;padding:2px 10px;border-radius:100px}
+.sql-approach-title{font-size:.84rem;font-weight:700;color:var(--code-col)}
+.sql-approach-why{padding:11px 16px 0;font-size:.8rem;color:var(--ink-dim);line-height:1.6}
+.sql-approach pre{color:#cfeeff}
+
+.bridge-arrow{display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-mono);font-size:.7rem;color:var(--ink-faint);padding:0}
+.bridge-arrow .line{flex:1;height:1px;background:var(--line-lit)}
+
+/* ── PYTHON STEPS walkthrough ── */
+.py-steps{display:flex;flex-direction:column;gap:9px}
+.py-step{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.py-step-head{display:flex;align-items:center;gap:10px;padding:9px 15px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.py-step-num{width:22px;height:22px;border-radius:50%;background:var(--grad);color:#08090c;font-weight:900;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.py-step-title{font-size:.82rem;font-weight:700;color:var(--ink)}
+.py-step-body{padding:10px 15px}
+.py-step-explain{font-size:.78rem;color:var(--ink-dim);margin-bottom:8px;line-height:1.55}
+.py-step pre{padding:9px 13px;font-size:.72rem}
+
+.quiz-box{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.22);border-radius:12px;padding:11px 15px}
+.quiz-box p.qtext{font-size:.83rem;font-weight:600;color:var(--ink);margin:0 0 8px}
+.reveal-btn{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:var(--green);padding:4px 15px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:.75rem;font-weight:700}
+.reveal-btn:hover{background:rgba(34,197,94,.25)}
+.quiz-answer{display:none;margin-top:9px;padding:9px 12px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.79rem;color:#8ee6a8;line-height:1.65}
+
+.checkpoint-header{background:rgba(232,121,249,.08);border:1px solid rgba(232,121,249,.28);border-radius:12px;padding:10px 17px;display:flex;align-items:center;gap:12px}
+.cp-badge{font-size:.62rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--secondary);color:#08090c;padding:3px 10px;border-radius:100px}
+.cp-title{font-size:.96rem;font-weight:800;color:var(--ink)}
+.cp-sub{font-size:.76rem;color:var(--ink-faint);margin-top:1px}
+.mcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mcq-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.mcq-q{font-size:.81rem;font-weight:700;color:var(--ink);line-height:1.5}
+.mcq-q code{font-size:.76rem}
+.opts{display:flex;flex-direction:column;gap:5px}
+.opt{display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);cursor:pointer;transition:all .15s;font-size:.76rem;color:var(--ink-dim);background:transparent;font-family:var(--font-body);text-align:left;width:100%}
+.opt:hover:not(.disabled){background:rgba(255,255,255,.04);border-color:var(--line-lit)}
+.opt.correct{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.5);color:var(--green);pointer-events:none}
+.opt.wrong{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);color:#f87171;pointer-events:none}
+.opt.disabled{pointer-events:none;opacity:.6}
+.opt-key{font-weight:800;font-size:.7rem;color:var(--ink-faint);min-width:15px;flex-shrink:0;margin-top:1px}
+.opt.correct .opt-key{color:var(--green)}
+.opt.wrong .opt-key{color:#f87171}
+.mcq-exp{display:none;margin-top:2px;padding:7px 10px;background:rgba(34,197,94,.07);border-left:2px solid var(--green);border-radius:0 6px 6px 0;font-size:.74rem;color:#8ee6a8;line-height:1.6}
+
+.pill-row{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:100px;padding:4px 13px;font-size:.73rem;font-weight:600;color:var(--ink-dim)}
+
+.toc-overlay{position:fixed;inset:0;background:rgba(8,9,12,.92);backdrop-filter:blur(10px);z-index:500;display:none;padding:80px 60px;overflow-y:auto}
+.toc-overlay.show{display:block}
+.toc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+.toc-head h2{font-size:1.4rem}
+.toc-close{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:16px}
+.toc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.toc-item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s}
+.toc-item:hover{border-color:var(--primary);transform:translateY(-2px)}
+.toc-item .tn{font-family:var(--font-mono);font-size:.68rem;color:var(--primary);font-weight:700}
+.toc-item .tt{font-size:.85rem;font-weight:700;color:var(--ink);margin-top:3px}
 </style>
 </head>
 <body>
-<nav>
-  <div class="nav-left">
-    <span class="nav-badge">Day 6 · Module 2</span>
-    <span class="nav-title">Tracking Customer Purchase Patterns — Window Operations</span>
-  </div>
-  <div class="nav-right">
-    <button class="nav-btn" onclick="go(-1)">← Prev</button>
-    <span class="nav-counter" id="ctr">1 / 9</span>
-    <button class="nav-btn" onclick="go(1)">Next →</button>
-  </div>
-</nav>
-<div class="deck">
 
-<!-- SLIDE 1: TITLE -->
-<div class="slide active">
-  <div>
-    <div class="tag">Day 6 · Module 2 · Window Operations</div>
-    <h1>Tracking Customer Purchase<br>Patterns for Targeted Marketing</h1>
-    <p class="sub">Build a campaign performance intelligence report — ranking, cumulative totals, and running averages using pandas window-style operations</p>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">6</div>
+    <div class="brand-text">
+      <span class="brand-day">Day 6 · HOL 1</span>
+      <span class="brand-title">Tracking Customer Purchase Patterns</span>
+    </div>
   </div>
-  <div class="two">
+  <div class="tools">
+    <button class="tbtn icon" onclick="toggleTOC()" title="Table of contents (G)">☰</button>
+    <span class="counter" id="ctr">1 / 17</span>
+    <button class="tbtn" onclick="go(-1)">← Prev</button>
+    <button class="tbtn" onclick="go(1)">Next →</button>
+  </div>
+</div>
+<div class="rail" id="rail"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active" data-title="Cover">
+  <div class="eyebrow">Day 6 · Hands-On Lab 1 · Marketing Intelligence</div>
+  <h1>Tracking Customer<br><span class="accent">Purchase Patterns</span> in pandas</h1>
+  <p class="sub">GlobalMart's Marketing team is spending across four channels with zero unified view of what's working. You'll build the performance engine — and every technique gets its SQL explanation first, then a full Python walkthrough, step by step.</p>
+  <div class="three-col" style="margin-top:16px;width:100%">
+    <div class="card"><h3>🔗 Merge & Aggregate</h3><p>Three tables, one campaign-level performance summary</p></div>
+    <div class="card"><h3>🏆 Window Ranking</h3><p>rank(), dense_rank-equivalent, row_number-equivalent — within each channel</p></div>
+    <div class="card"><h3>📈 Running Totals</h3><p>cumsum() and expanding().mean() across each campaign's lifecycle</p></div>
+  </div>
+  <div class="pill-row">
+    <div class="pill">merge()</div>
+    <div class="pill">groupby().agg()</div>
+    <div class="pill">assign() / np.where()</div>
+    <div class="pill">groupby().rank()</div>
+    <div class="pill">cumsum() / expanding()</div>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE BRIEF -->
+<div class="slide" data-title="The Brief">
+  <h2>The Brief</h2>
+  <div class="highlight-box">
+    <p><strong style="color:var(--primary)">Kriti Tiwari, VP of Marketing:</strong> "Raghul, we're spending across Email, Social Media, Paid Search, and more — and I genuinely cannot tell you which campaigns are converting and which are just burning budget. I need a report I can act on by Friday."</p>
+  </div>
+  <p class="sub">Raghul D has been pulled in as Marketing Analyst. Two deliverables, two critical questions:</p>
+  <div class="two-col">
     <div class="card">
-      <h3>🎯 The Mission</h3>
-      <p>GlobalMart spends budget across Email, Social Media, Paid Search — but has no unified view of which campaigns deliver results. You'll build a performance engine that answers: <em>which campaigns are top performers per channel?</em> and <em>what's the cumulative conversion trajectory?</em></p>
+      <h3>Question 1 — Who's winning, per channel?</h3>
+      <p style="font-size:.82rem">Rank every campaign against others in the <em>same</em> channel by total conversions — not globally. A top Email campaign and a top Paid Search campaign are winning different games.</p>
     </div>
     <div class="card">
-      <h3>📦 Three Datasets</h3>
-      <table style="margin-top:6px">
-        <tr><th>Table</th><th>Contains</th></tr>
-        <tr><td><code>ex_campaigns</code></td><td style="font-size:.78rem">Campaign metadata — channel, type, budget, dates</td></tr>
-        <tr><td><code>ex_channel</code></td><td style="font-size:.78rem">Channel name lookup</td></tr>
-        <tr><td><code>ex_campaign_metrics</code></td><td style="font-size:.78rem">Daily impressions, clicks, conversions, bounces</td></tr>
+      <h3>Question 2 — What's the momentum?</h3>
+      <p style="font-size:.82rem">For each campaign, track conversions accumulating day by day, and how the average click volume evolves as the campaign runs.</p>
+    </div>
+  </div>
+  <div class="highlight-box violet">
+    <p>💬 Robert, from Finance, has asked whether we can "just rank everything against everything, channels don't really matter." They do. Ranking Email against Paid Search is like ranking a marathon time against a 100m sprint.</p>
+  </div>
+</div>
+
+<!-- SLIDE 3: WINDOW OPERATIONS CONCEPT -->
+<div class="slide" data-title="Concept: Window Operations">
+  <h2>The Core Idea — Window Operations, in SQL and pandas</h2>
+  <p class="sub" style="margin-bottom:8px"><code>groupby().agg()</code> collapses every group into one row — you lose the detail. A <strong style="color:var(--ink)">window operation</strong> computes a value across rows <em>while keeping every row visible</em>. You already know this from SQL's <code>OVER (PARTITION BY ...)</code>. Today it gets a pandas name.</p>
+  <table>
+    <tr><th>Family</th><th>pandas</th><th>SQL equivalent</th><th>Behaviour</th></tr>
+    <tr><td>Ranking</td><td><code>rank(method='min')</code></td><td><code>RANK()</code></td><td>Ties share rank; next rank skips (1, 1, 3)</td></tr>
+    <tr><td>Ranking</td><td><code>rank(method='dense')</code></td><td><code>DENSE_RANK()</code></td><td>Ties share rank; no gap (1, 1, 2)</td></tr>
+    <tr><td>Ranking</td><td><code>rank(method='first')</code></td><td><code>ROW_NUMBER()</code></td><td>Unique sequential number; no ties</td></tr>
+    <tr><td>Running total</td><td><code>groupby().cumsum()</code></td><td><code>SUM() OVER (...)</code></td><td>Cumulative total per group</td></tr>
+    <tr><td>Running average</td><td><code>groupby().expanding().mean()</code></td><td><code>AVG() OVER (...)</code></td><td>Running average per group</td></tr>
+  </table>
+  <div class="highlight-box success">
+    <p>✅ The whole lab is really just this table, applied twice. <code>groupby().agg()</code> reduces N rows to 1. Everything in this table keeps all N rows and adds a new column of per-row context.</p>
+  </div>
+  <div class="highlight-box warn">
+    <p>⚠️ Always sort by the grouping key and date <em>before</em> <code>cumsum()</code> or <code>expanding()</code>. Unsorted data produces confidently wrong running totals — no error, just silently wrong numbers.</p>
+  </div>
+</div>
+
+<!-- SLIDE 4: CHECKPOINT 1 -->
+<div class="slide" data-title="Checkpoint 1">
+  <div class="checkpoint-header" style="margin-bottom:12px">
+    <span class="cp-badge">Checkpoint</span>
+    <div>
+      <div class="cp-title">Quick Quiz — Window Operations</div>
+      <div class="cp-sub">Click an option. Get instant feedback.</div>
+    </div>
+  </div>
+  <div class="mcq-grid" id="cp1">
+    <div class="mcq-card">
+      <p class="mcq-q">You want tied campaigns to share a rank with <strong>no gaps</strong> afterward (1, 1, 2 — not 1, 1, 3). Which method?</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-q1')"><span class="opt-key">A</span><code>method='rank'</code></button>
+        <button class="opt" onclick="mcq(this,'correct','exp-q1')"><span class="opt-key">B</span><code>method='dense'</code></button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q1')"><span class="opt-key">C</span><code>method='first'</code></button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q1')"><span class="opt-key">D</span><code>method='average'</code></button>
+      </div>
+      <div class="mcq-exp" id="exp-q1"><code>method='dense'</code> is SQL's <code>DENSE_RANK()</code> — ties share a rank, no rank value is ever skipped.</div>
+    </div>
+    <div class="mcq-card">
+      <p class="mcq-q">Which two statements are correct? (both count toward the answer)</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'correct','exp-q2')"><span class="opt-key">A</span><code>groupby().rank()</code> keeps every row, adds a rank column</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q2')"><span class="opt-key">B</span><code>groupby().agg()</code> is a window operation</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-q2')"><span class="opt-key">C</span><code>groupby().cumsum()</code> computes a running total without collapsing rows</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q2')"><span class="opt-key">D</span><code>expanding().mean()</code> reduces each group to one value</button>
+      </div>
+      <div class="mcq-exp" id="exp-q2">A and C. Both window operations preserve every row. <code>agg()</code> collapses to one row per group (the opposite behavior), and <code>expanding().mean()</code> also keeps every row — it does not reduce.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: DATA DICTIONARY -->
+<div class="slide" data-title="The Tables">
+  <h2>Three Tables You'll Merge</h2>
+  <p class="sub" style="margin-bottom:8px">This lab uses <code>ex_campaigns</code>, <code>ex_channel</code>, and <code>ex_campaign_metrics</code>. Every merge in this lab is one of these three joining another.</p>
+  <div class="three-col">
+    <div class="card">
+      <h3>ex_campaigns</h3>
+      <table>
+        <tr><td><code>campaign_id</code></td><td style="font-size:.74rem">PK</td></tr>
+        <tr><td><code>product_id</code></td><td style="font-size:.74rem">FK</td></tr>
+        <tr><td><code>channel_id</code></td><td style="font-size:.74rem">FK</td></tr>
+        <tr><td><code>start_date / end_date</code></td><td style="font-size:.74rem">dates</td></tr>
+        <tr><td><code>campaign_type</code></td><td style="font-size:.74rem">text</td></tr>
+        <tr><td><code>budget</code></td><td style="font-size:.74rem">numeric</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>ex_channel</h3>
+      <table>
+        <tr><td><code>channel_id</code></td><td style="font-size:.74rem">PK</td></tr>
+        <tr><td><code>channel_name</code></td><td style="font-size:.74rem">text</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>ex_campaign_metrics</h3>
+      <table>
+        <tr><td><code>metric_id</code></td><td style="font-size:.74rem">PK</td></tr>
+        <tr><td><code>campaign_id</code></td><td style="font-size:.74rem">FK</td></tr>
+        <tr><td><code>metric_date</code></td><td style="font-size:.74rem">date</td></tr>
+        <tr><td><code>impressions / clicks</code></td><td style="font-size:.74rem">numeric</td></tr>
+        <tr><td><code>conversions / bounces</code></td><td style="font-size:.74rem">numeric</td></tr>
       </table>
     </div>
   </div>
-  <div class="badge-row">
-    <div class="badge">groupby().rank(method='min')</div>
-    <div class="badge">rank(method='dense')</div>
-    <div class="badge">rank(method='first')</div>
-    <div class="badge">cumsum()</div>
-    <div class="badge">expanding().mean()</div>
-    <div class="badge">np.where()</div>
+  <div class="highlight-box">
+    <p>📌 One row per <em>day</em> per campaign in <code>ex_campaign_metrics</code>. Everything else is a lookup table. The whole first task is: collapse the daily rows into one row per campaign, then attach the lookups.</p>
   </div>
 </div>
 
-<!-- SLIDE 2: WINDOW OPS CONCEPT -->
-<div class="slide">
-  <h2>Window Operations — The Key Concept</h2>
-  <p class="sub" style="margin-bottom:12px"><strong>groupby().agg()</strong> collapses N rows → 1 per group. <strong>Window operations</strong> keep all rows and compute across them — just like SQL's <code>OVER(PARTITION BY ...)</code>.</p>
-  <div class="two">
-    <div>
-      <div class="card" style="margin-bottom:12px">
-        <h3 style="font-size:.84rem;margin-bottom:8px">pandas → SQL equivalents</h3>
-        <table>
-          <tr><th>pandas</th><th>SQL</th><th>Result</th></tr>
-          <tr><td><code>.rank(method='min')</code></td><td><code>RANK()</code></td><td style="font-size:.77rem">Ties share rank; next skips (1,1,3)</td></tr>
-          <tr><td><code>.rank(method='dense')</code></td><td><code>DENSE_RANK()</code></td><td style="font-size:.77rem">Ties share rank; no gap (1,1,2)</td></tr>
-          <tr><td><code>.rank(method='first')</code></td><td><code>ROW_NUMBER()</code></td><td style="font-size:.77rem">Unique sequential, no ties (1,2,3)</td></tr>
-          <tr><td><code>.cumsum()</code></td><td><code>SUM() OVER(...)</code></td><td style="font-size:.77rem">Running total per group</td></tr>
-          <tr><td><code>.expanding().mean()</code></td><td><code>AVG() OVER(...)</code></td><td style="font-size:.77rem">Running average per group</td></tr>
-        </table>
-      </div>
-      <div class="hl">
-        <h3 style="font-size:.84rem;margin-bottom:6px">The critical difference</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.77rem;"><span class="cm"># agg → collapses to 1 row per group</span>
-<span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'channel'</span>)[<span class="st">'conversions'</span>].<span class="fn">sum</span>()
-<span class="cm"># Email Marketing    → 5620 (one number)</span>
-
-<span class="cm"># rank → keeps all rows, adds a ranking column</span>
-<span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'channel'</span>)[<span class="st">'conversions'</span>].<span class="fn">rank</span>(<span class="var">ascending</span>=<span class="kw">False</span>)
-<span class="cm"># campaign 1 Email → rank 1
-# campaign 2 Email → rank 3
-# campaign 3 Social → rank 1   ← partitioned by channel</span></pre>
-      </div>
-    </div>
-    <div>
-      <div class="hl yl" style="margin-bottom:12px">
-        <h3 style="color:var(--yellow);font-size:.84rem;margin-bottom:8px">rank() methods — visual example</h3>
-        <table>
-          <tr><th>Campaign</th><th>Conversions</th><th>min (RANK)</th><th>dense</th><th>first (ROW_NUM)</th></tr>
-          <tr><td style="font-size:.77rem">Camp A</td><td style="font-size:.77rem">6745</td><td style="font-size:.77rem">1</td><td style="font-size:.77rem">1</td><td style="font-size:.77rem">1</td></tr>
-          <tr><td style="font-size:.77rem">Camp B</td><td style="font-size:.77rem">6745</td><td style="font-size:.77rem">1</td><td style="font-size:.77rem">1</td><td style="font-size:.77rem">2</td></tr>
-          <tr><td style="font-size:.77rem">Camp C</td><td style="font-size:.77rem">5620</td><td style="font-size:.77rem">3</td><td style="font-size:.77rem">2</td><td style="font-size:.77rem">3</td></tr>
-        </table>
-        <p style="font-size:.76rem;margin-top:6px;color:var(--muted)">Camp A and B tie → min skips to 3, dense goes to 2, first breaks the tie by position</p>
-      </div>
-      <div class="quiz">
-        <p>❓ You want to rank campaigns where two tied campaigns both get rank 1 and the next gets rank 2 (no gap). Which method?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <code>method='dense'</code> — equivalent to SQL's <code>DENSE_RANK()</code>. Ties share rank, no gap after them. <code>method='min'</code> (SQL RANK) would skip rank 2 and jump to 3.</div>
-      </div>
-    </div>
+<!-- SLIDE 6: TASK 1 INTRO -->
+<div class="slide" data-title="Task 1 – The Goal">
+  <h2>Task 1 — Campaign Performance Summary</h2>
+  <p class="sub">One row per campaign. Every metric totalled, every rate computed, every campaign ranked against its own channel.</p>
+  <table>
+    <tr><th>campaign_id</th><th>channel_name</th><th>budget</th><th>total_conversions</th><th>click_through_rate</th><th>channel_rank</th></tr>
+    <tr><td>1101</td><td>Email Marketing</td><td>12500.0</td><td>5620</td><td>6.71%</td><td>1</td></tr>
+    <tr><td>1102</td><td>Social Media</td><td>18500.0</td><td>6745</td><td>6.38%</td><td>2</td></tr>
+    <tr><td>1103</td><td>Search Advertising</td><td>9800.0</td><td>4210</td><td>7.45%</td><td>3</td></tr>
+  </table>
+  <div class="highlight-box amber">
+    <p>💡 Note the three campaigns above are all rank 1 within their <em>own</em> channel column shown here — that's the point. Every SQL query and every pandas step from here on is in service of exactly this table.</p>
   </div>
 </div>
 
-<!-- SLIDE 3: AGGREGATE DAILY METRICS -->
-<div class="slide">
-  <h2>Step 1 — Aggregate Daily Metrics Per Campaign</h2>
-  <p class="sub" style="margin-bottom:12px">ex_campaign_metrics has one row per campaign per day. We need to collapse to one row per campaign.</p>
-  <div class="two">
-    <pre><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
-<span class="kw">import</span> numpy <span class="kw">as</span> <span class="var">np</span>
+<!-- SLIDE 7: TASK 1 - SQL APPROACH -->
+<div class="slide" data-title="Task 1 – SQL Approach">
+  <h2>Task 1 — The SQL Approach First</h2>
+  <p class="sub" style="margin-bottom:8px">Before any pandas: what would this look like as one SQL query? Aggregate the daily metrics, join in the lookups, then rank within channel using a window function.</p>
+  <div class="sql-approach">
+    <div class="sql-approach-head"><span class="sql-approach-badge">SQL approach</span><span class="sql-approach-title">aggregate → join → window-rank</span></div>
+    <div class="sql-approach-why">A CTE first collapses the daily grain to one row per campaign (this is your <code>GROUP BY</code>). The outer query then joins in campaign metadata and channel name, computes rates inline, and ranks with three window functions — all partitioned by <code>channel_name</code>, all reading the same underlying total.</div>
+    <pre><span class="kw">WITH</span> campaign_agg <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> campaign_id,
+         <span class="fn">SUM</span>(impressions) <span class="kw">AS</span> total_impressions,
+         <span class="fn">SUM</span>(clicks)      <span class="kw">AS</span> total_clicks,
+         <span class="fn">SUM</span>(conversions) <span class="kw">AS</span> total_conversions,
+         <span class="fn">SUM</span>(bounces)     <span class="kw">AS</span> total_bounces,
+         <span class="fn">SUM</span>(conversions) * <span class="col">1.0</span> / <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> metric_date) <span class="kw">AS</span> avg_daily_conversions
+  <span class="kw">FROM</span> ex_campaign_metrics
+  <span class="kw">GROUP BY</span> campaign_id
+)
+<span class="kw">SELECT</span>
+  c.campaign_id, ch.channel_name, c.campaign_type, c.budget,
+  ca.total_impressions, ca.total_clicks, ca.total_conversions, ca.total_bounces,
+  <span class="fn">ROUND</span>(ca.avg_daily_conversions, <span class="col">2</span>) <span class="kw">AS</span> avg_daily_conversions,
+  <span class="fn">ROUND</span>(ca.total_clicks * <span class="col">100.0</span> / ca.total_impressions, <span class="col">2</span>) <span class="kw">AS</span> click_through_rate,
+  <span class="fn">ROUND</span>(ca.total_conversions * <span class="col">100.0</span> / ca.total_clicks, <span class="col">2</span>)   <span class="kw">AS</span> conversion_rate,
+  <span class="fn">DATEDIFF</span>(day, c.start_date, c.end_date) + <span class="col">1</span> <span class="kw">AS</span> campaign_duration_days,
+  <span class="fn">RANK</span>()       <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> ch.channel_name <span class="kw">ORDER BY</span> ca.total_conversions <span class="kw">DESC</span>) <span class="kw">AS</span> channel_rank,
+  <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> ch.channel_name <span class="kw">ORDER BY</span> ca.total_conversions <span class="kw">DESC</span>) <span class="kw">AS</span> dense_channel_rank,
+  <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> ch.channel_name <span class="kw">ORDER BY</span> ca.total_conversions <span class="kw">DESC</span>) <span class="kw">AS</span> row_num
+<span class="kw">FROM</span> campaign_agg ca
+<span class="kw">JOIN</span> ex_campaigns c  <span class="kw">ON</span> ca.campaign_id = c.campaign_id
+<span class="kw">JOIN</span> ex_channel ch    <span class="kw">ON</span> c.channel_id = ch.channel_id
+<span class="kw">ORDER BY</span> ch.channel_name, channel_rank;</pre>
+  </div>
+  <button class="line-explain-toggle" onclick="toggleLines('le1', this)">▸ Explain every line</button>
+  <div class="line-explain" id="le1">
+    <div class="line-row"><span class="line-code">WITH campaign_agg AS (</span><span class="line-desc">Starts a CTE — a named temporary result — so the daily-to-campaign aggregation can be built once and reused cleanly by the outer query.</span></div>
+    <div class="line-row"><span class="line-code">SELECT campaign_id,</span><span class="line-desc">The grouping key. Output will have exactly one row per campaign_id.</span></div>
+    <div class="line-row"><span class="line-code">SUM(impressions) AS total_impressions,</span><span class="line-desc">Adds up every daily impressions value belonging to that campaign.</span></div>
+    <div class="line-row"><span class="line-code">SUM(clicks) AS total_clicks,</span><span class="line-desc">Same idea, for clicks.</span></div>
+    <div class="line-row"><span class="line-code">SUM(conversions) AS total_conversions,</span><span class="line-desc">Same idea, for conversions — this becomes the ranking metric later in the query.</span></div>
+    <div class="line-row"><span class="line-code">SUM(bounces) AS total_bounces,</span><span class="line-desc">Same idea, for bounces.</span></div>
+    <div class="line-row"><span class="line-code">SUM(conversions) * 1.0 / COUNT(DISTINCT metric_date)</span><span class="line-desc">Total conversions divided by the number of distinct days recorded. <code>* 1.0</code> forces floating-point division so the result isn't truncated to a whole number.</span></div>
+    <div class="line-row"><span class="line-code">FROM ex_campaign_metrics</span><span class="line-desc">The daily-grain source table being collapsed down to one row per campaign.</span></div>
+    <div class="line-row"><span class="line-code">GROUP BY campaign_id</span><span class="line-desc">The clause that actually makes every SUM/COUNT above per-campaign instead of one grand total across all campaigns.</span></div>
+    <div class="line-row"><span class="line-code">) SELECT</span><span class="line-desc">Closes the CTE, then begins the outer query that reads from <code>campaign_agg</code> plus the two lookup tables.</span></div>
+    <div class="line-row"><span class="line-code">c.campaign_id, ch.channel_name, ...</span><span class="line-desc">Pulls campaign metadata and the human-readable channel name for the report.</span></div>
+    <div class="line-row"><span class="line-code">ca.total_impressions, ...</span><span class="line-desc">The four totals computed inside the CTE, passed straight through.</span></div>
+    <div class="line-row"><span class="line-code">ROUND(ca.avg_daily_conversions, 2)</span><span class="line-desc">Rounds to 2 decimal places for a clean, report-ready number.</span></div>
+    <div class="line-row"><span class="line-code">ROUND(... total_clicks * 100.0 / total_impressions, 2)</span><span class="line-desc">Clicks as a percentage of impressions. <code>* 100.0</code> both converts the ratio to a percentage and forces float math so it isn't rounded to 0.</span></div>
+    <div class="line-row"><span class="line-code">ROUND(... total_conversions * 100.0 / total_clicks, 2)</span><span class="line-desc">Same idea — conversions as a percentage of clicks.</span></div>
+    <div class="line-row"><span class="line-code">DATEDIFF(day, c.start_date, c.end_date) + 1</span><span class="line-desc">Days between start and end date. <code>+ 1</code> because both the start day and the end day count as active campaign days.</span></div>
+    <div class="line-row"><span class="line-code">RANK() OVER (PARTITION BY channel_name ORDER BY total_conversions DESC)</span><span class="line-desc">Ranks each campaign only against others in the <em>same</em> channel, best conversions first. Ties share a rank; the next rank then skips ahead.</span></div>
+    <div class="line-row"><span class="line-code">DENSE_RANK() OVER (...)</span><span class="line-desc">Identical partition and order, but ties never leave a gap in the rank sequence afterward.</span></div>
+    <div class="line-row"><span class="line-code">ROW_NUMBER() OVER (...)</span><span class="line-desc">Identical partition and order, but every row gets a unique number even when conversions tie exactly.</span></div>
+    <div class="line-row"><span class="line-code">FROM campaign_agg ca</span><span class="line-desc">The aggregated CTE becomes the base table for the outer query.</span></div>
+    <div class="line-row"><span class="line-code">JOIN ex_campaigns c ON ca.campaign_id = c.campaign_id</span><span class="line-desc">Attaches campaign metadata — dates, budget, type — by matching on campaign_id.</span></div>
+    <div class="line-row"><span class="line-code">JOIN ex_channel ch ON c.channel_id = ch.channel_id</span><span class="line-desc">Attaches the readable channel name by matching on channel_id.</span></div>
+    <div class="line-row"><span class="line-code">ORDER BY ch.channel_name, channel_rank;</span><span class="line-desc">Sorts the final report so each channel's campaigns sit together, best rank first within each.</span></div>
+  </div>
+</div>
 
-<span class="var">metrics</span>   = pd.<span class="fn">read_csv</span>(<span class="st">'ex_campaign_metrics.csv'</span>,
-                          <span class="var">parse_dates</span>=[<span class="st">'metric_date'</span>])
-<span class="var">campaigns</span> = pd.<span class="fn">read_csv</span>(<span class="st">'ex_campaigns.csv'</span>,
-                          <span class="var">parse_dates</span>=[<span class="st">'start_date'</span>,<span class="st">'end_date'</span>])
-<span class="var">channel</span>   = pd.<span class="fn">read_csv</span>(<span class="st">'ex_channel.csv'</span>)
-
-<span class="cm"># Aggregate daily → campaign totals</span>
-<span class="var">camp_agg</span> = (
+<!-- SLIDE 8: TASK 1 - PYTHON STEPS 1-3 -->
+<div class="slide" data-title="Task 1 – Python Steps 1–3">
+  <h2>Task 1 — Python, Step by Step (1 of 2)</h2>
+  <div class="bridge-arrow"><div class="line"></div><span>same query, now in pandas — one step per SQL clause</span><div class="line"></div></div>
+  <div class="py-steps">
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">1</div><div class="py-step-title">Load the three tables</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">Straightforward reads. Dates get parsed immediately — you'll need real <code>datetime</code> objects for <code>campaign_duration_days</code> later, not text that merely looks like a date.</p>
+        <div class="code-block"><pre><span class="var">campaigns</span> = <span class="var">pd</span>.<span class="fn">read_csv</span>(<span class="str">'ex_campaigns.csv'</span>, parse_dates=[<span class="str">'start_date'</span>, <span class="str">'end_date'</span>])
+<span class="var">channel</span>   = <span class="var">pd</span>.<span class="fn">read_csv</span>(<span class="str">'ex_channel.csv'</span>)
+<span class="var">metrics</span>   = <span class="var">pd</span>.<span class="fn">read_csv</span>(<span class="str">'ex_campaign_metrics.csv'</span>, parse_dates=[<span class="str">'metric_date'</span>])</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le2', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le2">
+          <div class="line-row"><span class="line-code">campaigns = pd.read_csv(..., parse_dates=[...])</span><span class="line-desc">Reads the campaign metadata file. <code>parse_dates</code> converts <code>start_date</code>/<code>end_date</code> straight into real datetime objects on load, not later — needed for the duration math in Step 4.</span></div>
+          <div class="line-row"><span class="line-code">channel = pd.read_csv('ex_channel.csv')</span><span class="line-desc">A small lookup table — no dates to parse, so a plain read.</span></div>
+          <div class="line-row"><span class="line-code">metrics = pd.read_csv(..., parse_dates=['metric_date'])</span><span class="line-desc">The daily metrics table. <code>metric_date</code> is parsed for the same reason — it drives <code>nunique()</code> in Step 2 and the sort/cumsum in Task 2.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">2</div><div class="py-step-title">Aggregate daily metrics per campaign — this is your GROUP BY</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">Exactly the CTE from the SQL approach. Named aggregation (<code>total_clicks=('clicks','sum')</code>) reads almost like the SQL <code>SUM(clicks) AS total_clicks</code> it replaces.</p>
+        <div class="code-block"><pre><span class="var">campaign_agg</span> = (
     <span class="var">metrics</span>
-    .<span class="fn">groupby</span>(<span class="st">'campaign_id'</span>)
+    .<span class="fn">groupby</span>(<span class="str">'campaign_id'</span>)
     .<span class="fn">agg</span>(
-        <span class="var">total_impressions</span> = (<span class="st">'impressions'</span>, <span class="st">'sum'</span>),
-        <span class="var">total_clicks</span>      = (<span class="st">'clicks'</span>,      <span class="st">'sum'</span>),
-        <span class="var">total_conversions</span> = (<span class="st">'conversions'</span>, <span class="st">'sum'</span>),
-        <span class="var">total_bounces</span>     = (<span class="st">'bounces'</span>,     <span class="st">'sum'</span>),
-        <span class="var">distinct_dates</span>    = (<span class="st">'metric_date'</span>, <span class="st">'nunique'</span>),
+        total_impressions = (<span class="str">'impressions'</span>, <span class="str">'sum'</span>),
+        total_clicks      = (<span class="str">'clicks'</span>,      <span class="str">'sum'</span>),
+        total_conversions = (<span class="str">'conversions'</span>, <span class="str">'sum'</span>),
+        total_bounces     = (<span class="str">'bounces'</span>,     <span class="str">'sum'</span>),
+        distinct_dates    = (<span class="str">'metric_date'</span>, <span class="str">'nunique'</span>),
     )
     .<span class="fn">reset_index</span>()
 )
-
-<span class="cm"># avg_daily_conversions = total / number of distinct days</span>
-<span class="var">camp_agg</span>[<span class="st">'avg_daily_conversions'</span>] = (
-    <span class="var">camp_agg</span>[<span class="st">'total_conversions'</span>] / <span class="var">camp_agg</span>[<span class="st">'distinct_dates'</span>]
-).<span class="fn">round</span>(<span class="nm">2</span>)
-<span class="var">camp_agg</span>.<span class="fn">drop</span>(<span class="var">columns</span>=<span class="st">'distinct_dates'</span>, <span class="var">inplace</span>=<span class="kw">True</span>)</pre>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Metrics dictionary</h3>
-        <table>
-          <tr><th>Column</th><th>Description</th></tr>
-          <tr><td><code>impressions</code></td><td style="font-size:.78rem">Times ad was shown</td></tr>
-          <tr><td><code>clicks</code></td><td style="font-size:.78rem">Times ad was clicked</td></tr>
-          <tr><td><code>conversions</code></td><td style="font-size:.78rem">Desired actions completed</td></tr>
-          <tr><td><code>bounces</code></td><td style="font-size:.78rem">Sessions where user left immediately</td></tr>
-          <tr><td><code>avg_daily_conv.</code></td><td style="font-size:.78rem">conversions / active days</td></tr>
-        </table>
+<span class="var">campaign_agg</span>[<span class="str">'avg_daily_conversions'</span>] = (
+    <span class="var">campaign_agg</span>[<span class="str">'total_conversions'</span>] / <span class="var">campaign_agg</span>[<span class="str">'distinct_dates'</span>]
+).<span class="fn">round</span>(<span class="col">2</span>)
+<span class="var">campaign_agg</span>.<span class="fn">drop</span>(columns=<span class="str">'distinct_dates'</span>, inplace=<span class="kw">True</span>)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le3', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le3">
+          <div class="line-row"><span class="line-code">metrics.groupby('campaign_id')</span><span class="line-desc">Buckets every daily row by which campaign it belongs to — the pandas equivalent of SQL's <code>GROUP BY campaign_id</code>.</span></div>
+          <div class="line-row"><span class="line-code">.agg(total_impressions=('impressions','sum'), ...)</span><span class="line-desc">Named aggregation: for each bucket, sum the named source column and label the result column. Reads almost exactly like <code>SUM(impressions) AS total_impressions</code>.</span></div>
+          <div class="line-row"><span class="line-code">distinct_dates=('metric_date','nunique')</span><span class="line-desc">Counts distinct dates per campaign — the pandas equivalent of <code>COUNT(DISTINCT metric_date)</code>, needed only to compute the average below.</span></div>
+          <div class="line-row"><span class="line-code">.reset_index()</span><span class="line-desc">groupby() makes campaign_id the index by default; this promotes it back to a normal column so later merges can use it as a join key.</span></div>
+          <div class="line-row"><span class="line-code">campaign_agg['avg_daily_conversions'] = (...) </span><span class="line-desc">A new column, computed the same way as the SQL CTE: total conversions divided by distinct days.</span></div>
+          <div class="line-row"><span class="line-code">.round(2)</span><span class="line-desc">Matches the SQL <code>ROUND(..., 2)</code> — two decimal places for the report.</span></div>
+          <div class="line-row"><span class="line-code">campaign_agg.drop(columns='distinct_dates', inplace=True)</span><span class="line-desc">The helper column has done its job (computing the average) and is no longer needed in the final output, so it's dropped. <code>inplace=True</code> modifies the DataFrame directly instead of returning a copy.</span></div>
+        </div>
       </div>
-      <div class="tip">
-        <strong>💡 nunique for distinct dates</strong> — Using <code>'nunique'</code> on <code>metric_date</code> gives the number of active days for the campaign, needed to compute the correct daily average.
-      </div>
-      <div class="quiz">
-        <p>❓ What's the difference between <code>'count'</code> and <code>'nunique'</code> as an aggfunc?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <code>'count'</code> counts all rows (including duplicates). <code>'nunique'</code> counts only distinct unique values. For dates: if a campaign ran for 10 days and each day has 3 records, count=30, nunique=10.</div>
+    </div>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">3</div><div class="py-step-title">Merge in campaign metadata and channel name — this is your JOIN</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">Two chained <code>.merge()</code> calls, same as two SQL <code>JOIN</code>s. <code>how='inner'</code> because every campaign here should have a matching channel by design.</p>
+        <div class="code-block"><pre><span class="var">df</span> = (
+    <span class="var">campaign_agg</span>
+    .<span class="fn">merge</span>(<span class="var">campaigns</span>, on=<span class="str">'campaign_id'</span>, how=<span class="str">'inner'</span>)
+    .<span class="fn">merge</span>(<span class="var">channel</span>,   on=<span class="str">'channel_id'</span>,  how=<span class="str">'inner'</span>)
+)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le4', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le4">
+          <div class="line-row"><span class="line-code">campaign_agg.merge(campaigns, on='campaign_id', how='inner')</span><span class="line-desc">First JOIN: attaches campaign metadata (dates, budget, type) by matching on the shared <code>campaign_id</code> column. <code>how='inner'</code> keeps only campaigns present in both.</span></div>
+          <div class="line-row"><span class="line-code">.merge(channel, on='channel_id', how='inner')</span><span class="line-desc">Second JOIN, chained directly onto the first: attaches the readable channel name by matching on <code>channel_id</code>, which just arrived from the previous merge.</span></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 4: MERGE + DERIVED METRICS -->
-<div class="slide">
-  <h2>Step 2 — Merge and Compute Derived Metrics</h2>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># Merge: campaign_agg + campaigns + channel</span>
-<span class="var">df</span> = (
-    <span class="var">camp_agg</span>
-    .<span class="fn">merge</span>(<span class="var">campaigns</span>, <span class="var">on</span>=<span class="st">'campaign_id'</span>, <span class="var">how</span>=<span class="st">'inner'</span>)
-    .<span class="fn">merge</span>(<span class="var">channel</span>,   <span class="var">on</span>=<span class="st">'channel_id'</span>,  <span class="var">how</span>=<span class="st">'inner'</span>)
-)
+<!-- SLIDE 9: TASK 1 - PYTHON STEPS 4-6 -->
+<div class="slide" data-title="Task 1 – Python Steps 4–6">
+  <h2>Task 1 — Python, Step by Step (2 of 2)</h2>
+  <div class="py-steps">
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">4</div><div class="py-step-title">Compute derived rates — the SELECT calculations</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain"><code>np.where()</code> is pandas' inline <code>CASE WHEN</code> — it guards against dividing by zero, exactly like a defensive SQL <code>CASE WHEN total_impressions &gt; 0 THEN ... ELSE 0 END</code> would.</p>
+        <div class="code-block"><pre><span class="var">df</span>[<span class="str">'campaign_duration_days'</span>] = (<span class="var">df</span>[<span class="str">'end_date'</span>] - <span class="var">df</span>[<span class="str">'start_date'</span>]).dt.days + <span class="col">1</span>
 
-<span class="cm"># Campaign duration: (end_date - start_date) + 1 day</span>
-<span class="var">df</span>[<span class="st">'campaign_duration_days'</span>] = (
-    <span class="var">df</span>[<span class="st">'end_date'</span>] - <span class="var">df</span>[<span class="st">'start_date'</span>]
-).dt.days + <span class="nm">1</span>
-
-<span class="cm"># CTR = clicks / impressions × 100
-# np.where: safe division (avoid ÷0 error)</span>
-<span class="var">df</span>[<span class="st">'click_through_rate'</span>] = np.<span class="fn">where</span>(
-    <span class="var">df</span>[<span class="st">'total_impressions'</span>] > <span class="nm">0</span>,
-    (<span class="var">df</span>[<span class="st">'total_clicks'</span>] / <span class="var">df</span>[<span class="st">'total_impressions'</span>] * <span class="nm">100</span>).<span class="fn">round</span>(<span class="nm">2</span>),
-    <span class="nm">0.0</span>
+<span class="var">df</span>[<span class="str">'click_through_rate'</span>] = <span class="var">np</span>.<span class="fn">where</span>(
+    <span class="var">df</span>[<span class="str">'total_impressions'</span>] > <span class="col">0</span>,
+    (<span class="var">df</span>[<span class="str">'total_clicks'</span>] / <span class="var">df</span>[<span class="str">'total_impressions'</span>] * <span class="col">100</span>).<span class="fn">round</span>(<span class="col">2</span>),
+    <span class="col">0.0</span>
 )
-<span class="var">df</span>[<span class="st">'click_through_rate'</span>] = <span class="var">df</span>[<span class="st">'click_through_rate'</span>].<span class="fn">apply</span>(<span class="kw">lambda</span> <span class="var">x</span>: <span class="st">f"</span><span class="var">{x}</span><span class="st">%"</span>)
+<span class="var">df</span>[<span class="str">'click_through_rate'</span>] = <span class="var">df</span>[<span class="str">'click_through_rate'</span>].<span class="fn">apply</span>(<span class="kw">lambda</span> <span class="var">x</span>: <span class="str">f"</span><span class="var">{x}</span><span class="str">%"</span>)
 
-<span class="cm"># CR = conversions / clicks × 100</span>
-<span class="var">df</span>[<span class="st">'conversion_rate'</span>] = np.<span class="fn">where</span>(
-    <span class="var">df</span>[<span class="st">'total_clicks'</span>] > <span class="nm">0</span>,
-    (<span class="var">df</span>[<span class="st">'total_conversions'</span>] / <span class="var">df</span>[<span class="st">'total_clicks'</span>] * <span class="nm">100</span>).<span class="fn">round</span>(<span class="nm">2</span>),
-    <span class="nm">0.0</span>
+<span class="var">df</span>[<span class="str">'conversion_rate'</span>] = <span class="var">np</span>.<span class="fn">where</span>(
+    <span class="var">df</span>[<span class="str">'total_clicks'</span>] > <span class="col">0</span>,
+    (<span class="var">df</span>[<span class="str">'total_conversions'</span>] / <span class="var">df</span>[<span class="str">'total_clicks'</span>] * <span class="col">100</span>).<span class="fn">round</span>(<span class="col">2</span>),
+    <span class="col">0.0</span>
 )
-<span class="var">df</span>[<span class="st">'conversion_rate'</span>] = <span class="var">df</span>[<span class="st">'conversion_rate'</span>].<span class="fn">apply</span>(<span class="kw">lambda</span> <span class="var">x</span>: <span class="st">f"</span><span class="var">{x}</span><span class="st">%"</span>)</pre>
+<span class="var">df</span>[<span class="str">'conversion_rate'</span>] = <span class="var">df</span>[<span class="str">'conversion_rate'</span>].<span class="fn">apply</span>(<span class="kw">lambda</span> <span class="var">x</span>: <span class="str">f"</span><span class="var">{x}</span><span class="str">%"</span>)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le5', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le5">
+          <div class="line-row"><span class="line-code">(df['end_date'] - df['start_date']).dt.days + 1</span><span class="line-desc">Subtracting two datetime columns gives a duration; <code>.dt.days</code> pulls out the whole-number day count. <code>+ 1</code> matches SQL's DATEDIFF logic — both the start and end day count as active.</span></div>
+          <div class="line-row"><span class="line-code">np.where(condition, value_if_true, value_if_false)</span><span class="line-desc">pandas' inline CASE WHEN. Here: if impressions &gt; 0, compute the real rate; otherwise return 0.0 and skip the division entirely, avoiding a divide-by-zero.</span></div>
+          <div class="line-row"><span class="line-code">(df['total_clicks'] / df['total_impressions'] * 100).round(2)</span><span class="line-desc">The click-through rate itself, as a percentage, rounded to 2 decimals — only evaluated for rows where the np.where condition is True.</span></div>
+          <div class="line-row"><span class="line-code">df['click_through_rate'].apply(lambda x: f"{x}%")</span><span class="line-desc">Runs a small function over every value in the column, appending a literal "%" so the final report shows "6.71%" instead of the bare number 6.71.</span></div>
+          <div class="line-row"><span class="line-code">df['conversion_rate'] = np.where(...)</span><span class="line-desc">Same guarded-division pattern as click_through_rate, this time conversions over clicks.</span></div>
+          <div class="line-row"><span class="line-code">.apply(lambda x: f"{x}%")</span><span class="line-desc">Same percentage-string formatting, applied to conversion_rate.</span></div>
+        </div>
+      </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Marketing metrics formulas</h3>
-        <table>
-          <tr><th>Metric</th><th>Formula</th></tr>
-          <tr><td style="font-size:.78rem">CTR</td><td style="font-size:.78rem">clicks / impressions × 100</td></tr>
-          <tr><td style="font-size:.78rem">CR (Conversion Rate)</td><td style="font-size:.78rem">conversions / clicks × 100</td></tr>
-          <tr><td style="font-size:.78rem">Avg Daily Conversions</td><td style="font-size:.78rem">total_conversions / active_days</td></tr>
-          <tr><td style="font-size:.78rem">Campaign Duration</td><td style="font-size:.78rem">(end_date − start_date).days + 1</td></tr>
-        </table>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">5</div><div class="py-step-title">Rank within channel — the window functions</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">Three ranks, three methods, one pattern: <code>groupby('channel_name')[...].rank(method=..., ascending=False)</code>. This is the exact table from Slide 3, now as code.</p>
+        <div class="code-block"><pre><span class="var">df</span>[<span class="str">'channel_rank'</span>] = (
+    <span class="var">df</span>.<span class="fn">groupby</span>(<span class="str">'channel_name'</span>)[<span class="str">'total_conversions'</span>]
+    .<span class="fn">rank</span>(method=<span class="str">'min'</span>, ascending=<span class="kw">False</span>)
+    .<span class="fn">astype</span>(<span class="fn">int</span>)
+)
+<span class="var">df</span>[<span class="str">'dense_channel_rank'</span>] = (
+    <span class="var">df</span>.<span class="fn">groupby</span>(<span class="str">'channel_name'</span>)[<span class="str">'total_conversions'</span>]
+    .<span class="fn">rank</span>(method=<span class="str">'dense'</span>, ascending=<span class="kw">False</span>)
+    .<span class="fn">astype</span>(<span class="fn">int</span>)
+)
+<span class="var">df</span>[<span class="str">'row_num'</span>] = (
+    <span class="var">df</span>.<span class="fn">groupby</span>(<span class="str">'channel_name'</span>)[<span class="str">'total_conversions'</span>]
+    .<span class="fn">rank</span>(method=<span class="str">'first'</span>, ascending=<span class="kw">False</span>)
+    .<span class="fn">astype</span>(<span class="fn">int</span>)
+)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le6', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le6">
+          <div class="line-row"><span class="line-code">df.groupby('channel_name')['total_conversions']</span><span class="line-desc">Buckets rows by channel — this is the PARTITION BY. Selecting <code>['total_conversions']</code> narrows to the one column being ranked.</span></div>
+          <div class="line-row"><span class="line-code">.rank(method='min', ascending=False)</span><span class="line-desc">Ranks within each bucket, highest conversions first. <code>method='min'</code> is pandas' name for SQL's RANK() — ties share the lowest rank, the next rank skips ahead.</span></div>
+          <div class="line-row"><span class="line-code">.astype(int)</span><span class="line-desc">rank() returns floats by default (e.g. 1.0); casting to int gives a clean whole-number rank for the report.</span></div>
+          <div class="line-row"><span class="line-code">method='dense'</span><span class="line-desc">Identical groupby/rank pattern, but this method name is pandas' equivalent of DENSE_RANK() — no gap is ever left after a tie.</span></div>
+          <div class="line-row"><span class="line-code">method='first'</span><span class="line-desc">Identical pattern again, this method name is pandas' equivalent of ROW_NUMBER() — every row gets a unique sequential number, ties broken by row order.</span></div>
+        </div>
       </div>
-      <div class="hl yl">
-        <h3 style="color:var(--yellow);font-size:.83rem;margin-bottom:5px">np.where() — safe division</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.76rem;"><span class="cm"># np.where(condition, value_if_true, value_if_false)
-# → if impressions > 0: compute CTR
-# → else: set to 0.0 (avoid divide-by-zero ZeroDivisionError)</span>
-np.<span class="fn">where</span>(<span class="var">df</span>[<span class="st">'total_impressions'</span>] > <span class="nm">0</span>, <var>formula</var>, <span class="nm">0.0</span>)</pre>
-      </div>
-      <div class="quiz">
-        <p>❓ What happens if you don't use <code>np.where()</code> and a campaign has 0 impressions?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>ZeroDivisionError</strong> (or NaN in pandas). Division by zero: clicks/0 = undefined. <code>np.where()</code> short-circuits — if the condition is False (impressions == 0), it returns the fallback value (0.0) without ever attempting the division.</div>
+    </div>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">6</div><div class="py-step-title">Select and sort — the final SELECT ... ORDER BY</div></div>
+      <div class="py-step-body">
+        <div class="code-block"><pre><span class="var">result</span> = <span class="var">df</span>[[
+    <span class="str">'campaign_id'</span>, <span class="str">'channel_name'</span>, <span class="str">'campaign_type'</span>, <span class="str">'budget'</span>,
+    <span class="str">'total_impressions'</span>, <span class="str">'total_clicks'</span>, <span class="str">'total_conversions'</span>, <span class="str">'total_bounces'</span>,
+    <span class="str">'avg_daily_conversions'</span>, <span class="str">'click_through_rate'</span>, <span class="str">'conversion_rate'</span>,
+    <span class="str">'campaign_duration_days'</span>, <span class="str">'channel_rank'</span>, <span class="str">'dense_channel_rank'</span>, <span class="str">'row_num'</span>
+]].<span class="fn">sort_values</span>([<span class="str">'channel_name'</span>, <span class="str">'channel_rank'</span>]).<span class="fn">reset_index</span>(drop=<span class="kw">True</span>)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le7', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le7">
+          <div class="line-row"><span class="line-code">result = df[[ 'campaign_id', ... ]]</span><span class="line-desc">Selects only the columns the final report needs, in the desired order — the pandas equivalent of a SQL SELECT column list.</span></div>
+          <div class="line-row"><span class="line-code">.sort_values(['channel_name', 'channel_rank'])</span><span class="line-desc">Sorts by channel first, then by rank within that channel — matching the SQL <code>ORDER BY ch.channel_name, channel_rank</code>.</span></div>
+          <div class="line-row"><span class="line-code">.reset_index(drop=True)</span><span class="line-desc">After sorting, the row index is left in its scrambled original order; this renumbers it 0, 1, 2... cleanly. <code>drop=True</code> discards the old index instead of keeping it as a column.</span></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 5: RANKING WITHIN CHANNEL -->
-<div class="slide">
-  <h2>Step 3 — Rank Campaigns Within Each Channel</h2>
-  <p class="sub" style="margin-bottom:12px">We want to know which campaigns are top performers <em>within their own channel</em> — not globally. This requires partitioning by channel, just like SQL's <code>RANK() OVER(PARTITION BY channel_name)</code>.</p>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># RANK within channel — ties share rank, next skips</span>
-<span class="cm"># (RANK() in SQL)</span>
-<span class="var">df</span>[<span class="st">'channel_rank'</span>] = (
-    <span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'channel_name'</span>)[<span class="st">'total_conversions'</span>]
-    .<span class="fn">rank</span>(<span class="var">method</span>=<span class="st">'min'</span>, <span class="var">ascending</span>=<span class="kw">False</span>)
-    .<span class="fn">astype</span>(<span class="fn">int</span>)
-)
-
-<span class="cm"># DENSE_RANK within channel — ties share rank, NO gap</span>
-<span class="cm"># (DENSE_RANK() in SQL)</span>
-<span class="var">df</span>[<span class="st">'dense_channel_rank'</span>] = (
-    <span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'channel_name'</span>)[<span class="st">'total_conversions'</span>]
-    .<span class="fn">rank</span>(<span class="var">method</span>=<span class="st">'dense'</span>, <span class="var">ascending</span>=<span class="kw">False</span>)
-    .<span class="fn">astype</span>(<span class="fn">int</span>)
-)
-
-<span class="cm"># ROW_NUMBER within channel — unique, no ties</span>
-<span class="cm"># (ROW_NUMBER() in SQL)</span>
-<span class="var">df</span>[<span class="st">'row_num'</span>] = (
-    <span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'channel_name'</span>)[<span class="st">'total_conversions'</span>]
-    .<span class="fn">rank</span>(<span class="var">method</span>=<span class="st">'first'</span>, <span class="var">ascending</span>=<span class="kw">False</span>)
-    .<span class="fn">astype</span>(<span class="fn">int</span>)
-)
-
-<span class="cm"># ascending=False → highest conversions = rank 1</span></pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">All three methods on the same data</h3>
-        <table>
-          <tr><th>Campaign</th><th>Conv.</th><th>min<br>(RANK)</th><th>dense<br>(D_RANK)</th><th>first<br>(ROW_NUM)</th></tr>
-          <tr><td style="font-size:.77rem">CampA Email</td><td style="font-size:.77rem">6000</td><td style="font-size:.77rem" class="ok">1</td><td style="font-size:.77rem" class="ok">1</td><td style="font-size:.77rem" class="ok">1</td></tr>
-          <tr><td style="font-size:.77rem">CampB Email</td><td style="font-size:.77rem">6000</td><td style="font-size:.77rem" class="ok">1</td><td style="font-size:.77rem" class="ok">1</td><td style="font-size:.77rem">2</td></tr>
-          <tr><td style="font-size:.77rem">CampC Email</td><td style="font-size:.77rem">4500</td><td style="font-size:.77rem">3</td><td style="font-size:.77rem">2</td><td style="font-size:.77rem">3</td></tr>
-          <tr><td style="font-size:.77rem" style="color:var(--muted)">CampD Social</td><td style="font-size:.77rem" style="color:var(--muted)">8000</td><td style="font-size:.77rem" class="ok">1</td><td style="font-size:.77rem" class="ok">1</td><td style="font-size:.77rem" class="ok">1</td></tr>
-        </table>
-        <p style="font-size:.75rem;margin-top:6px;color:var(--muted)">Ranks reset for each channel (partitioned by channel_name)</p>
-      </div>
-      <div class="hl">
-        <h3 style="font-size:.83rem;margin-bottom:5px">Why .astype(int)?</h3>
-        <p style="font-size:.82rem">rank() returns floats by default (e.g., 1.0, 2.0). <code>.astype(int)</code> converts to clean integers (1, 2, 3) for display.</p>
-      </div>
-      <div class="quiz">
-        <p>❓ Which method gives 1,1,3 for two tied campaigns (gap after tie)? Which gives 1,1,2 (no gap)?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ 1,1,3 = <code>method='min'</code> (SQL RANK). 1,1,2 = <code>method='dense'</code> (SQL DENSE_RANK). Both make ties share the same rank — the difference is whether the next rank skips.</div>
-      </div>
-    </div>
+<!-- SLIDE 10: TASK 2 INTRO -->
+<div class="slide" data-title="Task 2 – The Goal">
+  <h2>Task 2 — Running Cumulative Metrics</h2>
+  <p class="sub">Kriti's second ask: "I don't just want the final total — I want to see the trend build, day by day, for each campaign." One row per campaign per day.</p>
+  <table>
+    <tr><th>campaign_id</th><th>metric_date</th><th>daily_conversions</th><th>cumulative_conversions</th><th>running_avg_clicks</th></tr>
+    <tr><td>501</td><td>2025-06-10</td><td>87</td><td>87</td><td>432.25</td></tr>
+    <tr><td>501</td><td>2025-06-11</td><td>154</td><td>241</td><td>518.40</td></tr>
+    <tr><td>501</td><td>2025-06-12</td><td>219</td><td>460</td><td>603.75</td></tr>
+  </table>
+  <div class="highlight-box violet">
+    <p>💬 This is the difference between "campaign 501 got 460 conversions total" and "campaign 501 built to 460 conversions, accelerating as it ran" — the second version is what actually tells Kriti whether to extend the budget.</p>
   </div>
 </div>
 
-<!-- SLIDE 6: CUMULATIVE / RUNNING OPERATIONS -->
-<div class="slide">
-  <h2>Step 4 — Running Totals and Averages</h2>
-  <p class="sub" style="margin-bottom:12px">For daily trend analysis, we want to see cumulative conversions and running average clicks <em>as they build up day by day</em> within each campaign.</p>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># CRITICAL: Sort by campaign + date BEFORE cumulative ops
-# Unsorted data gives wrong running totals!</span>
-<span class="var">m_sorted</span> = <span class="var">metrics</span>.<span class="fn">sort_values</span>(
-    [<span class="st">'campaign_id'</span>, <span class="st">'metric_date'</span>]
-).<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>)
+<!-- SLIDE 11: TASK 2 - SQL APPROACH -->
+<div class="slide" data-title="Task 2 – SQL Approach">
+  <h2>Task 2 — The SQL Approach First</h2>
+  <p class="sub" style="margin-bottom:8px">No <code>GROUP BY</code> needed this time — every row stays. <code>SUM() OVER</code> and <code>AVG() OVER</code> with an explicit frame do the accumulating.</p>
+  <div class="sql-approach">
+    <div class="sql-approach-head"><span class="sql-approach-badge">SQL approach</span><span class="sql-approach-title">running SUM / AVG with an explicit frame</span></div>
+    <div class="sql-approach-why"><code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code> tells SQL exactly which rows to accumulate: from the start of the partition up to (and including) the current row. That frame clause is the SQL name for what pandas calls "expanding."</div>
+    <pre><span class="kw">SELECT</span>
+  campaign_id,
+  metric_date,
+  conversions <span class="kw">AS</span> daily_conversions,
+  <span class="fn">SUM</span>(conversions) <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> campaign_id
+      <span class="kw">ORDER BY</span> metric_date
+      <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
+  ) <span class="kw">AS</span> cumulative_conversions,
+  <span class="fn">ROUND</span>(
+    <span class="fn">AVG</span>(clicks) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> campaign_id
+        <span class="kw">ORDER BY</span> metric_date
+        <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
+    ), <span class="col">2</span>
+  ) <span class="kw">AS</span> running_avg_clicks
+<span class="kw">FROM</span> ex_campaign_metrics
+<span class="kw">ORDER BY</span> campaign_id, metric_date;</pre>
+  </div>
+  <button class="line-explain-toggle" onclick="toggleLines('le8', this)">▸ Explain every line</button>
+  <div class="line-explain" id="le8">
+    <div class="line-row"><span class="line-code">SELECT campaign_id, metric_date,</span><span class="line-desc">No GROUP BY this time — every input row is kept as its own output row.</span></div>
+    <div class="line-row"><span class="line-code">conversions AS daily_conversions,</span><span class="line-desc">Renames the raw column for clarity in the output — this single day's conversions, not a total.</span></div>
+    <div class="line-row"><span class="line-code">SUM(conversions) OVER (</span><span class="line-desc">A window function — computes a sum across a set of rows without collapsing them into one.</span></div>
+    <div class="line-row"><span class="line-code">PARTITION BY campaign_id</span><span class="line-desc">Restarts the running total at zero for every new campaign — rows from different campaigns never mix.</span></div>
+    <div class="line-row"><span class="line-code">ORDER BY metric_date</span><span class="line-desc">Defines the order the running total accumulates in — oldest date first, so "cumulative" actually means something chronological.</span></div>
+    <div class="line-row"><span class="line-code">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span><span class="line-desc">The frame: sum everything from the very first row of this campaign's partition up to and including the current row. This exact phrase is what "running" or "cumulative" means in SQL.</span></div>
+    <div class="line-row"><span class="line-code">) AS cumulative_conversions,</span><span class="line-desc">Names the resulting column.</span></div>
+    <div class="line-row"><span class="line-code">ROUND( AVG(clicks) OVER (...), 2 )</span><span class="line-desc">Same partition/order/frame as above, but averaging clicks instead of summing conversions — a running average, rounded to 2 decimals.</span></div>
+    <div class="line-row"><span class="line-code">FROM ex_campaign_metrics</span><span class="line-desc">The daily-grain table — read directly, nothing pre-aggregated.</span></div>
+    <div class="line-row"><span class="line-code">ORDER BY campaign_id, metric_date;</span><span class="line-desc">Controls the final display order of the result set — separate from the ORDER BY inside each OVER(), which only controls the window's internal accumulation order.</span></div>
+  </div>
+</div>
 
-<span class="cm"># cumsum() — running total conversions per campaign
-# Like SUM() OVER(PARTITION BY campaign ORDER BY date)</span>
-<span class="var">m_sorted</span>[<span class="st">'cumulative_conversions'</span>] = (
-    <span class="var">m_sorted</span>
-    .<span class="fn">groupby</span>(<span class="st">'campaign_id'</span>)[<span class="st">'conversions'</span>]
+<!-- SLIDE 12: TASK 2 - PYTHON STEPS -->
+<div class="slide" data-title="Task 2 – Python Steps">
+  <h2>Task 2 — Python, Step by Step</h2>
+  <div class="bridge-arrow"><div class="line"></div><span>the ROWS UNBOUNDED PRECEDING frame, in pandas</span><div class="line"></div></div>
+  <div class="py-steps">
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">1</div><div class="py-step-title">Sort by campaign and date — non-negotiable</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">SQL's <code>ORDER BY metric_date</code> inside the <code>OVER()</code> clause guarantees row order for the window. pandas has no such built-in guarantee — you sort first, or the running totals are quietly wrong.</p>
+        <div class="code-block"><pre><span class="var">metrics_sorted</span> = <span class="var">metrics</span>.<span class="fn">sort_values</span>(by=[<span class="str">'campaign_id'</span>, <span class="str">'metric_date'</span>]).<span class="fn">reset_index</span>(drop=<span class="kw">True</span>)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le9', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le9">
+          <div class="line-row"><span class="line-code">metrics.sort_values(by=['campaign_id','metric_date'])</span><span class="line-desc">Sorts by campaign first, then by date within each campaign — this ordering is what makes the next two steps' running totals mean anything at all.</span></div>
+          <div class="line-row"><span class="line-code">.reset_index(drop=True)</span><span class="line-desc">Renumbers the index 0, 1, 2... after sorting scrambled the original row order; <code>drop=True</code> discards the stale index instead of keeping it as a stray column.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">2</div><div class="py-step-title">Cumulative conversions per campaign</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain"><code>groupby('campaign_id')['conversions'].cumsum()</code> — one line, and it's the pandas name for <code>SUM() OVER (PARTITION BY campaign_id ORDER BY metric_date ROWS UNBOUNDED PRECEDING)</code>.</p>
+        <div class="code-block"><pre><span class="var">metrics_sorted</span>[<span class="str">'cumulative_conversions'</span>] = (
+    <span class="var">metrics_sorted</span>
+    .<span class="fn">groupby</span>(<span class="str">'campaign_id'</span>)[<span class="str">'conversions'</span>]
     .<span class="fn">cumsum</span>()
-)
-
-<span class="cm"># expanding().mean() — running average clicks per campaign
-# Like AVG() OVER(PARTITION BY campaign ORDER BY date
-#                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)</span>
-<span class="var">m_sorted</span>[<span class="st">'running_avg_clicks'</span>] = (
-    <span class="var">m_sorted</span>
-    .<span class="fn">groupby</span>(<span class="st">'campaign_id'</span>)[<span class="st">'clicks'</span>]
+)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le10', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le10">
+          <div class="line-row"><span class="line-code">metrics_sorted.groupby('campaign_id')['conversions']</span><span class="line-desc">Buckets rows by campaign (the PARTITION BY), narrowed to the conversions column — the one being accumulated.</span></div>
+          <div class="line-row"><span class="line-code">.cumsum()</span><span class="line-desc">Running total within each bucket, in the row order already established by the sort in Step 1. This one call is the entire pandas equivalent of the SQL SUM() OVER (...ROWS UNBOUNDED PRECEDING) block.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">3</div><div class="py-step-title">Running average of clicks per campaign</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">There's no <code>cummean()</code> in pandas — <code>.expanding().mean()</code> is the tool for a running average. Same partition-and-order logic as step 2.</p>
+        <div class="code-block"><pre><span class="var">metrics_sorted</span>[<span class="str">'running_avg_clicks'</span>] = (
+    <span class="var">metrics_sorted</span>
+    .<span class="fn">groupby</span>(<span class="str">'campaign_id'</span>)[<span class="str">'clicks'</span>]
     .<span class="fn">expanding</span>()
     .<span class="fn">mean</span>()
-    .<span class="fn">round</span>(<span class="nm">2</span>)
-    .values   <span class="cm"># .values avoids index mismatch</span>
-)</pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Daily trend output (per campaign per day)</h3>
-        <table>
-          <tr><th>campaign_id</th><th>metric_date</th><th>daily_conv.</th><th>cumulative</th><th>running_avg</th></tr>
-          <tr><td style="font-size:.77rem">501</td><td style="font-size:.77rem">Jun 10</td><td style="font-size:.77rem">87</td><td style="font-size:.77rem" class="ok">87</td><td style="font-size:.77rem">432</td></tr>
-          <tr><td style="font-size:.77rem">501</td><td style="font-size:.77rem">Jun 11</td><td style="font-size:.77rem">154</td><td style="font-size:.77rem" class="ok">241</td><td style="font-size:.77rem">518</td></tr>
-          <tr><td style="font-size:.77rem">501</td><td style="font-size:.77rem">Jun 12</td><td style="font-size:.77rem">219</td><td style="font-size:.77rem" class="ok">460</td><td style="font-size:.77rem">603</td></tr>
-        </table>
-      </div>
-      <div class="imp">
-        <strong>⚠️ Always sort before cumulative operations</strong> — <code>cumsum()</code> and <code>expanding()</code> process rows in DataFrame order. If dates are unsorted, the running totals will be wrong and impossible to debug visually.
-      </div>
-      <div class="quiz">
-        <p>❓ What does <code>groupby().cumsum()</code> return vs <code>groupby().sum()</code>?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <code>groupby().sum()</code> collapses to one total per group. <code>groupby().cumsum()</code> keeps all rows and adds a running total that grows day by day within each group. After the last day it equals the same value as <code>.sum()</code>.</div>
+    .<span class="fn">round</span>(<span class="col">2</span>)
+    .values
+)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le11', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le11">
+          <div class="line-row"><span class="line-code">metrics_sorted.groupby('campaign_id')['clicks']</span><span class="line-desc">Same partitioning as Step 2, this time on the clicks column.</span></div>
+          <div class="line-row"><span class="line-code">.expanding()</span><span class="line-desc">Creates an "expanding window" per group — a window that grows by one row at a time, from the start of the group to the current row. There is no <code>cummean()</code> in pandas; this is the tool for a running average.</span></div>
+          <div class="line-row"><span class="line-code">.mean()</span><span class="line-desc">Computes the average over each expanding window — the running average, one value per row.</span></div>
+          <div class="line-row"><span class="line-code">.round(2)</span><span class="line-desc">Two decimal places, matching the SQL ROUND(...,2).</span></div>
+          <div class="line-row"><span class="line-code">.values</span><span class="line-desc">Extracts the plain array of numbers so it can be assigned directly into a new DataFrame column without pandas trying to align it by index.</span></div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- SLIDE 7: FULL PIPELINE -->
-<div class="slide">
-  <h2>Full Pipeline — Campaign Performance Summary</h2>
-  <div class="two">
-    <pre style="font-size:.71rem;line-height:1.75"><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>; <span class="kw">import</span> numpy <span class="kw">as</span> <span class="var">np</span>
-
-<span class="cm"># Load</span>
-<span class="var">campaigns</span> = pd.<span class="fn">read_csv</span>(<span class="st">'ex_campaigns.csv'</span>, <span class="var">parse_dates</span>=[<span class="st">'start_date'</span>,<span class="st">'end_date'</span>])
-<span class="var">channel</span>   = pd.<span class="fn">read_csv</span>(<span class="st">'ex_channel.csv'</span>)
-<span class="var">metrics</span>   = pd.<span class="fn">read_csv</span>(<span class="st">'ex_campaign_metrics.csv'</span>, <span class="var">parse_dates</span>=[<span class="st">'metric_date'</span>])
-
-<span class="cm"># Aggregate daily → campaign</span>
-<span class="var">agg</span> = metrics.<span class="fn">groupby</span>(<span class="st">'campaign_id'</span>).<span class="fn">agg</span>(
-    <span class="var">total_impressions</span>=(<span class="st">'impressions'</span>,<span class="st">'sum'</span>),
-    <span class="var">total_clicks</span>=(<span class="st">'clicks'</span>,<span class="st">'sum'</span>),
-    <span class="var">total_conversions</span>=(<span class="st">'conversions'</span>,<span class="st">'sum'</span>),
-    <span class="var">total_bounces</span>=(<span class="st">'bounces'</span>,<span class="st">'sum'</span>),
-    <span class="var">distinct_dates</span>=(<span class="st">'metric_date'</span>,<span class="st">'nunique'</span>)
-).<span class="fn">reset_index</span>()
-<span class="var">agg</span>[<span class="st">'avg_daily_conversions'</span>] = (<span class="var">agg</span>[<span class="st">'total_conversions'</span>]/<span class="var">agg</span>[<span class="st">'distinct_dates'</span>]).<span class="fn">round</span>(<span class="nm">2</span>)
-<span class="var">agg</span>.<span class="fn">drop</span>(<span class="var">columns</span>=<span class="st">'distinct_dates'</span>, <span class="var">inplace</span>=<span class="kw">True</span>)
-
-<span class="cm"># Merge metadata</span>
-<span class="var">df</span> = <span class="var">agg</span>.<span class="fn">merge</span>(<span class="var">campaigns</span>, <span class="var">on</span>=<span class="st">'campaign_id'</span>).<span class="fn">merge</span>(<span class="var">channel</span>, <span class="var">on</span>=<span class="st">'channel_id'</span>)
-
-<span class="cm"># Derived metrics</span>
-<span class="var">df</span>[<span class="st">'campaign_duration_days'</span>] = (<span class="var">df</span>[<span class="st">'end_date'</span>]-<span class="var">df</span>[<span class="st">'start_date'</span>]).dt.days+<span class="nm">1</span>
-<span class="var">df</span>[<span class="st">'click_through_rate'</span>] = np.<span class="fn">where</span>(<span class="var">df</span>[<span class="st">'total_impressions'</span>]><span class="nm">0</span>,
-    (<span class="var">df</span>[<span class="st">'total_clicks'</span>]/<span class="var">df</span>[<span class="st">'total_impressions'</span>]*<span class="nm">100</span>).<span class="fn">round</span>(<span class="nm">2</span>), <span class="nm">0.0</span>)
-<span class="var">df</span>[<span class="st">'conversion_rate'</span>]   = np.<span class="fn">where</span>(<span class="var">df</span>[<span class="st">'total_clicks'</span>]><span class="nm">0</span>,
-    (<span class="var">df</span>[<span class="st">'total_conversions'</span>]/<span class="var">df</span>[<span class="st">'total_clicks'</span>]*<span class="nm">100</span>).<span class="fn">round</span>(<span class="nm">2</span>), <span class="nm">0.0</span>)
-
-<span class="cm"># Rank within channel</span>
-<span class="var">df</span>[<span class="st">'channel_rank'</span>]       = <span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'channel_name'</span>)[<span class="st">'total_conversions'</span>].<span class="fn">rank</span>(<span class="var">method</span>=<span class="st">'min'</span>,   <span class="var">ascending</span>=<span class="kw">False</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
-<span class="var">df</span>[<span class="st">'dense_channel_rank'</span>] = <span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'channel_name'</span>)[<span class="st">'total_conversions'</span>].<span class="fn">rank</span>(<span class="var">method</span>=<span class="st">'dense'</span>, <span class="var">ascending</span>=<span class="kw">False</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
-<span class="var">df</span>[<span class="st">'row_num'</span>]            = <span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'channel_name'</span>)[<span class="st">'total_conversions'</span>].<span class="fn">rank</span>(<span class="var">method</span>=<span class="st">'first'</span>, <span class="var">ascending</span>=<span class="kw">False</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
-
-<span class="cm"># Running totals (sort first!)</span>
-<span class="var">ms</span> = <span class="var">metrics</span>.<span class="fn">sort_values</span>([<span class="st">'campaign_id'</span>,<span class="st">'metric_date'</span>]).<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>)
-<span class="var">ms</span>[<span class="st">'cumulative_conversions'</span>] = <span class="var">ms</span>.<span class="fn">groupby</span>(<span class="st">'campaign_id'</span>)[<span class="st">'conversions'</span>].<span class="fn">cumsum</span>()
-<span class="var">ms</span>[<span class="st">'running_avg_clicks'</span>]     = <span class="var">ms</span>.<span class="fn">groupby</span>(<span class="st">'campaign_id'</span>)[<span class="st">'clicks'</span>].<span class="fn">expanding</span>().<span class="fn">mean</span>().<span class="fn">round</span>(<span class="nm">2</span>).values</pre>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Summary of all window operations</h3>
-        <table>
-          <tr><th>Operation</th><th>SQL equiv</th><th>Output</th></tr>
-          <tr><td><code>rank(method='min')</code></td><td style="font-size:.77rem">RANK()</td><td style="font-size:.77rem">1,1,3 for ties</td></tr>
-          <tr><td><code>rank(method='dense')</code></td><td style="font-size:.77rem">DENSE_RANK()</td><td style="font-size:.77rem">1,1,2 for ties</td></tr>
-          <tr><td><code>rank(method='first')</code></td><td style="font-size:.77rem">ROW_NUMBER()</td><td style="font-size:.77rem">1,2,3 unique</td></tr>
-          <tr><td><code>cumsum()</code></td><td style="font-size:.77rem">SUM() OVER()</td><td style="font-size:.77rem">Running total</td></tr>
-          <tr><td><code>expanding().mean()</code></td><td style="font-size:.77rem">AVG() OVER()</td><td style="font-size:.77rem">Running average</td></tr>
-        </table>
-      </div>
-      <div class="quiz">
-        <p>❓ True or false: <code>groupby().rank()</code> returns the same number of rows as the input DataFrame?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>True</strong> — rank() is a window operation. It keeps every row and adds a ranking value to each. It does NOT collapse rows. This is the fundamental difference from agg() which reduces N rows to 1 per group.</div>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">4</div><div class="py-step-title">Select and rename — the final SELECT</div></div>
+      <div class="py-step-body">
+        <div class="code-block"><pre><span class="var">daily_trend</span> = <span class="var">metrics_sorted</span>[[
+    <span class="str">'campaign_id'</span>, <span class="str">'metric_date'</span>, <span class="str">'conversions'</span>,
+    <span class="str">'cumulative_conversions'</span>, <span class="str">'running_avg_clicks'</span>
+]].<span class="fn">rename</span>(columns={<span class="str">'conversions'</span>: <span class="str">'daily_conversions'</span>})</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le12', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le12">
+          <div class="line-row"><span class="line-code">metrics_sorted[[ 'campaign_id', 'metric_date', ... ]]</span><span class="line-desc">Picks only the columns the final report needs — the SELECT column list.</span></div>
+          <div class="line-row"><span class="line-code">.rename(columns={'conversions': 'daily_conversions'})</span><span class="line-desc">Relabels the raw <code>conversions</code> column to <code>daily_conversions</code> for the output — the pandas equivalent of SQL's <code>conversions AS daily_conversions</code>.</span></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- SLIDE 13: OUTPUT PREVIEW -->
+<div class="slide" data-title="Full Output Preview">
+  <h2>What Raghul Hands Back to Kriti</h2>
+  <div class="two-col">
+    <div class="card">
+      <h3>Deliverable 1 — Campaign Performance Summary</h3>
+      <table>
+        <tr><th>campaign_id</th><th>channel_name</th><th>total_conversions</th><th>channel_rank</th></tr>
+        <tr><td>1101</td><td>Email Marketing</td><td>5620</td><td>1</td></tr>
+        <tr><td>1102</td><td>Social Media</td><td>6745</td><td>2</td></tr>
+        <tr><td>1103</td><td>Search Advertising</td><td>4210</td><td>3</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Deliverable 2 — Daily Trend</h3>
+      <table>
+        <tr><th>campaign_id</th><th>metric_date</th><th>cumulative_conversions</th></tr>
+        <tr><td>501</td><td>2025-06-10</td><td>87</td></tr>
+        <tr><td>501</td><td>2025-06-11</td><td>241</td></tr>
+        <tr><td>501</td><td>2025-06-12</td><td>460</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="highlight-box amber">
+    <p>💡 Both tables come from the same underlying <code>ex_campaign_metrics</code> — one collapses it (GROUP BY), the other keeps every row and adds context (window function). Same data, two completely different lenses.</p>
+  </div>
 </div>
+
+<!-- SLIDE 14: CHECKPOINT 2 (extra reinforcement, not from source but consistent) -->
+<div class="slide" data-title="Checkpoint 2">
+  <div class="checkpoint-header" style="margin-bottom:12px">
+    <span class="cp-badge">Checkpoint</span>
+    <div>
+      <div class="cp-title">Quick Quiz — Applying the Pattern</div>
+      <div class="cp-sub">Click an option. Get instant feedback.</div>
+    </div>
+  </div>
+  <div class="mcq-grid" id="cp2">
+    <div class="mcq-card">
+      <p class="mcq-q">Which SQL clause is the direct equivalent of <code>.expanding().mean()</code>?</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q1')"><span class="opt-key">A</span><code>GROUP BY campaign_id</code></button>
+        <button class="opt" onclick="mcq(this,'correct','exp-c2q1')"><span class="opt-key">B</span><code>AVG(clicks) OVER (PARTITION BY campaign_id ORDER BY metric_date ROWS UNBOUNDED PRECEDING)</code></button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q1')"><span class="opt-key">C</span><code>HAVING AVG(clicks) > 0</code></button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q1')"><span class="opt-key">D</span><code>WHERE clicks IS NOT NULL</code></button>
+      </div>
+      <div class="mcq-exp" id="exp-c2q1">B. The window frame <code>ROWS UNBOUNDED PRECEDING</code> is exactly what "expanding" means — accumulate from the start of the partition to the current row.</div>
+    </div>
+    <div class="mcq-card">
+      <p class="mcq-q">You forget to sort before calling <code>.cumsum()</code>. What happens?</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q2')"><span class="opt-key">A</span>Python raises a SortError</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-c2q2')"><span class="opt-key">B</span>It runs fine but the running total is wrong — no error at all</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q2')"><span class="opt-key">C</span>pandas auto-sorts for you</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-c2q2')"><span class="opt-key">D</span>The column comes back empty</button>
+      </div>
+      <div class="mcq-exp" id="exp-c2q2">B — the most dangerous kind of bug. <code>cumsum()</code> just accumulates rows in whatever order they're in. Wrong order, wrong numbers, zero errors raised.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15: COMMON PITFALLS -->
+<div class="slide" data-title="Common Pitfalls">
+  <h2>Where This Lab Usually Breaks</h2>
+  <div class="two-col">
+    <div class="highlight-box warn">
+      <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Ranking globally instead of per channel</h3>
+      <p style="font-size:.82rem">Forgetting <code>groupby('channel_name')</code> before <code>.rank()</code> ranks every campaign against every other campaign — exactly the "channels don't matter" mistake Robert suggested. They matter.</p>
+    </div>
+    <div class="highlight-box warn">
+      <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Dividing before checking for zero</h3>
+      <p style="font-size:.82rem">A campaign with 0 impressions but a currently-running record will crash <code>total_clicks / total_impressions</code>. <code>np.where()</code> exists specifically to dodge this.</p>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="highlight-box warn">
+      <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Skipping the sort before cumsum/expanding</h3>
+      <p style="font-size:.82rem">Covered on the last slide, worth repeating: this bug never throws an error. It just quietly produces a wrong running total. Always sort by group key + date first.</p>
+    </div>
+    <div class="highlight-box warn">
+      <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Confusing method='rank' with method='min'</h3>
+      <p style="font-size:.82rem">There is no <code>method='rank'</code> in pandas — SQL's <code>RANK()</code> maps to pandas' <code>method='min'</code>, which trips up almost everyone the first time.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16: SELF-CHECK CODE -->
+<div class="slide" data-title="Self-Check">
+  <h2>Self-Check — Read the Output, Not Just the Code</h2>
+  <div class="quiz-box">
+    <p class="qtext">❓ Two campaigns in "Social Media" both have 4200 total_conversions — the only tie in that channel. Using <code>method='min'</code> for <code>channel_rank</code>, what ranks do they get, and what does the campaign immediately below them get?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal</button>
+    <div class="quiz-answer">✅ Both tied campaigns get rank <strong>1</strong>. The next campaign down gets rank <strong>3</strong> — not 2. <code>method='min'</code> (SQL's <code>RANK()</code>) always skips ahead by the number of tied rows.</div>
+  </div>
+  <div class="quiz-box">
+    <p class="qtext">❓ Same tie, but this time look at <code>dense_channel_rank</code>. What does the campaign below the tie get now?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal</button>
+    <div class="quiz-answer">✅ Rank <strong>2</strong>. <code>method='dense'</code> never leaves a gap — it's counting distinct rank <em>values</em>, not row positions.</div>
+  </div>
+</div>
+
+<!-- SLIDE 17: WRAP UP -->
+<div class="slide" data-title="Wrap-Up">
+  <h2>Wrap-Up</h2>
+  <div class="highlight-box success">
+    <p>✅ Raghul ships both deliverables. Kriti finally sees which channel is actually converting. Robert's "rank everything against everything" idea stays exactly where good ideas that ignore the data belong.</p>
+  </div>
+  <div class="three-col">
+    <div class="card"><h3>merge() + groupby().agg()</h3><p>Your JOIN and GROUP BY. Collapse the daily grain, attach the lookups.</p></div>
+    <div class="card"><h3>groupby().rank()</h3><p>Your RANK() / DENSE_RANK() / ROW_NUMBER() — the method name is the only thing that changes.</p></div>
+    <div class="card"><h3>cumsum() / expanding().mean()</h3><p>Your SUM() / AVG() OVER (... ROWS UNBOUNDED PRECEDING). Sort first, always.</p></div>
+  </div>
+  <div class="highlight-box violet">
+    <p>🎯 Next up: Product Return Rate Report — same SQL-first habit, this time pointed at <code>pivot_table()</code> and <code>melt()</code>. You've already seen their SQL cousins, PIVOT and UNPIVOT, back on Day 3.</p>
+  </div>
+</div>
+
+</div>
+
+<div class="toc-overlay" id="tocOverlay">
+  <div class="toc-head">
+    <h2>Table of Contents</h2>
+    <button class="toc-close" onclick="toggleTOC()">✕</button>
+  </div>
+  <div class="toc-grid" id="tocGrid"></div>
+</div>
+
 <script>
-let cur=0;const slides=document.querySelectorAll('.slide');const total=slides.length;const ctr=document.getElementById('ctr');
-function show(n){slides[cur].classList.remove('active');cur=(n+total)%total;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+total;}
-function go(d){show(cur+d)}function rev(btn){btn.nextElementSibling.style.display='block';btn.style.display='none';}
-document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
-ctr.textContent='1 / '+total;
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+const rail = document.getElementById('rail');
+const tocGrid = document.getElementById('tocGrid');
+
+slides.forEach((s,i)=>{
+  const seg = document.createElement('div');
+  seg.className = 'rail-seg';
+  seg.onclick = ()=>{ cur = i; render(); };
+  rail.appendChild(seg);
+
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="tn">${String(i+1).padStart(2,'0')}</div><div class="tt">${s.dataset.title || 'Slide '+(i+1)}</div>`;
+  item.onclick = ()=>{ cur = i; render(); toggleTOC(); };
+  tocGrid.appendChild(item);
+});
+
+function render(){
+  slides.forEach((s,i)=> s.classList.toggle('active', i===cur));
+  document.getElementById('ctr').textContent = `${cur+1} / ${slides.length}`;
+  document.querySelectorAll('.rail-seg').forEach((seg,i)=> seg.classList.toggle('done', i<=cur));
+}
+function go(dir){
+  cur = Math.min(Math.max(cur+dir,0), slides.length-1);
+  render();
+}
+function toggleTOC(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+}
+function rev(btn){
+  const ans = btn.nextElementSibling;
+  ans.style.display = ans.style.display==='block' ? 'none' : 'block';
+}
+function mcq(el, verdict, expId){
+  const opts = el.closest('.opts').querySelectorAll('.opt');
+  if(el.classList.contains('correct') || el.classList.contains('wrong')) return;
+  if(verdict==='wrong'){
+    opts.forEach(o=>o.classList.add('disabled'));
+    el.classList.add('wrong');
+    opts.forEach(o=>{ if(o.getAttribute('onclick') && o.getAttribute('onclick').includes("'correct'")) o.classList.add('correct'); });
+    document.getElementById(expId).style.display = 'block';
+  } else {
+    el.classList.add('correct');
+    const totalCorrect = [...opts].filter(o=>o.getAttribute('onclick') && o.getAttribute('onclick').includes("'correct'")).length;
+    const pickedCorrect = [...opts].filter(o=>o.classList.contains('correct')).length;
+    if(pickedCorrect >= totalCorrect){
+      opts.forEach(o=>o.classList.add('disabled'));
+      document.getElementById(expId).style.display = 'block';
+    }
+  }
+}
+function copyCode(btn){
+  const code = btn.closest('.code-block').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code);
+  const orig = btn.textContent;
+  btn.textContent = 'Copied!';
+  setTimeout(()=> btn.textContent = orig, 1200);
+}
+function toggleLines(id, btn){
+  const el = document.getElementById(id);
+  const open = el.classList.contains('show');
+  el.classList.toggle('show');
+  btn.textContent = open ? '▸ Explain every line' : '▾ Hide line-by-line';
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight') go(1);
+  if(e.key==='ArrowLeft') go(-1);
+  if(e.key==='g' || e.key==='G') toggleTOC();
+  if(e.key==='Escape') document.getElementById('tocOverlay').classList.remove('show');
+});
+let touchX=0;
+document.addEventListener('touchstart', e=> touchX = e.touches[0].clientX);
+document.addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - touchX;
+  if(dx > 60) go(-1);
+  if(dx < -60) go(1);
+});
+render();
 </script>
 </body>
 </html>

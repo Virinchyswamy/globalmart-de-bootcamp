@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpookyStay Analytics — SQL Case Study</title>
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/sql-wasm.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800;900&display=swap');
+:root {
+  --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d;
+  --accent: #d946ef; --accent-light: #f0abfc; --accent-dim: rgba(217,70,239,0.13); --accent-border: rgba(217,70,239,0.30); --accent-hover: #c026d3;
+  --green: #238636; --green-text: #3fb950; --green-bg: #0d2618;
+  --red: #da3633; --red-text: #f85149; --red-bg: #210d0d;
+  --yellow: #9e6a03; --yellow-text: #d29922; --yellow-bg: #1f1700;
+  --text: #c9d1d9; --text-dim: #8b949e; --text-bright: #f0f6fc;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
+#loader { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; }
+.spinner { width: 38px; height: 38px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#loader p { color: var(--text-dim); font-size: 14px; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 32px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.header-logo { width: 36px; height: 36px; background: var(--accent); color: #08111f; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex: 0 0 auto; }
+header h1 { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800; color: var(--text-bright); letter-spacing: -.2px; }
+header p { font-size: 12px; color: var(--text-dim); }
+.progress-wrap { display: flex; align-items: center; gap: 10px; }
+.pills { display: flex; gap: 6px; }
+.pill { width: 30px; height: 7px; background: var(--border); border-radius: 4px; transition: background .4s; }
+.pill.done { background: var(--accent); }
+.prog-text { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+main { max-width: 940px; margin: 0 auto; padding: 32px 20px; display: flex; flex-direction: column; gap: 36px; }
+.section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent-light); margin-bottom: 12px; }
+.card, .qcard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: box-shadow .25s, border-color .25s; }
+.card:hover, .qcard:hover { box-shadow: 0 6px 24px rgba(0,0,0,.28); border-color: var(--accent-border); }
+.qnum { font-family: 'Sora', sans-serif; }
+.card-body { padding: 24px; }
+.prob-text { font-size: 14px; line-height: 1.8; }
+.prob-text strong { color: var(--text-bright); }
+.prob-bullets { margin: 14px 0 14px 20px; display: flex; flex-direction: column; gap: 5px; font-size: 14px; }
+.stake { border-left: 3px solid var(--accent); padding-left: 14px; margin-top: 14px; font-style: italic; color: var(--text-dim); font-size: 13px; }
+.table-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 20px; overflow-x: auto; }
+.tab-btn { background: none; border: none; color: var(--text-dim); padding: 11px 15px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: 'Courier New', monospace; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+.tab-panel { display: none; padding: 20px; overflow-x: auto; }
+.tab-panel.active { display: block; }
+.tab-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 14px; }
+.dtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dtable th { background: var(--surface2); color: var(--accent-light); font-weight: 600; padding: 9px 13px; text-align: left; border: 1px solid var(--border); font-family: 'Courier New', monospace; }
+.dtable td { padding: 8px 13px; border: 1px solid var(--border); color: var(--text); }
+.dtable tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+.qcard.solved { border-color: var(--green); }
+.qcard-head { padding: 15px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.qnum { font-size: 15px; font-weight: 700; color: var(--text-bright); }
+.badge { font-size: 11px; font-weight: 700; padding: 3px 11px; border-radius: 20px; text-transform: uppercase; letter-spacing: .05em; }
+.badge-b { background: #0d2618; color: #3fb950; border: 1px solid #238636; }
+.badge-i { background: #1f1700; color: #d29922; border: 1px solid #9e6a03; }
+.badge-a { background: #210d0d; color: #f85149; border: 1px solid #da3633; }
+.qbody { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.ctx-box { background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 8px; padding: 15px; }
+.ctx-label, .task-label, .output-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
+.ctx-label { color: var(--accent-light); }
+.ctx-box p, .task-box p { font-size: 14px; line-height: 1.75; }
+.ctx-box strong { color: var(--text-bright); }
+.task-box { background: var(--surface2); border-radius: 8px; padding: 15px; }
+.task-label, .output-label { color: var(--text-dim); }
+.task-box p { color: var(--text-bright); }
+.editor-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
+.editor-wrap:focus-within { border-color: var(--accent); }
+.editor-bar { background: var(--surface2); padding: 7px 13px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.editor-lang { font-size: 11px; color: var(--text-dim); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.clear-btn { background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; padding: 2px 8px; border-radius: 4px; }
+.clear-btn:hover { background: var(--border); color: var(--text); }
+.sql-editor { width: 100%; background: #080b10; color: #7ee787; font-family: 'Courier New', Consolas, monospace; font-size: 14px; line-height: 1.65; padding: 16px; border: none; outline: none; resize: vertical; min-height: 110px; tab-size: 4; }
+.sql-editor::placeholder { color: #2d3748; }
+.action-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.run-btn { background: var(--accent); color: #08111f; border: none; padding: 9px 22px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.run-btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); color: #fff; }
+.reset-btn { background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 9px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.reset-btn:hover { border-color: var(--text-dim); color: var(--text); }
+.output-area { display: none; flex-direction: column; gap: 12px; }
+.output-area.show { display: flex; }
+.result-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+.empty-result { padding: 12px 16px; color: var(--text-dim); font-size: 13px; font-style: italic; }
+.fb-box { border-radius: 8px; padding: 14px 16px; font-size: 14px; line-height: 1.7; display: flex; gap: 12px; align-items: flex-start; }
+.fb-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; font-weight: 900; }
+.fb-content { flex: 1; }
+.fb-title { font-weight: 700; margin-bottom: 3px; }
+.fb-box.success { background: var(--green-bg); border: 1px solid var(--green); color: var(--green-text); }
+.fb-box.error { background: var(--red-bg); border: 1px solid var(--red); color: var(--red-text); }
+.fb-box.hint { background: var(--yellow-bg); border: 1px solid var(--yellow); color: var(--yellow-text); }
+.fb-box code { font-family: 'Courier New', monospace; font-size: 12px; background: rgba(0,0,0,.3); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 6px; word-break: break-all; }
+.solved-banner { display: none; align-items: center; gap: 8px; background: var(--green-bg); border-top: 1px solid var(--green); padding: 11px 22px; font-size: 13px; color: var(--green-text); font-weight: 700; }
+.solved-banner.show { display: flex; }
+#all-done { display: none; text-align: center; padding: 40px 20px; background: var(--surface); border: 1px solid var(--green); border-radius: 12px; }
+#all-done h2 { color: var(--green-text); font-size: 22px; margin-bottom: 8px; }
+#all-done p { color: var(--text-dim); font-size: 14px; }
+#all-done.show { display: block; }
+@media (max-width: 700px) {
+  header { padding: 12px 16px; align-items: flex-start; flex-direction: column; }
+  main { padding: 24px 14px; }
+  .progress-wrap { width: 100%; justify-content: space-between; }
+  .pill { width: 24px; }
+}
+</style>
+</head>
+<body>
+<div id="loader"><div class="spinner"></div><p>Initializing SQL Engine...</p></div>
+<header>
+  <div class="header-left"><div class="header-logo">SPK</div><div><h1>SpookyStay Booking Analytics</h1><p>Haunted House Rentals Domain · SQL Case Study</p></div></div>
+  <div class="progress-wrap"><div class="pills"><div class="pill" id="p1"></div><div class="pill" id="p2"></div><div class="pill" id="p3"></div><div class="pill" id="p4"></div></div><span class="prog-text" id="prog-text">0 / 4 solved</span></div>
+</header>
+<main>
+  <section>
+    <p class="section-label">Problem Statement</p>
+    <div class="card"><div class="card-body"><div class="prob-text">
+      <p><strong>SpookyStay</strong> is the booking platform for guests who specifically want their vacation rental to be haunted — verified ghosts, rattling doors, the works. Business is, unfortunately for the ghosts, booming.</p>
+      <p style="margin-top:12px">You're the new Data Analyst. Your queries decide:</p>
+      <ul class="prob-bullets"><li>Which properties get promoted on the homepage this Halloween</li><li>Which haunting level actually drives the most revenue</li><li>Which guests keep coming back for more (unclear if for the ghosts or the amenities)</li><li>Which property is really carrying its haunting-level bracket</li></ul>
+      <p class="stake">Ananya Seth, Head of Guest Experience, needs this before the "Are We Legally a Hotel or a Paranormal Society" board meeting. One resident ghost, who signs his complaint emails only as "Robert (Attic, Unit 1)," insists his reviews are being "suppressed." They are not. He has a 2-star review and he earned it.</p>
+    </div></div></div>
+  </section>
+  <section>
+    <p class="section-label">Database Tables</p>
+    <div class="card"><div class="table-tabs">
+        <button class="tab-btn active" onclick="switchTab('properties',this)">properties</button>
+        <button class="tab-btn " onclick="switchTab('guests',this)">guests</button>
+        <button class="tab-btn " onclick="switchTab('bookings',this)">bookings</button>
+        <button class="tab-btn " onclick="switchTab('ghost_reviews',this)">ghost_reviews</button>
+      </div>
+      <div class="tab-panel active" id="tab-properties">
+        <p class="tab-desc">The listings. Haunting level is on a 1–5 scale, self-reported by the ghosts.</p>
+        <table class="dtable"><thead><tr><th>property_id</th><th>property_name</th><th>city</th><th>haunting_level</th><th>nightly_rate</th></tr></thead><tbody>
+            <tr><td>1</td><td>The Weeping Willow Manor</td><td>Ooty</td><td>5</td><td>4500</td></tr>
+            <tr><td>2</td><td>Crimson Attic B&amp;B</td><td>Shimla</td><td>3</td><td>2800</td></tr>
+            <tr><td>3</td><td>Whispering Pines Cabin</td><td>Manali</td><td>4</td><td>3200</td></tr>
+            <tr><td>4</td><td>The Grinning Staircase</td><td>Jaipur</td><td>2</td><td>2000</td></tr>
+            <tr><td>5</td><td>Fogbound Lighthouse</td><td>Goa</td><td>5</td><td>5000</td></tr>
+        </tbody></table>
+      </div>
+      <div class="tab-panel " id="tab-guests">
+        <p class="tab-desc">Brave (or curious) travelers.</p>
+        <table class="dtable"><thead><tr><th>guest_id</th><th>full_name</th><th>city</th><th>loyalty_tier</th></tr></thead><tbody>
+            <tr><td>1</td><td>Aayush Sharma</td><td>Hyderabad</td><td>Gold</td></tr>
+            <tr><td>2</td><td>Ananya Seth</td><td>Chennai</td><td>Silver</td></tr>
+            <tr><td>3</td><td>Anuj Khokhar</td><td>Bengaluru</td><td>Gold</td></tr>
+            <tr><td>4</td><td>Prem Kushwah</td><td>Hyderabad</td><td>Silver</td></tr>
+            <tr><td>5</td><td>Tanushi</td><td>Mumbai</td><td>Gold</td></tr>
+        </tbody></table>
+      </div>
+      <div class="tab-panel " id="tab-bookings">
+        <p class="tab-desc">Confirmed stays. All guests survived.</p>
+        <table class="dtable"><thead><tr><th>booking_id</th><th>property_id</th><th>guest_id</th><th>nights_stayed</th><th>total_paid</th></tr></thead><tbody>
+            <tr><td>101</td><td>1</td><td>1</td><td>3</td><td>13500</td></tr>
+            <tr><td>102</td><td>2</td><td>2</td><td>2</td><td>5600</td></tr>
+            <tr><td>103</td><td>3</td><td>3</td><td>4</td><td>12800</td></tr>
+            <tr><td>104</td><td>1</td><td>4</td><td>2</td><td>9000</td></tr>
+            <tr><td>105</td><td>5</td><td>5</td><td>1</td><td>5000</td></tr>
+            <tr><td>106</td><td>4</td><td>1</td><td>3</td><td>6000</td></tr>
+        </tbody></table>
+      </div>
+      <div class="tab-panel " id="tab-ghost_reviews">
+        <p class="tab-desc">Post-stay reviews. "mentions_ghost" tracks whether the review specifically brought up paranormal activity.</p>
+        <table class="dtable"><thead><tr><th>review_id</th><th>booking_id</th><th>stars</th><th>mentions_ghost</th></tr></thead><tbody>
+            <tr><td>1</td><td>101</td><td>5</td><td>Yes</td></tr>
+            <tr><td>2</td><td>102</td><td>4</td><td>No</td></tr>
+            <tr><td>3</td><td>103</td><td>5</td><td>Yes</td></tr>
+            <tr><td>4</td><td>104</td><td>2</td><td>Yes</td></tr>
+            <tr><td>5</td><td>105</td><td>5</td><td>Yes</td></tr>
+            <tr><td>6</td><td>106</td><td>4</td><td>No</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </section>
+  <section>
+    <p class="section-label">Questions</p>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div class="qcard" id="qcard-1">
+        <div class="qcard-head"><span class="qnum">Question 1</span><span class="badge badge-b">Beginner</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>Ananya is building the "Seriously Haunted" homepage carousel and needs the top spenders first.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>Show the property name and total amount paid for every booking at a property with haunting_level 4 or higher, highest amount paid first.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(1)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-1" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(1)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(1)">Reset</button></div>
+          <div class="output-area" id="out-1"><div class="output-label">Your Output</div><div class="result-wrap" id="res-1"></div><div id="fb-1"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-1">OK - Question 1 solved!</div>
+      </div>
+
+      <div class="qcard" id="qcard-2">
+        <div class="qcard-head"><span class="qnum">Question 2</span><span class="badge badge-i">Intermediate</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>The board meeting needs a <strong>Property Performance Report</strong> — revenue and guest satisfaction, side by side.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>For each property, show total revenue from bookings and the average review star rating, rounded to 2 decimals.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(2)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-2" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(2)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(2)">Reset</button></div>
+          <div class="output-area" id="out-2"><div class="output-label">Your Output</div><div class="result-wrap" id="res-2"></div><div id="fb-2"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-2">OK - Question 2 solved!</div>
+      </div>
+
+      <div class="qcard" id="qcard-3">
+        <div class="qcard-head"><span class="qnum">Question 3</span><span class="badge badge-i">Intermediate</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>Marketing wants to know which guests are repeat visitors, for a "Frequent Fright" loyalty push.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>Show guests who have booked more than once — their name, booking count, and total amount spent.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(3)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-3" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(3)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(3)">Reset</button></div>
+          <div class="output-area" id="out-3"><div class="output-label">Your Output</div><div class="result-wrap" id="res-3"></div><div id="fb-3"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-3">OK - Question 3 solved!</div>
+      </div>
+
+      <div class="qcard" id="qcard-4">
+        <div class="qcard-head"><span class="qnum">Question 4</span><span class="badge badge-a">Advanced</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>Ananya wants a <strong>Haunting Leaderboard</strong> — within each haunting_level bracket, which property is actually pulling in the revenue.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>For each property, show its name, haunting_level, total revenue, its rank within its haunting_level bracket by revenue (highest = Rank 1), and its share of that bracket's total revenue as a percentage rounded to 2 decimals.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(4)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-4" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(4)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(4)">Reset</button></div>
+          <div class="output-area" id="out-4"><div class="output-label">Your Output</div><div class="result-wrap" id="res-4"></div><div id="fb-4"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-4">OK - Question 4 solved!</div>
+      </div>
+    </div>
+  </section>
+  <div id="all-done"><h2>All Questions Solved!</h2><p>The board is satisfied. SpookyStay is, legally, a hospitality company. Robert's review still stands at 2 stars.</p></div>
+</main>
+<script>
+let db = null;
+const solved = { 1: false, 2: false, 3: false, 4: false };
+const EXP = {"1":[["The Weeping Willow Manor",13500],["Whispering Pines Cabin",12800],["The Weeping Willow Manor",9000],["Fogbound Lighthouse",5000]],"2":[["The Weeping Willow Manor",22500,3.5],["Crimson Attic B&B",5600,4.0],["Whispering Pines Cabin",12800,5.0],["The Grinning Staircase",6000,4.0],["Fogbound Lighthouse",5000,5.0]],"3":[["Aayush Sharma",2,19500]],"4":[["The Weeping Willow Manor",5,22500,1,81.82],["Fogbound Lighthouse",5,5000,2,18.18],["Whispering Pines Cabin",4,12800,1,100],["Crimson Attic B&B",3,5600,1,100],["The Grinning Staircase",2,6000,1,100]]};
+const HINTS = {
+  generic: {
+    noRows: "Your query returned no rows. Check the joins and filters against the sample data.",
+    wrongCount: "The row count is different from the expected answer. Recheck the filters, grouping, or HAVING clause.",
+    wrongValues: "The row count is close, but one or more values do not match. Review selected columns, calculations, and rounding."
+  }
+};
+initSqlJs({ locateFile: f => 'https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/' + f })
+  .then(SQL => {
+    db = new SQL.Database();
+    db.run(`
+      CREATE TABLE properties (property_id REAL, property_name TEXT, city TEXT, haunting_level REAL, nightly_rate REAL);
+      INSERT INTO properties VALUES (1,'The Weeping Willow Manor','Ooty',5,4500);
+      INSERT INTO properties VALUES (2,'Crimson Attic B&B','Shimla',3,2800);
+      INSERT INTO properties VALUES (3,'Whispering Pines Cabin','Manali',4,3200);
+      INSERT INTO properties VALUES (4,'The Grinning Staircase','Jaipur',2,2000);
+      INSERT INTO properties VALUES (5,'Fogbound Lighthouse','Goa',5,5000);
+
+      CREATE TABLE guests (guest_id REAL, full_name TEXT, city TEXT, loyalty_tier TEXT);
+      INSERT INTO guests VALUES (1,'Aayush Sharma','Hyderabad','Gold');
+      INSERT INTO guests VALUES (2,'Ananya Seth','Chennai','Silver');
+      INSERT INTO guests VALUES (3,'Anuj Khokhar','Bengaluru','Gold');
+      INSERT INTO guests VALUES (4,'Prem Kushwah','Hyderabad','Silver');
+      INSERT INTO guests VALUES (5,'Tanushi','Mumbai','Gold');
+
+      CREATE TABLE bookings (booking_id REAL, property_id REAL, guest_id REAL, nights_stayed REAL, total_paid REAL);
+      INSERT INTO bookings VALUES (101,1,1,3,13500);
+      INSERT INTO bookings VALUES (102,2,2,2,5600);
+      INSERT INTO bookings VALUES (103,3,3,4,12800);
+      INSERT INTO bookings VALUES (104,1,4,2,9000);
+      INSERT INTO bookings VALUES (105,5,5,1,5000);
+      INSERT INTO bookings VALUES (106,4,1,3,6000);
+
+      CREATE TABLE ghost_reviews (review_id REAL, booking_id REAL, stars REAL, mentions_ghost TEXT);
+      INSERT INTO ghost_reviews VALUES (1,101,5,'Yes');
+      INSERT INTO ghost_reviews VALUES (2,102,4,'No');
+      INSERT INTO ghost_reviews VALUES (3,103,5,'Yes');
+      INSERT INTO ghost_reviews VALUES (4,104,2,'Yes');
+      INSERT INTO ghost_reviews VALUES (5,105,5,'Yes');
+      INSERT INTO ghost_reviews VALUES (6,106,4,'No');
+    `);
+    document.getElementById('loader').style.display = 'none';
+  })
+  .catch(e => {
+    document.getElementById('loader').innerHTML = '<p style="color:var(--red-text)">Failed to load SQL engine: ' + e.message + '</p>';
+  });
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+function handleTab(e) {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const t = e.target, s = t.selectionStart;
+  t.value = t.value.slice(0, s) + '    ' + t.value.slice(t.selectionEnd);
+  t.selectionStart = t.selectionEnd = s + 4;
+}
+function clearQ(n) {
+  document.getElementById('ed-' + n).value = '';
+  document.getElementById('out-' + n).classList.remove('show');
+}
+function renderTable(result) {
+  if (!result || !result.length) return '<p class="empty-result">Query returned 0 rows.</p>';
+  const columns = result[0].columns, values = result[0].values;
+  let h = '<table class="dtable"><thead><tr>';
+  columns.forEach(c => h += '<th>' + c + '</th>');
+  h += '</tr></thead><tbody>';
+  values.forEach(row => {
+    h += '<tr>';
+    row.forEach(v => h += '<td>' + (v ?? 'NULL') + '</td>');
+    h += '</tr>';
+  });
+  return h + '</tbody></table>';
+}
+function norm(v) {
+  if (v === null || v === undefined) return '';
+  const n = parseFloat(v);
+  return isNaN(n) ? String(v).toLowerCase().trim() : Math.round(n * 100) / 100;
+}
+function sortRows(rows) {
+  return [...rows].sort((a, b) => {
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      const av = String(a[i] ?? ''), bv = String(b[i] ?? '');
+      if (av < bv) return -1;
+      if (av > bv) return 1;
+    }
+    return 0;
+  });
+}
+function matches(actualValues, expected) {
+  if (actualValues.length !== expected.length) return false;
+  const as = sortRows(actualValues.map(r => r.map(norm)));
+  const es = sortRows(expected.map(r => r.map(norm)));
+  for (let i = 0; i < as.length; i++) {
+    if (as[i].length !== es[i].length) return false;
+    for (let j = 0; j < as[i].length; j++) {
+      const a = as[i][j], e = es[i][j];
+      if (typeof a === 'number' && typeof e === 'number') {
+        if (Math.abs(a - e) > 0.1) return false;
+      } else if (a !== e) return false;
+    }
+  }
+  return true;
+}
+function showFb(n, type, title, body) {
+  const icon = type === 'success' ? 'OK' : type === 'error' ? 'X' : '!';
+  document.getElementById('fb-' + n).innerHTML = '<div class="fb-box ' + type + '"><span class="fb-icon">' + icon + '</span><div class="fb-content"><div class="fb-title">' + title + '</div>' + (body ? '<div>' + body + '</div>' : '') + '</div></div>';
+}
+function markSolved(n) {
+  if (solved[n]) return;
+  solved[n] = true;
+  document.getElementById('qcard-' + n).classList.add('solved');
+  document.getElementById('sb-' + n).classList.add('show');
+  document.getElementById('p' + n).classList.add('done');
+  const count = Object.values(solved).filter(Boolean).length;
+  document.getElementById('prog-text').textContent = count + ' / 4 solved';
+  if (count === 4) document.getElementById('all-done').classList.add('show');
+}
+function getHint(n, result) {
+  const rows = result && result.length ? result[0].values : [];
+  const expected = EXP[n];
+  if (matches(rows, expected)) return ['success', 'Correct!', 'Your output matches the expected result. Question ' + n + ' solved!'];
+  if (rows.length === 0) return ['hint', 'No Results', HINTS.generic.noRows];
+  if (rows.length !== expected.length) return ['hint', 'Row Count Mismatch', HINTS.generic.wrongCount];
+  return ['hint', 'Close, but Not Quite', HINTS.generic.wrongValues];
+}
+function checkQ(n) {
+  if (!db) { alert('SQL engine still loading - please wait a moment.'); return; }
+  const query = document.getElementById('ed-' + n).value.trim();
+  if (!query) { alert('Please write a query first.'); return; }
+  const outEl = document.getElementById('out-' + n);
+  outEl.classList.add('show');
+  document.getElementById('res-' + n).innerHTML = '';
+  document.getElementById('fb-' + n).innerHTML = '';
+  let result;
+  try {
+    result = db.exec(query);
+  } catch (err) {
+    showFb(n, 'error', 'SQL Error', '<code>' + err.message + '</code>');
+    return;
+  }
+  document.getElementById('res-' + n).innerHTML = renderTable(result);
+  const fb = getHint(n, result);
+  showFb(n, fb[0], fb[1], fb[2]);
+  if (fb[0] === 'success') markSolved(n);
+}
+</script>
+</body>
+</html>

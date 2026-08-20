@@ -1,0 +1,31 @@
+Question Text,Option A,Option B,Option C,Option D,Correct Answer,Time (seconds)
+"Which clause removes duplicate rows from a SELECT result?",WHERE,UNIQUE,DISTINCT,FILTER,C,30
+"SQL's real execution order doesn't start with SELECT. What does it actually start with?",SELECT,ORDER BY,WHERE,FROM,D,30
+"I have no fixed number of rows until I actually run. Ask me to find every manager above a manager above a manager, and I'll keep going until nobody's left to ask. What am I?",A window function,A recursive CTE,A GROUP BY,A subquery,B,35
+"WHERE customer_id NOT IN (1, 2, NULL) can silently return zero rows. Why?","NULL comparisons evaluate to UNKNOWN, poisoning the whole condition",It's a syntax error,IN doesn't support NULL,NOT IN always returns all rows,A,30
+"Which window function assigns the SAME rank to tied rows but still leaves a gap in the numbers afterward (1, 2, 2, 4)?",ROW_NUMBER(),DENSE_RANK(),RANK(),NTILE(),C,30
+"Why did the SQL query stay single forever?",It couldn't find the right JOIN,It kept ORDER BY-ing alone,It had trust issues with NULL,It refused to ever COMMIT,A,15
+"SUM(sales) OVER (PARTITION BY region ORDER BY date), with no frame clause specified, computes what by default?",The total for the whole partition,A running total up to the current row,A simple average,It throws an error,B,30
+"Kriti Tiwari wants 2017 and 2018 monthly revenue laid out as two side-by-side columns. Which operator reshapes rows that way?",ROLLUP,UNPIVOT,CUBE,PIVOT,D,30
+"I turn your rows into columns. Say my name backwards, in spirit, and I turn them right back into rows. What operator pair am I part of?",ROLLUP / CUBE,WHERE / HAVING,PIVOT / UNPIVOT,UNION / UNION ALL,C,35
+"In a PIVOT's IN() list, why must a value like 2017 be wrapped in square brackets — [2017]?",It's just a style preference,SQL requires brackets on every clause,"Without brackets, it would be parsed as a bare numeric literal, not an identifier",Brackets are optional but recommended,C,30
+"What's the single biggest reason SELECT * hurts performance on a wide table?",It's harder to read,It silently changes column order,It disables indexes permanently,It drags unnecessary columns across disk and network,D,30
+"Why did the database administrator file for divorce?",His spouse kept dropping hints,They couldn't agree on a primary key,He found out it was a one-to-many relationship,She left without a COMMIT,C,15
+"Which pattern is NULL-safe for 'find customers with zero orders'?",NOT IN,!= ALL,NOT EXISTS,EXCEPT ALL,C,30
+"GROUP BY ROLLUP(region, state, city) — 3 columns — produces how many grouping levels?",3,6,8,4,D,30
+"I check whether something exists, never what it equals — and unlike my cousin, one stray NULL in the crowd never confuses me. Who am I?",IN,NOT EXISTS,BETWEEN,LIKE,B,35
+"GROUP BY CUBE(region, state) — 2 columns — produces how many groupings?",2,3,4,8,C,30
+"Which operator lets you specify exactly which subtotal combinations to compute — no more, no less?",ROLLUP,UNION ALL,CUBE,GROUPING SETS,D,30
+"What do you call a recursive CTE with no exit plan?",A subquery,A GROUP BY,A view,A permanent resident of your query plan,D,15
+"In a recursive CTE, what does the base case (anchor member) NEVER do?",Run exactly once,Produce the starting rows,Reference the CTE itself,Use a SELECT statement,C,30
+"What connector MUST join a recursive CTE's base case and its recursive case?",UNION,JOIN,INTERSECT,UNION ALL,D,30
+"Give me n columns and I'll hand you back 2 to the power of n groupings — greedy, but thorough about it. What operator am I?",ROLLUP,GROUPING SETS,CUBE,HAVING,C,35
+"A recursive CTE will loop forever on cyclic data unless you add what?",An ORDER BY,A GROUP BY,A termination guard — like hop_count < N,A DISTINCT,C,30
+"A recursive CTE returns a truncated path string once chains get long. What's the most likely fix?",Add an ORDER BY,CAST the path column to VARCHAR(MAX) in the base case,Add a GROUP BY,Use UNION instead of UNION ALL,B,30
+"Why don't SQL developers trust NULL?",It's too slow,It only works on Tuesdays,"It's never equal to anything, not even itself",It breaks every JOIN on sight,C,15
+"What's the real difference between EXISTS and IN when checking against a subquery?",They behave identically in every case,EXISTS is correlated and checks row existence; IN checks membership in a static list,IN is always faster with no exceptions,EXISTS can never be negated,B,30
+"Which clause filters rows BEFORE grouping, and which filters groups AFTER aggregation?",GROUP BY / ORDER BY,WHERE / HAVING,HAVING / WHERE,FROM / SELECT,B,30
+"I sit right between WHERE and ORDER BY in a query, but I only ever judge groups — never a single row on its own. What clause am I?",HAVING,GROUP BY,DISTINCT,OVER,A,35
+"For Bhaskar's dashboard, every row needs a unique sequential number — even when two values tie exactly. Which function?",RANK(),DENSE_RANK(),ROW_NUMBER(),NTILE(2),C,30
+"What did one recursive CTE say to the other on its way out?",SELECT you later,Let's never JOIN again,I've hit MAXRECURSION with you,I'll see myself out. Eventually.,D,15
+"Across all four SQL days, which single habit did nearly every optimization lesson circle back to?",Always use SELECT * to be safe,"Filter early, and only select what you actually need",Avoid JOINs wherever possible,Never use window functions,B,30

@@ -1,5 +1,5 @@
 """
-read_learner_list.py — load the Chennai 2026 learner roster and deterministically
+read_learner_list.py — load a cohort's learner roster and deterministically
 rotate a real name into a worked-example slide.
 
 Why this exists: the slide deck's tone uses a running named-learner example
@@ -10,14 +10,20 @@ non-reproducible (running this skill twice for the same session should not
 silently change which learner appears on it). pick_learner() solves both:
 deterministic per (day, session_seed), varied across different sessions.
 
+Default cohort is Hyderabad 2026 (the operative batch as of 2026-08-12).
+Pass --learner-list to point at a different cohort's roster, e.g. the
+original Chennai 2026 one.
+
 Usage:
     python read_learner_list.py                       # print full roster
     python read_learner_list.py --pick 7 ILT2          # pick a learner for Day 7, ILT2
+    python read_learner_list.py --learner-list "..\\..\\..\\..\\calendars\\tred-alch-adv-dbx-chennai-2026-learner list (duplicate, identical to the other copy).xlsx" --pick 7 ILT2
 """
 
 import argparse
 import hashlib
 import sys
+from pathlib import Path
 
 try:
     import openpyxl
@@ -29,7 +35,16 @@ except ImportError:
 # lives in calendars/ (an exact-duplicate copy also sits alongside it,
 # labeled "(duplicate, identical to the other copy)" -- either is fine, this
 # one is the original).
-LEARNER_LIST_PATH = r"C:\Yvirinchy\tred-alch-adv-dbx\calendars\tred-alch-adv-dbx-chennai-2026-learner list.xlsx"
+#
+# 2026-08-12: default cohort switched to Hyderabad 2026. NOTE: the Chennai
+# roster file this constant used to point at (and the absolute
+# C:\Yvirinchy\tred-alch-adv-dbx\ root it lived under) has since been deleted
+# from the repo -- only the "(duplicate, identical to the other copy)" file
+# remains for Chennai. Path is now relative to this script so it survives
+# repo moves (the old absolute path silently pointed at a dead root).
+LEARNER_LIST_PATH = str(
+    Path(__file__).resolve().parents[4] / "calendars" / "tred-alch-adv-dbx-hyderabad-2026-learner-list.xlsx"
+)
 SHEET_NAME = "Sheet1"
 
 
@@ -106,14 +121,16 @@ if __name__ == "__main__":
                          help="Pick a learner for the given day and session seed.")
     parser.add_argument("--self-test", action="store_true",
                          help="Run the built-in determinism/variety self-test.")
+    parser.add_argument("--learner-list", type=str, default=LEARNER_LIST_PATH,
+                         help="Override path to the roster .xlsx (e.g. the Chennai roster path)")
     args = parser.parse_args()
 
     if args.self_test:
         _self_test()
     elif args.pick:
         day, session_seed = args.pick
-        name, email = pick_learner(day, session_seed)
+        name, email = pick_learner(day, session_seed, path=args.learner_list)
         print(f"{name} <{email}>")
     else:
-        for name, email in load_learners():
+        for name, email in load_learners(path=args.learner_list):
             print(f"{name}\t{email}")

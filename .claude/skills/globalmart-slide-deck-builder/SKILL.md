@@ -3,10 +3,12 @@ name: globalmart-slide-deck-builder
 description: >
   Builds one dark-themed, self-contained HTML slide deck (the .html file that
   accompanies an ILT or HOL .ipynb) for ONE GlobalMart Databricks bootcamp
-  session, Chennai 2026 cohort, using the approved slide template
+  session, using the approved slide template
   (slide-cover/slide-section/slide-content/slide-demo, cards, highlight-box,
   pill, order-list, sql-table, syntax-highlighted code blocks) and real
-  learner names from the Chennai 2026 roster as rotating worked-example
+  learner names from the current cohort's roster (Hyderabad 2026 by default;
+  the original Chennai 2026 roster is available via
+  `scripts/read_learner_list.py --learner-list`) as rotating worked-example
   protagonists. Use this whenever the user asks to build, generate, or
   present slides, a slide deck, an HTML explainer, or "the deck" for a
   GlobalMart Day N ILT or HOL -- including phrasings like "make the slides
@@ -38,7 +40,7 @@ plausible-sounding guess.
 
 ### 1. Identify the target session and locate its siblings
 
-Glob `C:\Yvirinchy\tred-alch-adv-dbx\Databricks\Day{N}\Day{N}_*_{ILT|HOL}*_*.ipynb` for the
+Glob `C:\Yvirinchy\DE notebooks\Databricks\Day{N}\Day{N}_*_{ILT|HOL}*_*.ipynb` for the
 day/topic the user names. This is the ground truth this deck must reflect —
 if it doesn't exist yet, **stop and tell the user to run
 `globalmart-notebook-builder` first.** Never invent slide content that isn't
@@ -234,10 +236,11 @@ These apply to every deck this skill helps produce, no exceptions:
 
 ## Bundled scripts
 
-- `scripts/read_learner_list.py` — loads the Chennai 2026 roster and
-  deterministically rotates a learner name per (day, session). Run with
-  `--pick <day> <session_seed>` for one name, or `--self-test` to see the
-  rotation across several sessions at once.
+- `scripts/read_learner_list.py` — loads the current cohort's roster
+  (Hyderabad 2026 by default; pass `--learner-list` to use Chennai 2026's
+  instead) and deterministically rotates a learner name per (day, session).
+  Run with `--pick <day> <session_seed>` for one name, or `--self-test` to
+  see the rotation across several sessions at once.
 - `scripts/validate_html_deck.py` — structural validator (tag balance, nav/JS
   integrity, slide-count-vs-counter match, no external network refs outside
   `<pre>`). Run against every deck this skill writes before reporting success.

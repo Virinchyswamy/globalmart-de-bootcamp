@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StackAttack League Analytics — SQL Case Study</title>
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/sql-wasm.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800;900&display=swap');
+:root {
+  --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d;
+  --accent: #14b8a6; --accent-light: #5eead4; --accent-dim: rgba(20,184,166,0.13); --accent-border: rgba(20,184,166,0.30); --accent-hover: #0d9488;
+  --green: #238636; --green-text: #3fb950; --green-bg: #0d2618;
+  --red: #da3633; --red-text: #f85149; --red-bg: #210d0d;
+  --yellow: #9e6a03; --yellow-text: #d29922; --yellow-bg: #1f1700;
+  --text: #c9d1d9; --text-dim: #8b949e; --text-bright: #f0f6fc;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
+#loader { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; }
+.spinner { width: 38px; height: 38px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#loader p { color: var(--text-dim); font-size: 14px; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 32px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.header-logo { width: 36px; height: 36px; background: var(--accent); color: #08111f; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex: 0 0 auto; }
+header h1 { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800; color: var(--text-bright); letter-spacing: -.2px; }
+header p { font-size: 12px; color: var(--text-dim); }
+.progress-wrap { display: flex; align-items: center; gap: 10px; }
+.pills { display: flex; gap: 6px; }
+.pill { width: 30px; height: 7px; background: var(--border); border-radius: 4px; transition: background .4s; }
+.pill.done { background: var(--accent); }
+.prog-text { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+main { max-width: 940px; margin: 0 auto; padding: 32px 20px; display: flex; flex-direction: column; gap: 36px; }
+.section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent-light); margin-bottom: 12px; }
+.card, .qcard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: box-shadow .25s, border-color .25s; }
+.card:hover, .qcard:hover { box-shadow: 0 6px 24px rgba(0,0,0,.28); border-color: var(--accent-border); }
+.qnum { font-family: 'Sora', sans-serif; }
+.card-body { padding: 24px; }
+.prob-text { font-size: 14px; line-height: 1.8; }
+.prob-text strong { color: var(--text-bright); }
+.prob-bullets { margin: 14px 0 14px 20px; display: flex; flex-direction: column; gap: 5px; font-size: 14px; }
+.stake { border-left: 3px solid var(--accent); padding-left: 14px; margin-top: 14px; font-style: italic; color: var(--text-dim); font-size: 13px; }
+.table-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 20px; overflow-x: auto; }
+.tab-btn { background: none; border: none; color: var(--text-dim); padding: 11px 15px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: 'Courier New', monospace; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+.tab-panel { display: none; padding: 20px; overflow-x: auto; }
+.tab-panel.active { display: block; }
+.tab-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 14px; }
+.dtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dtable th { background: var(--surface2); color: var(--accent-light); font-weight: 600; padding: 9px 13px; text-align: left; border: 1px solid var(--border); font-family: 'Courier New', monospace; }
+.dtable td { padding: 8px 13px; border: 1px solid var(--border); color: var(--text); }
+.dtable tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+.qcard.solved { border-color: var(--green); }
+.qcard-head { padding: 15px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.qnum { font-size: 15px; font-weight: 700; color: var(--text-bright); }
+.badge { font-size: 11px; font-weight: 700; padding: 3px 11px; border-radius: 20px; text-transform: uppercase; letter-spacing: .05em; }
+.badge-b { background: #0d2618; color: #3fb950; border: 1px solid #238636; }
+.badge-i { background: #1f1700; color: #d29922; border: 1px solid #9e6a03; }
+.badge-a { background: #210d0d; color: #f85149; border: 1px solid #da3633; }
+.qbody { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.ctx-box { background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 8px; padding: 15px; }
+.ctx-label, .task-label, .output-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
+.ctx-label { color: var(--accent-light); }
+.ctx-box p, .task-box p { font-size: 14px; line-height: 1.75; }
+.ctx-box strong { color: var(--text-bright); }
+.task-box { background: var(--surface2); border-radius: 8px; padding: 15px; }
+.task-label, .output-label { color: var(--text-dim); }
+.task-box p { color: var(--text-bright); }
+.editor-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
+.editor-wrap:focus-within { border-color: var(--accent); }
+.editor-bar { background: var(--surface2); padding: 7px 13px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.editor-lang { font-size: 11px; color: var(--text-dim); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.clear-btn { background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; padding: 2px 8px; border-radius: 4px; }
+.clear-btn:hover { background: var(--border); color: var(--text); }
+.sql-editor { width: 100%; background: #080b10; color: #7ee787; font-family: 'Courier New', Consolas, monospace; font-size: 14px; line-height: 1.65; padding: 16px; border: none; outline: none; resize: vertical; min-height: 110px; tab-size: 4; }
+.sql-editor::placeholder { color: #2d3748; }
+.action-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.run-btn { background: var(--accent); color: #08111f; border: none; padding: 9px 22px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.run-btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); color: #fff; }
+.reset-btn { background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 9px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.reset-btn:hover { border-color: var(--text-dim); color: var(--text); }
+.output-area { display: none; flex-direction: column; gap: 12px; }
+.output-area.show { display: flex; }
+.result-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+.empty-result { padding: 12px 16px; color: var(--text-dim); font-size: 13px; font-style: italic; }
+.fb-box { border-radius: 8px; padding: 14px 16px; font-size: 14px; line-height: 1.7; display: flex; gap: 12px; align-items: flex-start; }
+.fb-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; font-weight: 900; }
+.fb-content { flex: 1; }
+.fb-title { font-weight: 700; margin-bottom: 3px; }
+.fb-box.success { background: var(--green-bg); border: 1px solid var(--green); color: var(--green-text); }
+.fb-box.error { background: var(--red-bg); border: 1px solid var(--red); color: var(--red-text); }
+.fb-box.hint { background: var(--yellow-bg); border: 1px solid var(--yellow); color: var(--yellow-text); }
+.fb-box code { font-family: 'Courier New', monospace; font-size: 12px; background: rgba(0,0,0,.3); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 6px; word-break: break-all; }
+.solved-banner { display: none; align-items: center; gap: 8px; background: var(--green-bg); border-top: 1px solid var(--green); padding: 11px 22px; font-size: 13px; color: var(--green-text); font-weight: 700; }
+.solved-banner.show { display: flex; }
+#all-done { display: none; text-align: center; padding: 40px 20px; background: var(--surface); border: 1px solid var(--green); border-radius: 12px; }
+#all-done h2 { color: var(--green-text); font-size: 22px; margin-bottom: 8px; }
+#all-done p { color: var(--text-dim); font-size: 14px; }
+#all-done.show { display: block; }
+@media (max-width: 700px) {
+  header { padding: 12px 16px; align-items: flex-start; flex-direction: column; }
+  main { padding: 24px 14px; }
+  .progress-wrap { width: 100%; justify-content: space-between; }
+  .pill { width: 24px; }
+}
+</style>
+</head>
+<body>
+<div id="loader"><div class="spinner"></div><p>Initializing SQL Engine...</p></div>
+<header>
+  <div class="header-left"><div class="header-logo">STK</div><div><h1>StackAttack League Analytics</h1><p>Competitive Cup Stacking Domain · SQL Case Study</p></div></div>
+  <div class="progress-wrap"><div class="pills"><div class="pill" id="p1"></div><div class="pill" id="p2"></div><div class="pill" id="p3"></div><div class="pill" id="p4"></div></div><span class="prog-text" id="prog-text">0 / 4 solved</span></div>
+</header>
+<main>
+  <section>
+    <p class="section-label">Problem Statement</p>
+    <div class="card"><div class="card-body"><div class="prob-text">
+      <p><strong>StackAttack</strong> is the national league for Competitive Sport Stacking — stacking and unstacking plastic cups into pyramids, against the clock, with the intensity most people reserve for actual sports. Sponsors are real. The rivalries are realer.</p>
+      <p style="margin-top:12px">You've joined as the league's Data Analyst. Your queries decide:</p>
+      <ul class="prob-bullets"><li>Which team takes the National Pyramid trophy</li><li>Which stacker gets the sponsorship spotlight</li><li>Who's a serial competitor worth building a highlight reel around</li><li>Who's actually the fastest hands on their own team</li></ul>
+      <p class="stake">Prem Kushwah, Federation President, wants this on his desk before the Nationals press conference. Raghul D has already texted the group chat: "just checked, I'm still faster than Kabirkrishnan, right?" Let the data answer that, not the group chat.</p>
+    </div></div></div>
+  </section>
+  <section>
+    <p class="section-label">Database Tables</p>
+    <div class="card"><div class="table-tabs">
+        <button class="tab-btn active" onclick="switchTab('teams',this)">teams</button>
+        <button class="tab-btn " onclick="switchTab('stackers',this)">stackers</button>
+        <button class="tab-btn " onclick="switchTab('tournaments',this)">tournaments</button>
+        <button class="tab-btn " onclick="switchTab('results',this)">results</button>
+      </div>
+      <div class="tab-panel active" id="tab-teams">
+        <p class="tab-desc">The three franchises stacking their way to glory.</p>
+        <table class="dtable"><thead><tr><th>team_id</th><th>team_name</th><th>home_city</th><th>coach</th></tr></thead><tbody>
+            <tr><td>1</td><td>Cup Crushers</td><td>Hyderabad</td><td>Bhaskar Chauhan</td></tr>
+            <tr><td>2</td><td>Stack Ninjas</td><td>Chennai</td><td>Naman Prasad</td></tr>
+            <tr><td>3</td><td>Speed Pyramids</td><td>Bengaluru</td><td>Kriti Tiwari</td></tr>
+        </tbody></table>
+      </div>
+      <div class="tab-panel " id="tab-stackers">
+        <p class="tab-desc">The athletes and their years of experience stacking cups under pressure.</p>
+        <table class="dtable"><thead><tr><th>stacker_id</th><th>full_name</th><th>team_id</th><th>years_competing</th></tr></thead><tbody>
+            <tr><td>1</td><td>Raghul D</td><td>1</td><td>6</td></tr>
+            <tr><td>2</td><td>Kabirkrishnan A</td><td>1</td><td>2</td></tr>
+            <tr><td>3</td><td>Udhav Vinaik</td><td>2</td><td>8</td></tr>
+            <tr><td>4</td><td>Harsh Kumar</td><td>2</td><td>3</td></tr>
+            <tr><td>5</td><td>Aditi</td><td>3</td><td>5</td></tr>
+        </tbody></table>
+      </div>
+      <div class="tab-panel " id="tab-tournaments">
+        <p class="tab-desc">This season's official events.</p>
+        <table class="dtable"><thead><tr><th>tournament_id</th><th>event_name</th><th>city</th><th>event_date</th></tr></thead><tbody>
+            <tr><td>1</td><td>Deccan Cup Open</td><td>Hyderabad</td><td>2026-03-01</td></tr>
+            <tr><td>2</td><td>Southern Speed Stack</td><td>Chennai</td><td>2026-03-08</td></tr>
+            <tr><td>3</td><td>National Pyramid Finals</td><td>Bengaluru</td><td>2026-03-15</td></tr>
+        </tbody></table>
+      </div>
+      <div class="tab-panel " id="tab-results">
+        <p class="tab-desc">Stack times (seconds — lower is faster) and finishing placement.</p>
+        <table class="dtable"><thead><tr><th>result_id</th><th>tournament_id</th><th>stacker_id</th><th>stack_time_sec</th><th>placement</th></tr></thead><tbody>
+            <tr><td>1</td><td>1</td><td>1</td><td>5.2</td><td>1</td></tr>
+            <tr><td>2</td><td>1</td><td>3</td><td>5.8</td><td>2</td></tr>
+            <tr><td>3</td><td>2</td><td>1</td><td>4.9</td><td>1</td></tr>
+            <tr><td>4</td><td>2</td><td>4</td><td>6.1</td><td>2</td></tr>
+            <tr><td>5</td><td>3</td><td>2</td><td>5.5</td><td>2</td></tr>
+            <tr><td>6</td><td>3</td><td>5</td><td>5.0</td><td>1</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </section>
+  <section>
+    <p class="section-label">Questions</p>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div class="qcard" id="qcard-1">
+        <div class="qcard-head"><span class="qnum">Question 1</span><span class="badge badge-b">Beginner</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>Prem wants the "Under 5.5 Seconds Club" list for the Nationals promo poster.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>Show the stacker's name and stack time for every result under 5.5 seconds, fastest time first.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(1)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-1" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(1)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(1)">Reset</button></div>
+          <div class="output-area" id="out-1"><div class="output-label">Your Output</div><div class="result-wrap" id="res-1"></div><div id="fb-1"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-1">OK - Question 1 solved!</div>
+      </div>
+
+      <div class="qcard" id="qcard-2">
+        <div class="qcard-head"><span class="qnum">Question 2</span><span class="badge badge-i">Intermediate</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>Prem needs a <strong>Team Form Report</strong> ahead of Nationals sponsorship renewals.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>For each team, show the number of events its stackers competed in and their average stack time, rounded to 2 decimals.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(2)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-2" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(2)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(2)">Reset</button></div>
+          <div class="output-area" id="out-2"><div class="output-label">Your Output</div><div class="result-wrap" id="res-2"></div><div id="fb-2"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-2">OK - Question 2 solved!</div>
+      </div>
+
+      <div class="qcard" id="qcard-3">
+        <div class="qcard-head"><span class="qnum">Question 3</span><span class="badge badge-i">Intermediate</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>The broadcast wants a "most consistent competitor" segment for the Nationals stream.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>Show stackers who have competed in more than one tournament — their name, tournament count, and total stack time across those events.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(3)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-3" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(3)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(3)">Reset</button></div>
+          <div class="output-area" id="out-3"><div class="output-label">Your Output</div><div class="result-wrap" id="res-3"></div><div id="fb-3"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-3">OK - Question 3 solved!</div>
+      </div>
+
+      <div class="qcard" id="qcard-4">
+        <div class="qcard-head"><span class="qnum">Question 4</span><span class="badge badge-a">Advanced</span></div>
+        <div class="qbody">
+          <div class="ctx-box"><div class="ctx-label">Business Context</div><p>Raghul's group-chat question deserves a real answer. Prem wants a <strong>Speed Leaderboard</strong> settled once and for all.</p></div>
+          <div class="task-box"><div class="task-label">Your Task</div><p>For each stacker, show their name, team, total stack time across all events, their rank within their team (lowest total time = Rank 1), and their share of the team's total stack time as a percentage rounded to 2 decimals.</p></div>
+          <div class="editor-wrap">
+            <div class="editor-bar"><span class="editor-lang">SQL</span><button class="clear-btn" onclick="clearQ(4)">Clear</button></div>
+            <textarea class="sql-editor" id="ed-4" placeholder="-- Write your SQL query here..." onkeydown="handleTab(event)"></textarea>
+          </div>
+          <div class="action-row"><button class="run-btn" onclick="checkQ(4)">&#9654; Run Check</button><button class="reset-btn" onclick="clearQ(4)">Reset</button></div>
+          <div class="output-area" id="out-4"><div class="output-label">Your Output</div><div class="result-wrap" id="res-4"></div><div id="fb-4"></div></div>
+        </div>
+        <div class="solved-banner" id="sb-4">OK - Question 4 solved!</div>
+      </div>
+    </div>
+  </section>
+  <div id="all-done"><h2>All Questions Solved!</h2><p>Prem has his report. The group chat has its answer. Kabirkrishnan is, in fact, faster than Raghul on team total — and will not be letting anyone forget it.</p></div>
+</main>
+<script>
+let db = null;
+const solved = { 1: false, 2: false, 3: false, 4: false };
+const EXP = {"1":[["Raghul D",4.9],["Aditi",5.0],["Raghul D",5.2]],"2":[["Cup Crushers",3,5.2],["Stack Ninjas",2,5.95],["Speed Pyramids",1,5.0]],"3":[["Raghul D",2,10.1]],"4":[["Kabirkrishnan A","Cup Crushers",5.5,1,35.26],["Raghul D","Cup Crushers",10.1,2,64.74],["Udhav Vinaik","Stack Ninjas",5.8,1,48.74],["Harsh Kumar","Stack Ninjas",6.1,2,51.26],["Aditi","Speed Pyramids",5.0,1,100]]};
+const HINTS = {
+  generic: {
+    noRows: "Your query returned no rows. Check the joins and filters against the sample data.",
+    wrongCount: "The row count is different from the expected answer. Recheck the filters, grouping, or HAVING clause.",
+    wrongValues: "The row count is close, but one or more values do not match. Review selected columns, calculations, and rounding."
+  }
+};
+initSqlJs({ locateFile: f => 'https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/' + f })
+  .then(SQL => {
+    db = new SQL.Database();
+    db.run(`
+      CREATE TABLE teams (team_id REAL, team_name TEXT, home_city TEXT, coach TEXT);
+      INSERT INTO teams VALUES (1,'Cup Crushers','Hyderabad','Bhaskar Chauhan');
+      INSERT INTO teams VALUES (2,'Stack Ninjas','Chennai','Naman Prasad');
+      INSERT INTO teams VALUES (3,'Speed Pyramids','Bengaluru','Kriti Tiwari');
+
+      CREATE TABLE stackers (stacker_id REAL, full_name TEXT, team_id REAL, years_competing REAL);
+      INSERT INTO stackers VALUES (1,'Raghul D',1,6);
+      INSERT INTO stackers VALUES (2,'Kabirkrishnan A',1,2);
+      INSERT INTO stackers VALUES (3,'Udhav Vinaik',2,8);
+      INSERT INTO stackers VALUES (4,'Harsh Kumar',2,3);
+      INSERT INTO stackers VALUES (5,'Aditi',3,5);
+
+      CREATE TABLE tournaments (tournament_id REAL, event_name TEXT, city TEXT, event_date TEXT);
+      INSERT INTO tournaments VALUES (1,'Deccan Cup Open','Hyderabad','2026-03-01');
+      INSERT INTO tournaments VALUES (2,'Southern Speed Stack','Chennai','2026-03-08');
+      INSERT INTO tournaments VALUES (3,'National Pyramid Finals','Bengaluru','2026-03-15');
+
+      CREATE TABLE results (result_id REAL, tournament_id REAL, stacker_id REAL, stack_time_sec REAL, placement REAL);
+      INSERT INTO results VALUES (1,1,1,5.2,1);
+      INSERT INTO results VALUES (2,1,3,5.8,2);
+      INSERT INTO results VALUES (3,2,1,4.9,1);
+      INSERT INTO results VALUES (4,2,4,6.1,2);
+      INSERT INTO results VALUES (5,3,2,5.5,2);
+      INSERT INTO results VALUES (6,3,5,5.0,1);
+    `);
+    document.getElementById('loader').style.display = 'none';
+  })
+  .catch(e => {
+    document.getElementById('loader').innerHTML = '<p style="color:var(--red-text)">Failed to load SQL engine: ' + e.message + '</p>';
+  });
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+function handleTab(e) {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const t = e.target, s = t.selectionStart;
+  t.value = t.value.slice(0, s) + '    ' + t.value.slice(t.selectionEnd);
+  t.selectionStart = t.selectionEnd = s + 4;
+}
+function clearQ(n) {
+  document.getElementById('ed-' + n).value = '';
+  document.getElementById('out-' + n).classList.remove('show');
+}
+function renderTable(result) {
+  if (!result || !result.length) return '<p class="empty-result">Query returned 0 rows.</p>';
+  const columns = result[0].columns, values = result[0].values;
+  let h = '<table class="dtable"><thead><tr>';
+  columns.forEach(c => h += '<th>' + c + '</th>');
+  h += '</tr></thead><tbody>';
+  values.forEach(row => {
+    h += '<tr>';
+    row.forEach(v => h += '<td>' + (v ?? 'NULL') + '</td>');
+    h += '</tr>';
+  });
+  return h + '</tbody></table>';
+}
+function norm(v) {
+  if (v === null || v === undefined) return '';
+  const n = parseFloat(v);
+  return isNaN(n) ? String(v).toLowerCase().trim() : Math.round(n * 100) / 100;
+}
+function sortRows(rows) {
+  return [...rows].sort((a, b) => {
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      const av = String(a[i] ?? ''), bv = String(b[i] ?? '');
+      if (av < bv) return -1;
+      if (av > bv) return 1;
+    }
+    return 0;
+  });
+}
+function matches(actualValues, expected) {
+  if (actualValues.length !== expected.length) return false;
+  const as = sortRows(actualValues.map(r => r.map(norm)));
+  const es = sortRows(expected.map(r => r.map(norm)));
+  for (let i = 0; i < as.length; i++) {
+    if (as[i].length !== es[i].length) return false;
+    for (let j = 0; j < as[i].length; j++) {
+      const a = as[i][j], e = es[i][j];
+      if (typeof a === 'number' && typeof e === 'number') {
+        if (Math.abs(a - e) > 0.1) return false;
+      } else if (a !== e) return false;
+    }
+  }
+  return true;
+}
+function showFb(n, type, title, body) {
+  const icon = type === 'success' ? 'OK' : type === 'error' ? 'X' : '!';
+  document.getElementById('fb-' + n).innerHTML = '<div class="fb-box ' + type + '"><span class="fb-icon">' + icon + '</span><div class="fb-content"><div class="fb-title">' + title + '</div>' + (body ? '<div>' + body + '</div>' : '') + '</div></div>';
+}
+function markSolved(n) {
+  if (solved[n]) return;
+  solved[n] = true;
+  document.getElementById('qcard-' + n).classList.add('solved');
+  document.getElementById('sb-' + n).classList.add('show');
+  document.getElementById('p' + n).classList.add('done');
+  const count = Object.values(solved).filter(Boolean).length;
+  document.getElementById('prog-text').textContent = count + ' / 4 solved';
+  if (count === 4) document.getElementById('all-done').classList.add('show');
+}
+function getHint(n, result) {
+  const rows = result && result.length ? result[0].values : [];
+  const expected = EXP[n];
+  if (matches(rows, expected)) return ['success', 'Correct!', 'Your output matches the expected result. Question ' + n + ' solved!'];
+  if (rows.length === 0) return ['hint', 'No Results', HINTS.generic.noRows];
+  if (rows.length !== expected.length) return ['hint', 'Row Count Mismatch', HINTS.generic.wrongCount];
+  return ['hint', 'Close, but Not Quite', HINTS.generic.wrongValues];
+}
+function checkQ(n) {
+  if (!db) { alert('SQL engine still loading - please wait a moment.'); return; }
+  const query = document.getElementById('ed-' + n).value.trim();
+  if (!query) { alert('Please write a query first.'); return; }
+  const outEl = document.getElementById('out-' + n);
+  outEl.classList.add('show');
+  document.getElementById('res-' + n).innerHTML = '';
+  document.getElementById('fb-' + n).innerHTML = '';
+  let result;
+  try {
+    result = db.exec(query);
+  } catch (err) {
+    showFb(n, 'error', 'SQL Error', '<code>' + err.message + '</code>');
+    return;
+  }
+  document.getElementById('res-' + n).innerHTML = renderTable(result);
+  const fb = getHint(n, result);
+  showFb(n, fb[0], fb[1], fb[2]);
+  if (fb[0] === 'success') markSolved(n);
+}
+</script>
+</body>
+</html>

@@ -3,613 +3,555 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Day 5 – Tier-based Loyalty Discount Report</title>
+<title>Day 5 – Tier-Based Loyalty Discount Report</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;--orange:#fb923c;--silver:#94a3b8;--gold:#f59e0b;--plat:#a78bfa}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
-.nav-left{display:flex;align-items:center;gap:10px}
-.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
-.nav-title{font-size:12px;color:var(--muted);font-weight:500}
-.nav-right{display:flex;align-items:center;gap:8px}
-.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
-.nav-btn:hover{background:var(--a);color:#fff;border-color:var(--a)}
-.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
-.deck{padding-top:52px;height:100vh}
-.slide{display:none;height:calc(100vh - 52px);padding:28px 52px;flex-direction:column;justify-content:flex-start;gap:14px;overflow:hidden;animation:fadein .25s ease}
+:root{
+  --void:#08090c;--surface:#111318;--surface-2:#181b22;--line:#242832;--line-lit:#33394a;
+  --ink:#eef1f6;--ink-dim:#a8adba;--ink-faint:#6b7180;
+  --primary:#f59e0b;--secondary:#ec4899;--grad:linear-gradient(135deg,#f59e0b,#ec4899);
+  --green:#22c55e;--red:#ef4444;--violet:#8b5cf6;
+  --silver:#94a3b8;--gold:#f59e0b;--plat:#ec4899;
+  --code-kw:#ff8fab;--code-fn:#ffcf7a;--code-str:#8be9c5;--code-cm:#6b7180;--code-col:#7dd3fc;--code-tbl:#d3b3ff;
+  --font-display:'Sora',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+html,body{height:100%}
+body{font-family:var(--font-body);background:var(--void);color:var(--ink);overflow:hidden}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--line-lit);border-radius:10px}
+
+/* ── TOPBAR ── */
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(8,9,12,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;z-index:200}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:26px;height:26px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#08090c}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-day{font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--primary);text-transform:uppercase}
+.brand-title{font-size:12px;color:var(--ink-dim);font-weight:500}
+.tools{display:flex;align-items:center;gap:10px}
+.counter{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);min-width:48px;text-align:center}
+.tbtn{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:12.5px;font-weight:600;transition:all .15s var(--ease)}
+.tbtn:hover{background:var(--primary);color:#08090c;border-color:var(--primary)}
+.tbtn.icon{padding:6px 10px}
+
+/* ── PROGRESS RAIL ── */
+.rail{position:fixed;top:56px;left:0;right:0;height:4px;background:var(--surface);z-index:190;display:flex;gap:2px;padding:0 2px}
+.rail-seg{flex:1;background:var(--line);border-radius:2px;cursor:pointer;transition:background .2s}
+.rail-seg.done{background:var(--grad)}
+.rail-seg:hover{background:var(--line-lit)}
+
+/* ── DECK ── */
+.deck{padding-top:60px;height:100vh}
+.slide{display:none;height:calc(100vh - 60px);padding:30px 56px 26px;flex-direction:column;justify-content:flex-start;gap:14px;overflow:hidden;animation:fadein .3s var(--ease)}
 .slide.active{display:flex}
-@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-h1{font-size:2.2rem;font-weight:900;color:var(--a);line-height:1.1}
-h2{font-size:1.55rem;font-weight:800;color:var(--a);line-height:1.2}
-h3{font-size:1rem;font-weight:700;color:var(--a2);margin-bottom:6px}
-p,li{font-size:.88rem;color:#c9d1d9;line-height:1.7}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.slide-cover{justify-content:center;align-items:flex-start;position:relative;background:
+  radial-gradient(circle at 15% 20%,rgba(245,158,11,.14),transparent 45%),
+  radial-gradient(circle at 85% 75%,rgba(236,72,153,.13),transparent 45%)}
+
+h1{font-family:var(--font-display);font-size:2.5rem;font-weight:900;color:var(--ink);line-height:1.08;letter-spacing:-.5px}
+h1 .accent{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--ink);line-height:1.2}
+h3{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:6px}
+p,li{font-size:.89rem;color:var(--ink-dim);line-height:1.7}
 ul{padding-left:18px}li{margin-bottom:4px}
-.sub{font-size:.88rem;color:var(--muted);margin-top:4px}
-.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
-.hl{background:rgba(59,130,246,.06);border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:11px 15px}
-.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
-.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
-.hl.yl{background:rgba(245,158,11,.06);border-color:var(--yellow)}
-.hl.pu{background:rgba(167,139,250,.06);border-color:var(--purple)}
-pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.85;overflow-x:auto;white-space:pre}
-code{font-family:'JetBrains Mono',monospace;font-size:.8rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
-.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.nm{color:#ffa657}.var{color:#79c0ff}
-table{width:100%;border-collapse:collapse;font-size:.82rem}
-th{background:rgba(59,130,246,.12);color:var(--a2);padding:7px 11px;text-align:left;border-bottom:2px solid var(--border);font-size:.76rem;letter-spacing:.5px}
-td{padding:6px 11px;border-bottom:1px solid var(--border);color:#c9d1d9}
-tr:hover td{background:rgba(255,255,255,.02)}
-.ok{color:var(--green);font-weight:600}.no{color:var(--red)}
-.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:12px 16px}
-.quiz p{font-size:.86rem;font-weight:600;color:var(--text);margin-bottom:10px}
-.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:5px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700}
-.ans{display:none;margin-top:10px;padding:10px 13px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.83rem;color:#86efac;line-height:1.7}
-.num{display:inline-flex;align-items:center;justify-content:center;background:var(--a);color:#fff;width:24px;height:24px;border-radius:50%;font-size:.72rem;font-weight:800;flex-shrink:0}
-.step{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
-.step p{margin:0;font-size:.84rem;color:#c9d1d9;padding-top:2px}
-.tier-silver{color:var(--silver);font-weight:700}
-.tier-gold{color:var(--gold);font-weight:700}
-.tier-plat{color:var(--plat);font-weight:700}
-.tier-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:.75rem;font-weight:700}
-.tb-s{background:rgba(148,163,184,.12);border:1px solid var(--silver);color:var(--silver)}
-.tb-g{background:rgba(245,158,11,.12);border:1px solid var(--gold);color:var(--gold)}
-.tb-p{background:rgba(167,139,250,.12);border:1px solid var(--plat);color:var(--plat)}
-.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
-.flow-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.78rem;font-weight:600;color:var(--a2)}
-.flow-arrow{color:var(--muted);font-size:.9rem}
-.badge-row{display:flex;gap:8px;flex-wrap:wrap}
-.badge{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:4px 13px;font-size:.76rem;font-weight:600;color:var(--muted)}
-.imp{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:#fca5a5}
-.tip{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:#86efac}
-.note{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:#93c5fd}
+.sub{font-size:.92rem;color:var(--ink-dim);margin-top:6px;max-width:640px}
+.eyebrow{font-family:var(--font-mono);font-size:.68rem;font-weight:700;letter-spacing:2.5px;color:var(--secondary);text-transform:uppercase;margin-bottom:6px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;transition:border-color .2s}
+.card:hover{border-color:var(--line-lit)}
+
+.highlight-box{background:rgba(245,158,11,.06);border-left:3px solid var(--primary);border-radius:0 10px 10px 0;padding:12px 16px}
+.highlight-box.warn{background:rgba(239,68,68,.06);border-color:var(--red)}
+.highlight-box.success{background:rgba(34,197,94,.06);border-color:var(--green)}
+.highlight-box.violet{background:rgba(139,92,246,.07);border-color:var(--violet)}
+.highlight-box.danger{background:rgba(239,68,68,.08);border-color:var(--red)}
+
+/* ── CODE BLOCKS ── */
+.code-block{background:#0a0b10;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.code-head{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.code-head span{font-family:var(--font-mono);font-size:.68rem;color:var(--ink-faint);letter-spacing:1px;text-transform:uppercase}
+.copy-btn{background:transparent;border:1px solid var(--line);color:var(--ink-faint);padding:3px 10px;border-radius:6px;font-size:.68rem;cursor:pointer;font-family:var(--font-mono)}
+.copy-btn:hover{color:var(--primary);border-color:var(--primary)}
+pre{padding:13px 16px;font-family:var(--font-mono);font-size:.76rem;line-height:1.8;overflow-x:auto;white-space:pre;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.8rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--code-col)}
+.kw{color:var(--code-kw);font-weight:700}.fn{color:var(--code-fn)}.str{color:var(--code-str)}.cm{color:var(--code-cm);font-style:italic}.col{color:var(--code-col)}.tbl{color:var(--code-tbl)}
+
+/* ── SQL PREVIEW ("think in SQL first") ── */
+.sql-preview{background:rgba(125,211,252,.05);border:1px solid rgba(125,211,252,.25);border-radius:12px;overflow:hidden}
+.sql-preview-head{display:flex;align-items:center;gap:8px;padding:9px 16px;background:rgba(125,211,252,.08);border-bottom:1px solid rgba(125,211,252,.2)}
+.sql-preview-badge{font-family:var(--font-mono);font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;background:#7dd3fc;color:#08090c;padding:2px 9px;border-radius:100px}
+.sql-preview-title{font-size:.82rem;font-weight:700;color:var(--code-col)}
+.sql-preview pre{color:#cfeeff}
+.bridge-arrow{display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-mono);font-size:.72rem;color:var(--ink-faint);padding:2px 0}
+.bridge-arrow .line{flex:1;height:1px;background:var(--line-lit)}
+
+table.sql-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.sql-table th{background:rgba(245,158,11,.1);color:var(--primary);padding:7px 11px;text-align:left;border-bottom:2px solid var(--line);font-size:.74rem;letter-spacing:.4px}
+.sql-table td{padding:6px 11px;border-bottom:1px solid var(--line);color:var(--ink-dim)}
+.sql-table tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ── QUIZ / MCQ ── */
+.quiz-box{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.22);border-radius:14px;padding:13px 17px}
+.quiz-box .qhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.qbadge{width:22px;height:22px;border-radius:50%;background:var(--green);color:#08090c;font-weight:900;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.quiz-box p.qtext{font-size:.87rem;font-weight:700;color:var(--ink);margin:0}
+.reveal-btn{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:var(--green);padding:5px 16px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:.78rem;font-weight:700}
+.reveal-btn:hover{background:rgba(34,197,94,.25)}
+.quiz-answer{display:none;margin-top:10px;padding:10px 13px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.82rem;color:#8ee6a8;line-height:1.7}
+
+.mcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.mcq-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px;display:flex;flex-direction:column;gap:9px}
+.mcq-q{font-size:.83rem;font-weight:700;color:var(--ink);line-height:1.5}
+.opts{display:flex;flex-direction:column;gap:5px}
+.opt{display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);cursor:pointer;transition:all .15s;font-size:.77rem;color:var(--ink-dim);background:transparent;font-family:var(--font-body);text-align:left;width:100%}
+.opt:hover:not(.disabled){background:rgba(255,255,255,.04);border-color:var(--line-lit)}
+.opt.correct{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.5);color:var(--green);pointer-events:none}
+.opt.wrong{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);color:#f87171;pointer-events:none}
+.opt.disabled{pointer-events:none;opacity:.55}
+.opt-key{font-weight:800;font-size:.7rem;color:var(--ink-faint);min-width:15px;flex-shrink:0;margin-top:1px}
+.opt.correct .opt-key{color:var(--green)}
+.opt.wrong .opt-key{color:#f87171}
+.mcq-exp{display:none;margin-top:2px;padding:8px 11px;background:rgba(34,197,94,.07);border-left:2px solid var(--green);border-radius:0 6px 6px 0;font-size:.74rem;color:#8ee6a8;line-height:1.6}
+
+/* ── PILLS / BADGES ── */
+.pill-row{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:100px;padding:4px 13px;font-size:.75rem;font-weight:600;color:var(--ink-dim)}
+.tier-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:100px;font-size:.74rem;font-weight:700}
+.tb-s{background:rgba(148,163,184,.13);border:1px solid var(--silver);color:var(--silver)}
+.tb-g{background:rgba(245,158,11,.13);border:1px solid var(--gold);color:var(--gold)}
+.tb-p{background:rgba(236,72,153,.13);border:1px solid var(--plat);color:var(--plat)}
+
+.step-list{display:flex;flex-direction:column;gap:9px}
+.step{display:flex;align-items:flex-start;gap:10px}
+.step-num{display:inline-flex;align-items:center;justify-content:center;background:var(--grad);color:#08090c;width:24px;height:24px;border-radius:50%;font-size:.72rem;font-weight:900;flex-shrink:0}
+.step p{margin:0;font-size:.85rem;color:var(--ink-dim);padding-top:2px}
+
+/* ── TOC OVERLAY ── */
+.toc-overlay{position:fixed;inset:0;background:rgba(8,9,12,.92);backdrop-filter:blur(10px);z-index:500;display:none;padding:80px 60px;overflow-y:auto}
+.toc-overlay.show{display:block}
+.toc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+.toc-head h2{font-size:1.4rem}
+.toc-close{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:16px}
+.toc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.toc-item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s}
+.toc-item:hover{border-color:var(--primary);transform:translateY(-2px)}
+.toc-item .tn{font-family:var(--font-mono);font-size:.68rem;color:var(--primary);font-weight:700}
+.toc-item .tt{font-size:.85rem;font-weight:700;color:var(--ink);margin-top:3px}
 </style>
 </head>
 <body>
-<nav>
-  <div class="nav-left">
-    <span class="nav-badge">Day 5 · Module 3</span>
-    <span class="nav-title">Tier-based Loyalty Discount Report</span>
-  </div>
-  <div class="nav-right">
-    <button class="nav-btn" onclick="go(-1)">← Prev</button>
-    <span class="nav-counter" id="ctr">1 / 10</span>
-    <button class="nav-btn" onclick="go(1)">Next →</button>
-  </div>
-</nav>
-<div class="deck">
 
-<!-- SLIDE 1: TITLE + OVERVIEW -->
-<div class="slide active">
-  <div>
-    <div class="tag">Day 5 · Module 3 · Pandas Scenario</div>
-    <h1>Tier-based Loyalty<br>Discount Report</h1>
-    <p class="sub">Build a customer loyalty segmentation system for GlobalMart — from raw order history to discounted pricing on new orders</p>
-  </div>
-  <div class="two">
-    <div class="card">
-      <h3>🎯 The Business Problem</h3>
-      <p>GlobalMart wants to reward loyal customers with tiered discounts. They need to segment customers into <span class="tier-silver">Silver</span>, <span class="tier-gold">Gold</span>, and <span class="tier-plat">Platinum</span> tiers based on their last 6 months of purchase history, then apply those discounts to new orders.</p>
-    </div>
-    <div class="card">
-      <h3>📦 What You'll Build</h3>
-      <div class="step" style="margin-top:8px"><div class="num">1</div><p><strong>Customer Loyalty Tier Report</strong> — One row per customer with tier + discount %</p></div>
-      <div class="step"><div class="num">2</div><p><strong>Discounted Pricing Report</strong> — Each new order with original price, discount %, and final price</p></div>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">5</div>
+    <div class="brand-text">
+      <span class="brand-day">Day 5 · HOL 1</span>
+      <span class="brand-title">Tier-Based Loyalty Discount Report</span>
     </div>
   </div>
-  <div class="flow">
-    <div class="flow-box">📋 Orders data</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">Filter 6 months</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">groupby + agg</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">assign_tier()</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">assign_discount()</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">Loyalty Report</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">Merge new orders</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">Discounted Price</div>
+  <div class="tools">
+    <button class="tbtn icon" onclick="toggleTOC()" title="Table of contents (G)">☰</button>
+    <span class="counter" id="ctr">1 / 11</span>
+    <button class="tbtn" onclick="go(-1)">← Prev</button>
+    <button class="tbtn" onclick="go(1)">Next →</button>
   </div>
-  <div class="badge-row">
-    <div class="badge">pd.merge()</div>
-    <div class="badge">groupby + agg</div>
-    <div class="badge">df.apply(func, axis=1)</div>
-    <div class="badge">DateOffset(months=6)</div>
-    <div class="badge">fillna()</div>
-    <div class="badge">left join</div>
+</div>
+<div class="rail" id="rail"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active" data-title="Cover">
+  <div class="eyebrow">Day 5 · Hands-On Lab 1 · pandas</div>
+  <h1>Building the <span class="accent">Loyalty Tier</span><br>& Discount Engine</h1>
+  <p class="sub">GlobalMart wants to reward its best customers automatically. You'll build two chained reports in pandas — and before every solution, we'll sketch what the same logic looks like in SQL, since that's the mental model you already trust.</p>
+  <div class="three-col" style="margin-top:18px;width:100%">
+    <div class="card"><h3>📊 Report 1</h3><p>Customer Loyalty Tier Report — classify every customer by spend & frequency</p></div>
+    <div class="card"><h3>💸 Report 2</h3><p>Discounted Pricing Report — apply each customer's tier discount to new orders</p></div>
+    <div class="card"><h3>🧭 The twist</h3><p>Every pandas step gets an "SQL shape" preview first — see the structure, then write the Python</p></div>
+  </div>
+  <div class="pill-row" style="margin-top:14px">
+    <div class="pill">groupby + agg</div>
+    <div class="pill">conditional tiering</div>
+    <div class="pill">merge / left join</div>
+    <div class="pill">derived columns</div>
   </div>
 </div>
 
-<!-- SLIDE 2: THE DATASETS -->
-<div class="slide">
-  <h2>The Datasets — What You're Working With</h2>
-  <p class="sub" style="margin-bottom:12px">Three datasets. Each has a role in the final pipeline.</p>
-  <div class="three" style="margin-bottom:14px">
+<!-- SLIDE 2: THE BRIEF -->
+<div class="slide" data-title="The Brief">
+  <h2>The Brief</h2>
+  <p class="sub">Anuradha Navin picks this up straight from a message in the analytics channel.</p>
+  <div class="highlight-box">
+    <p><strong style="color:var(--primary)">Udhav Vinaik, Head of Customer Retention:</strong> "Anuradha, we're bleeding repeat customers to a competitor's loyalty app. I want every customer bucketed into Silver / Gold / Platinum by how much they've spent with us — and I want new orders auto-discounted the moment we ship this. Six-month window. Don't overthink it."</p>
+  </div>
+  <div class="two-col">
     <div class="card">
-      <h3>📦 orders (GlobalMart)</h3>
-      <table style="margin-top:8px">
-        <tr><th>Column</th><th>Type</th></tr>
-        <tr><td><code>order_id</code></td><td style="font-size:.78rem">String / int</td></tr>
-        <tr><td><code>customer_id</code></td><td style="font-size:.78rem">Join key</td></tr>
-        <tr><td><code>order_purchase_date</code></td><td style="font-size:.78rem">datetime</td></tr>
+      <h3>Three datasets on your desk</h3>
+      <table class="sql-table">
+        <tr><th>Dataset</th><th>What's in it</th></tr>
+        <tr><td><code>orders</code></td><td>Historical order dates + IDs, linked to customers</td></tr>
+        <tr><td><code>transactions</code></td><td>Sales amount per order</td></tr>
+        <tr><td><code>customers</code></td><td>Customer names, linked by <code>customer_id</code></td></tr>
+        <tr><td><code>new_orders</code></td><td>Upcoming orders that need pricing applied <em>right now</em></td></tr>
       </table>
-      <p style="font-size:.78rem;margin-top:8px;color:var(--muted)">Used for: filtering 6 months, counting orders</p>
     </div>
     <div class="card">
-      <h3>💳 transactions (GlobalMart)</h3>
-      <table style="margin-top:8px">
-        <tr><th>Column</th><th>Type</th></tr>
-        <tr><td><code>order_id</code></td><td style="font-size:.78rem">Join key</td></tr>
-        <tr><td><code>sales_amt</code></td><td style="font-size:.78rem">float — the spend</td></tr>
-      </table>
-      <p style="font-size:.78rem;margin-top:8px;color:var(--muted)">Used for: summing total_spending per customer</p>
+      <h3>Two reports, one dependency</h3>
+      <div class="step-list">
+        <div class="step"><div class="step-num">1</div><p><strong style="color:var(--ink)">Customer Loyalty Tier Report</strong> — summarizes 6 months of history into a tier + discount per customer</p></div>
+        <div class="step"><div class="step-num">2</div><p><strong style="color:var(--ink)">Discounted Pricing Report</strong> — depends entirely on Report 1. You cannot price a new order before you know the customer's tier.</p></div>
+      </div>
+      <div class="highlight-box violet" style="margin-top:10px">
+        <p>💬 Robert, from three floors up, has already asked whether we can "just skip to the pricing report and back-fill the tiers later." We cannot. The dependency only runs one way.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: SQL BRIDGE INTRO -->
+<div class="slide" data-title="Think in SQL First">
+  <h2>Before Any Python — Sketch the SQL Shape</h2>
+  <p class="sub">You've spent four days thinking in SELECT / WHERE / GROUP BY / JOIN. That instinct doesn't disappear on Day 5 — it becomes your planning tool. For every step below, we'll show the SQL shape of the answer first, then translate it into pandas.</p>
+  <div class="three-col">
+    <div class="card">
+      <h3>🧱 pandas <code style="font-size:.78rem">groupby().agg()</code></h3>
+      <p>is structurally the same idea as SQL's</p>
+      <code>GROUP BY ... SUM() / COUNT()</code>
     </div>
     <div class="card">
-      <h3>🆕 new_orders (CSV)</h3>
-      <table style="margin-top:8px">
-        <tr><th>Column</th><th>Type</th></tr>
-        <tr><td><code>order_id</code></td><td style="font-size:.78rem">New order</td></tr>
-        <tr><td><code>customer_id</code></td><td style="font-size:.78rem">Join key</td></tr>
-        <tr><td><code>original_price</code></td><td style="font-size:.78rem">Price before discount</td></tr>
-      </table>
-      <p style="font-size:.78rem;margin-top:8px;color:var(--muted)">Used for: applying discount to calculate final price</p>
+      <h3>🧱 pandas <code style="font-size:.78rem">if / elif / else</code></h3>
+      <p>row-by-row, mirrors SQL's</p>
+      <code>CASE WHEN ... THEN ... END</code>
+    </div>
+    <div class="card">
+      <h3>🧱 pandas <code style="font-size:.78rem">.merge()</code></h3>
+      <p>is exactly SQL's</p>
+      <code>LEFT JOIN ... ON key</code>
     </div>
   </div>
-  <div class="hl" style="margin-bottom:12px">
-    <h3 style="font-size:.86rem;margin-bottom:6px">Why orders + transactions are separate</h3>
-    <p style="font-size:.83rem">orders gives us the date and customer link. transactions gives us the money. They share <code>order_id</code> — we join them first to get everything in one place before filtering and aggregating.</p>
+  <div class="highlight-box success" style="margin-top:6px">
+    <p>✅ If you can already write the SQL query for a problem, you already understand the <em>shape</em> of the pandas solution. The syntax is new. The thinking is not.</p>
   </div>
-  <pre><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
-
-<span class="cm"># Load all three datasets</span>
-<span class="var">customers_df</span> = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'customers'</span>)
-<span class="var">orders_df</span>    = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'orders'</span>)
-<span class="var">trans</span>        = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'transactions'</span>)
-
-<span class="cm"># Step 0: Combine orders + transactions on order_id</span>
-<span class="var">order_trans_df</span> = <span class="var">orders_df</span>.<span class="fn">merge</span>(<span class="var">trans</span>, <span class="var">on</span>=<span class="st">'order_id'</span>, <span class="var">how</span>=<span class="st">'inner'</span>)</pre>
 </div>
 
-<!-- SLIDE 3: STEP 1 — FILTER 6 MONTHS -->
-<div class="slide">
-  <h2>Step 1 — Filter Last 6 Months</h2>
-  <p class="sub" style="margin-bottom:12px">We don't want all-time history — only what customers have done in the <strong>last 6 months</strong>. This reflects current loyalty, not purchases from 3 years ago.</p>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># Convert date column to datetime first</span>
-<span class="var">order_trans_df</span>[<span class="st">'order_purchase_date'</span>] = pd.<span class="fn">to_datetime</span>(
-    <span class="var">order_trans_df</span>[<span class="st">'order_purchase_date'</span>]
+<!-- SLIDE 4: STEP 1 -->
+<div class="slide" data-title="Step 1 – Customer History">
+  <h2>Step 1 — Summarize Customer History</h2>
+  <p class="sub">Filter to the last 6 months of orders, then get each customer's total spending and order count.</p>
+  <div class="sql-preview">
+    <div class="sql-preview-head"><span class="sql-preview-badge">SQL shape</span><span class="sql-preview-title">what we're computing</span></div>
+    <pre><span class="kw">SELECT</span> <span class="col">customer_id</span>,
+       <span class="fn">SUM</span>(<span class="col">sales_amt</span>)   <span class="kw">AS</span> total_spending,
+       <span class="fn">COUNT</span>(<span class="col">order_id</span>) <span class="kw">AS</span> order_count
+<span class="kw">FROM</span>   <span class="tbl">orders</span> <span class="kw">JOIN</span> <span class="tbl">transactions</span> <span class="kw">USING</span>(<span class="col">order_id</span>)
+<span class="kw">WHERE</span>  <span class="col">order_purchase_date</span> &gt;= <span class="str">'cutoff_date'</span>
+<span class="kw">GROUP BY</span> <span class="col">customer_id</span>;</pre>
+  </div>
+  <div class="bridge-arrow"><div class="line"></div><span>↓ same shape, pandas syntax</span><div class="line"></div></div>
+  <div class="code-block">
+    <div class="code-head"><span>python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="var">order_trans_df</span> = <span class="var">orders_df</span>.<span class="fn">merge</span>(<span class="var">trans</span>, on=<span class="str">'order_id'</span>, how=<span class="str">'inner'</span>) <span class="cm"># the JOIN</span>
+
+<span class="var">order_trans_df</span>[<span class="str">'order_purchase_date'</span>] = <span class="var">pd</span>.<span class="fn">to_datetime</span>(<span class="var">order_trans_df</span>[<span class="str">'order_purchase_date'</span>])
+<span class="var">cutoff_date</span> = <span class="var">order_trans_df</span>[<span class="str">'order_purchase_date'</span>].<span class="fn">max</span>() - <span class="var">pd</span>.<span class="fn">DateOffset</span>(months=<span class="col">6</span>)
+<span class="var">recent_orders</span> = <span class="var">order_trans_df</span>[<span class="var">order_trans_df</span>[<span class="str">'order_purchase_date'</span>] &gt;= <span class="var">cutoff_date</span>]  <span class="cm"># the WHERE</span>
+
+<span class="var">customer_summary</span> = <span class="var">recent_orders</span>.<span class="fn">groupby</span>(<span class="str">'customer_id'</span>).<span class="fn">agg</span>(       <span class="cm"># the GROUP BY</span>
+    total_spending=(<span class="str">'sales_amt'</span>, <span class="str">'sum'</span>),
+    order_count=(<span class="str">'order_id'</span>, <span class="str">'count'</span>)
+).<span class="fn">reset_index</span>()</pre>
+  </div>
+</div>
+
+<!-- SLIDE 5: STEP 2 - TIER RULES -->
+<div class="slide" data-title="Step 2 – Tier Rules">
+  <h2>Step 2 — The Tier & Discount Matrix</h2>
+  <p class="sub">Six combinations, one rule of thumb: bigger spend and more orders both push the discount up.</p>
+  <table class="sql-table">
+    <tr><th>Tier</th><th>Total Spending</th><th>Order Count</th><th>Discount</th></tr>
+    <tr><td><span class="tier-badge tb-s">Silver</span></td><td>&lt; 500</td><td>&lt; 10</td><td>2%</td></tr>
+    <tr><td><span class="tier-badge tb-s">Silver</span></td><td>&lt; 500</td><td>&ge; 10</td><td>4%</td></tr>
+    <tr><td><span class="tier-badge tb-g">Gold</span></td><td>500 – 2000</td><td>&lt; 10</td><td>6%</td></tr>
+    <tr><td><span class="tier-badge tb-g">Gold</span></td><td>500 – 2000</td><td>&ge; 10</td><td>8%</td></tr>
+    <tr><td><span class="tier-badge tb-p">Platinum</span></td><td>&gt; 2000</td><td>&lt; 10</td><td>10%</td></tr>
+    <tr><td><span class="tier-badge tb-p">Platinum</span></td><td>&gt; 2000</td><td>&ge; 10</td><td>15%</td></tr>
+  </table>
+  <div class="highlight-box warn">
+    <p>⚠️ The higher discount inside a tier kicks in at <strong>10 or more orders (&ge; 10)</strong>, not strictly more than 10. A customer with exactly 10 orders already qualifies. Robert asked for "round numbers" — this is as round as it gets.</p>
+  </div>
+</div>
+
+<!-- SLIDE 6: STEP 3 - CASE WHEN BRIDGE -->
+<div class="slide" data-title="Step 3 – if/elif ↔ CASE WHEN">
+  <h2>Step 3 — Turning Rules into Code</h2>
+  <p class="sub">This is the cleanest SQL-to-Python bridge of the whole lab: a chain of conditions is a chain of conditions, whichever language you write it in.</p>
+  <div class="sql-preview">
+    <div class="sql-preview-head"><span class="sql-preview-badge">SQL shape</span><span class="sql-preview-title">tier assignment as CASE WHEN</span></div>
+    <pre><span class="kw">CASE</span>
+  <span class="kw">WHEN</span> total_spending &lt; <span class="col">500</span>  <span class="kw">THEN</span> <span class="str">'Silver'</span>
+  <span class="kw">WHEN</span> total_spending &lt;= <span class="col">2000</span> <span class="kw">THEN</span> <span class="str">'Gold'</span>
+  <span class="kw">ELSE</span> <span class="str">'Platinum'</span>
+<span class="kw">END AS</span> tier</pre>
+  </div>
+  <div class="bridge-arrow"><div class="line"></div><span>↓ same shape, pandas syntax</span><div class="line"></div></div>
+  <div class="code-block">
+    <div class="code-head"><span>python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">def</span> <span class="fn">assign_tier</span>(row):
+    <span class="kw">if</span> row[<span class="str">'total_spending'</span>] &lt; <span class="col">500</span>:
+        <span class="kw">return</span> <span class="str">'Silver'</span>
+    <span class="kw">elif</span> row[<span class="str">'total_spending'</span>] &lt;= <span class="col">2000</span>:
+        <span class="kw">return</span> <span class="str">'Gold'</span>
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="str">'Platinum'</span>
+
+<span class="kw">def</span> <span class="fn">assign_discount</span>(row):
+    <span class="kw">if</span> row[<span class="str">'tier'</span>] == <span class="str">'Silver'</span>:
+        <span class="kw">return</span> <span class="col">4</span> <span class="kw">if</span> row[<span class="str">'order_count'</span>] &gt;= <span class="col">10</span> <span class="kw">else</span> <span class="col">2</span>
+    <span class="kw">elif</span> row[<span class="str">'tier'</span>] == <span class="str">'Gold'</span>:
+        <span class="kw">return</span> <span class="col">8</span> <span class="kw">if</span> row[<span class="str">'order_count'</span>] &gt;= <span class="col">10</span> <span class="kw">else</span> <span class="col">6</span>
+    <span class="kw">else</span>: <span class="cm"># Platinum</span>
+        <span class="kw">return</span> <span class="col">15</span> <span class="kw">if</span> row[<span class="str">'order_count'</span>] &gt;= <span class="col">10</span> <span class="kw">else</span> <span class="col">10</span>
+
+<span class="var">customer_summary</span>[<span class="str">'tier'</span>] = <span class="var">customer_summary</span>.<span class="fn">apply</span>(assign_tier, axis=<span class="col">1</span>)
+<span class="var">customer_summary</span>[<span class="str">'discount_applicable'</span>] = <span class="var">customer_summary</span>.<span class="fn">apply</span>(assign_discount, axis=<span class="col">1</span>)</pre>
+  </div>
+</div>
+
+<!-- SLIDE 7: STEP 4 - BUILD LOYALTY REPORT -->
+<div class="slide" data-title="Step 4 – Loyalty Report">
+  <h2>Step 4 — Finish the Loyalty Tier Report</h2>
+  <p class="sub">One thing's still missing: names. <code>customer_summary</code> only knows IDs.</p>
+  <div class="sql-preview">
+    <div class="sql-preview-head"><span class="sql-preview-badge">SQL shape</span><span class="sql-preview-title">bring in the customer name</span></div>
+    <pre><span class="kw">SELECT</span> s.*, c.<span class="col">customer_name</span>
+<span class="kw">FROM</span>   customer_summary s
+<span class="kw">LEFT JOIN</span> customers c <span class="kw">ON</span> s.<span class="col">customer_id</span> = c.<span class="col">customer_id</span>;</pre>
+  </div>
+  <div class="bridge-arrow"><div class="line"></div><span>↓ same shape, pandas syntax</span><div class="line"></div></div>
+  <div class="code-block">
+    <div class="code-head"><span>python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="var">loyalty_report</span> = <span class="var">customer_summary</span>.<span class="fn">merge</span>(
+    <span class="var">customers_df</span>[[<span class="str">'customer_id'</span>, <span class="str">'customer_name'</span>]],
+    on=<span class="str">'customer_id'</span>, how=<span class="str">'left'</span>
 )
 
-<span class="cm"># Establish cutoff relative to latest order in data
-# NOT today's date — use max date in dataset!</span>
-<span class="var">cutoff_date</span> = (
-    <span class="var">order_trans_df</span>[<span class="st">'order_purchase_date'</span>].<span class="fn">max</span>()
-    - pd.<span class="fn">DateOffset</span>(<span class="var">months</span>=<span class="nm">6</span>)
-)
-
-<span class="cm"># Filter rows where date >= cutoff</span>
-<span class="var">recent_orders</span> = <span class="var">order_trans_df</span>[
-    <span class="var">order_trans_df</span>[<span class="st">'order_purchase_date'</span>] >= <span class="var">cutoff_date</span>
-]
-
-<span class="fn">print</span>(<span class="fn">len</span>(<span class="var">recent_orders</span>))   <span class="cm"># Should be 4,120</span></pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="imp">
-        <strong>⚠️ Common Mistake</strong> — Using <code>datetime.today()</code> as the reference date. If the dataset is historical (e.g., ends in 2023), filtering from today gives 0 rows. Always use <code>order_purchase_date.max()</code> to get the most recent date in the data.
-      </div>
-      <div class="note">
-        <strong>📊 Expected Result</strong> — After the 6-month filter, <strong>4,120 orders</strong> remain. If you get ~9,818 rows, the filter didn't apply. If you get ~3,490, check that you're using <code>>=</code> not <code>&gt;</code>.
-      </div>
-      <div class="quiz">
-        <p>❓ Why do we use <code>pd.DateOffset(months=6)</code> instead of <code>timedelta(days=180)</code>?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <code>DateOffset(months=6)</code> respects calendar months exactly — 6 months back from March 15 = September 15. <code>timedelta(days=180)</code> is an approximation (6×30=180, but months vary). For business use cases, DateOffset is more accurate.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 4: STEP 2 — GROUPBY AGGREGATE -->
-<div class="slide">
-  <h2>Step 2 — Aggregate Per Customer</h2>
-  <p class="sub" style="margin-bottom:12px">We need two metrics per customer: how much they spent, and how many orders they placed — in the last 6 months.</p>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># Aggregate: one row per customer
-# total_spending = sum of sales_amt
-# order_count   = count of order_id</span>
-<span class="var">customer_summary</span> = <span class="var">recent_orders</span>.<span class="fn">groupby</span>(<span class="st">'customer_id'</span>).<span class="fn">agg</span>(
-    <span class="var">total_spending</span> = (<span class="st">'sales_amt'</span>, <span class="st">'sum'</span>),
-    <span class="var">order_count</span>   = (<span class="st">'order_id'</span>,  <span class="st">'count'</span>)
-).<span class="fn">reset_index</span>()
-
-<span class="cm"># preview
-#   customer_id  total_spending  order_count
-#   C001         1850.50         12
-#   C002         380.00          7
-#   C003         5200.00         25</span></pre>
-      <div class="hl" style="margin-top:12px">
-        <h3 style="font-size:.84rem;margin-bottom:6px">Named aggregation syntax</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.77rem;"><span class="cm"># new_col_name = (source_col, aggfunc)</span>
-<span class="fn">agg</span>(
-    <span class="var">total_spending</span> = (<span class="st">'sales_amt'</span>, <span class="st">'sum'</span>),
-    <span class="var">order_count</span>   = (<span class="st">'order_id'</span>,  <span class="st">'count'</span>)
-)</pre>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">groupby().agg() — what happens</h3>
-        <table>
-          <tr><th>Input rows</th><th>→</th><th>Output rows</th></tr>
-          <tr><td style="font-size:.78rem">Many orders per customer</td><td style="font-size:.78rem">→</td><td style="font-size:.78rem">One row per customer</td></tr>
-          <tr><td style="font-size:.78rem">sales_amt per order</td><td style="font-size:.78rem">→</td><td style="font-size:.78rem">total_spending (sum)</td></tr>
-          <tr><td style="font-size:.78rem">order_id per row</td><td style="font-size:.78rem">→</td><td style="font-size:.78rem">order_count (count)</td></tr>
-        </table>
-      </div>
-      <div class="tip">
-        <strong>💡 Why reset_index()?</strong> — groupby() makes customer_id the index. <code>.reset_index()</code> converts it back to a regular column so we can use it in later joins and functions.
-      </div>
-      <div class="quiz">
-        <p>❓ A customer placed 15 orders totalling ₹450. What tier and discount do they get? (Preview the rules before clicking)</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <span class="tier-silver">Silver tier</span> (spending &lt; 500) + <strong>4%</strong> discount (order_count ≥ 10 → higher Silver tier discount). Always check BOTH spending AND order count — they interact.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 5: TIER RULES + assign_tier -->
-<div class="slide">
-  <h2>The Tier Rules — assign_tier Function</h2>
-  <p class="sub" style="margin-bottom:12px">The tier is determined by total spending alone. The order count only affects the discount within a tier.</p>
-  <div class="two">
-    <div>
-      <div class="card" style="margin-bottom:12px">
-        <h3 style="font-size:.84rem;margin-bottom:10px">Loyalty Tier Rules — Full Matrix</h3>
-        <table>
-          <tr><th>Tier</th><th>Total Spending</th><th>Orders &lt; 10</th><th>Orders ≥ 10</th></tr>
-          <tr>
-            <td><span class="tier-badge tb-s">Silver</span></td>
-            <td style="font-size:.8rem">&lt; 500</td>
-            <td style="font-size:.8rem;color:var(--silver)">2%</td>
-            <td style="font-size:.8rem;color:var(--silver)">4%</td>
-          </tr>
-          <tr>
-            <td><span class="tier-badge tb-g">Gold</span></td>
-            <td style="font-size:.8rem">500 – 2000</td>
-            <td style="font-size:.8rem;color:var(--gold)">6%</td>
-            <td style="font-size:.8rem;color:var(--gold)">8%</td>
-          </tr>
-          <tr>
-            <td><span class="tier-badge tb-p">Platinum</span></td>
-            <td style="font-size:.8rem">&gt; 2000</td>
-            <td style="font-size:.8rem;color:var(--plat)">10%</td>
-            <td style="font-size:.8rem;color:var(--plat)">15%</td>
-          </tr>
-        </table>
-      </div>
-      <div class="imp">
-        <strong>⚠️ Edge case</strong> — spending of exactly <strong>500</strong> → <span class="tier-gold">Gold</span> (NOT Silver). Silver is strictly &lt; 500. Use <code>&lt;</code> for Silver boundary, <code>&lt;=</code> for Gold upper boundary.
-      </div>
-    </div>
-    <div>
-      <pre><span class="cm"># assign_tier — uses only total_spending</span>
-<span class="kw">def</span> <span class="fn">assign_tier</span>(<span class="var">row</span>):
-    <span class="kw">if</span> <span class="var">row</span>[<span class="st">'total_spending'</span>] &lt; <span class="nm">500</span>:    <span class="cm"># &lt; 500</span>
-        <span class="kw">return</span> <span class="st">'Silver'</span>
-    <span class="kw">elif</span> <span class="var">row</span>[<span class="st">'total_spending'</span>] &lt;= <span class="nm">2000</span>: <span class="cm"># 500 to 2000</span>
-        <span class="kw">return</span> <span class="st">'Gold'</span>
-    <span class="kw">else</span>:                                <span class="cm"># > 2000</span>
-        <span class="kw">return</span> <span class="st">'Platinum'</span>
-
-<span class="cm"># Apply to every row — axis=1 means row-wise</span>
-<span class="var">customer_summary</span>[<span class="st">'tier'</span>] = (
-    <span class="var">customer_summary</span>.<span class="fn">apply</span>(<span class="fn">assign_tier</span>, <span class="var">axis</span>=<span class="nm">1</span>)
-)
-
-<span class="cm"># axis=0 → apply column-wise (default)
-# axis=1 → apply row-wise (what we need here)</span></pre>
-      <div class="quiz" style="margin-top:10px">
-        <p>❓ A customer's <code>total_spending</code> is exactly 2000. What tier do they get?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <span class="tier-gold">Gold</span> — because <code>2000 &lt;= 2000</code> is True (the Gold elif catches spending from 500 to 2000 inclusive). Platinum needs spending STRICTLY greater than 2000.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 6: assign_discount FUNCTION -->
-<div class="slide">
-  <h2>Step 3 — assign_discount Function</h2>
-  <p class="sub" style="margin-bottom:12px">Now that every customer has a tier, we look at their order count within that tier to determine the exact discount percentage.</p>
-  <div class="two">
-    <div>
-      <pre><span class="kw">def</span> <span class="fn">assign_discount</span>(<span class="var">row</span>):
-    <span class="kw">if</span> <span class="var">row</span>[<span class="st">'tier'</span>] == <span class="st">'Silver'</span>:
-        <span class="kw">return</span> <span class="nm">4</span> <span class="kw">if</span> <span class="var">row</span>[<span class="st">'order_count'</span>] >= <span class="nm">10</span> <span class="kw">else</span> <span class="nm">2</span>
-    <span class="kw">elif</span> <span class="var">row</span>[<span class="st">'tier'</span>] == <span class="st">'Gold'</span>:
-        <span class="kw">return</span> <span class="nm">8</span> <span class="kw">if</span> <span class="var">row</span>[<span class="st">'order_count'</span>] >= <span class="nm">10</span> <span class="kw">else</span> <span class="nm">6</span>
-    <span class="kw">else</span>:  <span class="cm"># Platinum</span>
-        <span class="kw">return</span> <span class="nm">15</span> <span class="kw">if</span> <span class="var">row</span>[<span class="st">'order_count'</span>] >= <span class="nm">10</span> <span class="kw">else</span> <span class="nm">10</span>
-
-<span class="cm"># Apply discount function — needs 'tier' column first!</span>
-<span class="var">customer_summary</span>[<span class="st">'discount_applicable'</span>] = (
-    <span class="var">customer_summary</span>.<span class="fn">apply</span>(<span class="fn">assign_discount</span>, <span class="var">axis</span>=<span class="nm">1</span>)
-)</pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Using ternary inside return</h3>
-        <pre style="font-size:.78rem;"><span class="cm"># This pattern: value_if_true if condition else value_if_false</span>
-<span class="kw">return</span> <span class="nm">4</span> <span class="kw">if</span> <span class="var">row</span>[<span class="st">'order_count'</span>] >= <span class="nm">10</span> <span class="kw">else</span> <span class="nm">2</span>
-
-<span class="cm"># Equivalent to:</span>
-<span class="kw">if</span> <span class="var">row</span>[<span class="st">'order_count'</span>] >= <span class="nm">10</span>:
-    <span class="kw">return</span> <span class="nm">4</span>
-<span class="kw">else</span>:
-    <span class="kw">return</span> <span class="nm">2</span></pre>
-      </div>
-      <div class="note">
-        <strong>📝 Order matters</strong> — <code>assign_tier</code> must run first. <code>assign_discount</code> reads the 'tier' column, which doesn't exist until <code>assign_tier</code> creates it. Always tier → then discount.
-      </div>
-      <div class="quiz">
-        <p>❓ A Platinum customer with exactly 10 orders gets which discount?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>15%</strong> — the threshold is <code>order_count >= 10</code>, so exactly 10 qualifies for the higher discount. The note in the scenario says "10 or more orders" → higher discount.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 7: BUILD LOYALTY REPORT -->
-<div class="slide">
-  <h2>Step 4 — Build the Customer Loyalty Tier Report</h2>
-  <p class="sub" style="margin-bottom:12px">We have customer_id, spending, order_count, tier, and discount. Now we bring in customer names by joining with the customers table.</p>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># Join with customers_df to get customer names
-# Left join: keep all customers from summary,
-# even if they don't have a name in customers_df</span>
-<span class="var">loyalty_report</span> = <span class="var">customer_summary</span>.<span class="fn">merge</span>(
-    <span class="var">customers_df</span>[[<span class="st">'customer_id'</span>, <span class="st">'customer_name'</span>]],
-    <span class="var">on</span>=<span class="st">'customer_id'</span>,
-    <span class="var">how</span>=<span class="st">'left'</span>
-)
-
-<span class="cm"># Reorder columns for clean output</span>
 <span class="var">loyalty_report</span> = <span class="var">loyalty_report</span>[[
-    <span class="st">'customer_id'</span>,
-    <span class="st">'customer_name'</span>,
-    <span class="st">'total_spending'</span>,
-    <span class="st">'order_count'</span>,
-    <span class="st">'tier'</span>,
-    <span class="st">'discount_applicable'</span>
-]]
-
-<span class="var">loyalty_report</span>.<span class="fn">head</span>()
-
-<span class="cm"># customer_id | customer_name | total_spending | order_count | tier     | discount_applicable
-# C001        | Ravi Kumar    | 1850.50        | 12          | Gold     | 8
-# C002        | Priya Sharma  | 380.00         | 7           | Silver   | 2
-# C003        | Ajay Patel    | 5200.00        | 25          | Platinum | 15</span></pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Why left join here?</h3>
-        <p style="font-size:.83rem">We want to keep all customers who have orders in the last 6 months — even those whose details (customer_name) might be missing from the customers table. A left join keeps all rows from the left DataFrame.</p>
-        <table style="margin-top:8px">
-          <tr><th>Join type</th><th>Keeps rows where</th></tr>
-          <tr><td style="font-size:.78rem">left join</td><td style="font-size:.78rem">All left rows + matches from right</td></tr>
-          <tr><td style="font-size:.78rem">inner join</td><td style="font-size:.78rem">Only matching rows both sides</td></tr>
-        </table>
-      </div>
-      <div class="note">
-        <strong>🔍 Selecting columns from right table</strong> — <code>customers_df[['customer_id', 'customer_name']]</code> brings only 2 columns from the customer table. Without this, you'd get all customer columns merged in — unnecessary noise.
-      </div>
-      <div class="quiz">
-        <p>❓ A customer has spending=480, orders=11. What are their tier and discount?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <span class="tier-silver">Silver</span> tier (480 &lt; 500) with <strong>4%</strong> discount (11 orders ≥ 10 → higher Silver rate). High order count, but low spending keeps them at Silver.</div>
-      </div>
-    </div>
+    <span class="str">'customer_id'</span>, <span class="str">'customer_name'</span>, <span class="str">'total_spending'</span>,
+    <span class="str">'order_count'</span>, <span class="str">'tier'</span>, <span class="str">'discount_applicable'</span>
+]]</pre>
+  </div>
+  <div class="highlight-box">
+    <p>📌 Report 1 is now complete: <code>customer_id | customer_name | total_spending | order_count | tier | discount_applicable</code></p>
   </div>
 </div>
 
-<!-- SLIDE 8: MERGE NEW ORDERS -->
-<div class="slide">
-  <h2>Step 5 — Load New Orders and Merge</h2>
-  <p class="sub" style="margin-bottom:12px">The loyalty report is ready. Now we bring in the new orders and attach each customer's discount to their upcoming purchases.</p>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># Step 5A: Load new orders dataset</span>
-<span class="var">new_orders_url</span> = <span class="st">"https://...neworders.csv"</span>
-<span class="var">new_orders_df</span> = pd.<span class="fn">read_csv</span>(<span class="var">new_orders_url</span>)
-
-<span class="cm"># Normalize column names (avoid case mismatches)</span>
-<span class="var">new_orders_df</span>.columns = <span class="var">new_orders_df</span>.columns.<span class="fn">str</span>.<span class="fn">lower</span>()
-
-<span class="cm"># Step 5B: Left merge — new orders as base
-# Why left? Keep ALL new orders, even if
-# the customer has no loyalty history yet.</span>
-<span class="var">pricing_report</span> = <span class="var">new_orders_df</span>.<span class="fn">merge</span>(
-    <span class="var">loyalty_report</span>[[
-        <span class="st">'customer_id'</span>, <span class="st">'customer_name'</span>,
-        <span class="st">'tier'</span>, <span class="st">'discount_applicable'</span>
-    ]],
-    <span class="var">on</span>=<span class="st">'customer_id'</span>,
-    <span class="var">how</span>=<span class="st">'left'</span>           <span class="cm"># all new orders retained</span>
-)</pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="tip">
-        <strong>✅ Always use left join for new orders</strong> — Some customers placing new orders may be brand-new with no purchase history. A left join retains all new order rows; an inner join would lose new customers entirely.
-      </div>
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Handle new / unmatched customers</h3>
-        <pre style="font-size:.78rem;"><span class="cm"># New customers will have NaN for discount and tier</span>
-<span class="cm"># Fill NaN: 0% discount, 'No Tier' label</span>
-<span class="var">pricing_report</span>[<span class="st">'discount_applicable'</span>] = (
-    <span class="var">pricing_report</span>[<span class="st">'discount_applicable'</span>].<span class="fn">fillna</span>(<span class="nm">0</span>)
-)
-<span class="var">pricing_report</span>[<span class="st">'tier'</span>] = (
-    <span class="var">pricing_report</span>[<span class="st">'tier'</span>].<span class="fn">fillna</span>(<span class="st">'No Tier'</span>)
-)</pre>
-      </div>
-      <div class="quiz">
-        <p>❓ After merging, 13 rows have NaN in customer_name. What does that mean?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ 13 orders in the dataset have a <code>customer_id</code> that doesn't match any entry in the customers table. This is a data quality issue — those customers exist in orders but not in the customer details file. That's why we use fillna(0) for discount so the math still works.</div>
-      </div>
-    </div>
+<!-- SLIDE 8: STEP 5 - PRICING REPORT -->
+<div class="slide" data-title="Step 5 – Pricing New Orders">
+  <h2>Step 5 — Price the New Orders</h2>
+  <p class="sub">Merge the loyalty report onto new orders, then apply: <code>discounted_price = original_price × (1 − discount / 100)</code></p>
+  <div class="sql-preview">
+    <div class="sql-preview-head"><span class="sql-preview-badge">SQL shape</span><span class="sql-preview-title">left join, keep every new order</span></div>
+    <pre><span class="kw">SELECT</span> n.<span class="col">order_id</span>, n.<span class="col">customer_id</span>, l.<span class="col">customer_name</span>,
+       n.<span class="col">original_price</span>,
+       <span class="fn">COALESCE</span>(l.<span class="col">discount_applicable</span>, <span class="col">0</span>) <span class="kw">AS</span> discount_applicable
+<span class="kw">FROM</span>      new_orders n
+<span class="kw">LEFT JOIN</span> loyalty_report l <span class="kw">ON</span> n.<span class="col">customer_id</span> = l.<span class="col">customer_id</span>;</pre>
   </div>
-</div>
-
-<!-- SLIDE 9: DISCOUNTED PRICE -->
-<div class="slide">
-  <h2>Step 6 — Calculate Discounted Price</h2>
-  <p class="sub" style="margin-bottom:12px">Apply the formula and build the final output report.</p>
-  <div class="two">
-    <div>
-      <div class="hl yl" style="margin-bottom:12px">
-        <h3 style="color:var(--yellow);font-size:.86rem;margin-bottom:6px">The Formula</h3>
-        <p style="font-size:.9rem;font-weight:700;text-align:center;color:var(--text);padding:6px 0">Discounted Price = Original Price × (1 − Discount% / 100)</p>
-        <p style="font-size:.8rem;margin-top:4px;text-align:center;color:var(--muted)">Example: ₹1000 with 8% → 1000 × (1 − 0.08) = ₹920.00</p>
-      </div>
-      <pre><span class="cm"># Calculate discounted price</span>
-<span class="var">pricing_report</span>[<span class="st">'discounted_price'</span>] = (
-    <span class="var">pricing_report</span>[<span class="st">'original_price'</span>]
-    * (<span class="nm">1</span> - <span class="var">pricing_report</span>[<span class="st">'discount_applicable'</span>] / <span class="nm">100</span>)
+  <div class="bridge-arrow"><div class="line"></div><span>↓ same shape, pandas syntax</span><div class="line"></div></div>
+  <div class="code-block">
+    <div class="code-head"><span>python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="var">pricing_report</span> = <span class="var">new_orders_df</span>.<span class="fn">merge</span>(
+    <span class="var">loyalty_report</span>[[<span class="str">'customer_id'</span>, <span class="str">'customer_name'</span>, <span class="str">'tier'</span>, <span class="str">'discount_applicable'</span>]],
+    on=<span class="str">'customer_id'</span>, how=<span class="str">'left'</span>                          <span class="cm"># the LEFT JOIN</span>
 )
 
-<span class="cm"># Round to 2 decimal places</span>
-<span class="var">pricing_report</span>[<span class="st">'discounted_price'</span>] = (
-    <span class="var">pricing_report</span>[<span class="st">'discounted_price'</span>].<span class="fn">round</span>(<span class="nm">2</span>)
-)
+<span class="cm"># new customers with no history → COALESCE equivalent</span>
+<span class="var">pricing_report</span>[<span class="str">'discount_applicable'</span>] = <span class="var">pricing_report</span>[<span class="str">'discount_applicable'</span>].<span class="fn">fillna</span>(<span class="col">0</span>)
+<span class="var">pricing_report</span>[<span class="str">'tier'</span>] = <span class="var">pricing_report</span>[<span class="str">'tier'</span>].<span class="fn">fillna</span>(<span class="str">'No Tier'</span>)
 
-<span class="cm"># Final output — select and reorder columns</span>
-<span class="var">pricing_report</span> = <span class="var">pricing_report</span>[[
-    <span class="st">'order_id'</span>, <span class="st">'customer_id'</span>, <span class="st">'customer_name'</span>,
-    <span class="st">'original_price'</span>, <span class="st">'discount_applicable'</span>, <span class="st">'discounted_price'</span>
-]]
-<span class="var">pricing_report</span>.<span class="fn">head</span>()</pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:10px">Expected output preview</h3>
-        <table>
-          <tr><th>order_id</th><th>customer_name</th><th>orig</th><th>disc%</th><th>final</th></tr>
-          <tr><td style="font-size:.76rem">ORD001</td><td style="font-size:.76rem">Ravi Kumar</td><td style="font-size:.76rem">₹1000</td><td style="font-size:.76rem;color:var(--gold)">8%</td><td style="font-size:.76rem;color:var(--green)">₹920.00</td></tr>
-          <tr><td style="font-size:.76rem">ORD002</td><td style="font-size:.76rem">Priya Sharma</td><td style="font-size:.76rem">₹500</td><td style="font-size:.76rem;color:var(--silver)">2%</td><td style="font-size:.76rem;color:var(--green)">₹490.00</td></tr>
-          <tr><td style="font-size:.76rem">ORD003</td><td style="font-size:.76rem">Ajay Patel</td><td style="font-size:.76rem">₹3200</td><td style="font-size:.76rem;color:var(--plat)">15%</td><td style="font-size:.76rem;color:var(--green)">₹2720.00</td></tr>
-          <tr><td style="font-size:.76rem">ORD004</td><td style="font-size:.76rem">NaN</td><td style="font-size:.76rem">₹800</td><td style="font-size:.76rem">0%</td><td style="font-size:.76rem;color:var(--green)">₹800.00</td></tr>
-        </table>
-        <p style="font-size:.76rem;margin-top:6px;color:var(--muted)">NaN customer → 0% discount → full price retained</p>
+<span class="var">pricing_report</span>[<span class="str">'discounted_price'</span>] = (
+    <span class="var">pricing_report</span>[<span class="str">'original_price'</span>] * (<span class="col">1</span> - <span class="var">pricing_report</span>[<span class="str">'discount_applicable'</span>] / <span class="col">100</span>)
+).<span class="fn">round</span>(<span class="col">2</span>)</pre>
+  </div>
+  <div class="highlight-box violet">
+    <p>💡 Why left join and not inner? A brand-new customer with zero order history still needs a price on their first order — they just get 0% until they earn a tier. Drop them with an inner join and Robert's checkout page shows nothing.</p>
+  </div>
+</div>
+
+<!-- SLIDE 9: CHECKPOINT -->
+<div class="slide" data-title="Checkpoint">
+  <h2>Checkpoint — Before You Touch the Notebook</h2>
+  <p class="sub">Four quick ones. Click an option.</p>
+  <div class="mcq-grid">
+    <div class="mcq-card">
+      <p class="mcq-q">Q1. After a left join from orders to customer details on <code>customer_id</code>, how many orders have no matching customer?</p>
+      <div class="opts">
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">A</span>1</button>
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">B</span>0</button>
+        <button class="opt" data-correct="true" onclick="pick(this,true)"><span class="opt-key">C</span>13</button>
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">D</span>8</button>
       </div>
-      <div class="quiz">
-        <p>❓ A Gold customer with 8% discount orders ₹2500. What is their discounted price?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>₹2300.00</strong> — 2500 × (1 − 8/100) = 2500 × 0.92 = 2300.00</div>
+      <div class="mcq-exp">13 rows come back with <code>NaN</code> in <code>customer_name</code> after the merge — real-world referential gaps, not a bug in your join.</div>
+    </div>
+    <div class="mcq-card">
+      <p class="mcq-q">Q2. After filtering to the last 6 months, how many orders remain?</p>
+      <div class="opts">
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">A</span>3490</button>
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">B</span>9818</button>
+        <button class="opt" data-correct="true" onclick="pick(this,true)"><span class="opt-key">C</span>4120</button>
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">D</span>9201</button>
+      </div>
+      <div class="mcq-exp">4,120. If you get 9,818 or 9,201, your cutoff is off — it should be <code>max(order_purchase_date) − 6 months</code>, not today's date.</div>
+    </div>
+    <div class="mcq-card">
+      <p class="mcq-q">Q3. Which loyalty tier offers the highest possible discount?</p>
+      <div class="opts">
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">A</span>Silver</button>
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">B</span>Gold</button>
+        <button class="opt" data-correct="true" onclick="pick(this,true)"><span class="opt-key">C</span>Platinum</button>
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">D</span>All tiers tie</button>
+      </div>
+      <div class="mcq-exp">Platinum, at 15% (10+ orders). Gold tops out at 8%, Silver at 4%. If an earlier version of this deck said Gold — that was wrong, this is the correction.</div>
+    </div>
+    <div class="mcq-card">
+      <p class="mcq-q">Q4. A customer spent exactly 500 in the window. Which tier?</p>
+      <div class="opts">
+        <button class="opt" data-correct="true" onclick="pick(this,true)"><span class="opt-key">A</span>Gold</button>
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">B</span>Silver</button>
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">C</span>Platinum</button>
+        <button class="opt" data-correct="false" onclick="pick(this,false)"><span class="opt-key">D</span>Undefined</button>
+      </div>
+      <div class="mcq-exp">Gold. Silver is strictly <code>&lt; 500</code>. Since 500 is not less than 500, it falls straight into Gold — same boundary logic as a SQL <code>CASE WHEN</code> evaluated top to bottom.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: COMMON PITFALLS -->
+<div class="slide" data-title="Common Pitfalls">
+  <h2>Where This Lab Usually Breaks</h2>
+  <div class="two-col">
+    <div class="stack">
+      <div class="highlight-box warn">
+        <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Comparing dates before converting them</h3>
+        <p>If <code>order_purchase_date</code> is still a string when you compute <code>cutoff_date</code>, the comparison silently does the wrong thing. Always <code>pd.to_datetime()</code> first.</p>
+      </div>
+      <div class="highlight-box warn">
+        <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Using today's date instead of the dataset's max date</h3>
+        <p>This is historical data — "6 months ago" means 6 months before the <em>latest order in the file</em>, not 6 months before today.</p>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="highlight-box warn">
+        <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Inner-joining new orders to the loyalty report</h3>
+        <p>Silently drops every brand-new customer who has no order history yet. You want <code>how='left'</code>, then <code>fillna()</code> the gaps.</p>
+      </div>
+      <div class="highlight-box warn">
+        <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Reversing the tier boundary (&lt; vs &le;)</h3>
+        <p>Gold is <code>500 to 2000</code> inclusive at the bottom. A spend of exactly 500 is Gold, not Silver — the same off-by-one trap SQL <code>CASE WHEN</code> chains have.</p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 10: FULL CODE + QUIZ -->
-<div class="slide">
-  <h2>Full Solution — End to End</h2>
-  <div class="two">
-    <div>
-      <pre style="font-size:.72rem;line-height:1.75"><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
-
-<span class="cm"># Load data</span>
-<span class="var">customers_df</span> = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'customers'</span>)
-<span class="var">orders_df</span>    = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'orders'</span>)
-<span class="var">trans</span>        = pd.<span class="fn">read_excel</span>(<span class="st">"globalmart.xlsx"</span>, sheet_name=<span class="st">'transactions'</span>)
-
-<span class="cm"># Combine orders + transactions</span>
-<span class="var">df</span> = <span class="var">orders_df</span>.<span class="fn">merge</span>(<span class="var">trans</span>, <span class="var">on</span>=<span class="st">'order_id'</span>, <span class="var">how</span>=<span class="st">'inner'</span>)
-<span class="var">df</span>[<span class="st">'order_purchase_date'</span>] = pd.<span class="fn">to_datetime</span>(<span class="var">df</span>[<span class="st">'order_purchase_date'</span>])
-
-<span class="cm"># Filter last 6 months</span>
-<span class="var">cutoff</span> = <span class="var">df</span>[<span class="st">'order_purchase_date'</span>].<span class="fn">max</span>() - pd.<span class="fn">DateOffset</span>(<span class="var">months</span>=<span class="nm">6</span>)
-<span class="var">recent</span> = <span class="var">df</span>[<span class="var">df</span>[<span class="st">'order_purchase_date'</span>] >= <span class="var">cutoff</span>]
-
-<span class="cm"># Aggregate</span>
-<span class="var">summary</span> = <span class="var">recent</span>.<span class="fn">groupby</span>(<span class="st">'customer_id'</span>).<span class="fn">agg</span>(
-    <span class="var">total_spending</span>=(<span class="st">'sales_amt'</span>,<span class="st">'sum'</span>), <span class="var">order_count</span>=(<span class="st">'order_id'</span>,<span class="st">'count'</span>)
-).<span class="fn">reset_index</span>()
-
-<span class="cm"># Tier + discount functions</span>
-<span class="kw">def</span> <span class="fn">assign_tier</span>(<span class="var">row</span>):
-    <span class="kw">if</span>   <span class="var">row</span>[<span class="st">'total_spending'</span>] &lt;   <span class="nm">500</span>: <span class="kw">return</span> <span class="st">'Silver'</span>
-    <span class="kw">elif</span> <span class="var">row</span>[<span class="st">'total_spending'</span>] &lt;= <span class="nm">2000</span>: <span class="kw">return</span> <span class="st">'Gold'</span>
-    <span class="kw">else</span>: <span class="kw">return</span> <span class="st">'Platinum'</span>
-
-<span class="kw">def</span> <span class="fn">assign_discount</span>(<span class="var">row</span>):
-    <span class="var">hi</span> = <span class="var">row</span>[<span class="st">'order_count'</span>] >= <span class="nm">10</span>
-    <span class="kw">if</span>   <span class="var">row</span>[<span class="st">'tier'</span>] == <span class="st">'Silver'</span>:   <span class="kw">return</span> <span class="nm">4</span>  <span class="kw">if</span> <span class="var">hi</span> <span class="kw">else</span> <span class="nm">2</span>
-    <span class="kw">elif</span> <span class="var">row</span>[<span class="st">'tier'</span>] == <span class="st">'Gold'</span>:     <span class="kw">return</span> <span class="nm">8</span>  <span class="kw">if</span> <span class="var">hi</span> <span class="kw">else</span> <span class="nm">6</span>
-    <span class="kw">else</span>:                           <span class="kw">return</span> <span class="nm">15</span> <span class="kw">if</span> <span class="var">hi</span> <span class="kw">else</span> <span class="nm">10</span>
-
-<span class="var">summary</span>[<span class="st">'tier'</span>]              = <span class="var">summary</span>.<span class="fn">apply</span>(<span class="fn">assign_tier</span>, <span class="var">axis</span>=<span class="nm">1</span>)
-<span class="var">summary</span>[<span class="st">'discount_applicable'</span>] = <span class="var">summary</span>.<span class="fn">apply</span>(<span class="fn">assign_discount</span>, <span class="var">axis</span>=<span class="nm">1</span>)
-<span class="var">loyalty_report</span> = <span class="var">summary</span>.<span class="fn">merge</span>(<span class="var">customers_df</span>[[<span class="st">'customer_id'</span>,<span class="st">'customer_name'</span>]], <span class="var">on</span>=<span class="st">'customer_id'</span>, <span class="var">how</span>=<span class="st">'left'</span>)
-
-<span class="cm"># New orders</span>
-<span class="var">new_orders</span> = pd.<span class="fn">read_csv</span>(<span class="st">"new_orders.csv"</span>)
-<span class="var">new_orders</span>.columns = <span class="var">new_orders</span>.columns.<span class="fn">str</span>.<span class="fn">lower</span>()
-<span class="var">pricing</span> = <span class="var">new_orders</span>.<span class="fn">merge</span>(<span class="var">loyalty_report</span>[[<span class="st">'customer_id'</span>,<span class="st">'customer_name'</span>,<span class="st">'tier'</span>,<span class="st">'discount_applicable'</span>]], <span class="var">on</span>=<span class="st">'customer_id'</span>, <span class="var">how</span>=<span class="st">'left'</span>)
-<span class="var">pricing</span>[<span class="st">'discount_applicable'</span>] = <span class="var">pricing</span>[<span class="st">'discount_applicable'</span>].<span class="fn">fillna</span>(<span class="nm">0</span>)
-<span class="var">pricing</span>[<span class="st">'discounted_price'</span>] = (<span class="var">pricing</span>[<span class="st">'original_price'</span>] * (<span class="nm">1</span> - <span class="var">pricing</span>[<span class="st">'discount_applicable'</span>]/<span class="nm">100</span>)).<span class="fn">round</span>(<span class="nm">2</span>)</pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Key concepts used</h3>
-        <table>
-          <tr><th>Concept</th><th>Where used</th></tr>
-          <tr><td><code>merge()</code></td><td style="font-size:.78rem">Join orders+trans, join customers, join new orders</td></tr>
-          <tr><td><code>groupby().agg()</code></td><td style="font-size:.78rem">Aggregate spending + order count per customer</td></tr>
-          <tr><td><code>apply(fn, axis=1)</code></td><td style="font-size:.78rem">Row-wise tier and discount assignment</td></tr>
-          <tr><td><code>DateOffset(months=6)</code></td><td style="font-size:.78rem">Exactly 6 calendar months back</td></tr>
-          <tr><td><code>fillna(0)</code></td><td style="font-size:.78rem">Handle new/unmatched customers</td></tr>
-          <tr><td><code>str.lower()</code></td><td style="font-size:.78rem">Normalize column names</td></tr>
-        </table>
-      </div>
-      <div class="quiz">
-        <p>❓ After filtering, how many orders remain? And how many have no matching customer details?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>4,120 orders</strong> remain after the 6-month filter. <strong>13 orders</strong> have no matching customer details (NaN in customer_name after the left merge). These get 0% discount automatically via fillna(0).</div>
-      </div>
-      <div class="quiz">
-        <p>❓ Which join type should you use when merging new orders with the loyalty report?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>Left join</strong> (how='left') — new_orders is the left table. This keeps ALL new orders, including orders from brand-new customers who have no loyalty history. An inner join would silently drop those orders.</div>
-      </div>
-    </div>
+<!-- SLIDE 11: WRAP UP -->
+<div class="slide" data-title="Wrap-Up">
+  <h2>Wrap-Up</h2>
+  <div class="highlight-box success">
+    <p>✅ Anuradha ships both reports. Udhav gets his tiers. Robert's "skip to pricing" idea stays exactly where it belongs — un-shipped.</p>
+  </div>
+  <div class="three-col">
+    <div class="card"><h3>groupby().agg()</h3><p>is your GROUP BY. Same aggregation, same grain, new syntax.</p></div>
+    <div class="card"><h3>if/elif/else on a row</h3><p>is your CASE WHEN. Chain conditions top to bottom, same as SQL evaluates them.</p></div>
+    <div class="card"><h3>.merge(how='left')</h3><p>is your LEFT JOIN. Keep the left side whole, fill the gaps after.</p></div>
+  </div>
+  <div class="highlight-box violet">
+    <p>🎯 Next up: functions — because right now, <code>assign_tier</code> and <code>assign_discount</code> are one-off helpers. Day 5's next session turns "write it once" into "reuse it everywhere."</p>
   </div>
 </div>
 
 </div>
+
+<!-- TOC OVERLAY -->
+<div class="toc-overlay" id="tocOverlay">
+  <div class="toc-head">
+    <h2>Table of Contents</h2>
+    <button class="toc-close" onclick="toggleTOC()">✕</button>
+  </div>
+  <div class="toc-grid" id="tocGrid"></div>
+</div>
+
 <script>
-let cur=0;
-const slides=document.querySelectorAll('.slide');
-const total=slides.length;
-const ctr=document.getElementById('ctr');
-function show(n){slides[cur].classList.remove('active');cur=(n+total)%total;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+total;}
-function go(d){show(cur+d)}
-function rev(btn){btn.nextElementSibling.style.display='block';btn.style.display='none';}
-document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
-ctr.textContent='1 / '+total;
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+const rail = document.getElementById('rail');
+const tocGrid = document.getElementById('tocGrid');
+
+slides.forEach((s,i)=>{
+  const seg = document.createElement('div');
+  seg.className = 'rail-seg';
+  seg.onclick = ()=>{ cur = i; render(); };
+  rail.appendChild(seg);
+
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="tn">${String(i+1).padStart(2,'0')}</div><div class="tt">${s.dataset.title || 'Slide '+(i+1)}</div>`;
+  item.onclick = ()=>{ cur = i; render(); toggleTOC(); };
+  tocGrid.appendChild(item);
+});
+
+function render(){
+  slides.forEach((s,i)=> s.classList.toggle('active', i===cur));
+  document.getElementById('ctr').textContent = `${cur+1} / ${slides.length}`;
+  document.querySelectorAll('.rail-seg').forEach((seg,i)=> seg.classList.toggle('done', i<=cur));
+}
+function go(dir){
+  cur = Math.min(Math.max(cur+dir,0), slides.length-1);
+  render();
+}
+function toggleTOC(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+}
+function rev(btn){
+  const ans = btn.nextElementSibling;
+  ans.style.display = ans.style.display==='block' ? 'none' : 'block';
+}
+function pick(btn, isCorrect){
+  const card = btn.closest('.mcq-card');
+  card.querySelectorAll('.opt').forEach(o=>{
+    o.classList.add('disabled');
+    if(o.dataset.correct === 'true') o.classList.add('correct');
+  });
+  if(!isCorrect) btn.classList.add('wrong');
+  card.querySelector('.mcq-exp').style.display = 'block';
+}
+function copyCode(btn){
+  const code = btn.closest('.code-block').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code);
+  const orig = btn.textContent;
+  btn.textContent = 'Copied!';
+  setTimeout(()=> btn.textContent = orig, 1200);
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight') go(1);
+  if(e.key==='ArrowLeft') go(-1);
+  if(e.key==='g' || e.key==='G') toggleTOC();
+  if(e.key==='Escape') document.getElementById('tocOverlay').classList.remove('show');
+});
+let touchX=0;
+document.addEventListener('touchstart', e=> touchX = e.touches[0].clientX);
+document.addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - touchX;
+  if(dx > 60) go(-1);
+  if(dx < -60) go(1);
+});
+render();
 </script>
 </body>
 </html>

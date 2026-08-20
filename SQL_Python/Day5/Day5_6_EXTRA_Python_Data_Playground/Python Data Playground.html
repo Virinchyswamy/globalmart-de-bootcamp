@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Data Playground — datetime, NumPy & pandas</title>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+:root {
+  --bg: #08090c; --surface: #111318; --surface2: #181b22; --border: #242832; --border-lit: #33394a;
+  --accent: #f59e0b; --accent-light: #fbbf24; --accent-dim: rgba(245,158,11,0.12); --accent-border: rgba(245,158,11,0.32); --accent-hover: #d97706;
+  --rose: #ec4899; --violet: #8b5cf6; --np: #06b6d4; --pd: #f472b6;
+  --green: #238636; --green-text: #3fb950; --green-bg: #0d2618;
+  --red: #da3633; --red-text: #f85149; --red-bg: #210d0d;
+  --yellow: #9e6a03; --yellow-text: #d29922; --yellow-bg: #1f1700;
+  --text: #c9d1d9; --text-dim: #8b949e; --text-bright: #f0f6fc;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; line-height: 1.6; }
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border-lit);border-radius:10px}
+
+#loader { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#loader p { color: var(--text-dim); font-size: 14px; }
+#loader .sub { font-size: 12px; color: var(--text-dim); opacity: .7; }
+
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 32px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.header-logo { width: 36px; height: 36px; background: linear-gradient(135deg,var(--accent),var(--rose)); color: #08090c; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; flex: 0 0 auto; }
+header h1 { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800; color: var(--text-bright); letter-spacing: -.2px; }
+header p { font-size: 12px; color: var(--text-dim); }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.hbtn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 15px; border-radius: 8px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 700; transition: all .15s; }
+.hbtn:hover:not(:disabled) { background: var(--accent); color: #08090c; border-color: var(--accent); }
+.hbtn:disabled { opacity: .4; cursor: not-allowed; }
+.hbtn.ghost:hover:not(:disabled) { background: var(--surface2); color: var(--red-text); border-color: var(--red); }
+#engine-status { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red-text); }
+.status-dot.ready { background: var(--green-text); }
+
+main { max-width: 960px; margin: 0 auto; padding: 28px 20px 80px; display: flex; flex-direction: column; gap: 22px; }
+
+.intro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 26px; }
+.intro-card h1.title { font-family: 'Sora', sans-serif; font-size: 1.7rem; font-weight: 900; color: var(--text-bright); margin-bottom: 8px; }
+.intro-card h1.title .accent { background: linear-gradient(135deg,var(--accent),var(--rose)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.intro-card p { font-size: 14px; color: var(--text-dim); margin-bottom: 6px; }
+.intro-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 14px; }
+.intro-step { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 12.5px; }
+.intro-step b { color: var(--accent-light); display: block; margin-bottom: 3px; font-size: 12px; }
+.legend-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-dim); }
+
+.section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.topic-pill { font-size: 10px; font-weight: 800; letter-spacing: .06em; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; }
+.pill-dt { background: rgba(139,92,246,.12); color: var(--violet); border: 1px solid rgba(139,92,246,.35); }
+.pill-np { background: rgba(6,182,212,.12); color: var(--np); border: 1px solid rgba(6,182,212,.35); }
+.pill-pd { background: rgba(244,114,182,.1); color: var(--pd); border: 1px solid rgba(244,114,182,.35); }
+.pill-new { background: rgba(245,158,11,.14); color: var(--accent-light); border: 1px solid rgba(245,158,11,.4); }
+.diff-badge { font-size: 10px; font-weight: 800; padding: 3px 11px; border-radius: 20px; text-transform: uppercase; letter-spacing: .05em; }
+.diff-b { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green); }
+.diff-i { background: var(--yellow-bg); color: var(--yellow-text); border: 1px solid var(--yellow); }
+.diff-a { background: var(--red-bg); color: var(--red-text); border: 1px solid var(--red); }
+
+.cell { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+.cell:hover { border-color: var(--border-lit); box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+.cell-head { padding: 16px 20px 4px; }
+.cell-title { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 800; color: var(--text-bright); margin: 6px 0 6px; }
+.cell-explain { font-size: 13.5px; color: var(--text-dim); line-height: 1.65; }
+.cell-explain code { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 4px; color: var(--accent-light); }
+.cell-body { padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+.editor-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
+.editor-wrap:focus-within { border-color: var(--accent); }
+.editor-bar { background: var(--surface2); padding: 7px 13px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.editor-lang { font-size: 11px; color: var(--text-dim); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+.editor-tools { display: flex; gap: 6px; }
+.tool-btn { background: none; border: none; color: var(--text-dim); font-size: 11.5px; cursor: pointer; padding: 2px 8px; border-radius: 4px; font-family: 'Inter', sans-serif; }
+.tool-btn:hover { background: var(--border); color: var(--text); }
+.py-editor { width: 100%; background: #080b10; color: #7ee787; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13.5px; line-height: 1.65; padding: 15px 16px; border: none; outline: none; resize: vertical; min-height: 90px; tab-size: 4; }
+
+.action-row { display: flex; gap: 10px; align-items: center; }
+.run-btn { background: var(--accent); color: #08090c; border: none; padding: 8px 20px; border-radius: 8px; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all .15s; }
+.run-btn:hover:not(:disabled) { background: var(--accent-hover); color: #fff; transform: translateY(-1px); }
+.run-btn:disabled { opacity: .45; cursor: not-allowed; }
+.output-wrap { display: none; }
+.output-wrap.show { display: block; }
+.output-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); margin-bottom: 6px; }
+.output-pane { background: #080b10; border: 1px solid var(--border); border-radius: 8px; padding: 13px 16px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; color: #d4d9e0; max-height: 340px; overflow-y: auto; }
+.output-pane.err { color: var(--red-text); border-color: rgba(218,54,51,.4); }
+.output-pane .running { color: var(--accent-light); font-style: italic; }
+
+.data-note { background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 8px; padding: 11px 14px; font-size: 12.5px; color: var(--text); }
+.data-note b { color: var(--accent-light); }
+
+.level-banner { background: linear-gradient(135deg, rgba(245,158,11,.1), rgba(236,72,153,.08)); border: 1px solid var(--accent-border); border-radius: 14px; padding: 18px 24px; display: flex; align-items: center; gap: 16px; }
+.level-banner .trophy { font-size: 30px; flex-shrink: 0; }
+.level-banner h3 { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800; color: var(--text-bright); margin-bottom: 4px; }
+.level-banner p { font-size: 13px; color: var(--text-dim); }
+
+footer { text-align: center; padding: 30px 20px 50px; color: var(--text-dim); font-size: 12.5px; }
+footer .accent-text { color: var(--accent-light); font-weight: 700; }
+
+@media (max-width: 700px) {
+  header { flex-direction: column; align-items: flex-start; }
+  .intro-steps { grid-template-columns: 1fr; }
+  main { padding: 20px 14px 60px; }
+  .level-banner { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <p>Booting up the Python engine (Pyodide + NumPy + pandas)...</p>
+  <p class="sub">First load takes 10–20 seconds. It's cached after that.</p>
+</div>
+
+<header>
+  <div class="header-left">
+    <div class="header-logo">PY</div>
+    <div>
+      <h1>Python Data Playground</h1>
+      <p>Day 5 · print() to pandas JOINs — write real code, get real output</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="engine-status"><span class="status-dot" id="statusDot"></span><span id="statusText">Loading engine…</span></span>
+    <button class="hbtn" id="runAllBtn" onclick="runAll()" disabled>▶ Run All (top to bottom)</button>
+    <button class="hbtn ghost" id="restartBtn" onclick="restartPython()" disabled>↻ Restart Python</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="intro-card">
+    <h1 class="title">Stop reading code. <span class="accent">Start running it.</span></h1>
+    <p>Every box below is a real, live Python interpreter — not a screenshot, not a video, an actual computer running actual Python inside your browser tab. Edit anything. Break things. Run it again. Nothing you do here can go wrong in a way that matters.</p>
+    <p>We start at the very bottom — literally, <code>print("hello")</code> — and climb up one small step at a time until you're joining two tables together like a real analyst. Nothing is assumed. Nothing is skipped.</p>
+    <div class="intro-steps">
+      <div class="intro-step"><b>1. Cells share memory</b>A variable you create in one cell is still there in every cell below it — run them in order the first time.</div>
+      <div class="intro-step"><b>2. Click Run</b>Or use "Run All" in the top-right to execute every cell in order in one go.</div>
+      <div class="intro-step"><b>3. Stuck? Restart</b>"Restart Python" wipes all variables and starts fresh — same as restarting a Jupyter kernel.</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-item"><span class="diff-badge diff-b">Beginner</span> the smallest possible concept</div>
+      <div class="legend-item"><span class="diff-badge diff-i">Intermediate</span> real tables, real questions</div>
+      <div class="legend-item"><span class="diff-badge diff-a">Advanced</span> combining data like a working analyst</div>
+    </div>
+  </div>
+
+  <!-- CELL 1: PRINT & VARIABLES -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-b">Beginner</span><span class="topic-pill pill-dt">python basics</span></div>
+      <div class="cell-title">print() and Variables — the Smallest Thing There Is</div>
+      <p class="cell-explain"><code>print()</code> is Python's way of talking back to you. Without it, Python runs silently and you'd have zero idea what happened. A variable is just a labeled box — you put a value in it, you give the box a name, that's the whole idea. That's it. That's the concept.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 1 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(1)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-1" rows="11"># print() just shows you something
+print("Hello, Bhaskar!")
+
+# A variable is a labeled box holding a value
+name = "Kriti"
+age = 24
+
+# f-strings let you drop variables straight into text
+print(f"{name} is {age} years old")
+
+# Boxes can be refilled any time you like
+age = age + 1
+print(f"Happy birthday, {name}! Now {age}.")</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(1)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-1"><div class="output-label">Output</div><pre class="output-pane" id="out-1"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 2: BASIC MATH & COMPARISONS -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-b">Beginner</span><span class="topic-pill pill-dt">python basics</span></div>
+      <div class="cell-title">Basic Math, and Asking Python a Yes/No Question</div>
+      <p class="cell-explain">Python does math exactly like a calculator: <code>+ - * /</code>. A comparison like <code>&gt;</code> or <code>==</code> doesn't do math at all — it just answers a yes/no question with <code>True</code> or <code>False</code>. Robert has strong opinions about what 2 + 2 should equal. Python does not care about Robert's opinions.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 2 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(2)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-2" rows="12"># The usual suspects
+print("Add:", 10 + 3)
+print("Subtract:", 10 - 3)
+print("Multiply:", 10 * 3)
+print("Divide:", 10 / 3)
+
+# Robert insists 2 + 2 should equal 5 "for simplicity."
+# Python respectfully disagrees.
+print("Is 2 + 2 equal to 5?", 2 + 2 == 5)
+print("Is 2 + 2 equal to 4?", 2 + 2 == 4)
+
+# Comparisons always answer True or False — nothing else
+budget = 50000
+expense = 61000
+print("Did we go over budget?", expense > budget)</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(2)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-2"><div class="output-label">Output</div><pre class="output-pane" id="out-2"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 3: LISTS RECAP -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-b">Beginner</span><span class="topic-pill pill-dt">python basics</span></div>
+      <div class="cell-title">Lists — the 10-Second Recap</div>
+      <p class="cell-explain">A list is an ordered box of things, written with square brackets. You met these back in Module 1 — here's the smallest possible refresher before we start stacking lists into full tables a few cells from now.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 3 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(3)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-3" rows="9">attendees = ["Prem", "Raghul", "Tanushi", "Udhav"]
+
+print("Everyone on the list:", attendees)
+print("First person:", attendees[0])
+print("Last person:", attendees[-1])
+
+attendees.append("Harsh")
+print("After adding Harsh:", attendees)
+print("How many people total?", len(attendees))</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(3)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-3"><div class="output-label">Output</div><pre class="output-pane" id="out-3"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 4: DATETIME BASICS -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-b">Beginner</span><span class="topic-pill pill-dt">datetime</span></div>
+      <div class="cell-title">Today's Date, and Turning Text Into a Real Date</div>
+      <p class="cell-explain">Here's a small secret: a computer has no idea what "15 March 2026" means. To Python it's just text, unless you tell it otherwise. <code>datetime</code> is the module that teaches Python to treat dates as actual dates — things you can compare, sort, and do math on.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 4 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(4)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-4" rows="9">import datetime as dt
+
+# Right now
+now = dt.datetime.now()
+print("Right now:", now)
+
+# Turn a plain string into a real date Python understands
+order_date = dt.datetime.strptime("2026-03-15", "%Y-%m-%d")
+print("Parsed date:", order_date)
+print("Just the year:", order_date.year)
+print("Just the month:", order_date.month)
+print("Day of the week:", order_date.strftime("%A"))</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(4)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-4"><div class="output-label">Output</div><pre class="output-pane" id="out-4"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 5: DATETIME FORMATTING + MATH -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-b">Beginner</span><span class="topic-pill pill-dt">datetime</span></div>
+      <div class="cell-title">Making a Date Look Nice, and Doing Math With It</div>
+      <p class="cell-explain"><code>strftime()</code> is the reverse trick — it turns a real date back into whatever text you want. And once Python knows two things are dates, subtracting one from the other just... works. It hands you back the number of days between them.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 5 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(5)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-5" rows="10">import datetime as dt
+
+order_date = dt.datetime.strptime("2026-03-15", "%Y-%m-%d")
+today = dt.datetime(2026, 8, 19)
+
+# Format it however you like
+print("DD-MM-YYYY:", order_date.strftime("%d-%m-%Y"))
+print("Readable:", order_date.strftime("%B %d, %Y"))
+
+# Date math — how many days ago was this order?
+days_since_order = (today - order_date).days
+print(f"That order was placed {days_since_order} days ago")
+
+# Go 6 months back from today (used constantly for "last N months" filters)
+six_months_ago = today - dt.timedelta(days=180)
+print("6 months before today:", six_months_ago.strftime("%Y-%m-%d"))</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(5)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-5"><div class="output-label">Output</div><pre class="output-pane" id="out-5"></pre></div>
+    </div>
+  </div>
+
+  <div class="level-banner">
+    <div class="trophy">🏆</div>
+    <div>
+      <h3>Beginner cleared. Robert still thinks CSV stands for "Can't See Values."</h3>
+      <p>You now know more Python than that. Next up: NumPy arrays, and the one trick that makes them worth learning.</p>
+    </div>
+  </div>
+
+  <!-- CELL 6: NUMPY ARRAYS + MATH -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-i">Intermediate</span><span class="topic-pill pill-np">numpy</span></div>
+      <div class="cell-title">Arrays and the "No Loop Needed" Trick</div>
+      <p class="cell-explain">A NumPy array looks exactly like a list. Here's the difference: do math on it, and Python applies that math to <em>every single item at once</em> — no loop, no typing the same line five times. That's genuinely the whole pitch for NumPy.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 6 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(6)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-6" rows="10">import numpy as np
+
+scores = np.array([63, 94, 91, 85, 14, 79])
+print("Array:", scores)
+
+# No loop needed — this hits every element
+print("Plus 5 bonus marks:", scores + 5)
+print("Doubled:", scores * 2)
+
+# Quick stats
+print("Mean:", scores.mean())
+print("Max:", scores.max())
+print("Min:", scores.min())
+print("Standard deviation:", round(scores.std(), 2))</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(6)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-6"><div class="output-label">Output</div><pre class="output-pane" id="out-6"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 7: NUMPY BOOLEAN FILTERING -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-i">Intermediate</span><span class="topic-pill pill-np">numpy</span></div>
+      <div class="cell-title">Boolean Filtering — the Trick Everything Else Is Built On</div>
+      <p class="cell-explain"><code>scores &gt; 80</code> doesn't error out — it hands you back <code>True</code>/<code>False</code> for every item. Put that inside <code>[ ]</code> and you keep only the <code>True</code> ones. Remember this cell. This exact trick is how you'll filter every table for the rest of your career.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 7 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(7)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-7" rows="9">import numpy as np
+
+scores = np.array([63, 94, 91, 85, 14, 79])
+
+mask = scores > 80
+print("The mask (True/False per element):", mask)
+print("Only scores above 80:", scores[mask])
+
+# Usually written in one line, skipping the mask variable
+print("Same thing, one line:", scores[scores > 80])
+print("How many scored above 80?", np.sum(scores > 80))</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(7)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-7"><div class="output-label">Output</div><pre class="output-pane" id="out-7"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 8: BUILD THE SHARED DATASET -->
+  <div class="cell" style="border-color:var(--accent-border)">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-i">Intermediate</span><span class="topic-pill pill-pd">pandas</span><span class="topic-pill pill-new">run this one</span></div>
+      <div class="cell-title">Build Two Tables — You'll Use Both for the Rest of This Page</div>
+      <p class="cell-explain">A DataFrame is a table — rows and columns, just like a spreadsheet or a SQL table. We're building two here, <code>customers_df</code> and <code>orders_df</code>, on purpose — every pandas section below (filtering, groupby, and especially merging) reuses these same two tables.</p>
+    </div>
+    <div class="cell-body">
+      <div class="data-note">📌 <b>Run this cell before any pandas cell below it.</b> Notice order 105 belongs to <code>customer_id 6</code> — a walk-in customer who, according to <code>customers_df</code>, does not officially exist. That's not a typo. It's there on purpose for the merge cell later.</div>
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 8 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(8)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-8" rows="17">import pandas as pd
+
+customers_df = pd.DataFrame({
+    "customer_id": [1, 2, 3, 4, 5],
+    "name":        ["Naman Prasad", "Swarna Choudhury", "Agnik Chakraborty", "Anuj Khokhar", "Ananya Seth"],
+    "city":        ["Hyderabad", "Chennai", "Bengaluru", "Hyderabad", "Mumbai"],
+    "tier":        ["Gold", "Silver", "Platinum", "Silver", "Gold"]
+})
+
+orders_df = pd.DataFrame({
+    "order_id":    [101, 102, 103, 104, 105, 106],
+    "customer_id": [1,   2,   1,   3,   6,   4],
+    "product":     ["Laptop", "Mouse", "Keyboard", "Monitor", "Webcam", "Laptop"],
+    "amount":      [55000, 799, 2499, 12999, 3499, 61000],
+    "order_date":  ["2026-01-15", "2026-02-03", "2026-02-20", "2026-03-05", "2026-03-10", "2026-03-15"]
+})
+
+print("customers_df:")
+print(customers_df)
+print()
+print("orders_df:")
+print(orders_df)</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(8)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-8"><div class="output-label">Output</div><pre class="output-pane" id="out-8"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 9: EXPLORING -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-i">Intermediate</span><span class="topic-pill pill-pd">pandas</span></div>
+      <div class="cell-title">First Look at a DataFrame</div>
+      <p class="cell-explain">Every time you get handed a new DataFrame, check these things first, before you do anything clever with it. <code>.shape</code> tells you (rows, columns). <code>.head()</code> previews the top rows. <code>.describe()</code> gives quick stats on the numbers.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 9 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(9)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-9" rows="9">print("Shape:", orders_df.shape)
+print()
+print("First 3 rows:")
+print(orders_df.head(3))
+print()
+print("Quick stats on amount:")
+print(orders_df["amount"].describe())</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(9)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-9"><div class="output-label">Output</div><pre class="output-pane" id="out-9"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 10: FILTERING -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-i">Intermediate</span><span class="topic-pill pill-pd">pandas</span></div>
+      <div class="cell-title">Filtering Rows</div>
+      <p class="cell-explain">This is the exact same boolean-filtering trick from the NumPy cells, just aimed at a DataFrame column instead of an array. For more than one condition, use <code>&amp;</code> (and) or <code>|</code> (or) — not Python's normal <code>and</code>/<code>or</code> — and wrap each condition in its own parentheses.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 10 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(10)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-10" rows="9">expensive_orders = orders_df[orders_df["amount"] > 3000]
+print("Orders above 3000:")
+print(expensive_orders)
+print()
+
+gold_and_hyderabad = customers_df[(customers_df["tier"] == "Gold") & (customers_df["city"] == "Hyderabad")]
+print("Gold-tier customers from Hyderabad:")
+print(gold_and_hyderabad)</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(10)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-10"><div class="output-label">Output</div><pre class="output-pane" id="out-10"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 11: SORT + NEW COLUMN -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-i">Intermediate</span><span class="topic-pill pill-pd">pandas</span></div>
+      <div class="cell-title">Sorting, and Adding a New Column</div>
+      <p class="cell-explain"><code>sort_values()</code> puts rows in order, biggest or smallest first. A new column is nothing fancy — it's just <code>df["new_name"] = </code> some calculation built from columns that already exist.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 11 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(11)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-11" rows="11"># Highest amount first
+print(orders_df.sort_values("amount", ascending=False))
+print()
+
+# A new column computed from an existing one
+orders_df["amount_with_tax"] = orders_df["amount"] * 1.18
+print("With an 18% tax column added:")
+print(orders_df[["order_id", "amount", "amount_with_tax"]])</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(11)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-11"><div class="output-label">Output</div><pre class="output-pane" id="out-11"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 12: MISSING DATA -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-i">Intermediate</span><span class="topic-pill pill-pd">pandas</span></div>
+      <div class="cell-title">Missing Data — the Gaps Real Data Always Has</div>
+      <p class="cell-explain">Someone forgets to fill in a field. A system hiccups. It happens constantly, and pandas has a name for that gap: <code>NaN</code> ("Not a Number" — genuinely the actual name). <code>.isnull().sum()</code> finds the gaps. <code>.fillna()</code> patches them with something sensible. Keep this trick in your back pocket — it comes back one cell from now.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 12 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(12)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-12" rows="12">sample = pd.DataFrame({
+    "name":  ["Naman Prasad", "Swarna Choudhury", "Agnik Chakraborty"],
+    "score": [85, None, 91],
+    "city":  ["Hyderabad", "Chennai", None]
+})
+
+print("Where are the gaps?")
+print(sample.isnull().sum())
+print()
+
+sample["score"] = sample["score"].fillna(0)
+sample["city"] = sample["city"].fillna("Unknown")
+print("After patching the gaps:")
+print(sample)</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(12)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-12"><div class="output-label">Output</div><pre class="output-pane" id="out-12"></pre></div>
+    </div>
+  </div>
+
+  <div class="level-banner">
+    <div class="trophy">🏆</div>
+    <div>
+      <h3>Intermediate cleared. Kabirkrishnan called pandas "Excel with extra steps."</h3>
+      <p>He's not wrong, and also not ready for what a JOIN does when two tables don't fully agree with each other. Onward to Advanced.</p>
+    </div>
+  </div>
+
+  <!-- CELL 13: GROUPBY -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-a">Advanced</span><span class="topic-pill pill-pd">pandas</span></div>
+      <div class="cell-title">GroupBy — One Row Per Category</div>
+      <p class="cell-explain"><code>groupby("tier")</code> splits the table into buckets by tier — one bucket per unique value. Whatever you chain after it (<code>.mean()</code>, <code>.sum()</code>, <code>.count()</code>) then runs separately, per bucket. Same idea as SQL's <code>GROUP BY</code>, same result.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 13 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(13)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-13" rows="9">print("How many customers per tier:")
+print(customers_df.groupby("tier")["customer_id"].count())
+print()
+
+print("Total order amount per customer_id:")
+print(orders_df.groupby("customer_id")["amount"].sum())</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(13)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-13"><div class="output-label">Output</div><pre class="output-pane" id="out-13"></pre></div>
+    </div>
+  </div>
+
+  <!-- CELL 14: MERGE / JOIN -->
+  <div class="cell" style="border-color:var(--accent-border)">
+    <div class="cell-head">
+      <div class="section-label"><span class="diff-badge diff-a">Advanced</span><span class="topic-pill pill-pd">pandas</span><span class="topic-pill pill-new">new topic</span></div>
+      <div class="cell-title">Merging Two Tables — pandas' Version of a SQL JOIN</div>
+      <p class="cell-explain"><code>.merge()</code> glues two DataFrames together using a shared column, exactly like a SQL <code>JOIN ... ON</code>. <code>how="inner"</code> keeps only rows that match on both sides. <code>how="left"</code> keeps every row from the left table even without a match. Watch order 105 below — its <code>customer_id</code> (6) doesn't exist in <code>customers_df</code>, so it either vanishes or shows up with a gap, depending which join you pick.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 14 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(14)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-14" rows="16">inner = orders_df.merge(customers_df, on="customer_id", how="inner")
+print("INNER JOIN — order 105 (customer_id 6) silently disappears:")
+print(inner[["order_id", "customer_id", "product", "name"]])
+print()
+
+left = orders_df.merge(customers_df, on="customer_id", how="left")
+print("LEFT JOIN — order 105 is kept, name comes back as NaN:")
+print(left[["order_id", "customer_id", "product", "name"]])
+print()
+
+# Remember .fillna() from the missing-data cell? Exact same fix applies here.
+report = orders_df.merge(customers_df, on="customer_id", how="left")
+report["name"] = report["name"].fillna("Unknown Walk-in Customer")
+print("Final report, gap patched:")
+print(report[["order_id", "name", "product", "amount"]])</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(14)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-14"><div class="output-label">Output</div><pre class="output-pane" id="out-14"></pre></div>
+    </div>
+  </div>
+
+  <div class="level-banner">
+    <div class="trophy">🎉</div>
+    <div>
+      <h3>Advanced cleared. You can now do more with two tables than Robert can do with one.</h3>
+      <p>One box left — and this one's entirely yours.</p>
+    </div>
+  </div>
+
+  <!-- CELL 15: FREE PLAY -->
+  <div class="cell">
+    <div class="cell-head">
+      <div class="section-label"><span class="topic-pill pill-new">free play</span></div>
+      <div class="cell-title">Your Turn — Empty Cell</div>
+      <p class="cell-explain">Everything from cell 8 onward (<code>customers_df</code>, <code>orders_df</code>, <code>report</code>, <code>left</code>) is still sitting in memory. Try grouping by <code>city</code> instead of <code>tier</code>. Try an outer join with <code>how="outer"</code>. Try adding your own name to <code>customers_df</code>. Nothing here is graded — this box only exists so you can break things safely.</p>
+    </div>
+    <div class="cell-body">
+      <div class="editor-wrap">
+        <div class="editor-bar"><span class="editor-lang">cell 15 · python</span><div class="editor-tools"><button class="tool-btn" onclick="resetCell(15)">Reset</button></div></div>
+        <textarea class="py-editor" id="code-15" rows="7"># Write anything here. customers_df and orders_df already exist.
+# Example to get you started:
+print(customers_df.groupby("city")["customer_id"].count())</textarea>
+      </div>
+      <div class="action-row">
+        <button class="run-btn" onclick="runCell(15)" disabled>▶ Run</button>
+      </div>
+      <div class="output-wrap" id="outwrap-15"><div class="output-label">Output</div><pre class="output-pane" id="out-15"></pre></div>
+    </div>
+  </div>
+
+  <footer>
+    Built for Day 5 · If a cell complains about a missing variable, scroll up and run <span class="accent-text">cell 8</span> first — every pandas cell after it depends on that one.
+  </footer>
+
+</main>
+
+<script>
+const STARTER = {};
+document.querySelectorAll('.py-editor').forEach(el => {
+  const n = el.id.split('-')[1];
+  STARTER[n] = el.value;
+});
+const CELL_COUNT = document.querySelectorAll('.py-editor').length;
+
+let pyodide = null;
+let pyodideReady = false;
+let outputBuffer = "";
+
+function setStatus(ready, text) {
+  document.getElementById('statusDot').classList.toggle('ready', ready);
+  document.getElementById('statusText').textContent = text;
+  document.querySelectorAll('.run-btn').forEach(b => b.disabled = !ready);
+  document.getElementById('runAllBtn').disabled = !ready;
+  document.getElementById('restartBtn').disabled = !ready;
+}
+
+async function initPyodide() {
+  setStatus(false, 'Loading engine…');
+  pyodide = await loadPyodide();
+  await pyodide.loadPackage(['numpy', 'pandas']);
+  pyodide.setStdout({ batched: (msg) => { outputBuffer += msg + "\n"; } });
+  pyodide.setStderr({ batched: (msg) => { outputBuffer += msg + "\n"; } });
+  await pyodide.runPythonAsync("import pandas as pd; pd.set_option('display.width', 100)");
+  pyodideReady = true;
+  document.getElementById('loader').style.display = 'none';
+  setStatus(true, 'Python engine ready');
+}
+initPyodide();
+
+async function runCell(n) {
+  if (!pyodideReady) { alert('Python engine is still loading — please wait a few seconds.'); return; }
+  const code = document.getElementById('code-' + n).value;
+  const outWrap = document.getElementById('outwrap-' + n);
+  const outEl = document.getElementById('out-' + n);
+  outWrap.classList.add('show');
+  outEl.classList.remove('err');
+  outEl.innerHTML = '<span class="running">Running…</span>';
+  outputBuffer = "";
+  try {
+    await pyodide.runPythonAsync(code);
+    outEl.textContent = outputBuffer.length ? outputBuffer : '(no output — try adding a print() statement)';
+  } catch (err) {
+    outEl.classList.add('err');
+    const msg = String(err.message || err).trim();
+    const lines = msg.split('\n').filter(l => l.trim().length);
+    outEl.textContent = lines.slice(-2).join('\n');
+  }
+}
+
+async function runAll() {
+  for (let n = 1; n <= CELL_COUNT; n++) {
+    await runCell(n);
+  }
+}
+
+function resetCell(n) {
+  document.getElementById('code-' + n).value = STARTER[n];
+  document.getElementById('outwrap-' + n).classList.remove('show');
+}
+
+async function restartPython() {
+  if (!confirm('This clears every variable (customers_df, orders_df, everything). Continue?')) return;
+  document.getElementById('loader').style.display = 'flex';
+  document.querySelector('#loader p').textContent = 'Restarting Python engine…';
+  pyodideReady = false;
+  setStatus(false, 'Restarting…');
+  document.querySelectorAll('.output-wrap').forEach(el => el.classList.remove('show'));
+  pyodide = null;
+  await initPyodide();
+}
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    const active = document.activeElement;
+    if (active && active.classList.contains('py-editor')) {
+      const n = active.id.split('-')[1];
+      runCell(n);
+      e.preventDefault();
+    }
+  }
+});
+</script>
+</body>
+</html>

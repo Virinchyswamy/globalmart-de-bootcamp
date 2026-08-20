@@ -5,421 +5,710 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 6 – Product Return Rate Report</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;--orange:#fb923c}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
-.nav-left{display:flex;align-items:center;gap:10px}
-.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
-.nav-title{font-size:12px;color:var(--muted);font-weight:500}
-.nav-right{display:flex;align-items:center;gap:8px}
-.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
-.nav-btn:hover{background:var(--a);color:#fff;border-color:var(--a)}
-.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
-.deck{padding-top:52px;height:100vh}
-.slide{display:none;height:calc(100vh - 52px);padding:28px 52px;flex-direction:column;justify-content:flex-start;gap:14px;overflow:hidden;animation:fadein .25s ease}
+:root{
+  --void:#08090c;--surface:#111318;--surface-2:#181b22;--line:#242832;--line-lit:#33394a;
+  --ink:#eef1f6;--ink-dim:#a8adba;--ink-faint:#6b7180;
+  --primary:#22d3ee;--secondary:#e879f9;--grad:linear-gradient(135deg,#22d3ee,#e879f9);
+  --green:#22c55e;--red:#ef4444;--violet:#8b5cf6;--amber:#f59e0b;
+  --code-kw:#ff8fab;--code-fn:#ffcf7a;--code-str:#8be9c5;--code-cm:#6b7180;--code-col:#7dd3fc;--code-tbl:#d3b3ff;
+  --font-display:'Sora',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+html,body{height:100%}
+body{font-family:var(--font-body);background:var(--void);color:var(--ink);overflow:hidden}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--line-lit);border-radius:10px}
+
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(8,9,12,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;z-index:200}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:26px;height:26px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#08090c}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-day{font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--primary);text-transform:uppercase}
+.brand-title{font-size:12px;color:var(--ink-dim);font-weight:500}
+.tools{display:flex;align-items:center;gap:10px}
+.counter{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);min-width:48px;text-align:center}
+.tbtn{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:12.5px;font-weight:600;transition:all .15s var(--ease)}
+.tbtn:hover{background:var(--primary);color:#08090c;border-color:var(--primary)}
+.tbtn.icon{padding:6px 10px}
+
+.rail{position:fixed;top:56px;left:0;right:0;height:4px;background:var(--surface);z-index:190;display:flex;gap:2px;padding:0 2px}
+.rail-seg{flex:1;background:var(--line);border-radius:2px;cursor:pointer;transition:background .2s}
+.rail-seg.done{background:var(--grad)}
+.rail-seg:hover{background:var(--line-lit)}
+
+.deck{padding-top:60px;height:100vh}
+.slide{display:none;height:calc(100vh - 60px);padding:26px 52px 22px;flex-direction:column;justify-content:flex-start;gap:12px;overflow:hidden;animation:fadein .3s var(--ease)}
 .slide.active{display:flex}
-@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-h1{font-size:2.1rem;font-weight:900;color:var(--a);line-height:1.1}
-h2{font-size:1.5rem;font-weight:800;color:var(--a);line-height:1.2}
-h3{font-size:.95rem;font-weight:700;color:var(--a2);margin-bottom:6px}
-p,li{font-size:.87rem;color:#c9d1d9;line-height:1.7}
-ul{padding-left:18px}li{margin-bottom:4px}
-.sub{font-size:.87rem;color:var(--muted);margin-top:4px}
-.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:13px 15px}
-.hl{background:rgba(59,130,246,.06);border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:10px 14px}
-.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
-.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
-.hl.yl{background:rgba(245,158,11,.06);border-color:var(--yellow)}
-pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-family:'JetBrains Mono',monospace;font-size:.77rem;line-height:1.82;overflow-x:auto;white-space:pre}
-code{font-family:'JetBrains Mono',monospace;font-size:.79rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
-.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.nm{color:#ffa657}.var{color:#79c0ff}
-table{width:100%;border-collapse:collapse;font-size:.81rem}
-th{background:rgba(59,130,246,.12);color:var(--a2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;letter-spacing:.5px}
-td{padding:6px 10px;border-bottom:1px solid var(--border);color:#c9d1d9}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.slide-cover{justify-content:center;align-items:flex-start;position:relative;background:
+  radial-gradient(circle at 15% 20%,rgba(34,211,238,.14),transparent 45%),
+  radial-gradient(circle at 85% 75%,rgba(232,121,249,.13),transparent 45%)}
+
+h1{font-family:var(--font-display);font-size:2.3rem;font-weight:900;color:var(--ink);line-height:1.08;letter-spacing:-.5px}
+h1 .accent{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-family:var(--font-display);font-size:1.45rem;font-weight:800;color:var(--ink);line-height:1.2}
+h3{font-family:var(--font-display);font-size:.92rem;font-weight:700;color:var(--primary);margin-bottom:5px}
+p,li{font-size:.86rem;color:var(--ink-dim);line-height:1.62}
+ul{padding-left:18px}li{margin-bottom:3px}
+.sub{font-size:.89rem;color:var(--ink-dim);margin-top:4px;max-width:700px}
+.eyebrow{font-family:var(--font-mono);font-size:.66rem;font-weight:700;letter-spacing:2.5px;color:var(--secondary);text-transform:uppercase;margin-bottom:6px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.card:hover{border-color:var(--line-lit)}
+
+.highlight-box{background:rgba(34,211,238,.06);border-left:3px solid var(--primary);border-radius:0 10px 10px 0;padding:10px 14px}
+.highlight-box.warn{background:rgba(239,68,68,.06);border-color:var(--red)}
+.highlight-box.success{background:rgba(34,197,94,.06);border-color:var(--green)}
+.highlight-box.violet{background:rgba(139,92,246,.07);border-color:var(--violet)}
+.highlight-box.amber{background:rgba(245,158,11,.07);border-color:var(--amber)}
+
+.dialogue{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 15px;display:flex;flex-direction:column;gap:8px}
+.dline{font-size:.83rem;line-height:1.55;color:var(--ink-dim)}
+.dline strong{color:var(--primary)}
+.dline.b strong{color:var(--secondary)}
+
+.code-block{background:#0a0b10;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.code-head{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.code-head span{font-family:var(--font-mono);font-size:.64rem;color:var(--ink-faint);letter-spacing:1px;text-transform:uppercase}
+.copy-btn{background:transparent;border:1px solid var(--line);color:var(--ink-faint);padding:3px 10px;border-radius:6px;font-size:.64rem;cursor:pointer;font-family:var(--font-mono)}
+.copy-btn:hover{color:var(--primary);border-color:var(--primary)}
+pre{padding:10px 14px;font-family:var(--font-mono);font-size:.71rem;line-height:1.68;overflow-x:auto;white-space:pre;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.76rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--code-col)}
+.kw{color:var(--code-kw);font-weight:700}.fn{color:var(--code-fn)}.str{color:var(--code-str)}.cm{color:var(--code-cm);font-style:italic}.col,.var,.nm{color:var(--code-col)}
+
+/* ── LINE-BY-LINE EXPLAIN ── */
+.line-explain-toggle{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.35);color:var(--violet);padding:5px 14px;border-radius:8px;cursor:pointer;font-size:.73rem;font-weight:700;margin-top:1px;font-family:var(--font-body)}
+.line-explain-toggle:hover{background:rgba(139,92,246,.2)}
+.line-explain{display:none;margin-top:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 13px;max-height:230px;overflow-y:auto;flex-direction:column;gap:6px}
+.line-explain.show{display:flex}
+.line-row{display:flex;gap:9px;align-items:flex-start;font-size:.72rem}
+.line-code{font-family:var(--font-mono);background:rgba(255,255,255,.07);color:var(--code-col);padding:2px 7px;border-radius:5px;white-space:nowrap;flex-shrink:0;font-size:.68rem;max-width:38%;overflow-x:auto}
+.line-desc{color:var(--ink-dim);line-height:1.5;padding-top:1px}
+
+table{width:100%;border-collapse:collapse;font-size:.79rem}
+th{background:rgba(34,211,238,.1);color:var(--primary);padding:5px 9px;text-align:left;border-bottom:2px solid var(--line);font-size:.7rem;letter-spacing:.4px}
+td{padding:4px 9px;border-bottom:1px solid var(--line);color:var(--ink-dim)}
 tr:hover td{background:rgba(255,255,255,.02)}
 .ok{color:var(--green);font-weight:600}.no{color:var(--red)}
-.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:11px 15px}
-.quiz p{font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:10px}
-.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:5px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.77rem;font-weight:700}
-.ans{display:none;margin-top:9px;padding:9px 12px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.82rem;color:#86efac;line-height:1.7}
-.num{display:inline-flex;align-items:center;justify-content:center;background:var(--a);color:#fff;width:22px;height:22px;border-radius:50%;font-size:.7rem;font-weight:800;flex-shrink:0}
-.step{display:flex;align-items:flex-start;gap:9px;margin-bottom:7px}
-.step p{margin:0;font-size:.83rem;color:#c9d1d9;padding-top:2px}
-.flow{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.flow-box{background:var(--bg2);border:1px solid var(--a);border-radius:8px;padding:5px 11px;font-size:.77rem;font-weight:600;color:var(--a2)}
-.flow-arrow{color:var(--muted);font-size:.85rem}
-.imp{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:#fca5a5}
-.tip{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:#86efac}
-.note{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:#93c5fd}
-.badge-row{display:flex;gap:8px;flex-wrap:wrap}
-.badge{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:3px 11px;font-size:.74rem;font-weight:600;color:var(--muted)}
+
+.sql-approach{background:rgba(125,211,252,.05);border:1px solid rgba(125,211,252,.25);border-radius:12px;overflow:hidden}
+.sql-approach-head{display:flex;align-items:center;gap:9px;padding:9px 16px;background:rgba(125,211,252,.08);border-bottom:1px solid rgba(125,211,252,.2)}
+.sql-approach-badge{font-family:var(--font-mono);font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;background:#7dd3fc;color:#08090c;padding:2px 10px;border-radius:100px}
+.sql-approach-title{font-size:.84rem;font-weight:700;color:var(--code-col)}
+.sql-approach-why{padding:11px 16px 0;font-size:.8rem;color:var(--ink-dim);line-height:1.6}
+.sql-approach pre{color:#cfeeff}
+
+.bridge-arrow{display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-mono);font-size:.7rem;color:var(--ink-faint);padding:0}
+.bridge-arrow .line{flex:1;height:1px;background:var(--line-lit)}
+
+.py-steps{display:flex;flex-direction:column;gap:9px}
+.py-step{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.py-step-head{display:flex;align-items:center;gap:10px;padding:9px 15px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.py-step-num{width:22px;height:22px;border-radius:50%;background:var(--grad);color:#08090c;font-weight:900;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.py-step-title{font-size:.82rem;font-weight:700;color:var(--ink)}
+.py-step-body{padding:10px 15px}
+.py-step-explain{font-size:.78rem;color:var(--ink-dim);margin-bottom:8px;line-height:1.55}
+.py-step pre{padding:9px 13px;font-size:.72rem}
+
+.quiz-box{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.22);border-radius:12px;padding:11px 15px}
+.quiz-box p.qtext{font-size:.83rem;font-weight:600;color:var(--ink);margin:0 0 8px}
+.reveal-btn{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:var(--green);padding:4px 15px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:.75rem;font-weight:700}
+.reveal-btn:hover{background:rgba(34,197,94,.25)}
+.quiz-answer{display:none;margin-top:9px;padding:9px 12px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.79rem;color:#8ee6a8;line-height:1.65}
+
+.checkpoint-header{background:rgba(232,121,249,.08);border:1px solid rgba(232,121,249,.28);border-radius:12px;padding:10px 17px;display:flex;align-items:center;gap:12px}
+.cp-badge{font-size:.62rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--secondary);color:#08090c;padding:3px 10px;border-radius:100px}
+.cp-title{font-size:.96rem;font-weight:800;color:var(--ink)}
+.cp-sub{font-size:.76rem;color:var(--ink-faint);margin-top:1px}
+.mcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mcq-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.mcq-q{font-size:.81rem;font-weight:700;color:var(--ink);line-height:1.5}
+.mcq-q code{font-size:.76rem}
+.opts{display:flex;flex-direction:column;gap:5px}
+.opt{display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);cursor:pointer;transition:all .15s;font-size:.76rem;color:var(--ink-dim);background:transparent;font-family:var(--font-body);text-align:left;width:100%}
+.opt:hover:not(.disabled){background:rgba(255,255,255,.04);border-color:var(--line-lit)}
+.opt.correct{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.5);color:var(--green);pointer-events:none}
+.opt.wrong{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);color:#f87171;pointer-events:none}
+.opt.disabled{pointer-events:none;opacity:.6}
+.opt-key{font-weight:800;font-size:.7rem;color:var(--ink-faint);min-width:15px;flex-shrink:0;margin-top:1px}
+.opt.correct .opt-key{color:var(--green)}
+.opt.wrong .opt-key{color:#f87171}
+.mcq-exp{display:none;margin-top:2px;padding:7px 10px;background:rgba(34,197,94,.07);border-left:2px solid var(--green);border-radius:0 6px 6px 0;font-size:.74rem;color:#8ee6a8;line-height:1.6}
+
+.pill-row{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:100px;padding:4px 13px;font-size:.73rem;font-weight:600;color:var(--ink-dim)}
+
+.toc-overlay{position:fixed;inset:0;background:rgba(8,9,12,.92);backdrop-filter:blur(10px);z-index:500;display:none;padding:80px 60px;overflow-y:auto}
+.toc-overlay.show{display:block}
+.toc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+.toc-head h2{font-size:1.4rem}
+.toc-close{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:16px}
+.toc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.toc-item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s}
+.toc-item:hover{border-color:var(--primary);transform:translateY(-2px)}
+.toc-item .tn{font-family:var(--font-mono);font-size:.68rem;color:var(--primary);font-weight:700}
+.toc-item .tt{font-size:.85rem;font-weight:700;color:var(--ink);margin-top:3px}
 </style>
 </head>
 <body>
-<nav>
-  <div class="nav-left">
-    <span class="nav-badge">Day 6 · Module 1</span>
-    <span class="nav-title">Product Return Rate Report — Pivot & Unpivot</span>
-  </div>
-  <div class="nav-right">
-    <button class="nav-btn" onclick="go(-1)">← Prev</button>
-    <span class="nav-counter" id="ctr">1 / 10</span>
-    <button class="nav-btn" onclick="go(1)">Next →</button>
-  </div>
-</nav>
-<div class="deck">
 
-<!-- SLIDE 1: TITLE -->
-<div class="slide active">
-  <div>
-    <div class="tag">Day 6 · Module 1 · Pandas Scenario</div>
-    <h1>Product Return Rate<br>Report — Pivot & Unpivot</h1>
-    <p class="sub">Transform scattered return data into a business-ready report — then reshape it between wide and long formats</p>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">6</div>
+    <div class="brand-text">
+      <span class="brand-day">Day 6 · HOL 2</span>
+      <span class="brand-title">Product Return Rate Report</span>
+    </div>
   </div>
-  <div class="two">
+  <div class="tools">
+    <button class="tbtn icon" onclick="toggleTOC()" title="Table of contents (G)">☰</button>
+    <span class="counter" id="ctr">1 / 15</span>
+    <button class="tbtn" onclick="go(-1)">← Prev</button>
+    <button class="tbtn" onclick="go(1)">Next →</button>
+  </div>
+</div>
+<div class="rail" id="rail"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active" data-title="Cover">
+  <div class="eyebrow">Day 6 · Hands-On Lab 2 · Reshaping Data</div>
+  <h1>Product Return Rate<br>Report — <span class="accent">Pivot & Unpivot</span></h1>
+  <p class="sub">GlobalMart's return data is scattered across three tables and tells nobody anything at a glance. You already learned PIVOT and UNPIVOT in SQL back on Day 3 — today you'll meet their pandas cousins, <code>pivot_table()</code> and <code>melt()</code>. SQL approach first, every time, then the Python walkthrough.</p>
+  <div class="three-col" style="margin-top:16px;width:100%">
+    <div class="card"><h3>🔗 The Bridge Join</h3><p>orders has no product reference — transactions connects the two</p></div>
+    <div class="card"><h3>📊 Wide Format</h3><p>pivot_table() — one row per category, metrics as columns</p></div>
+    <div class="card"><h3>📈 Long Format</h3><p>melt() — unpivot back for charting and downstream models</p></div>
+  </div>
+  <div class="pill-row">
+    <div class="pill">merge() chains</div>
+    <div class="pill">isin()</div>
+    <div class="pill">groupby().agg()</div>
+    <div class="pill">pivot_table()</div>
+    <div class="pill">melt()</div>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE BRIEF -->
+<div class="slide" data-title="The Brief">
+  <h2>The Brief</h2>
+  <div class="highlight-box">
+    <p><strong style="color:var(--primary)">Swarna Choudhury, Lead Analyst:</strong> "Our returns data only becomes useful once we can reshape it. A long table of individual return records tells us nothing at a glance. What merchandising actually needs is a pivot — one row per category, with return rate, total returns, and total orders as columns. And when we need to feed that into a chart, we unpivot it back. That's the core skill here."</p>
+  </div>
+  <p class="sub">Kabirkrishnan A has been brought in as Data Analyst. Three business questions, three techniques:</p>
+  <table>
+    <tr><th>Business Question</th><th>Technique</th></tr>
+    <tr><td>Which product categories have the highest return rates?</td><td><code>groupby()</code> + aggregation</td></tr>
+    <tr><td>How do return metrics compare across categories, side by side?</td><td><code>pivot_table()</code> — wide format</td></tr>
+    <tr><td>How can the wide table feed into a chart or downstream model?</td><td><code>melt()</code> — long format</td></tr>
+  </table>
+  <div class="highlight-box violet">
+    <p>💬 Robert wants "just the return rate, nothing else, by tomorrow morning." Robert will get the return rate. Robert will also get total_orders and total_returns next to it, whether he asked or not — a rate with no denominator in sight is not a report.</p>
+  </div>
+</div>
+
+<!-- SLIDE 3: DATA DICTIONARY -->
+<div class="slide" data-title="The Tables">
+  <h2>Four Tables — and One Trap</h2>
+  <p class="sub" style="margin-bottom:8px">Tables: <code>ex_orders</code>, <code>ex_returns</code>, <code>ex_transactions</code>, <code>ex_products</code>.</p>
+  <div class="highlight-box warn">
+    <h3 style="color:var(--red);font-size:.86rem;margin-bottom:4px">⚠️ ex_returns does not contain product_id</h3>
+    <p style="font-size:.82rem">You must join <code>returns → orders</code> to get <code>order_id</code> context, then <code>orders → transactions → products</code> to get <code>category</code>. Do these joins in the wrong order and you get a <code>KeyError</code> — the column you need simply hasn't arrived yet.</p>
+  </div>
+  <div class="two-col">
     <div class="card">
-      <h3>🔗 The Join Challenge</h3>
-      <p>ex_returns → ex_orders → ex_transactions → ex_products. There is <strong>no direct link</strong> from returns to products. Transactions is the mandatory bridge table.</p>
+      <h3>The join path</h3>
+      <p style="font-size:.82rem"><code>ex_transactions</code> is the bridge — it's the only table holding both <code>Order_ID</code> and <code>Product_ID</code> together. Without it, orders and products can never meet.</p>
     </div>
     <div class="card">
-      <h3>📊 Three Business Questions</h3>
-      <table style="margin-top:6px">
-        <tr><th>Question</th><th>Technique</th></tr>
-        <tr><td style="font-size:.78rem">Which categories have highest returns?</td><td style="font-size:.78rem"><code>groupby()</code></td></tr>
-        <tr><td style="font-size:.78rem">Metrics side by side per category?</td><td style="font-size:.78rem"><code>pivot_table()</code></td></tr>
-        <tr><td style="font-size:.78rem">Feed into charts or models?</td><td style="font-size:.78rem"><code>melt()</code></td></tr>
-      </table>
-    </div>
-  </div>
-  <div class="flow">
-    <div class="flow-box">ex_transactions</div>
-    <div class="flow-arrow">→ bridge →</div>
-    <div class="flow-box">order_product</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">+ category</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">+ orders</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">is_return flag</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">groupby</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">pivot</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-box">melt</div>
-  </div>
-  <div class="badge-row">
-    <div class="badge">drop_duplicates()</div>
-    <div class="badge">left_on / right_on</div>
-    <div class="badge">isin()</div>
-    <div class="badge">pivot_table()</div>
-    <div class="badge">melt()</div>
-    <div class="badge">compute rate AFTER groupby</div>
-  </div>
-</div>
-
-<!-- SLIDE 2: THE JOIN CHAIN -->
-<div class="slide">
-  <h2>The Join Chain — Why Transactions is the Bridge</h2>
-  <div class="imp" style="margin-bottom:12px">
-    <strong>⚠️ Critical constraint</strong> — ex_returns does NOT contain product_id. ex_orders also does NOT contain product_id. The only path from return → product is: <strong>returns → orders → transactions → products</strong>. Getting this order wrong causes a KeyError.
-  </div>
-  <div class="two">
-    <div>
-      <pre><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
-
-<span class="var">orders</span>       = pd.<span class="fn">read_csv</span>(<span class="st">"exorders.csv"</span>)
-<span class="var">returns</span>      = pd.<span class="fn">read_csv</span>(<span class="st">"exreturns.csv"</span>)
-<span class="var">products</span>     = pd.<span class="fn">read_csv</span>(<span class="st">"exproducts.csv"</span>)
-<span class="var">transactions</span> = pd.<span class="fn">read_csv</span>(<span class="st">"extransactions.csv"</span>)
-
-<span class="cm"># Step 1: transactions bridges orders → products
-# Pull only the two linking columns (no extra noise)
-# drop_duplicates: one order may have many transaction lines
-# → same Order_ID appears multiple times
-# → would inflate counts during groupby!</span>
-<span class="var">order_product</span> = <span class="var">transactions</span>[[<span class="st">'Order_ID'</span>, <span class="st">'Product_ID'</span>]].<span class="fn">drop_duplicates</span>()
-
-<span class="cm"># Step 2: Bring in category from products
-# NOTE: column names differ in case! Product_ID vs product_id
-# → must use left_on / right_on, NOT just on='product_id'</span>
-<span class="var">order_category</span> = <span class="var">order_product</span>.<span class="fn">merge</span>(
-    <span class="var">products</span>[[<span class="st">'product_id'</span>, <span class="st">'category'</span>]],
-    <span class="var">left_on</span>=<span class="st">'Product_ID'</span>,
-    <span class="var">right_on</span>=<span class="st">'product_id'</span>,
-    <span class="var">how</span>=<span class="st">'left'</span>
-)</pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      <div class="card">
-        <h3 style="font-size:.83rem;margin-bottom:8px">Why each design decision matters</h3>
-        <table>
-          <tr><th>Decision</th><th>Reason</th></tr>
-          <tr><td><code>drop_duplicates()</code></td><td style="font-size:.78rem">Prevents one order from being counted multiple times</td></tr>
-          <tr><td><code>left_on / right_on</code></td><td style="font-size:.78rem">Column names differ in case (Order_ID vs order_id)</td></tr>
-          <tr><td><code>how='left'</code></td><td style="font-size:.78rem">Keep all orders even if product has no match</td></tr>
-        </table>
-      </div>
-      <div class="quiz">
-        <p>❓ Why is <code>drop_duplicates()</code> on the transactions table needed before merging?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ An order with 3 products appears 3× in transactions. Without deduplication, each order would be counted 3× during groupby — inflating <code>total_orders</code> incorrectly. <code>drop_duplicates()</code> ensures each Order_ID appears once per product (or just once if we only need the order count).</div>
-      </div>
+      <h3>The left-join rule</h3>
+      <p style="font-size:.82rem">Products with zero returns must still appear with <code>total_returns = 0</code>. Always <code>how='left'</code> when merging returns onto orders — an inner join would silently erase every product with a clean track record.</p>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 3: FLAG + AGGREGATE -->
-<div class="slide">
-  <h2>Flagging Returns and Aggregating by Category</h2>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># Step 3: Merge category back onto orders table</span>
-<span class="var">orders_with_cat</span> = <span class="var">orders</span>.<span class="fn">merge</span>(
-    <span class="var">order_category</span>[[<span class="st">'Order_ID'</span>, <span class="st">'category'</span>]],
-    <span class="var">left_on</span>=<span class="st">'order_id'</span>,     <span class="cm"># orders uses lowercase</span>
-    <span class="var">right_on</span>=<span class="st">'Order_ID'</span>,    <span class="cm"># transactions uses uppercase</span>
-    <span class="var">how</span>=<span class="st">'left'</span>
+<!-- SLIDE 4: TASK 1 INTRO -->
+<div class="slide" data-title="Task 1 – The Goal">
+  <h2>Task 1 — Category-Level Return Summary</h2>
+  <p class="sub">One row per product category. Total orders, total returns, and a return rate computed the right way.</p>
+  <table>
+    <tr><th>category</th><th>total_orders</th><th>total_returns</th><th>return_rate</th></tr>
+    <tr><td>Electronics</td><td>1200</td><td>180</td><td>15.00%</td></tr>
+  </table>
+  <div class="highlight-box amber">
+    <p>💡 This looks trivial. It is not. The join order and the point at which you compute the rate are both easy to get subtly, silently wrong — see the checkpoint later in this deck.</p>
+  </div>
+</div>
+
+<!-- SLIDE 5: TASK 1 - SQL APPROACH -->
+<div class="slide" data-title="Task 1 – SQL Approach">
+  <h2>Task 1 — The SQL Approach First</h2>
+  <p class="sub" style="margin-bottom:8px">Two CTEs build the bridge, a third flags returns, and the final <code>GROUP BY</code> computes the rate from summed totals — never from an average of row-level rates.</p>
+  <div class="sql-approach">
+    <div class="sql-approach-head"><span class="sql-approach-badge">SQL approach</span><span class="sql-approach-title">bridge join → flag → aggregate → rate</span></div>
+    <div class="sql-approach-why">The <code>order_product</code> CTE is the bridge — the only place <code>Order_ID</code> and <code>Product_ID</code> sit in the same row. A correlated <code>EXISTS</code> against <code>ex_returns</code> is the SQL-native way to produce a 0/1 return flag per order, playing the same role as pandas' <code>isin()</code> a few slides from now.</div>
+    <pre><span class="kw">WITH</span> order_product <span class="kw">AS</span> (
+  <span class="kw">SELECT DISTINCT</span> Order_ID, Product_ID <span class="kw">FROM</span> ex_transactions
+),
+orders_with_category <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> o.order_id, p.category
+  <span class="kw">FROM</span> ex_orders o
+  <span class="kw">LEFT JOIN</span> order_product op <span class="kw">ON</span> o.order_id = op.Order_ID
+  <span class="kw">LEFT JOIN</span> ex_products p     <span class="kw">ON</span> op.Product_ID = p.product_id
 )
+<span class="kw">SELECT</span>
+  category,
+  <span class="fn">COUNT</span>(order_id) <span class="kw">AS</span> total_orders,
+  <span class="fn">SUM</span>(<span class="kw">CASE WHEN EXISTS</span> (
+      <span class="kw">SELECT</span> <span class="col">1</span> <span class="kw">FROM</span> ex_returns r <span class="kw">WHERE</span> r.order_id = orders_with_category.order_id
+  ) <span class="kw">THEN</span> <span class="col">1</span> <span class="kw">ELSE</span> <span class="col">0</span> <span class="kw">END</span>) <span class="kw">AS</span> total_returns,
+  <span class="fn">CONCAT</span>(<span class="fn">ROUND</span>(
+      <span class="fn">SUM</span>(<span class="kw">CASE WHEN EXISTS</span> (
+          <span class="kw">SELECT</span> <span class="col">1</span> <span class="kw">FROM</span> ex_returns r <span class="kw">WHERE</span> r.order_id = orders_with_category.order_id
+      ) <span class="kw">THEN</span> <span class="col">1</span> <span class="kw">ELSE</span> <span class="col">0</span> <span class="kw">END</span>) * <span class="col">100.0</span> / <span class="fn">COUNT</span>(order_id), <span class="col">2</span>
+  ), <span class="str">'%'</span>) <span class="kw">AS</span> return_rate
+<span class="kw">FROM</span> orders_with_category
+<span class="kw">GROUP BY</span> category;</pre>
+  </div>
+  <button class="line-explain-toggle" onclick="toggleLines('le1', this)">▸ Explain every line</button>
+  <div class="line-explain" id="le1">
+    <div class="line-row"><span class="line-code">WITH order_product AS (</span><span class="line-desc">First CTE — builds the bridge between orders and products, since neither table can reach the other directly.</span></div>
+    <div class="line-row"><span class="line-code">SELECT DISTINCT Order_ID, Product_ID FROM ex_transactions</span><span class="line-desc">Pulls only the two linking columns. DISTINCT collapses duplicate transaction line items so one order-product pair appears once, not once per line item.</span></div>
+    <div class="line-row"><span class="line-code">), orders_with_category AS (</span><span class="line-desc">Second CTE — attaches a category label to every order using the bridge just built.</span></div>
+    <div class="line-row"><span class="line-code">SELECT o.order_id, p.category</span><span class="line-desc">Only the columns needed downstream: the order identifier and its category.</span></div>
+    <div class="line-row"><span class="line-code">FROM ex_orders o</span><span class="line-desc">Starts from every order — this table is the anchor, so every order will survive regardless of matches.</span></div>
+    <div class="line-row"><span class="line-code">LEFT JOIN order_product op ON o.order_id = op.Order_ID</span><span class="line-desc">Brings in the product each order relates to. LEFT JOIN keeps orders even if no transaction line matches.</span></div>
+    <div class="line-row"><span class="line-code">LEFT JOIN ex_products p ON op.Product_ID = p.product_id</span><span class="line-desc">Brings in the category for that product. LEFT JOIN again — a missing product shouldn't delete the order row.</span></div>
+    <div class="line-row"><span class="line-code">) SELECT category,</span><span class="line-desc">Closes the second CTE; the outer query now groups by category.</span></div>
+    <div class="line-row"><span class="line-code">COUNT(order_id) AS total_orders,</span><span class="line-desc">Counts every order row per category — the denominator for the rate later.</span></div>
+    <div class="line-row"><span class="line-code">SUM(CASE WHEN EXISTS (...) THEN 1 ELSE 0 END)</span><span class="line-desc">For each order, checks whether it appears anywhere in ex_returns; scores 1 if so, 0 if not, then sums those scores per category — a correlated-subquery way of counting returns.</span></div>
+    <div class="line-row"><span class="line-code">SELECT 1 FROM ex_returns r WHERE r.order_id = orders_with_category.order_id</span><span class="line-desc">The correlated subquery itself — "does at least one row in ex_returns share this exact order_id?" EXISTS only cares whether any row comes back, not what's in it.</span></div>
+    <div class="line-row"><span class="line-code">AS total_returns,</span><span class="line-desc">Names the summed return-flag column.</span></div>
+    <div class="line-row"><span class="line-code">CONCAT(ROUND(... * 100.0 / COUNT(order_id), 2), '%')</span><span class="line-desc">Return count divided by order count, times 100 for a percentage, rounded to 2 decimals, then glued to a literal "%" character to make a display-ready string.</span></div>
+    <div class="line-row"><span class="line-code">FROM orders_with_category</span><span class="line-desc">Reads from the second CTE — every order, already tagged with its category.</span></div>
+    <div class="line-row"><span class="line-code">GROUP BY category;</span><span class="line-desc">Collapses all order rows down to one row per category — the clause that turns COUNT/SUM from row-level into category-level totals.</span></div>
+  </div>
+</div>
 
-<span class="cm"># Step 4: Flag returned orders using isin()
-# isin() returns True if order_id is in returns table
-# True = 1, False = 0 → perfect for summing later</span>
-<span class="var">orders_with_cat</span>[<span class="st">'is_return'</span>] = (
-    <span class="var">orders_with_cat</span>[<span class="st">'order_id'</span>].<span class="fn">isin</span>(<span class="var">returns</span>[<span class="st">'order_id'</span>])
-)
-
-<span class="cm"># Step 5: Aggregate — one row per category</span>
-<span class="var">summary</span> = <span class="var">orders_with_cat</span>.<span class="fn">groupby</span>(<span class="st">'category'</span>).<span class="fn">agg</span>(
-    <span class="var">total_orders</span>  = (<span class="st">'order_id'</span>,  <span class="st">'count'</span>),
-    <span class="var">total_returns</span> = (<span class="st">'is_return'</span>, <span class="st">'sum'</span>)  <span class="cm"># True=1, False=0</span>
-).<span class="fn">reset_index</span>()</pre>
+<!-- SLIDE 6: TASK 1 - PYTHON STEPS 1-3 -->
+<div class="slide" data-title="Task 1 – Python Steps 1–3">
+  <h2>Task 1 — Python, Step by Step (1 of 2)</h2>
+  <div class="bridge-arrow"><div class="line"></div><span>same bridge join, now in pandas</span><div class="line"></div></div>
+  <div class="py-steps">
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">1</div><div class="py-step-title">Link orders to products via transactions — build the bridge</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">This is the <code>order_product</code> CTE. Only the two linking columns are pulled. <code>drop_duplicates()</code> matters here — a single order can generate several transaction line items, and without deduplicating, the same order-product pair would appear more than once.</p>
+        <div class="code-block"><pre><span class="var">order_product</span> = <span class="var">transactions</span>[[<span class="str">'Order_ID'</span>, <span class="str">'Product_ID'</span>]].<span class="fn">drop_duplicates</span>()</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le2', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le2">
+          <div class="line-row"><span class="line-code">transactions[['Order_ID', 'Product_ID']]</span><span class="line-desc">Selects only the two linking columns from the transactions table — everything else in that table is irrelevant to this bridge.</span></div>
+          <div class="line-row"><span class="line-code">.drop_duplicates()</span><span class="line-desc">Removes repeated order-product pairs. A single order with multiple transaction line items would otherwise appear more than once, inflating counts later. The pandas equivalent of the SQL SELECT DISTINCT above.</span></div>
+        </div>
+      </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      <div class="hl">
-        <h3 style="font-size:.84rem;margin-bottom:6px">Why isin() instead of merge for returns?</h3>
-        <p style="font-size:.83rem">A left merge on returns would add extra columns and NaN handling complexity. <code>isin()</code> produces a clean boolean column (True/False) directly. <strong>True sums as 1, False sums as 0</strong> — so <code>.sum()</code> on the boolean column gives the exact return count per category.</p>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">2</div><div class="py-step-title">Bring in category from products</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">The second <code>LEFT JOIN</code> from the SQL approach. <code>left_on</code>/<code>right_on</code> are needed explicitly because the column casing differs between tables: <code>Product_ID</code> in transactions vs <code>product_id</code> in products.</p>
+        <div class="code-block"><pre><span class="var">order_category</span> = <span class="var">order_product</span>.<span class="fn">merge</span>(
+    <span class="var">products</span>[[<span class="str">'product_id'</span>, <span class="str">'category'</span>]],
+    left_on=<span class="str">'Product_ID'</span>, right_on=<span class="str">'product_id'</span>, how=<span class="str">'left'</span>
+)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le3', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le3">
+          <div class="line-row"><span class="line-code">order_product.merge(products[[...]], ...)</span><span class="line-desc">Joins the bridge table to a narrowed-down products table containing only the two columns actually needed.</span></div>
+          <div class="line-row"><span class="line-code">left_on='Product_ID', right_on='product_id'</span><span class="line-desc">Explicit because the column name casing differs between the two tables — a single shared <code>on=</code> key would fail since no column is spelled identically in both.</span></div>
+          <div class="line-row"><span class="line-code">how='left'</span><span class="line-desc">Keeps every row from order_product even if a product_id has no match in products — matching the SQL LEFT JOIN in the approach above.</span></div>
+        </div>
       </div>
-      <div class="hl yl">
-        <h3 style="color:var(--yellow);font-size:.84rem;margin-bottom:6px">⚠️ Compute return rate AFTER groupby</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.77rem;"><span class="cm"># ❌ Wrong: rate per row, then average</span>
-<span class="cm"># → mathematically incorrect (Simpson-like error)</span>
-
-<span class="cm"># ✅ Correct: compute from aggregated totals</span>
-<span class="var">summary</span>[<span class="st">'return_rate'</span>] = (
-    <span class="var">summary</span>[<span class="st">'total_returns'</span>] /
-    <span class="var">summary</span>[<span class="st">'total_orders'</span>] * <span class="nm">100</span>
-).<span class="fn">map</span>(<span class="st">'{:.2f}%'</span>.<span class="fn">format</span>)
-<span class="var">summary</span>[<span class="st">'total_returns'</span>] = <span class="var">summary</span>[<span class="st">'total_returns'</span>].<span class="fn">astype</span>(<span class="fn">int</span>)</pre>
-      </div>
-      <div class="quiz">
-        <p>❓ Why is return rate calculated AFTER groupby, not before?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ If computed per row first (e.g., 1 return out of 1 order = 100%), then averaged, each row carries equal weight regardless of volume. A product with 2 orders (50% rate) and one with 1000 orders (10% rate) would average 30% — not the true 10.1%. Category-level totals give the mathematically correct rate.</div>
+    </div>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">3</div><div class="py-step-title">Merge category back onto orders</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">The first <code>LEFT JOIN</code> from the SQL approach, done last in Python because it needed <code>category</code> to already exist. <code>how='left'</code> again — every order row survives, matched or not.</p>
+        <div class="code-block"><pre><span class="var">orders_with_category</span> = <span class="var">orders</span>.<span class="fn">merge</span>(
+    <span class="var">order_category</span>[[<span class="str">'Order_ID'</span>, <span class="str">'category'</span>]],
+    left_on=<span class="str">'order_id'</span>, right_on=<span class="str">'Order_ID'</span>, how=<span class="str">'left'</span>
+)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le4', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le4">
+          <div class="line-row"><span class="line-code">orders.merge(order_category[[...]], ...)</span><span class="line-desc">Joins the full orders table to the category lookup built in Step 2, narrowed to just the two needed columns.</span></div>
+          <div class="line-row"><span class="line-code">left_on='order_id', right_on='Order_ID'</span><span class="line-desc">Again explicit because of the casing mismatch — <code>order_id</code> in orders vs <code>Order_ID</code> in the transactions-derived table.</span></div>
+          <div class="line-row"><span class="line-code">how='left'</span><span class="line-desc">Every order row survives regardless of whether a category was found — orders is the anchor table for the whole report.</span></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 4: PIVOT TABLE -->
-<div class="slide">
-  <h2>pivot_table() — Wide Format for Side-by-Side Comparison</h2>
-  <p class="sub" style="margin-bottom:12px"><strong>Long format</strong> (current): one row per category. <strong>Wide format</strong> (pivot): category as row index, each metric as a column — easier for humans to scan.</p>
-  <div class="two">
+<!-- SLIDE 7: TASK 1 - PYTHON STEPS 4-6 -->
+<div class="slide" data-title="Task 1 – Python Steps 4–6">
+  <h2>Task 1 — Python, Step by Step (2 of 2)</h2>
+  <div class="py-steps">
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">4</div><div class="py-step-title">Flag returned orders — the CASE WHEN EXISTS, without a join</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain"><code>isin()</code> is pandas' cleaner alternative to the correlated <code>EXISTS</code> subquery from the SQL approach — same 0/1 outcome, no extra rows, no join needed at all.</p>
+        <div class="code-block"><pre><span class="var">orders_with_category</span>[<span class="str">'is_return'</span>] = <span class="var">orders_with_category</span>[<span class="str">'order_id'</span>].<span class="fn">isin</span>(<span class="var">returns</span>[<span class="str">'order_id'</span>])</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le5', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le5">
+          <div class="line-row"><span class="line-code">orders_with_category['order_id'].isin(returns['order_id'])</span><span class="line-desc">Checks each order_id against the full list of order_ids present in the returns table, returning True if found, False if not — a whole new boolean column, computed in one line, no join required.</span></div>
+          <div class="line-row"><span class="line-code">orders_with_category['is_return'] = ...</span><span class="line-desc">Assigns that True/False result as a new column named is_return, ready to be summed in the next step.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">5</div><div class="py-step-title">Group by category — the GROUP BY</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">Two aggregations at once: <code>count</code> on <code>order_id</code> gives total_orders. <code>sum</code> on the boolean <code>is_return</code> works because Python treats <code>True</code> as 1 and <code>False</code> as 0 — summing a boolean column literally counts the trues.</p>
+        <div class="code-block"><pre><span class="var">summary</span> = <span class="var">orders_with_category</span>.<span class="fn">groupby</span>(<span class="str">'category'</span>).<span class="fn">agg</span>(
+    total_orders  = (<span class="str">'order_id'</span>,  <span class="str">'count'</span>),
+    total_returns = (<span class="str">'is_return'</span>, <span class="str">'sum'</span>)
+).<span class="fn">reset_index</span>()</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le6', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le6">
+          <div class="line-row"><span class="line-code">orders_with_category.groupby('category')</span><span class="line-desc">Buckets every order row by its category — the pandas GROUP BY.</span></div>
+          <div class="line-row"><span class="line-code">.agg(total_orders=('order_id','count'), ...)</span><span class="line-desc">Named aggregation: counts how many order_id rows fall in each bucket, labeling the result total_orders.</span></div>
+          <div class="line-row"><span class="line-code">total_returns=('is_return','sum')</span><span class="line-desc">Sums the boolean is_return column per bucket. Because True=1 and False=0 in Python, this sum is literally a count of returned orders.</span></div>
+          <div class="line-row"><span class="line-code">.reset_index()</span><span class="line-desc">Promotes category from the groupby index back to a normal column, so it's usable in later steps like pivot_table() and melt().</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">6</div><div class="py-step-title">Compute return rate — from totals, never from an average of rates</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain">The rate is computed <em>after</em> grouping, from the already-summed totals — matching the SQL approach exactly, where the division happens outside the aggregate functions, not before them.</p>
+        <div class="code-block"><pre><span class="var">summary</span>[<span class="str">'return_rate'</span>] = (
+    <span class="var">summary</span>[<span class="str">'total_returns'</span>] / <span class="var">summary</span>[<span class="str">'total_orders'</span>] * <span class="col">100</span>
+).<span class="fn">map</span>(<span class="str">'{:.2f}%'</span>.<span class="fn">format</span>)
+<span class="var">summary</span>[<span class="str">'total_returns'</span>] = <span class="var">summary</span>[<span class="str">'total_returns'</span>].<span class="fn">astype</span>(<span class="fn">int</span>)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le7', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le7">
+          <div class="line-row"><span class="line-code">summary['total_returns'] / summary['total_orders'] * 100</span><span class="line-desc">The rate, computed from the already-aggregated category-level totals — divide first, multiply by 100 to convert to a percentage.</span></div>
+          <div class="line-row"><span class="line-code">.map('{:.2f}%'.format)</span><span class="line-desc">Applies Python's string formatting to every value in the resulting Series, fixing 2 decimal places and appending a literal "%" — turns 15.0 into "15.00%".</span></div>
+          <div class="line-row"><span class="line-code">summary['total_returns'] = summary['total_returns'].astype(int)</span><span class="line-desc">The sum() of a boolean column can come back as a float in some pandas versions; this forces it back to a clean integer so the report doesn't show "180.0".</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: CHECKPOINT 1 -->
+<div class="slide" data-title="Checkpoint 1">
+  <div class="checkpoint-header" style="margin-bottom:12px">
+    <span class="cp-badge">Checkpoint</span>
     <div>
-      <div class="card" style="margin-bottom:12px">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Before pivot (long) vs After pivot (wide)</h3>
-        <table>
-          <tr><th colspan="4" style="text-align:center">LONG — summary (current)</th></tr>
-          <tr><th>category</th><th>total_orders</th><th>total_returns</th><th>return_rate</th></tr>
-          <tr><td style="font-size:.77rem">Electronics</td><td style="font-size:.77rem">1200</td><td style="font-size:.77rem">180</td><td style="font-size:.77rem">15.00%</td></tr>
-          <tr><td style="font-size:.77rem">Clothing</td><td style="font-size:.77rem">800</td><td style="font-size:.77rem">180</td><td style="font-size:.77rem">22.50%</td></tr>
-        </table>
-        <p style="font-size:.77rem;margin-top:8px;color:var(--muted)">↓ After pivot_table() — same data, wider layout ↓</p>
-        <table>
-          <tr><th>category</th><th>return_rate</th><th>total_orders</th><th>total_returns</th></tr>
-          <tr><td style="font-size:.77rem">Clothing</td><td style="font-size:.77rem">22.50%</td><td style="font-size:.77rem">800</td><td style="font-size:.77rem">180</td></tr>
-          <tr><td style="font-size:.77rem">Electronics</td><td style="font-size:.77rem">15.00%</td><td style="font-size:.77rem">1200</td><td style="font-size:.77rem">180</td></tr>
-        </table>
-      </div>
-      <pre><span class="cm"># Pivot: one row per category, metrics as columns</span>
-<span class="var">pivot_df</span> = <span class="var">summary</span>.<span class="fn">pivot_table</span>(
-    <span class="var">index</span>=<span class="st">'category'</span>,
-    <span class="var">values</span>=[<span class="st">'total_orders'</span>, <span class="st">'total_returns'</span>, <span class="st">'return_rate'</span>],
-    <span class="var">aggfunc</span>=<span class="st">'first'</span>   <span class="cm"># already 1 row/category — no aggregation needed</span>
-).<span class="fn">reset_index</span>()       <span class="cm"># MUST call to make category a regular column</span></pre>
+      <div class="cp-title">Quick Quiz — Joins and Rate Math</div>
+      <div class="cp-sub">Click an option. Get instant feedback.</div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">pivot_table() parameters</h3>
-        <table>
-          <tr><th>Parameter</th><th>What it does</th></tr>
-          <tr><td><code>index=</code></td><td style="font-size:.78rem">Column that becomes row identifier</td></tr>
-          <tr><td><code>values=</code></td><td style="font-size:.78rem">Columns to spread as cell values</td></tr>
-          <tr><td><code>columns=</code></td><td style="font-size:.78rem">Column whose values become new columns</td></tr>
-          <tr><td><code>aggfunc=</code></td><td style="font-size:.78rem">How to combine duplicate cells</td></tr>
-          <tr><td><code>fill_value=</code></td><td style="font-size:.78rem">Replace NaN with this value</td></tr>
-        </table>
+  </div>
+  <div class="mcq-grid" id="cp1">
+    <div class="mcq-card">
+      <p class="mcq-q">Why is <code>drop_duplicates()</code> called on the transactions bridge before any merge?</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-q1')"><span class="opt-key">A</span>It removes rows where Product_ID is NaN</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-q1')"><span class="opt-key">B</span>It ensures each order-product pair appears once, preventing inflated order counts</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q1')"><span class="opt-key">C</span>It speeds up the merge by shrinking the table</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q1')"><span class="opt-key">D</span>It filters out cancelled orders</button>
       </div>
-      <div class="note">
-        <strong>📝 Why aggfunc='first'?</strong> — summary already has ONE row per category. There's nothing to aggregate. <code>'first'</code> simply picks the single existing value. Using <code>'sum'</code> would also work but is semantically misleading.
+      <div class="mcq-exp" id="exp-q1">B. A single order with multiple transaction line items would otherwise appear multiple times, silently inflating <code>total_orders</code> at the groupby step. This is deduplication for correctness, not performance or null-handling.</div>
+    </div>
+    <div class="mcq-card">
+      <p class="mcq-q">Why is <code>return_rate</code> computed <em>after</em> <code>groupby()</code>, not before it?</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-q2')"><span class="opt-key">A</span><code>.map()</code> only works on aggregated DataFrames</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q2')"><span class="opt-key">B</span><code>is_return</code> only exists after groupby completes</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-q2')"><span class="opt-key">C</span>Averaging per-row rates first gives a mathematically incorrect category rate</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-q2')"><span class="opt-key">D</span>groupby() doesn't support string columns</button>
       </div>
-      <div class="note">
-        <strong>📝 Why reset_index()?</strong> — After <code>pivot_table()</code>, <code>category</code> becomes the DataFrame's index. <code>reset_index()</code> moves it back to a regular column so <code>melt()</code> can reference it by name in the next step.
-      </div>
-      <div class="quiz">
-        <p>❓ Forgetting <code>reset_index()</code> after pivot_table — what breaks next?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ The <code>melt()</code> call in the next step will fail — it needs <code>id_vars='category'</code> but <code>category</code> is the INDEX not a column, so pandas can't find it and raises a <code>KeyError</code>.</div>
+      <div class="mcq-exp" id="exp-q2">C. A product with 2 orders/1 return (50%) and another with 1000 orders/100 returns (10%) would average to 30% — nowhere near the true category rate of ~10.1%. Computing the rate from summed totals after grouping is the only mathematically correct order.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: TASK 2 INTRO -->
+<div class="slide" data-title="Task 2 – The Goal">
+  <h2>Task 2 — Pivot: Reshape to Wide Format</h2>
+  <p class="sub">Take the category summary and lay it out with <code>category</code> as the row identifier and every metric as its own column — the format merchandising actually reads.</p>
+  <table>
+    <tr><th>category</th><th>return_rate</th><th>total_orders</th><th>total_returns</th></tr>
+    <tr><td>Electronics</td><td>15.00%</td><td>1200</td><td>180</td></tr>
+    <tr><td>Clothing</td><td>22.50%</td><td>800</td><td>180</td></tr>
+  </table>
+  <div class="highlight-box">
+    <p>📌 You already know this shape — it's exactly what <code>PIVOT</code> produces in SQL, which you built by hand back in Day 3. Same output shape, new syntax.</p>
+  </div>
+</div>
+
+<!-- SLIDE 10: TASK 2 - SQL APPROACH + PYTHON -->
+<div class="slide" data-title="Task 2 – SQL Approach & Python">
+  <h2>Task 2 — The SQL Approach First, Then Python</h2>
+  <div class="sql-approach">
+    <div class="sql-approach-head"><span class="sql-approach-badge">SQL approach</span><span class="sql-approach-title">recap: your Day 3 PIVOT</span></div>
+    <div class="sql-approach-why">Worth being honest here: <code>summary</code> already has one row per category — it's already "wide" in the SQL sense. A real SQL <code>PIVOT</code> earns its keep when you start from a <em>long</em> table (one row per category-metric pair). That's actually what melt() builds in Task 3 — so this pivot is really demonstrating the pandas API on data that doesn't strictly need reshaping yet.</div>
+    <pre><span class="kw">SELECT</span> category, [return_rate], [total_orders], [total_returns]
+<span class="kw">FROM</span> long_format_summary
+<span class="kw">PIVOT</span> (
+    <span class="fn">MAX</span>(value) <span class="kw">FOR</span> metric <span class="kw">IN</span> ([return_rate], [total_orders], [total_returns])
+) <span class="kw">AS</span> p;</pre>
+  </div>
+  <button class="line-explain-toggle" onclick="toggleLines('le8', this)">▸ Explain every line</button>
+  <div class="line-explain" id="le8">
+    <div class="line-row"><span class="line-code">SELECT category, [return_rate], [total_orders], [total_returns]</span><span class="line-desc">The final column list — category stays a row identifier, each metric name becomes its own bracketed column.</span></div>
+    <div class="line-row"><span class="line-code">FROM long_format_summary</span><span class="line-desc">PIVOT needs a long-format source: one row per category-metric pair, exactly the shape melt() produces in Task 3.</span></div>
+    <div class="line-row"><span class="line-code">PIVOT ( MAX(value) FOR metric IN (...) )</span><span class="line-desc">The reshape instruction: for each category, look across its rows, and for every metric name listed in IN(), place that row's value into a column of that name. MAX() is required syntactically even though only one value exists per category-metric pair.</span></div>
+    <div class="line-row"><span class="line-code">) AS p;</span><span class="line-desc">PIVOT must be aliased like any derived table.</span></div>
+  </div>
+  <div class="bridge-arrow"><div class="line"></div><span>pandas' pivot_table(), step by step</span><div class="line"></div></div>
+  <div class="py-steps">
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">1</div><div class="py-step-title">Pivot with aggfunc='first' — nothing to aggregate, just reshape</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain"><code>index='category'</code> makes category the row identifier. Since <code>summary</code> already has one row per category, <code>aggfunc='first'</code> just returns the existing value — no arithmetic happens.</p>
+        <div class="code-block"><pre><span class="var">pivot_df</span> = <span class="var">summary</span>.<span class="fn">pivot_table</span>(
+    index=<span class="str">'category'</span>,
+    values=[<span class="str">'total_orders'</span>, <span class="str">'total_returns'</span>, <span class="str">'return_rate'</span>],
+    aggfunc=<span class="str">'first'</span>
+).<span class="fn">reset_index</span>()</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le9', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le9">
+          <div class="line-row"><span class="line-code">summary.pivot_table(</span><span class="line-desc">Calls pandas' reshape function on the category summary built earlier.</span></div>
+          <div class="line-row"><span class="line-code">index='category',</span><span class="line-desc">Sets category as the row identifier for the output — one row per category, same role as PIVOT's SELECT column.</span></div>
+          <div class="line-row"><span class="line-code">values=['total_orders', 'total_returns', 'return_rate']</span><span class="line-desc">Names which columns should become the pivoted values — the same three names listed in the SQL PIVOT's IN() clause.</span></div>
+          <div class="line-row"><span class="line-code">aggfunc='first'</span><span class="line-desc">Normally pivot_table() would aggregate multiple matching rows with a function like sum or mean; here there's only ever one row per category already, so 'first' just passes the existing value through untouched — the pandas cousin of PIVOT's required MAX() when there's nothing to actually aggregate.</span></div>
+          <div class="line-row"><span class="line-code">).reset_index()</span><span class="line-desc">pivot_table() leaves category as the DataFrame's index; this promotes it back to a normal column so melt() can reference it by name in Task 3.</span></div>
+        </div>
+        <div class="highlight-box warn" style="margin-top:9px"><p style="font-size:.78rem">⚠️ Forgetting <code>reset_index()</code> is the classic mistake here — <code>category</code> becomes the DataFrame's index, not a column, and <code>melt()</code> in the next task won't be able to see it.</p></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 5: MELT (UNPIVOT) -->
-<div class="slide">
-  <h2>melt() — Unpivot Back to Long Format</h2>
-  <p class="sub" style="margin-bottom:12px">Charting libraries (matplotlib, seaborn, Plotly) prefer <strong>long format</strong> — one row per data point. <code>melt()</code> is the exact inverse of <code>pivot_table()</code>.</p>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># Melt: wide → long (unpivot)
-# id_vars: columns to KEEP as row identifiers (not unpivoted)
-# value_vars: columns to COLLAPSE into rows
-# var_name: name for the new "metric" column
-# value_name: name for the new "value" column</span>
-<span class="var">long_df</span> = <span class="var">pivot_df</span>.<span class="fn">melt</span>(
-    <span class="var">id_vars</span>=<span class="st">'category'</span>,
-    <span class="var">value_vars</span>=[<span class="st">'total_orders'</span>, <span class="st">'total_returns'</span>, <span class="st">'return_rate'</span>],
-    <span class="var">var_name</span>=<span class="st">'metric'</span>,
-    <span class="var">value_name</span>=<span class="st">'value'</span>
+<!-- SLIDE 11: TASK 3 INTRO -->
+<div class="slide" data-title="Task 3 – The Goal">
+  <h2>Task 3 — Unpivot: Reshape Back to Long Format</h2>
+  <p class="sub">Every chart library and most downstream models want tidy long data: one row per observation, not one row per entity with many columns.</p>
+  <table>
+    <tr><th>category</th><th>metric</th><th>value</th></tr>
+    <tr><td>Clothing</td><td>return_rate</td><td>22.50%</td></tr>
+    <tr><td>Clothing</td><td>total_orders</td><td>800</td></tr>
+    <tr><td>Clothing</td><td>total_returns</td><td>180</td></tr>
+  </table>
+  <div class="highlight-box">
+    <p>📌 This is the exact inverse of Task 2 — and exactly what SQL's <code>UNPIVOT</code> does, which you also saw on Day 3.</p>
+  </div>
+</div>
+
+<!-- SLIDE 12: TASK 3 - SQL APPROACH + PYTHON -->
+<div class="slide" data-title="Task 3 – SQL Approach & Python">
+  <h2>Task 3 — The SQL Approach First, Then Python</h2>
+  <div class="sql-approach">
+    <div class="sql-approach-head"><span class="sql-approach-badge">SQL approach</span><span class="sql-approach-title">recap: your Day 3 UNPIVOT</span></div>
+    <div class="sql-approach-why">Every non-key column named in the <code>IN()</code> list becomes its own row, tagged by the metric name it came from. This is the direct SQL cousin of what <code>melt()</code> does below.</div>
+    <pre><span class="kw">SELECT</span> category, metric, value
+<span class="kw">FROM</span> pivot_df
+<span class="kw">UNPIVOT</span> (
+    value <span class="kw">FOR</span> metric <span class="kw">IN</span> (total_orders, total_returns, return_rate)
+) <span class="kw">AS</span> u;</pre>
+  </div>
+  <button class="line-explain-toggle" onclick="toggleLines('le10', this)">▸ Explain every line</button>
+  <div class="line-explain" id="le10">
+    <div class="line-row"><span class="line-code">SELECT category, metric, value</span><span class="line-desc">The long-format output columns — one identifier (category), one label column (metric), one value column.</span></div>
+    <div class="line-row"><span class="line-code">FROM pivot_df</span><span class="line-desc">Starts from the wide table built in Task 2.</span></div>
+    <div class="line-row"><span class="line-code">UNPIVOT ( value FOR metric IN (...) )</span><span class="line-desc">For each row, takes every column named in IN() and turns it into its own output row: the column name becomes the metric value, the cell's contents become the value column.</span></div>
+    <div class="line-row"><span class="line-code">) AS u;</span><span class="line-desc">UNPIVOT also needs an alias, like any derived table.</span></div>
+  </div>
+  <div class="bridge-arrow"><div class="line"></div><span>pandas' melt(), step by step</span><div class="line"></div></div>
+  <div class="py-steps">
+    <div class="py-step">
+      <div class="py-step-head"><div class="py-step-num">1</div><div class="py-step-title">Melt the wide table back to long</div></div>
+      <div class="py-step-body">
+        <p class="py-step-explain"><code>id_vars</code> names the column(s) to keep as-is (the SQL cousin of the columns <em>not</em> listed in <code>UNPIVOT</code>'s <code>IN()</code>). Everything in <code>value_vars</code> becomes rows instead of columns.</p>
+        <div class="code-block"><pre><span class="var">long_df</span> = <span class="var">pivot_df</span>.<span class="fn">melt</span>(
+    id_vars=<span class="str">'category'</span>,
+    value_vars=[<span class="str">'total_orders'</span>, <span class="str">'total_returns'</span>, <span class="str">'return_rate'</span>],
+    var_name=<span class="str">'metric'</span>,
+    value_name=<span class="str">'value'</span>
 )
-
-<span class="var">long_df</span> = <span class="var">long_df</span>.<span class="fn">sort_values</span>([<span class="st">'category'</span>, <span class="st">'metric'</span>]).<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>)
-
-<span class="fn">print</span>(<span class="var">long_df</span>)
-<span class="cm">#  category     metric   value
-#  Clothing  return_rate  22.50%
-#  Clothing  total_orders    800
-#  Clothing  total_returns   180
-#  Electronics return_rate  15.00%
-#  ...</span></pre>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">pivot vs melt — visual</h3>
-        <pre style="font-size:.75rem;background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2)">WIDE (pivot_df)              LONG (long_df)
-─────────────────────        ──────────────────────────
-category│total_orders│...    category  │ metric       │value
-──────────────────────       ──────────────────────────
-Clothing│    800     │...    Clothing  │ total_orders │ 800
-Electronics│ 1200   │...    Clothing  │total_returns │ 180
-                             Clothing  │ return_rate  │22.5%
-← fewer rows, more columns  Electronics│total_orders │1200
-                             ← more rows, fewer columns</pre>
-      </div>
-      <div class="hl">
-        <h3 style="font-size:.84rem;margin-bottom:6px">When to use each format</h3>
-        <table>
-          <tr><th>Format</th><th>Best for</th></tr>
-          <tr><td style="font-size:.78rem">Wide (pivot)</td><td style="font-size:.78rem">Human-readable reports, Excel, dashboards</td></tr>
-          <tr><td style="font-size:.78rem">Long (melt)</td><td style="font-size:.78rem">Charts, ML models, downstream analysis</td></tr>
-        </table>
-      </div>
-      <div class="quiz">
-        <p>❓ In melt(), what does <code>id_vars</code> do vs what does <code>value_vars</code> do?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <code>id_vars</code> = columns that stay as identifiers (repeat for each melted row). <code>value_vars</code> = columns that get collapsed into rows. Everything in <code>value_vars</code> becomes a value in the new <code>var_name</code> column.</div>
+<span class="var">long_df</span> = <span class="var">long_df</span>.<span class="fn">sort_values</span>([<span class="str">'category'</span>, <span class="str">'metric'</span>]).<span class="fn">reset_index</span>(drop=<span class="kw">True</span>)</pre></div>
+        <button class="line-explain-toggle" onclick="toggleLines('le11', this)">▸ Explain every line</button>
+        <div class="line-explain" id="le11">
+          <div class="line-row"><span class="line-code">pivot_df.melt(</span><span class="line-desc">Calls pandas' unpivot function on the wide table from Task 2.</span></div>
+          <div class="line-row"><span class="line-code">id_vars='category',</span><span class="line-desc">Names the column(s) that stay exactly as they are — not unpivoted. The direct pandas cousin of whatever columns are <em>not</em> listed in SQL's UNPIVOT IN().</span></div>
+          <div class="line-row"><span class="line-code">value_vars=['total_orders', 'total_returns', 'return_rate']</span><span class="line-desc">Names the columns to fold into rows — matches the SQL UNPIVOT's IN() list exactly.</span></div>
+          <div class="line-row"><span class="line-code">var_name='metric',</span><span class="line-desc">Names the new column that will hold each original column's name (e.g. "total_orders").</span></div>
+          <div class="line-row"><span class="line-code">value_name='value'</span><span class="line-desc">Names the new column that will hold each original cell's value.</span></div>
+          <div class="line-row"><span class="line-code">)</span><span class="line-desc">Closes the melt() call — the result already has exactly three columns: category, metric, value.</span></div>
+          <div class="line-row"><span class="line-code">long_df.sort_values(['category', 'metric'])</span><span class="line-desc">melt() doesn't guarantee a tidy row order; this sorts by category then metric so the report reads predictably.</span></div>
+          <div class="line-row"><span class="line-code">.reset_index(drop=True)</span><span class="line-desc">Renumbers the index after sorting, discarding the old scrambled one.</span></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 6: FULL CODE -->
-<div class="slide">
-  <h2>Complete Solution — All Steps Together</h2>
-  <div class="two">
-    <pre style="font-size:.72rem;line-height:1.75"><span class="kw">import</span> pandas <span class="kw">as</span> <span class="var">pd</span>
-
-<span class="var">orders</span>   = pd.<span class="fn">read_csv</span>(<span class="st">"exorders.csv"</span>)
-<span class="var">returns</span>  = pd.<span class="fn">read_csv</span>(<span class="st">"exreturns.csv"</span>)
-<span class="var">products</span> = pd.<span class="fn">read_csv</span>(<span class="st">"exproducts.csv"</span>)
-<span class="var">trans</span>    = pd.<span class="fn">read_csv</span>(<span class="st">"extransactions.csv"</span>)
-
-<span class="cm"># 1. Bridge: transactions links orders → products</span>
-<span class="var">order_product</span> = <span class="var">trans</span>[[<span class="st">'Order_ID'</span>,<span class="st">'Product_ID'</span>]].<span class="fn">drop_duplicates</span>()
-
-<span class="cm"># 2. Add category from products</span>
-<span class="var">order_cat</span> = <span class="var">order_product</span>.<span class="fn">merge</span>(
-    <span class="var">products</span>[[<span class="st">'product_id'</span>,<span class="st">'category'</span>]],
-    <span class="var">left_on</span>=<span class="st">'Product_ID'</span>, <span class="var">right_on</span>=<span class="st">'product_id'</span>, <span class="var">how</span>=<span class="st">'left'</span>)
-
-<span class="cm"># 3. Attach category to orders</span>
-<span class="var">df</span> = <span class="var">orders</span>.<span class="fn">merge</span>(
-    <span class="var">order_cat</span>[[<span class="st">'Order_ID'</span>,<span class="st">'category'</span>]],
-    <span class="var">left_on</span>=<span class="st">'order_id'</span>, <span class="var">right_on</span>=<span class="st">'Order_ID'</span>, <span class="var">how</span>=<span class="st">'left'</span>)
-
-<span class="cm"># 4. Flag returns (isin = cleaner than a merge)</span>
-<span class="var">df</span>[<span class="st">'is_return'</span>] = <span class="var">df</span>[<span class="st">'order_id'</span>].<span class="fn">isin</span>(<span class="var">returns</span>[<span class="st">'order_id'</span>])
-
-<span class="cm"># 5. Category-level summary</span>
-<span class="var">summary</span> = <span class="var">df</span>.<span class="fn">groupby</span>(<span class="st">'category'</span>).<span class="fn">agg</span>(
-    <span class="var">total_orders</span>  = (<span class="st">'order_id'</span>, <span class="st">'count'</span>),
-    <span class="var">total_returns</span> = (<span class="st">'is_return'</span>, <span class="st">'sum'</span>)
-).<span class="fn">reset_index</span>()
-<span class="var">summary</span>[<span class="st">'return_rate'</span>] = (
-    <span class="var">summary</span>[<span class="st">'total_returns'</span>] / <span class="var">summary</span>[<span class="st">'total_orders'</span>] * <span class="nm">100</span>
-).<span class="fn">map</span>(<span class="st">'{:.2f}%'</span>.<span class="fn">format</span>)
-<span class="var">summary</span>[<span class="st">'total_returns'</span>] = <span class="var">summary</span>[<span class="st">'total_returns'</span>].<span class="fn">astype</span>(<span class="fn">int</span>)
-
-<span class="cm"># 6. Pivot — wide format</span>
-<span class="var">pivot_df</span> = <span class="var">summary</span>.<span class="fn">pivot_table</span>(
-    <span class="var">index</span>=<span class="st">'category'</span>,
-    <span class="var">values</span>=[<span class="st">'total_orders'</span>,<span class="st">'total_returns'</span>,<span class="st">'return_rate'</span>],
-    <span class="var">aggfunc</span>=<span class="st">'first'</span>
-).<span class="fn">reset_index</span>()
-
-<span class="cm"># 7. Melt — long format</span>
-<span class="var">long_df</span> = <span class="var">pivot_df</span>.<span class="fn">melt</span>(
-    <span class="var">id_vars</span>=<span class="st">'category'</span>,
-    <span class="var">value_vars</span>=[<span class="st">'total_orders'</span>,<span class="st">'total_returns'</span>,<span class="st">'return_rate'</span>],
-    <span class="var">var_name</span>=<span class="st">'metric'</span>, <span class="var">value_name</span>=<span class="st">'value'</span>
-).<span class="fn">sort_values</span>([<span class="st">'category'</span>,<span class="st">'metric'</span>]).<span class="fn">reset_index</span>(<span class="var">drop</span>=<span class="kw">True</span>)</pre>
-    <div style="display:flex;flex-direction:column;gap:10px">
+<!-- SLIDE 13: OUTPUT PREVIEW -->
+<div class="slide" data-title="Full Output Preview">
+  <h2>The Full Round Trip</h2>
+  <div class="three-col">
+    <div class="card">
+      <h3>1. Long → Grouped</h3>
       <table>
-        <tr><th colspan="2">Key Design Decisions</th></tr>
-        <tr><td><code>drop_duplicates()</code></td><td style="font-size:.78rem">Prevents count inflation from multi-line orders</td></tr>
-        <tr><td><code>left_on / right_on</code></td><td style="font-size:.78rem">Column names differ in case between tables</td></tr>
-        <tr><td><code>isin()</code></td><td style="font-size:.78rem">Cleaner boolean flag vs merge for returns</td></tr>
-        <tr><td>Rate after groupby</td><td style="font-size:.78rem">Mathematically correct at category level</td></tr>
-        <tr><td><code>aggfunc='first'</code></td><td style="font-size:.78rem">Already 1 row/category — no real aggregation</td></tr>
-        <tr><td><code>reset_index()</code></td><td style="font-size:.78rem">Promotes index back to column for melt()</td></tr>
+        <tr><th>category</th><th>rate</th></tr>
+        <tr><td>Electronics</td><td>15.00%</td></tr>
       </table>
-      <div class="quiz">
-        <p>❓ Why does the solution use <code>isin()</code> instead of merging with the returns table?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <code>isin()</code> produces a clean boolean column directly — no extra columns, no NaN handling needed. A left merge on returns would add return-specific columns and require dealing with NaN for non-returned orders. The boolean from <code>isin()</code> sums naturally (True=1, False=0).</div>
-      </div>
-      <div class="quiz">
-        <p>❓ A student accidentally uses <code>pivot()</code> instead of <code>pivot_table()</code>. What error do they get if there are duplicate category entries?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>ValueError: Index contains duplicate entries, cannot reshape</strong> — <code>pivot()</code> requires unique (index, column) pairs. <code>pivot_table()</code> handles duplicates via <code>aggfunc</code>. For safe pivoting, always prefer <code>pivot_table()</code>.</div>
-      </div>
+      <p style="font-size:.76rem;margin-top:6px">groupby().agg()</p>
+    </div>
+    <div class="card">
+      <h3>2. → Wide</h3>
+      <table>
+        <tr><th>rate</th><th>orders</th></tr>
+        <tr><td>15.00%</td><td>1200</td></tr>
+      </table>
+      <p style="font-size:.76rem;margin-top:6px">pivot_table()</p>
+    </div>
+    <div class="card">
+      <h3>3. → Long again</h3>
+      <table>
+        <tr><th>metric</th><th>value</th></tr>
+        <tr><td>rate</td><td>15.00%</td></tr>
+      </table>
+      <p style="font-size:.76rem;margin-top:6px">melt()</p>
+    </div>
+  </div>
+  <div class="highlight-box amber">
+    <p>💡 Same data, three shapes, three purposes: grouped for the summary number, wide for a human-readable report table, long for a chart library or a model that expects tidy data.</p>
+  </div>
+</div>
+
+<!-- SLIDE 14: COMMON PITFALLS -->
+<div class="slide" data-title="Common Pitfalls">
+  <h2>Where This Lab Usually Breaks</h2>
+  <div class="two-col">
+    <div class="highlight-box warn">
+      <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Joining in the wrong order → KeyError</h3>
+      <p style="font-size:.82rem"><code>ex_returns</code> has no <code>product_id</code>. Trying to join returns straight to products before going through orders and transactions raises a <code>KeyError</code> — the column genuinely does not exist yet at that point.</p>
+    </div>
+    <div class="highlight-box warn">
+      <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Using an inner join and losing clean products</h3>
+      <p style="font-size:.82rem">A product with zero returns should still show <code>total_returns = 0</code>. An inner join where a left join was needed erases it from the report entirely — a silent, dangerous kind of wrong.</p>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="highlight-box warn">
+      <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Forgetting reset_index() after pivot_table()</h3>
+      <p style="font-size:.82rem"><code>category</code> quietly becomes the index instead of a column. <code>melt()</code> then can't find it as an <code>id_vars</code> target.</p>
+    </div>
+    <div class="highlight-box warn">
+      <h3 style="color:var(--red);font-size:.84rem;margin-bottom:4px">Averaging rates instead of summing totals first</h3>
+      <p style="font-size:.82rem">Covered in the checkpoint, worth repeating: rate = SUM(returns) / SUM(orders), never AVG(per-row rate). The two give different — and only one correct — answer.</p>
     </div>
   </div>
 </div>
 
+<!-- SLIDE 15: WRAP UP -->
+<div class="slide" data-title="Wrap-Up">
+  <h2>Wrap-Up</h2>
+  <div class="highlight-box success">
+    <p>✅ Kabirkrishnan ships the report. Swarna gets her reshape-on-demand summary. Robert gets his return rate — with the total_orders and total_returns he didn't ask for, sitting right next to it.</p>
+  </div>
+  <div class="three-col">
+    <div class="card"><h3>merge() chains + isin()</h3><p>Your bridge JOINs and your return flag — no correlated subquery needed in pandas.</p></div>
+    <div class="card"><h3>pivot_table()</h3><p>Your PIVOT. Long or already-wide data, laid out with metrics as columns.</p></div>
+    <div class="card"><h3>melt()</h3><p>Your UNPIVOT. Wide data folded back into tidy long rows for charts and models.</p></div>
+  </div>
+  <div class="highlight-box violet">
+    <p>🎯 The habit to keep for the rest of this course: before writing the pandas, ask what the SQL would look like. If you can't picture the SQL, you don't understand the problem yet — the pandas syntax was never the hard part.</p>
+  </div>
 </div>
+
+</div>
+
+<div class="toc-overlay" id="tocOverlay">
+  <div class="toc-head">
+    <h2>Table of Contents</h2>
+    <button class="toc-close" onclick="toggleTOC()">✕</button>
+  </div>
+  <div class="toc-grid" id="tocGrid"></div>
+</div>
+
 <script>
-let cur=0;const slides=document.querySelectorAll('.slide');const total=slides.length;const ctr=document.getElementById('ctr');
-function show(n){slides[cur].classList.remove('active');cur=(n+total)%total;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+total;}
-function go(d){show(cur+d)}function rev(btn){btn.nextElementSibling.style.display='block';btn.style.display='none';}
-document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
-ctr.textContent='1 / '+total;
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+const rail = document.getElementById('rail');
+const tocGrid = document.getElementById('tocGrid');
+
+slides.forEach((s,i)=>{
+  const seg = document.createElement('div');
+  seg.className = 'rail-seg';
+  seg.onclick = ()=>{ cur = i; render(); };
+  rail.appendChild(seg);
+
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="tn">${String(i+1).padStart(2,'0')}</div><div class="tt">${s.dataset.title || 'Slide '+(i+1)}</div>`;
+  item.onclick = ()=>{ cur = i; render(); toggleTOC(); };
+  tocGrid.appendChild(item);
+});
+
+function render(){
+  slides.forEach((s,i)=> s.classList.toggle('active', i===cur));
+  document.getElementById('ctr').textContent = `${cur+1} / ${slides.length}`;
+  document.querySelectorAll('.rail-seg').forEach((seg,i)=> seg.classList.toggle('done', i<=cur));
+}
+function go(dir){
+  cur = Math.min(Math.max(cur+dir,0), slides.length-1);
+  render();
+}
+function toggleTOC(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+}
+function rev(btn){
+  const ans = btn.nextElementSibling;
+  ans.style.display = ans.style.display==='block' ? 'none' : 'block';
+}
+function mcq(el, verdict, expId){
+  const opts = el.closest('.opts').querySelectorAll('.opt');
+  if(el.classList.contains('correct') || el.classList.contains('wrong')) return;
+  opts.forEach(o=>o.classList.add('disabled'));
+  el.classList.add(verdict);
+  opts.forEach(o=>{ if(o!==el && o.getAttribute('onclick') && o.getAttribute('onclick').includes("'correct'")) o.classList.add('correct'); });
+  document.getElementById(expId).style.display = 'block';
+}
+function copyCode(btn){
+  const code = btn.closest('.code-block').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code);
+  const orig = btn.textContent;
+  btn.textContent = 'Copied!';
+  setTimeout(()=> btn.textContent = orig, 1200);
+}
+function toggleLines(id, btn){
+  const el = document.getElementById(id);
+  const open = el.classList.contains('show');
+  el.classList.toggle('show');
+  btn.textContent = open ? '▸ Explain every line' : '▾ Hide line-by-line';
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight') go(1);
+  if(e.key==='ArrowLeft') go(-1);
+  if(e.key==='g' || e.key==='G') toggleTOC();
+  if(e.key==='Escape') document.getElementById('tocOverlay').classList.remove('show');
+});
+let touchX=0;
+document.addEventListener('touchstart', e=> touchX = e.touches[0].clientX);
+document.addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - touchX;
+  if(dx > 60) go(-1);
+  if(dx < -60) go(1);
+});
+render();
 </script>
 </body>
 </html>

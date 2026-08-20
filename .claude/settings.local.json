@@ -16,7 +16,10 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git -C \"C:\\\\Yvirinchy\\\\DE notebooks\" status)",
+      "Bash(git -C \"C:\\\\Yvirinchy\\\\DE notebooks\" log --oneline -5)",
+      "Bash(git *)"
     ]
   }
 }

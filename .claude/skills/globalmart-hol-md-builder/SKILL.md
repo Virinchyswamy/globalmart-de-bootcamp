@@ -38,7 +38,7 @@ ever try to import anything.
 
 ### 1. Identify the target HOL session and locate its notebook
 
-Glob `C:\Yvirinchy\tred-alch-adv-dbx\Databricks\Day{N}\Day{N}_*_HOL*_*.ipynb` for the day the
+Glob `C:\Yvirinchy\DE notebooks\Databricks\Day{N}\Day{N}_*_HOL*_*.ipynb` for the day the
 user names (or the topic they describe — match against the notebook's title
 cell if they give a topic instead of a day number). If more than one HOL
 exists that day, ask which one (or match by topic keyword the user gave)
@@ -116,6 +116,13 @@ rather than inventing a new one.
 - One or more `## Scenario N — Name` blocks, each with a business-narrative
   `**Overview:**` (style from `tone-reference.md`) and ideally an
   `**Outcome:**`.
+  - **Scenario Block Structure Rule:** Insert a blank line before each
+    `## Scenario N` heading (to clearly separate it from the previous
+    Scenario's Solution blocks). The FIRST element after the heading must be
+    a `**Overview:**` section that fully restates the business context — never
+    assume the learner remembers the prior scenario. This prevents the
+    scenario-switching narrative from bleeding into the previous Input's
+    answer field.
 - Globally-numbered `## Input N` headings — **track ONE running counter for
   the entire file, across every Scenario, and never reset it.** This is the
   single most important structural rule in this whole skill; get it wrong
@@ -239,6 +246,13 @@ These apply to every hands-on `.md` this skill helps produce, no exceptions:
    simpler one using already-taught building blocks gets the same answer.**
    A few extra lines of `filter`/`groupBy`/`join` a learner can trace beats
    one clever line they can't.
+10. **Every `## Scenario N` block must start with clean context, never assume
+    the learner remembers the previous scenario.** Insert a blank line before
+    each `## Scenario N` heading (separation from the prior Solution block).
+    The first content after `## Scenario N` must be a `**Overview:**` section
+    that restates the business context in full — not a terse reference to the
+    prior scenario. This prevents scenario-switching context from bleeding into
+    the previous question's answer, and ensures each scenario is self-contained.
 
 ## Bundled references — when to read each
 

@@ -5,683 +5,693 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 5 – Mastering Code Reusability using Functions</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--a:#3b82f6;--a2:#60a5fa;--text:#e6edf3;--muted:#8b949e;--code:#090d1a;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;--orange:#fb923c}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;backdrop-filter:blur(8px)}
-.nav-left{display:flex;align-items:center;gap:10px}
-.nav-badge{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--a);text-transform:uppercase}
-.nav-title{font-size:12px;color:var(--muted);font-weight:500}
-.nav-right{display:flex;align-items:center;gap:8px}
-.nav-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
-.nav-btn:hover{background:var(--a);color:#fff;border-color:var(--a)}
-.nav-counter{font-size:12px;color:var(--muted);min-width:54px;text-align:center}
-.deck{padding-top:52px;height:100vh}
-.slide{display:none;height:calc(100vh - 52px);padding:28px 52px;flex-direction:column;justify-content:flex-start;gap:14px;overflow:hidden;animation:fadein .25s ease}
+:root{
+  --void:#08090c;--surface:#111318;--surface-2:#181b22;--line:#242832;--line-lit:#33394a;
+  --ink:#eef1f6;--ink-dim:#a8adba;--ink-faint:#6b7180;
+  --primary:#f59e0b;--secondary:#ec4899;--grad:linear-gradient(135deg,#f59e0b,#ec4899);
+  --green:#22c55e;--red:#ef4444;--violet:#8b5cf6;
+  --code-kw:#ff8fab;--code-fn:#ffcf7a;--code-str:#8be9c5;--code-cm:#6b7180;--code-col:#7dd3fc;--code-tbl:#d3b3ff;
+  --font-display:'Sora',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+html,body{height:100%}
+body{font-family:var(--font-body);background:var(--void);color:var(--ink);overflow:hidden}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--line-lit);border-radius:10px}
+
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(8,9,12,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;z-index:200}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:26px;height:26px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#08090c}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-day{font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--primary);text-transform:uppercase}
+.brand-title{font-size:12px;color:var(--ink-dim);font-weight:500}
+.tools{display:flex;align-items:center;gap:10px}
+.counter{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);min-width:48px;text-align:center}
+.tbtn{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:12.5px;font-weight:600;transition:all .15s var(--ease)}
+.tbtn:hover{background:var(--primary);color:#08090c;border-color:var(--primary)}
+.tbtn.icon{padding:6px 10px}
+
+.rail{position:fixed;top:56px;left:0;right:0;height:4px;background:var(--surface);z-index:190;display:flex;gap:2px;padding:0 2px}
+.rail-seg{flex:1;background:var(--line);border-radius:2px;cursor:pointer;transition:background .2s}
+.rail-seg.done{background:var(--grad)}
+.rail-seg:hover{background:var(--line-lit)}
+
+.deck{padding-top:60px;height:100vh}
+.slide{display:none;height:calc(100vh - 60px);padding:26px 52px 22px;flex-direction:column;justify-content:flex-start;gap:12px;overflow:hidden;animation:fadein .3s var(--ease)}
 .slide.active{display:flex}
-@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-h1{font-size:2.2rem;font-weight:900;color:var(--a);line-height:1.1}
-h2{font-size:1.55rem;font-weight:800;color:var(--a);line-height:1.2}
-h3{font-size:1rem;font-weight:700;color:var(--a2);margin-bottom:6px}
-p,li{font-size:.88rem;color:#c9d1d9;line-height:1.7}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.slide-cover{justify-content:center;align-items:flex-start;position:relative;background:
+  radial-gradient(circle at 15% 20%,rgba(245,158,11,.14),transparent 45%),
+  radial-gradient(circle at 85% 75%,rgba(236,72,153,.13),transparent 45%)}
+
+h1{font-family:var(--font-display);font-size:2.4rem;font-weight:900;color:var(--ink);line-height:1.08;letter-spacing:-.5px}
+h1 .accent{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--ink);line-height:1.2}
+h3{font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--primary);margin-bottom:6px}
+p,li{font-size:.87rem;color:var(--ink-dim);line-height:1.65}
 ul{padding-left:18px}li{margin-bottom:4px}
-.sub{font-size:.88rem;color:var(--muted);margin-top:4px}
-.tag{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
-.hl{background:rgba(59,130,246,.06);border-left:3px solid var(--a);border-radius:0 8px 8px 0;padding:11px 15px}
-.hl.gr{background:rgba(34,197,94,.06);border-color:var(--green)}
-.hl.rd{background:rgba(239,68,68,.06);border-color:var(--red)}
-.hl.yl{background:rgba(245,158,11,.06);border-color:var(--yellow)}
-.hl.pu{background:rgba(167,139,250,.06);border-color:var(--purple)}
-pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.85;overflow-x:auto;white-space:pre}
-code{font-family:'JetBrains Mono',monospace;font-size:.8rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a2)}
-.kw{color:#ff7b72;font-weight:700}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.nm{color:#ffa657}.var{color:#79c0ff}
-table{width:100%;border-collapse:collapse;font-size:.82rem}
-th{background:rgba(59,130,246,.12);color:var(--a2);padding:7px 11px;text-align:left;border-bottom:2px solid var(--border);font-size:.76rem;letter-spacing:.5px}
-td{padding:6px 11px;border-bottom:1px solid var(--border);color:#c9d1d9}
+.sub{font-size:.9rem;color:var(--ink-dim);margin-top:4px;max-width:680px}
+.eyebrow{font-family:var(--font-mono);font-size:.68rem;font-weight:700;letter-spacing:2.5px;color:var(--secondary);text-transform:uppercase;margin-bottom:6px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.card:hover{border-color:var(--line-lit)}
+
+.highlight-box{background:rgba(245,158,11,.06);border-left:3px solid var(--primary);border-radius:0 10px 10px 0;padding:11px 15px}
+.highlight-box.warn{background:rgba(239,68,68,.06);border-color:var(--red)}
+.highlight-box.success{background:rgba(34,197,94,.06);border-color:var(--green)}
+.highlight-box.violet{background:rgba(139,92,246,.07);border-color:var(--violet)}
+
+.dialogue{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 16px;display:flex;flex-direction:column;gap:9px}
+.dline{font-size:.85rem;line-height:1.6;color:var(--ink-dim)}
+.dline strong{color:var(--primary)}
+.dline.b strong{color:var(--secondary)}
+
+.code-block{background:#0a0b10;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.code-head{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.code-head span{font-family:var(--font-mono);font-size:.66rem;color:var(--ink-faint);letter-spacing:1px;text-transform:uppercase}
+.copy-btn{background:transparent;border:1px solid var(--line);color:var(--ink-faint);padding:3px 10px;border-radius:6px;font-size:.66rem;cursor:pointer;font-family:var(--font-mono)}
+.copy-btn:hover{color:var(--primary);border-color:var(--primary)}
+pre{padding:11px 15px;font-family:var(--font-mono);font-size:.73rem;line-height:1.75;overflow-x:auto;white-space:pre;color:var(--ink)}
+code{font-family:var(--font-mono);font-size:.78rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--code-col)}
+.kw{color:var(--code-kw);font-weight:700}.fn{color:var(--code-fn)}.str{color:var(--code-str)}.cm{color:var(--code-cm);font-style:italic}.col,.var,.nm{color:var(--code-col)}
+
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{background:rgba(245,158,11,.1);color:var(--primary);padding:6px 10px;text-align:left;border-bottom:2px solid var(--line);font-size:.72rem;letter-spacing:.4px}
+td{padding:5px 10px;border-bottom:1px solid var(--line);color:var(--ink-dim)}
 tr:hover td{background:rgba(255,255,255,.02)}
 .ok{color:var(--green);font-weight:600}.no{color:var(--red)}
-.quiz{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:12px 16px}
-.quiz p{font-size:.86rem;font-weight:600;color:var(--text);margin-bottom:10px}
-.reveal{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:5px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700}
-.ans{display:none;margin-top:10px;padding:10px 13px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.83rem;color:#86efac;line-height:1.7}
-.badge-row{display:flex;gap:8px;flex-wrap:wrap}
-.badge{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:4px 13px;font-size:.76rem;font-weight:600;color:var(--muted)}
-.num{display:inline-flex;align-items:center;justify-content:center;background:var(--a);color:#fff;width:22px;height:22px;border-radius:50%;font-size:.7rem;font-weight:800;flex-shrink:0}
-.step{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
-.step p{margin:0;font-size:.84rem;color:#c9d1d9;padding-top:2px}
-.scenario{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(167,139,250,.05));border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:14px 16px}
-.speech{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;font-style:italic;color:#c9d1d9;position:relative}
-.speaker{font-size:.72rem;font-weight:700;color:var(--a2);font-style:normal;margin-bottom:4px}
+
+.sql-preview{background:rgba(125,211,252,.05);border:1px solid rgba(125,211,252,.25);border-radius:12px;overflow:hidden}
+.sql-preview-head{display:flex;align-items:center;gap:8px;padding:8px 15px;background:rgba(125,211,252,.08);border-bottom:1px solid rgba(125,211,252,.2)}
+.sql-preview-badge{font-family:var(--font-mono);font-size:.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;background:#7dd3fc;color:#08090c;padding:2px 9px;border-radius:100px}
+.sql-preview-title{font-size:.8rem;font-weight:700;color:var(--code-col)}
+.sql-preview pre{color:#cfeeff}
+.bridge-arrow{display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-mono);font-size:.7rem;color:var(--ink-faint);padding:1px 0}
+.bridge-arrow .line{flex:1;height:1px;background:var(--line-lit)}
+.bridge-note{font-family:var(--font-mono);font-size:.72rem;color:var(--code-col);background:rgba(125,211,252,.06);border:1px dashed rgba(125,211,252,.3);border-radius:8px;padding:6px 12px;display:inline-block}
+
+.quiz-box{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.22);border-radius:12px;padding:11px 15px}
+.quiz-box p.qtext{font-size:.83rem;font-weight:600;color:var(--ink);margin:0 0 8px}
+.reveal-btn{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:var(--green);padding:4px 15px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:.75rem;font-weight:700}
+.reveal-btn:hover{background:rgba(34,197,94,.25)}
+.quiz-answer{display:none;margin-top:9px;padding:9px 12px;background:rgba(34,197,94,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.79rem;color:#8ee6a8;line-height:1.65}
+
+.checkpoint-header{background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.28);border-radius:12px;padding:10px 17px;display:flex;align-items:center;gap:12px}
+.cp-badge{font-size:.62rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--secondary);color:#08090c;padding:3px 10px;border-radius:100px}
+.cp-title{font-size:.96rem;font-weight:800;color:var(--ink)}
+.cp-sub{font-size:.76rem;color:var(--ink-faint);margin-top:1px}
+.mcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mcq-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.mcq-q{font-size:.81rem;font-weight:700;color:var(--ink);line-height:1.5}
+.mcq-q code{font-size:.76rem}
+.opts{display:flex;flex-direction:column;gap:5px}
+.opt{display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);cursor:pointer;transition:all .15s;font-size:.76rem;color:var(--ink-dim);background:transparent;font-family:var(--font-body);text-align:left;width:100%}
+.opt:hover:not(.disabled){background:rgba(255,255,255,.04);border-color:var(--line-lit)}
+.opt.correct{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.5);color:var(--green);pointer-events:none}
+.opt.wrong{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);color:#f87171;pointer-events:none}
+.opt.disabled{pointer-events:none;opacity:.6}
+.opt-key{font-weight:800;font-size:.7rem;color:var(--ink-faint);min-width:15px;flex-shrink:0;margin-top:1px}
+.opt.correct .opt-key{color:var(--green)}
+.opt.wrong .opt-key{color:#f87171}
+.mcq-exp{display:none;margin-top:2px;padding:7px 10px;background:rgba(34,197,94,.07);border-left:2px solid var(--green);border-radius:0 6px 6px 0;font-size:.74rem;color:#8ee6a8;line-height:1.6}
+.mcq-score{font-size:.8rem;font-weight:700;color:var(--ink-faint);text-align:center;margin-top:4px}
+.mcq-score span{color:var(--primary);font-size:1.05rem}
+
+.practice-header{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.28);border-radius:12px;padding:9px 17px;display:flex;align-items:center;gap:12px}
+.pr-badge{font-size:.62rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--violet);color:#08090c;padding:3px 10px;border-radius:100px}
+.pr-title{font-size:.96rem;font-weight:800;color:var(--ink)}
+.pr-sub{font-size:.76rem;color:var(--ink-faint);margin-top:1px}
+.task-box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.task-box h3{color:var(--violet);font-size:.86rem;margin-bottom:9px}
+.task-steps{display:flex;flex-direction:column;gap:6px}
+.task-step{display:flex;gap:9px;align-items:flex-start;font-size:.8rem;color:var(--ink-dim);line-height:1.55}
+.step-num{min-width:21px;height:21px;background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.35);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:800;color:var(--violet);flex-shrink:0;margin-top:1px}
+.sol-btn{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.35);color:var(--violet);padding:6px 17px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:.76rem;font-weight:700;transition:all .15s;margin-top:2px}
+.sol-btn:hover{background:rgba(139,92,246,.2)}
+.solution{display:none;animation:fadein .2s}
+
+.pill-row{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:100px;padding:4px 13px;font-size:.73rem;font-weight:600;color:var(--ink-dim)}
+
+.toc-overlay{position:fixed;inset:0;background:rgba(8,9,12,.92);backdrop-filter:blur(10px);z-index:500;display:none;padding:80px 60px;overflow-y:auto}
+.toc-overlay.show{display:block}
+.toc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+.toc-head h2{font-size:1.4rem}
+.toc-close{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:16px}
+.toc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.toc-item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s}
+.toc-item:hover{border-color:var(--primary);transform:translateY(-2px)}
+.toc-item .tn{font-family:var(--font-mono);font-size:.68rem;color:var(--primary);font-weight:700}
+.toc-item .tt{font-size:.85rem;font-weight:700;color:var(--ink);margin-top:3px}
 </style>
 </head>
 <body>
-<nav>
-  <div class="nav-left">
-    <span class="nav-badge">Day 5 · Module 2</span>
-    <span class="nav-title">Mastering Code Reusability using Functions</span>
-  </div>
-  <div class="nav-right">
-    <button class="nav-btn" onclick="go(-1)">← Prev</button>
-    <span class="nav-counter" id="ctr">1 / 12</span>
-    <button class="nav-btn" onclick="go(1)">Next →</button>
-  </div>
-</nav>
-<div class="deck">
 
-<!-- SLIDE 1: TITLE -->
-<div class="slide active">
-  <div>
-    <div class="tag">Day 5 · Module 2 · GlobalMart Scenario</div>
-    <h1>Mastering Code<br>Reusability using Functions</h1>
-    <p class="sub">From repetitive hard-coded logic → clean, reusable, maintainable Python code</p>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">5</div>
+    <div class="brand-text">
+      <span class="brand-day">Day 5 · ILT 2</span>
+      <span class="brand-title">Mastering Code Reusability using Functions</span>
+    </div>
   </div>
-  <div class="scenario">
-    <h3 style="font-size:.86rem;margin-bottom:8px">The Problem at GlobalMart</h3>
-    <p style="font-size:.84rem">Mark and Jane are data analysts at GlobalMart. They've been processing sales data, but their code is becoming a maintenance nightmare — the same logic is repeated in dozens of places. Every time the discount rule changes, they have to update it manually in 20 spots.</p>
+  <div class="tools">
+    <button class="tbtn icon" onclick="toggleTOC()" title="Table of contents (G)">☰</button>
+    <span class="counter" id="ctr">1 / 13</span>
+    <button class="tbtn" onclick="go(-1)">← Prev</button>
+    <button class="tbtn" onclick="go(1)">Next →</button>
   </div>
-  <div class="three">
-    <div class="card"><h3>📋 List Comprehension</h3><p>The Pythonic shortcut to build and filter lists in a single line</p></div>
-    <div class="card"><h3>🔧 Functions</h3><p>Define once, call anywhere. Change logic in one place, works everywhere</p></div>
-    <div class="card"><h3>⚡ Lambda</h3><p>Anonymous one-liner functions for quick, inline operations</p></div>
+</div>
+<div class="rail" id="rail"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 1: COVER -->
+<div class="slide slide-cover active" data-title="Cover">
+  <div class="eyebrow">Day 5 · Masterclass · Functions & Lambdas</div>
+  <h1>Mastering Code<br><span class="accent">Reusability</span> with Functions</h1>
+  <p class="sub">GlobalMart's sales-data logic is copy-pasted in a dozen places. One pricing rule change means a dozen edits, and Dev Jaishwal is the one who has to find every copy. Today we fix that — permanently — with functions.</p>
+  <div class="three-col" style="margin-top:16px;width:100%">
+    <div class="card"><h3>🧩 Define & Call</h3><p>def, parameters, the function body, and the return keyword</p></div>
+    <div class="card"><h3>🎯 Parameter Types</h3><p>Positional, keyword, and default parameters — and when to reach for each</p></div>
+    <div class="card"><h3>⚡ Lambda</h3><p>One-line anonymous functions for quick, throwaway logic</p></div>
   </div>
-  <div class="badge-row">
-    <div class="badge">List Comprehension</div>
-    <div class="badge">def / return</div>
-    <div class="badge">Parameters vs Arguments</div>
-    <div class="badge">Positional / Keyword / Default</div>
-    <div class="badge">Global vs Local scope</div>
-    <div class="badge">Lambda</div>
+  <div class="pill-row">
+    <div class="pill">List Comprehension recap</div>
+    <div class="pill">def / return</div>
+    <div class="pill">Parameters vs Arguments</div>
+    <div class="pill">Global vs Local scope</div>
+    <div class="pill">Lambda functions</div>
   </div>
 </div>
 
-<!-- SLIDE 2: THE PROBLEM WITH REPETITIVE CODE -->
-<div class="slide">
-  <h2>The Problem — Why We Need Functions</h2>
-  <div class="two">
-    <div>
-      <div class="hl rd" style="margin-bottom:12px">
-        <h3 style="color:var(--red);margin-bottom:8px">❌ Mark's code before functions</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.77rem;"><span class="cm"># Order 1 — Electronics</span>
-<span class="var">total1</span> = <span class="nm">1200</span> * <span class="nm">2</span>
-<span class="var">disc1</span>  = <span class="var">total1</span> * <span class="nm">0.10</span>
-<span class="var">final1</span> = <span class="var">total1</span> - <span class="var">disc1</span>
-<span class="fn">print</span>(<span class="st">f"Order 1: ₹</span><span class="var">{final1}</span><span class="st">"</span>)
-
-<span class="cm"># Order 2 — Furniture</span>
-<span class="var">total2</span> = <span class="nm">800</span> * <span class="nm">3</span>
-<span class="var">disc2</span>  = <span class="var">total2</span> * <span class="nm">0.10</span>
-<span class="var">final2</span> = <span class="var">total2</span> - <span class="var">disc2</span>
-<span class="fn">print</span>(<span class="st">f"Order 2: ₹</span><span class="var">{final2}</span><span class="st">"</span>)
-
-<span class="cm"># Order 3 — Clothing ...</span>
-<span class="cm"># Order 4 — Shoes ...</span>
-<span class="cm"># Imagine 100 more orders 😰</span></pre>
-      </div>
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide" data-title="The Problem">
+  <h2>The Problem: GlobalMart's Repetitive Code</h2>
+  <div class="dialogue">
+    <p class="dline"><strong>Dev Jaishwal:</strong> Swarna, our sales data script works, but I've written the same "calculate total, then apply discount" logic in four different notebooks now. Robert just asked for the discount rule to change again — flat 5% became tiered — and I have to go hunt down every copy.</p>
+    <p class="dline b"><strong>Swarna Choudhury:</strong> That's exactly the smell that functions are built to fix. Redundant logic, a maintenance nightmare the moment the rule changes, and it gets harder to read every time someone pastes it again.</p>
+    <p class="dline"><strong>Dev Jaishwal:</strong> So instead of four copies of the same 8 lines, I write it once and just... call it?</p>
+    <p class="dline b"><strong>Swarna Choudhury:</strong> Exactly. Change the logic in one place — <code>apply_discount()</code> — and every notebook that calls it picks up the fix automatically. Robert can change his mind as many times as he wants; you only edit one function.</p>
+  </div>
+  <div class="two-col">
+    <div class="highlight-box warn">
+      <h3 style="color:var(--red);font-size:.86rem;margin-bottom:5px">Problems with copy-pasted logic</h3>
+      <p style="font-size:.82rem">Code redundancy · a maintenance nightmare when the rule changes · readability that degrades as the script grows</p>
     </div>
-    <div>
-      <div style="margin-bottom:12px">
-        <h3 style="margin-bottom:10px">3 problems with this approach</h3>
-        <div class="step"><div class="num" style="background:var(--red)">1</div><p><strong>Code Redundancy</strong> — The same discount logic is copy-pasted everywhere. If you have 100 orders, it appears 100 times.</p></div>
-        <div class="step"><div class="num" style="background:var(--red)">2</div><p><strong>Maintenance Nightmare</strong> — If the discount changes from 10% to 12%, you have to update it in 100 places. Miss even one = wrong results.</p></div>
-        <div class="step"><div class="num" style="background:var(--red)">3</div><p><strong>Readability Issues</strong> — As the code grows, it becomes impossible to understand at a glance what it's doing.</p></div>
-      </div>
-      <div class="hl gr">
-        <h3 style="color:var(--green);margin-bottom:6px">✅ The solution — write once, use anywhere</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="kw">def</span> <span class="fn">calculate_final</span>(<span class="var">price</span>, <span class="var">qty</span>, <span class="var">disc</span>=<span class="nm">0.10</span>):
-    <span class="var">total</span> = <span class="var">price</span> * <span class="var">qty</span>
-    <span class="kw">return</span> <span class="var">total</span> * (<span class="nm">1</span> - <span class="var">disc</span>)
-
-<span class="fn">calculate_final</span>(<span class="nm">1200</span>, <span class="nm">2</span>)  <span class="cm"># ₹2160.0</span>
-<span class="fn">calculate_final</span>(<span class="nm">800</span>, <span class="nm">3</span>)   <span class="cm"># ₹2160.0</span>
-<span class="cm"># Discount change? Edit in ONE place ✅</span></pre>
-      </div>
+    <div class="highlight-box success">
+      <h3 style="color:var(--green);font-size:.86rem;margin-bottom:5px">What a function buys you</h3>
+      <p style="font-size:.82rem">Reduced redundancy · one place to fix · a main script that reads like a to-do list, not a wall of repeated math</p>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 3: LIST COMPREHENSION -->
-<div class="slide">
-  <h2>List Comprehension — The Pythonic Filter</h2>
-  <div class="scenario" style="margin-bottom:14px">
-    <div class="speech"><div class="speaker">Jane at GlobalMart</div>"Mark, I need to find all customers whose first name starts with 'Alan' — I'll write a for loop and append each one."</div>
-    <div class="speech" style="margin-top:8px"><div class="speaker">Mark</div>"Good thinking, Jane — but there's a cleaner, more Pythonic way. One line instead of four."</div>
-  </div>
-  <div class="two">
-    <div>
-      <pre><span class="cm"># ❌ The verbose way (4 lines)</span>
-<span class="var">customer_name</span> = data[<span class="st">'customer_name'</span>]
-<span class="var">alan_names</span> = []
-<span class="kw">for</span> <span class="var">name</span> <span class="kw">in</span> <span class="var">customer_name</span>:
-    <span class="kw">if</span> <span class="var">name</span>.<span class="fn">startswith</span>(<span class="st">"Alan"</span>):
-        <span class="var">alan_names</span>.<span class="fn">append</span>(<span class="var">name</span>)
-
-<span class="cm"># ✅ List comprehension (1 line)</span>
-<span class="var">alan_fname</span> = [
-    <span class="var">name</span> <span class="kw">for</span> <span class="var">name</span> <span class="kw">in</span> <span class="var">customer_name</span>
-    <span class="kw">if</span> <span class="var">name</span>.<span class="fn">startswith</span>(<span class="st">"Alan"</span>)
-]
-<span class="fn">print</span>(<span class="fn">len</span>(<span class="var">alan_fname</span>))  <span class="cm"># 6</span>
-
-<span class="cm"># High-value electronics (two conditions)</span>
-<span class="var">high_value</span> = [
-    <span class="var">s</span>[<span class="st">"product_name"</span>]
-    <span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">sales_data</span>
-    <span class="kw">if</span> <span class="var">s</span>[<span class="st">"sales_amt"</span>] > <span class="nm">500</span>
-    <span class="kw">and</span> <span class="var">s</span>[<span class="st">"category"</span>] == <span class="st">"Electronics"</span>
-]
-<span class="cm"># ['Laptop', 'Headphones']</span></pre>
+<!-- SLIDE 3: LIST COMPREHENSION RECAP -->
+<div class="slide" data-title="Recap – List Comprehension">
+  <h2>Quick Recap — List Comprehension</h2>
+  <p class="sub" style="margin-bottom:8px">You saw this in Module 1: a comprehension is a one-line <code>SELECT ... WHERE</code>. It comes back today because good reusable code is often a small function <em>wrapped around</em> a comprehension.</p>
+  <div class="two-col">
+    <div class="code-block">
+      <div class="code-head"><span>python</span></div>
+      <pre><span class="cm"># GlobalMart: customers whose name starts with "Alan"</span>
+<span class="var">customer_name</span> = <span class="var">data</span>[<span class="str">'customer_name'</span>]
+<span class="var">alan_fname</span> = [<span class="var">name</span> <span class="kw">for</span> <span class="var">name</span> <span class="kw">in</span> <span class="var">customer_name</span>
+              <span class="kw">if</span> <span class="var">name</span>.<span class="fn">startswith</span>(<span class="str">"Alan"</span>)]
+<span class="fn">print</span>(<span class="str">'Customers named Alan:'</span>, <span class="fn">len</span>(<span class="var">alan_fname</span>))  <span class="cm"># 6</span></pre>
     </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
+    <div class="card">
+      <span class="bridge-note">list comp = SELECT expr FROM iterable WHERE condition</span>
+      <p style="margin-top:10px;font-size:.83rem">This is still the fastest way to filter-and-transform a list in one line. Today's twist: what if you need to run this exact filter on ten different columns, in ten different notebooks? A comprehension alone can't help you reuse it across files — a <strong style="color:var(--ink)">function</strong> can.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: WHAT ARE FUNCTIONS + SYNTAX -->
+<div class="slide" data-title="What Is a Function?">
+  <h2>What Is a Function? — Syntax</h2>
+  <div class="two-col">
+    <div>
+      <div class="highlight-box violet" style="margin-bottom:11px">
+        <p style="font-size:.84rem">A function is a <strong style="color:var(--ink)">recipe</strong>: it takes ingredients (inputs), follows steps (logic), and produces a dish (output). Same recipe, same result, every time — that consistency is the entire point.</p>
+      </div>
+      <div class="code-block">
+        <div class="code-head"><span>python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">def</span> <span class="fn">add</span>(<span class="var">x</span>, <span class="var">y</span>):
+    <span class="fn">print</span>(<span class="str">f'Arguments passed are </span><span class="var">{x}</span><span class="str"> and </span><span class="var">{y}</span><span class="str">'</span>)
+    <span class="kw">return</span> <span class="var">x</span> + <span class="var">y</span></pre>
+      </div>
+    </div>
+    <div class="stack" style="display:flex;flex-direction:column;gap:11px">
       <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Anatomy of a list comprehension</h3>
-        <pre style="font-size:.76rem;"><span style="color:var(--purple)">[ </span><span style="color:var(--green)">expression</span>  <span style="color:var(--a)">for item in list</span>  <span style="color:var(--yellow)">if condition</span><span style="color:var(--purple)"> ]</span>
-      ↑                  ↑                  ↑
-  What to            Loop               Filter
-  produce            source           (optional)</pre>
-      </div>
-      <div class="card">
-        <h3 style="font-size:.84rem;margin-bottom:8px">GlobalMart Sales Data (for practice)</h3>
-        <pre style="font-size:.74rem;"><span class="var">sales_data</span> = [
-  {<span class="st">"product_name"</span>:<span class="st">"Laptop"</span>,     <span class="st">"sales_amt"</span>:<span class="nm">1200</span>, <span class="st">"category"</span>:<span class="st">"Electronics"</span>},
-  {<span class="st">"product_name"</span>:<span class="st">"Smartphone"</span>,  <span class="st">"sales_amt"</span>: <span class="nm">400</span>, <span class="st">"category"</span>:<span class="st">"Electronics"</span>},
-  {<span class="st">"product_name"</span>:<span class="st">"Desk Chair"</span>, <span class="st">"sales_amt"</span>: <span class="nm">150</span>, <span class="st">"category"</span>:<span class="st">"Furniture"</span>},
-  {<span class="st">"product_name"</span>:<span class="st">"Headphones"</span>, <span class="st">"sales_amt"</span>: <span class="nm">600</span>, <span class="st">"category"</span>:<span class="st">"Electronics"</span>},
-  {<span class="st">"product_name"</span>:<span class="st">"Office Desk"</span>,<span class="st">"sales_amt"</span>: <span class="nm">450</span>, <span class="st">"category"</span>:<span class="st">"Furniture"</span>},
-]</pre>
-      </div>
-      <div class="quiz">
-        <p>❓ How many records does the <code>high_value</code> list contain? Which products?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>2 products</strong>: "Laptop" (₹1200, Electronics, >500 ✓) and "Headphones" (₹600, Electronics, >500 ✓). Smartphone is Electronics but only ₹400. Furniture items are excluded by category.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 4: WHAT ARE FUNCTIONS -->
-<div class="slide">
-  <h2>What Are Functions? The Recipe Analogy</h2>
-  <div class="two">
-    <div>
-      <div class="hl pu" style="margin-bottom:12px">
-        <h3 style="color:var(--purple);margin-bottom:8px">🍪 The Cookie Recipe</h3>
-        <p style="font-size:.84rem">Without a recipe, every batch of cookies turns out differently — different shapes, different taste. <strong>With a recipe</strong>, every batch is consistent, no matter who's baking or how many times you make them.</p>
-        <p style="font-size:.84rem;margin-top:8px">A function is the same idea. It takes ingredients (inputs → parameters), follows steps (the function body), and produces a result (output → return value).</p>
-      </div>
-      <div class="hl">
-        <h3 style="font-size:.86rem;margin-bottom:6px">3 benefits of using functions</h3>
-        <div class="step"><div class="num">1</div><p><strong>Reduced Redundancy</strong> — Write the logic once. Call it 100 times.</p></div>
-        <div class="step"><div class="num">2</div><p><strong>Easy Maintenance</strong> — Change the discount from 10% to 12% in one place. It works everywhere instantly.</p></div>
-        <div class="step"><div class="num">3</div><p><strong>Improved Readability</strong> — Main code reads like plain English: "calculate_total → apply_discount → print_report"</p></div>
-      </div>
-    </div>
-    <div>
-      <pre><span class="cm"># ❌ BEFORE — redundant logic everywhere</span>
-<span class="var">cost_order1</span> = (<span class="nm">1200</span> * <span class="nm">2</span>) * (<span class="nm">1</span> - <span class="nm">0.10</span>)
-<span class="var">cost_order2</span> = (<span class="nm">800</span>  * <span class="nm">3</span>) * (<span class="nm">1</span> - <span class="nm">0.10</span>)
-<span class="var">cost_order3</span> = (<span class="nm">500</span>  * <span class="nm">1</span>) * (<span class="nm">1</span> - <span class="nm">0.10</span>)
-<span class="cm"># ... repeated 97 more times</span>
-
-
-<span class="cm"># ✅ AFTER — function does the work</span>
-<span class="kw">def</span> <span class="fn">calculate_total</span>(<span class="var">price</span>, <span class="var">qty</span>):
-    <span class="kw">return</span> <span class="var">price</span> * <span class="var">qty</span>
-
-<span class="kw">def</span> <span class="fn">apply_discount</span>(<span class="var">total</span>, <span class="var">disc_pct</span>=<span class="nm">10</span>):
-    <span class="kw">return</span> <span class="var">total</span> * (<span class="nm">1</span> - <span class="var">disc_pct</span> / <span class="nm">100</span>)
-
-<span class="cm"># Main code — clean and readable</span>
-<span class="var">orders</span> = [(<span class="nm">1200</span>, <span class="nm">2</span>), (<span class="nm">800</span>, <span class="nm">3</span>), (<span class="nm">500</span>, <span class="nm">1</span>)]
-<span class="kw">for</span> <span class="var">price</span>, <span class="var">qty</span> <span class="kw">in</span> <span class="var">orders</span>:
-    <span class="var">total</span> = <span class="fn">calculate_total</span>(<span class="var">price</span>, <span class="var">qty</span>)
-    <span class="var">final</span> = <span class="fn">apply_discount</span>(<span class="var">total</span>)
-    <span class="fn">print</span>(<span class="st">f"Final: ₹</span><span class="var">{final}</span><span class="st">"</span>)</pre>
-      <div class="quiz" style="margin-top:10px">
-        <p>❓ If the discount changes from 10% to 15%, how many lines of code change in the AFTER version?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>Just 1 line</strong> — change <code>disc_pct=10</code> to <code>disc_pct=15</code> in the <code>apply_discount</code> definition. All 100 calls update automatically.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 5: FUNCTION SYNTAX -->
-<div class="slide">
-  <h2>Function Syntax — How to Define a Function</h2>
-  <p class="sub" style="margin-bottom:14px">Every Python function has 4 parts: the keyword <code>def</code>, a name, parameters in parentheses, and a body (indented).</p>
-  <div class="two">
-    <div>
-      <pre style="font-size:.8rem;"><span class="cm"># ┌─── keyword ─────────────────────────────┐</span>
-<span class="kw">def</span> <span class="fn">greet</span>(<span class="var">name</span>):
-<span class="cm">#   ↑      ↑</span>
-<span class="cm">#  name  parameter (placeholder)</span>
-    <span class="fn">print</span>(<span class="st">"Hello, "</span> + <span class="var">name</span>)   <span class="cm"># body (indented!)</span>
-    <span class="cm"># No return needed here</span>
-
-<span class="cm"># ─────── Function with return ────────────</span>
-<span class="kw">def</span> <span class="fn">add</span>(<span class="var">x</span>, <span class="var">y</span>):
-    <span class="fn">print</span>(<span class="st">f"Arguments: </span><span class="var">{x}</span><span class="st"> and </span><span class="var">{y}</span><span class="st">"</span>)
-    <span class="kw">return</span> <span class="var">x</span> + <span class="var">y</span>  <span class="cm"># sends result back to caller</span>
-
-<span class="cm"># ─────── Calling functions ───────────────</span>
-<span class="fn">greet</span>(<span class="st">"Enqurious"</span>)    <span class="cm"># Hello, Enqurious</span>
-<span class="var">result</span> = <span class="fn">add</span>(<span class="nm">2</span>, <span class="nm">4</span>)   <span class="cm"># result = 6</span>
-<span class="fn">print</span>(<span class="var">result</span>)         <span class="cm"># 6</span></pre>
-      <div class="hl yl" style="margin-top:12px">
-        <h3 style="color:var(--yellow);font-size:.84rem;margin-bottom:6px">print vs return — the key difference</h3>
-        <table>
-          <tr><th></th><th>print()</th><th>return</th></tr>
-          <tr><td style="font-size:.78rem">What it does</td><td style="font-size:.78rem">Shows value on screen</td><td style="font-size:.78rem">Sends value back to caller</td></tr>
-          <tr><td style="font-size:.78rem">Can you use it later?</td><td style="font-size:.78rem" class="no">No — it's gone</td><td style="font-size:.78rem" class="ok">Yes — store in a variable</td></tr>
-          <tr><td style="font-size:.78rem">Good for</td><td style="font-size:.78rem">Debugging / display</td><td style="font-size:.78rem">Chaining / computing</td></tr>
+        <h3 style="font-size:.85rem">Three parts of a function definition</h3>
+        <table style="margin-top:6px">
+          <tr><th>Part</th><th>What it is</th></tr>
+          <tr><td><code>def</code></td><td style="font-size:.77rem">Keyword that starts a function definition</td></tr>
+          <tr><td>Parameters</td><td style="font-size:.77rem">Placeholders in parentheses — <code>(x, y)</code></td></tr>
+          <tr><td>Body</td><td style="font-size:.77rem">Indented block after <code>:</code> — the actual logic</td></tr>
         </table>
       </div>
-    </div>
-    <div>
-      <div class="card" style="margin-bottom:12px">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Function anatomy — labelled</h3>
-        <pre style="font-size:.75rem;">  <span class="kw">def</span> <span class="fn">calculate_total_cost</span>(<span class="var">unit_price</span>, <span class="var">quantity</span>):
-  <span style="color:var(--red)">↑</span>  <span style="color:var(--purple)">↑</span>        <span style="color:var(--orange)">↑</span>                 <span style="color:var(--a2)">↑</span>
- def  function      function              parameters
-      keyword       name                  (placeholders)
-
-      <span class="kw">return</span> <span class="var">unit_price</span> * <span class="var">quantity</span>
-      <span style="color:var(--green)">↑</span>     <span style="color:var(--a2)">↑────────────────────↑</span>
-    return        function body (indented 4 spaces)
-    keyword       — the actual logic</pre>
-      </div>
-      <div class="quiz">
-        <p>❓ Is this function definition correct for sending welcome emails?</p>
-        <pre style="font-size:.77rem;margin:8px 0;"><span class="kw">def</span> <span class="fn">welcome_message</span>(<span class="var">first_name</span>):
-        <span class="fn">print</span>(<span class="st">"Welcome to the platform, "</span> + <span class="var">first_name</span>)</pre>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>No</strong> — this only prints to screen. To send an email, you need to pass the message to an email function. It must <code>return</code> the string instead of printing it:<br><br><code>return "Welcome to the platform, " + first_name</code></div>
+      <div class="quiz-box">
+        <p class="qtext">❓ Is a <code>return</code> statement mandatory in every function?</p>
+        <button class="reveal-btn" onclick="rev(this)">Reveal</button>
+        <div class="quiz-answer">✅ No. If the function's job is to <em>do</em> something (print, save, log) rather than hand back a value, you can skip <code>return</code> entirely. <code>greet("Enqurious")</code> that only prints doesn't need one.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 6: PARAMETERS VS ARGUMENTS -->
-<div class="slide">
+<!-- SLIDE 5: FUNCTION CALL, RETURN, PRACTICE -->
+<div class="slide" data-title="Calling a Function">
+  <h2>Calling a Function — and What "return" Really Does</h2>
+  <div class="two-col">
+    <div>
+      <div class="code-block">
+        <div class="code-head"><span>python</span></div>
+        <pre><span class="kw">def</span> <span class="fn">welcome_message</span>(<span class="var">first_name</span>):
+    <span class="fn">print</span>(<span class="str">"Welcome to our platform, "</span> + <span class="var">first_name</span> + <span class="str">"!"</span>)</pre>
+      </div>
+      <div class="highlight-box warn" style="margin-top:10px">
+        <h3 style="color:var(--red);font-size:.84rem;margin-bottom:5px">This function is broken for an email system</h3>
+        <p style="font-size:.82rem">It <em>prints</em> the message — it never <em>returns</em> it. A print statement produces console output, not a value you can hand to an email client. Swap <code>print</code> for <code>return</code> and the function suddenly becomes reusable anywhere, not just in a terminal.</p>
+      </div>
+    </div>
+    <div>
+      <div class="highlight-box">
+        <h3 style="font-size:.84rem;margin-bottom:5px">The call flow</h3>
+        <p style="font-size:.82rem">1. Control shifts to the function &nbsp;→&nbsp; 2. The body executes &nbsp;→&nbsp; 3. If a <code>return</code> is hit, control shifts back with that value</p>
+      </div>
+      <div class="code-block" style="margin-top:11px">
+        <div class="code-head"><span>python</span></div>
+        <pre><span class="kw">def</span> <span class="fn">welcome_message</span>(<span class="var">first_name</span>):
+    <span class="kw">return</span> <span class="str">"Welcome to our platform, "</span> + <span class="var">first_name</span> + <span class="str">"!"</span>
+
+<span class="var">msg</span> = <span class="fn">welcome_message</span>(<span class="str">"Kriti"</span>)
+<span class="fn">send_email</span>(<span class="var">msg</span>)   <span class="cm"># now this actually works</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: PRACTICE — CALCULATE TOTAL COST -->
+<div class="slide" data-title="Practice — Your First Function">
+  <div class="practice-header" style="margin-bottom:12px">
+    <span class="pr-badge">Practice</span>
+    <div>
+      <div class="pr-title">Write Your First Reusable Function</div>
+      <div class="pr-sub">Open VS Code · Create <code>calculate_cost.py</code></div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="task-box">
+      <h3>Your Task</h3>
+      <div class="task-steps">
+        <div class="task-step"><span class="step-num">1</span>Define a function that calculates the total cost of an order</div>
+        <div class="task-step"><span class="step-num">2</span>It should take two parameters: unit price and quantity ordered</div>
+        <div class="task-step"><span class="step-num">3</span>Call it with <code>unit_price = 75</code>, <code>qty_ordered = 2</code>, and print the result</div>
+      </div>
+      <div class="highlight-box violet" style="margin-top:12px">
+        <p style="font-size:.8rem">💬 Robert's ask that started this: "Can we stop hard-coding 75 × 2 everywhere?" Yes — this is exactly that fix.</p>
+      </div>
+    </div>
+    <div>
+      <button class="sol-btn" onclick="toggleSol(this, 'sol1')">▶ Show Solution</button>
+      <div class="solution" id="sol1">
+        <div class="code-block" style="margin-top:9px">
+          <pre><span class="kw">def</span> <span class="fn">calculate_total_cost</span>(<span class="var">unit_price</span>, <span class="var">quantity</span>):
+    <span class="kw">return</span> <span class="var">unit_price</span> * <span class="var">quantity</span>
+
+<span class="var">unit_price</span> = <span class="nm">75</span>
+<span class="var">quantity</span> = <span class="nm">2</span>
+
+<span class="var">total_cost</span> = <span class="fn">calculate_total_cost</span>(<span class="var">unit_price</span>, <span class="var">quantity</span>)
+<span class="fn">print</span>(<span class="str">"Total Cost:"</span>, <span class="var">total_cost</span>)   <span class="cm"># Total Cost: 150</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: PARAMETERS VS ARGUMENTS -->
+<div class="slide" data-title="Parameters vs Arguments">
   <h2>Parameters vs Arguments</h2>
-  <p class="sub" style="margin-bottom:12px">This is one of the most commonly confused concepts. Both relate to function inputs, but they are NOT the same thing.</p>
-  <div class="two">
-    <div>
-      <div class="hl" style="margin-bottom:12px">
-        <h3 style="font-size:.88rem;margin-bottom:8px">Parameters — in the definition</h3>
-        <p style="font-size:.84rem">Parameters are <strong>placeholders</strong> (variable names) written inside the parentheses when <strong>defining</strong> a function. They don't have actual values yet.</p>
-        <pre style="background:transparent;border:none;padding:4px 0 0 0;font-size:.8rem;"><span class="kw">def</span> <span class="fn">add</span>(<span class="var">a</span>, <span class="var">b</span>):
-         <span style="color:var(--a2)">↑  ↑</span>
-     <span style="color:var(--a2)">parameters — just placeholders</span>
-    <span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span></pre>
-      </div>
-      <div class="hl gr">
-        <h3 style="color:var(--green);font-size:.88rem;margin-bottom:8px">Arguments — in the function call</h3>
-        <p style="font-size:.84rem">Arguments are the <strong>actual values</strong> you pass in when <strong>calling</strong> the function. They replace the parameter placeholders.</p>
-        <pre style="background:transparent;border:none;padding:4px 0 0 0;font-size:.8rem;"><span class="fn">add</span>(<span class="nm">2</span>, <span class="nm">4</span>)
-    <span style="color:var(--green)">↑  ↑</span>
-<span style="color:var(--green)">arguments — real values (a=2, b=4)</span>
-<span class="cm"># result = 2 + 4 = 6</span></pre>
-      </div>
+  <p class="sub" style="margin-bottom:10px">The single most-confused pair of terms in this whole module. Here's the rule that never fails.</p>
+  <div class="two-col">
+    <div class="card">
+      <h3>Parameter — the placeholder</h3>
+      <div class="code-block"><pre><span class="kw">def</span> <span class="fn">add</span>(<span class="var">a</span>, <span class="var">b</span>):   <span class="cm"># a, b = parameters</span>
+    <span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span></pre></div>
+      <p style="margin-top:9px;font-size:.82rem">Declared in the <strong style="color:var(--ink)">function definition</strong>. It's a name waiting for a value.</p>
+    </div>
+    <div class="card">
+      <h3>Argument — the real value</h3>
+      <div class="code-block"><pre><span class="fn">add</span>(<span class="nm">2</span>, <span class="nm">4</span>)   <span class="cm"># 2, 4 = arguments</span></pre></div>
+      <p style="margin-top:9px;font-size:.82rem">Passed at the <strong style="color:var(--ink)">function call</strong>. It's the actual data the function operates on. Here, <code>a=2</code>, <code>b=4</code>, so <code>a+b</code> returns 6.</p>
+    </div>
+  </div>
+  <div class="quiz-box">
+    <p class="qtext">❓ <code>welcome_name = "John"; greet(welcome_name)</code> — is <code>welcome_name</code> a parameter or an argument at the call site?</p>
+    <button class="reveal-btn" onclick="rev(this)">Reveal</button>
+    <div class="quiz-answer">✅ <strong>Argument.</strong> It's the value being handed to <code>greet()</code> at the moment of the call. The parameter is whatever name <code>greet</code>'s definition uses internally (e.g. <code>name</code>).</div>
+  </div>
+</div>
+
+<!-- SLIDE 8: TYPES OF PARAMETERS -->
+<div class="slide" data-title="Types of Parameters">
+  <h2>Types of Parameters</h2>
+  <div class="two-col">
+    <div class="code-block">
+      <div class="code-head"><span>python</span></div>
+      <pre><span class="cm"># Positional — matched by position</span>
+<span class="kw">def</span> <span class="fn">add</span>(<span class="var">a</span>, <span class="var">b</span>): <span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>
+<span class="fn">add</span>(<span class="nm">10</span>, <span class="nm">30</span>)         <span class="cm"># a=10, b=30</span>
+
+<span class="cm"># Keyword — matched by name, order doesn't matter</span>
+<span class="fn">add</span>(<span class="var">b</span>=<span class="nm">30</span>, <span class="var">a</span>=<span class="nm">10</span>)     <span class="cm"># same result</span>
+
+<span class="cm"># Default — used automatically if no argument is given</span>
+<span class="kw">def</span> <span class="fn">call_api</span>(<span class="var">url</span> = <span class="str">"https://www.api.com"</span>):
+    <span class="var">request</span>.<span class="fn">get</span>(<span class="var">url</span>)
+
+<span class="fn">call_api</span>()                       <span class="cm"># uses the default</span>
+<span class="fn">call_api</span>(<span class="str">"https://custom.com"</span>)  <span class="cm"># overrides it</span></pre>
     </div>
     <div>
-      <div class="card" style="margin-bottom:12px">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Summary</h3>
+      <div class="card" style="margin-bottom:11px">
+        <h3 style="font-size:.85rem">When to use which</h3>
         <table>
-          <tr><th></th><th>Parameters</th><th>Arguments</th></tr>
-          <tr><td style="font-size:.78rem">Where</td><td style="font-size:.78rem">In function <strong>definition</strong></td><td style="font-size:.78rem">In function <strong>call</strong></td></tr>
-          <tr><td style="font-size:.78rem">What they are</td><td style="font-size:.78rem">Placeholders</td><td style="font-size:.78rem">Actual values</td></tr>
-          <tr><td style="font-size:.78rem">Example</td><td><code>def add(a, b)</code></td><td><code>add(2, 4)</code></td></tr>
+          <tr><th>Type</th><th>Use it when</th></tr>
+          <tr><td>Positional</td><td style="font-size:.76rem">Order is obvious and unlikely to be confused</td></tr>
+          <tr><td>Keyword</td><td style="font-size:.76rem">Many parameters — clarity beats brevity</td></tr>
+          <tr><td>Default</td><td style="font-size:.76rem">Most calls use the same value, occasionally overridden</td></tr>
         </table>
       </div>
-      <pre><span class="cm"># Full example: greet a new user</span>
-<span class="kw">def</span> <span class="fn">greet</span>(<span class="var">name</span>):                  <span class="cm"># name = parameter</span>
-    <span class="kw">return</span> <span class="st">f"Welcome </span><span class="var">{name}</span><span class="st">!"</span>
-
-<span class="var">welcome_name</span> = <span class="st">"John"</span>            <span class="cm"># a variable</span>
-<span class="fn">greet</span>(<span class="var">welcome_name</span>)              <span class="cm"># welcome_name is the ARGUMENT</span>
-<span class="cm"># welcome_name → argument (value passed in)</span>
-<span class="cm"># name         → parameter (receives the value)</span></pre>
-      <div class="quiz" style="margin-top:12px">
-        <p>❓ In <code>greet(welcome_name)</code>, is <code>welcome_name</code> a parameter or an argument?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>Argument</strong> — it's the actual value passed to the function during the call. <code>name</code> inside the function definition is the parameter.</div>
+      <div class="quiz-box">
+        <p class="qtext">❓ You need <code>call_api()</code> to work whether or not a URL is passed. Which design is correct — a required positional parameter, no parameter at all, or a default parameter?</p>
+        <button class="reveal-btn" onclick="rev(this)">Reveal</button>
+        <div class="quiz-answer">✅ <strong>Default parameter.</strong> A required positional <code>url</code> errors out if nothing is passed; no parameter at all can't accept an override. Only <code>def call_api(url="https://www.api.com")</code> handles both cases.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 7: TYPES OF PARAMETERS -->
-<div class="slide">
-  <h2>Types of Parameters</h2>
-  <p class="sub" style="margin-bottom:12px">Python functions support 3 types of parameters, each offering different levels of flexibility.</p>
-  <div class="three" style="margin-bottom:14px">
-    <div class="card">
-      <h3 style="font-size:.86rem;margin-bottom:8px">1. Positional</h3>
-      <p style="font-size:.82rem;margin-bottom:8px">Order matters. Arguments are matched to parameters by their position.</p>
-      <pre style="font-size:.77rem;"><span class="kw">def</span> <span class="fn">add</span>(<span class="var">a</span>, <span class="var">b</span>):
-    <span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>
-
-<span class="fn">add</span>(<span class="nm">10</span>, <span class="nm">30</span>)  <span class="cm"># a=10, b=30 → 40</span>
-<span class="fn">add</span>(<span class="nm">30</span>, <span class="nm">10</span>)  <span class="cm"># a=30, b=10 → 40</span>
-<span class="cm"># same result here, but matters</span>
-<span class="cm"># for non-commutative operations!</span></pre>
-    </div>
-    <div class="card">
-      <h3 style="font-size:.86rem;margin-bottom:8px">2. Keyword</h3>
-      <p style="font-size:.82rem;margin-bottom:8px">Pass arguments by name — order doesn't matter anymore.</p>
-      <pre style="font-size:.77rem;"><span class="kw">def</span> <span class="fn">add</span>(<span class="var">a</span>, <span class="var">b</span>):
-    <span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>
-
-<span class="cm"># Both calls produce same result</span>
-<span class="fn">add</span>(<span class="var">a</span>=<span class="nm">10</span>, <span class="var">b</span>=<span class="nm">30</span>)  <span class="cm"># 40</span>
-<span class="fn">add</span>(<span class="var">b</span>=<span class="nm">30</span>, <span class="var">a</span>=<span class="nm">10</span>)  <span class="cm"># 40 — order flipped ✅</span>
-<span class="cm"># Named args = explicit & clear</span></pre>
-    </div>
-    <div class="card">
-      <h3 style="font-size:.86rem;margin-bottom:8px">3. Default</h3>
-      <p style="font-size:.82rem;margin-bottom:8px">Pre-set value used if caller doesn't provide one.</p>
-      <pre style="font-size:.77rem;"><span class="kw">def</span> <span class="fn">call_api</span>(<span class="var">url</span>=<span class="st">"https://api.com"</span>):
-    <span class="kw">return</span> requests.<span class="fn">get</span>(<span class="var">url</span>)
-
-<span class="cm"># Works with or without URL</span>
-<span class="fn">call_api</span>()                   <span class="cm"># uses default</span>
-<span class="fn">call_api</span>(<span class="st">"https://alt.com"</span>)  <span class="cm"># overrides</span>
-<span class="cm"># No argument? Use default ✅</span></pre>
-    </div>
-  </div>
-  <div class="hl">
-    <h3 style="font-size:.86rem;margin-bottom:6px">GlobalMart example — combining all three types</h3>
-    <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="kw">def</span> <span class="fn">apply_discount</span>(<span class="var">total</span>, <span class="var">tier</span>=<span class="st">"Silver"</span>, <span class="var">discount</span>=<span class="nm">2</span>):
-    <span class="cm"># total: positional — must always be provided</span>
-    <span class="cm"># tier, discount: default — use defaults if not passed</span>
-    <span class="kw">return</span> <span class="var">total</span> * (<span class="nm">1</span> - <span class="var">discount</span> / <span class="nm">100</span>)
-
-<span class="fn">apply_discount</span>(<span class="nm">1500</span>)                          <span class="cm"># positional only → 1500 * 0.98</span>
-<span class="fn">apply_discount</span>(<span class="nm">1500</span>, <span class="var">tier</span>=<span class="st">"Gold"</span>, <span class="var">discount</span>=<span class="nm">8</span>)  <span class="cm"># keyword args, override defaults</span></pre>
-  </div>
-  <div class="quiz">
-    <p>❓ Which parameter type should you use if an API function should work with a default URL but allow overriding it?</p>
-    <button class="reveal" onclick="rev(this)">Reveal</button>
-    <div class="ans">✅ <strong>Default parameter</strong> — <code>def call_api(url="https://www.api.com"):</code> If no URL is passed, it uses the default. If a URL is passed, it overrides. Positional would require a URL every time; default provides flexibility.</div>
-  </div>
-</div>
-
-<!-- SLIDE 8: GLOBAL VS LOCAL -->
-<div class="slide">
-  <h2>Global vs Local Variables — Variable Scope</h2>
-  <p class="sub" style="margin-bottom:12px">Every variable in Python lives in a "scope" — the region where it's accessible. Variables created inside a function are local; variables outside are global.</p>
-  <div class="two">
+<!-- SLIDE 9: GLOBAL VS LOCAL -->
+<div class="slide" data-title="Global vs Local Scope">
+  <h2>Global vs Local Variable — Where Did My Data Go?</h2>
+  <div class="two-col">
     <div>
-      <div class="hl rd" style="margin-bottom:12px">
-        <h3 style="color:var(--red);font-size:.86rem;margin-bottom:8px">❌ Jane's broken code</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="kw">def</span> <span class="fn">get_data</span>(<span class="var">url</span>=<span class="st">"https://api.com"</span>):
-    <span class="var">data</span> = requests.<span class="fn">get</span>(<span class="var">url</span>)  <span class="cm"># local var</span>
+      <div class="dialogue">
+        <p class="dline"><strong>Dev Jaishwal:</strong> Swarna, I'm getting a <code>NameError</code>. Here's my code —</p>
+      </div>
+      <div class="code-block" style="margin-top:9px">
+        <div class="code-head"><span>python — broken</span></div>
+        <pre><span class="kw">def</span> <span class="fn">get_data</span>(<span class="var">url</span> = <span class="str">"https://www.api.com"</span>):
+    <span class="var">data</span> = <span class="var">request</span>.<span class="fn">get</span>(<span class="var">url</span>)
 
 <span class="fn">get_data</span>()
-<span class="fn">print</span>(<span class="var">data</span>)   <span class="cm"># ❌ NameError: 'data' not defined!</span>
-<span class="cm"># 'data' was created inside the function.
-# It dies when the function ends.
-# It's NOT accessible outside.</span></pre>
-      </div>
-      <div class="hl gr">
-        <h3 style="color:var(--green);font-size:.86rem;margin-bottom:8px">✅ Mark's fix — return the value</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="kw">def</span> <span class="fn">get_data</span>(<span class="var">url</span>=<span class="st">"https://api.com"</span>):
-    <span class="var">data</span> = requests.<span class="fn">get</span>(<span class="var">url</span>)
-    <span class="kw">return</span> <span class="var">data</span>        <span class="cm"># send it out!</span>
-
-<span class="var">data</span> = <span class="fn">get_data</span>()   <span class="cm"># catch it in a global var</span>
-<span class="fn">print</span>(<span class="var">data</span>)         <span class="cm"># ✅ works now!</span></pre>
+<span class="fn">print</span>(<span class="var">data</span>)   <span class="cm"># ❌ NameError: data is not defined</span></pre>
       </div>
     </div>
     <div>
-      <div class="card" style="margin-bottom:12px">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Global vs Local — key rules</h3>
-        <table>
-          <tr><th></th><th>Local Variable</th><th>Global Variable</th></tr>
-          <tr><td style="font-size:.78rem">Defined</td><td style="font-size:.78rem">Inside a function</td><td style="font-size:.78rem">Outside all functions</td></tr>
-          <tr><td style="font-size:.78rem">Accessible</td><td style="font-size:.78rem">Only inside function</td><td style="font-size:.78rem">Anywhere in the file</td></tr>
-          <tr><td style="font-size:.78rem">Lifetime</td><td style="font-size:.78rem">Exists during call only</td><td style="font-size:.78rem">Exists until program ends</td></tr>
-        </table>
+      <div class="highlight-box">
+        <p style="font-size:.83rem"><strong style="color:var(--ink)">Swarna's diagnosis:</strong> <code>data</code> is a <em>local</em> variable — it only exists inside <code>get_data</code>'s own scope. The moment the function returns, that name is gone. Printing it outside is asking for something that was never in this room.</p>
       </div>
-      <pre><span class="cm"># Visual demonstration of scope</span>
-<span class="var">city</span> = <span class="st">"Chennai"</span>        <span class="cm"># global — accessible everywhere</span>
+      <div class="code-block" style="margin-top:11px">
+        <div class="code-head"><span>python — fixed</span></div>
+        <pre><span class="kw">def</span> <span class="fn">get_data</span>(<span class="var">url</span>=<span class="str">"https://www.api.com"</span>):
+    <span class="var">data</span> = <span class="var">request</span>.<span class="fn">get</span>(<span class="var">url</span>)
+    <span class="kw">return</span> <span class="var">data</span>          <span class="cm"># hand it back</span>
 
-<span class="kw">def</span> <span class="fn">show_city</span>():
-    <span class="var">zone</span> = <span class="st">"South"</span>      <span class="cm"># local — only inside this fn</span>
-    <span class="fn">print</span>(<span class="var">city</span>)         <span class="cm"># ✅ can read global</span>
-    <span class="fn">print</span>(<span class="var">zone</span>)         <span class="cm"># ✅ local is accessible here</span>
-
-<span class="fn">show_city</span>()
-<span class="fn">print</span>(<span class="var">city</span>)            <span class="cm"># ✅ global still accessible</span>
-<span class="fn">print</span>(<span class="var">zone</span>)            <span class="cm"># ❌ NameError — zone is LOCAL!</span></pre>
-      <div class="quiz" style="margin-top:10px">
-        <p>❓ A function calculates <code>bonus</code> but doesn't return it. The code prints <code>bonus</code> outside. What error?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>NameError: name 'bonus' is not defined</strong> — <code>bonus</code> is a local variable. It only exists inside the function. Fix: add <code>return bonus</code> and store it: <code>bonus = calculate_bonus()</code></div>
+<span class="var">data</span> = <span class="fn">get_data</span>()      <span class="cm"># now it's a global name</span>
+<span class="fn">print</span>(<span class="var">data</span>)         <span class="cm"># ✅ works</span></pre>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 9: LAMBDA FUNCTIONS -->
-<div class="slide">
-  <h2>Lambda Functions — Anonymous One-Liners</h2>
-  <div class="two">
+<!-- SLIDE 10: CHECKPOINT -->
+<div class="slide" data-title="Checkpoint">
+  <div class="checkpoint-header" style="margin-bottom:12px">
+    <span class="cp-badge">Checkpoint</span>
     <div>
-      <div class="scenario" style="margin-bottom:12px">
-        <div class="speech"><div class="speaker">Jane</div>"Mark, for a simple add function, using <code>def</code> feels excessive. What if I just need it once?"</div>
-        <div class="speech" style="margin-top:8px"><div class="speaker">Mark</div>"That's exactly what <strong>lambda functions</strong> are for — small, single-use functions with no def, no name, no return statement needed."</div>
+      <div class="cp-title">Quick Quiz — Functions & Scope</div>
+      <div class="cp-sub">Click an option. Get instant feedback.</div>
+    </div>
+  </div>
+  <div class="mcq-grid" id="cp1">
+    <div class="mcq-card">
+      <p class="mcq-q">Which are genuine advantages of using functions? (pick the correct pair)</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-a1')"><span class="opt-key">A</span>Decreases modularity</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-a1')"><span class="opt-key">B</span>Reduced code complexity</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-a1')"><span class="opt-key">C</span>Reusability</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-a1')"><span class="opt-key">D</span>Increases runtime errors</button>
       </div>
-      <pre><span class="cm"># Regular function — 3 lines</span>
-<span class="kw">def</span> <span class="fn">add</span>(<span class="var">a</span>, <span class="var">b</span>):
-    <span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>
+      <div class="mcq-exp" id="exp-a1">B and C. Functions break work into smaller, testable units (less complexity) and let you write logic once, call it everywhere (reusability). They increase modularity and tend to reduce runtime errors, not the reverse.</div>
+    </div>
+    <div class="mcq-card">
+      <p class="mcq-q">A while loop with no counter update — what happens?</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'correct','exp-a2')"><span class="opt-key">A</span>Infinite loop</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-a2')"><span class="opt-key">B</span>Runs once and stops</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-a2')"><span class="opt-key">C</span>SyntaxError</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-a2')"><span class="opt-key">D</span>Python auto-stops after 1000 iterations</button>
+      </div>
+      <div class="mcq-exp" id="exp-a2">Infinite loop — the condition never becomes False. Same discipline applies inside functions: make sure every loop and recursive call has a real exit condition.</div>
+    </div>
+    <div class="mcq-card">
+      <p class="mcq-q"><code>discounted_orders.append(lambda order: apply_discount(order))</code> inside a loop — what actually lands in the list?</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-a3')"><span class="opt-key">A</span>The discounted prices</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-a3')"><span class="opt-key">B</span>A list of unused lambda function objects</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-a3')"><span class="opt-key">C</span>A TypeError</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-a3')"><span class="opt-key">D</span>The original order amounts, unchanged</button>
+      </div>
+      <div class="mcq-exp" id="exp-a3">B — a lambda that's never called just sits there as a function object. This exact bug is coming up next.</div>
+    </div>
+    <div class="mcq-card">
+      <p class="mcq-q">Which correctly separates a parameter from an argument?</p>
+      <div class="opts">
+        <button class="opt" onclick="mcq(this,'wrong','exp-a4')"><span class="opt-key">A</span>Both terms mean the same thing</button>
+        <button class="opt" onclick="mcq(this,'correct','exp-a4')"><span class="opt-key">B</span>Parameter = defined in the function; argument = passed at the call</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-a4')"><span class="opt-key">C</span>Argument = defined in the function; parameter = passed at the call</button>
+        <button class="opt" onclick="mcq(this,'wrong','exp-a4')"><span class="opt-key">D</span>Neither exists in Python</button>
+      </div>
+      <div class="mcq-exp" id="exp-a4">B. <code>def add(a, b)</code> → a, b are parameters. <code>add(2, 4)</code> → 2, 4 are arguments.</div>
+    </div>
+  </div>
+  <div class="mcq-score" id="cp1-score">Score: <span id="cp1-s">0</span> / 4</div>
+</div>
 
-<span class="cm"># Lambda equivalent — 1 line</span>
-<span class="var">add</span> = <span class="kw">lambda</span> <span class="var">a</span>, <span class="var">b</span>: <span class="var">a</span> + <span class="var">b</span>
-<span class="cm">#        ↑      ↑   ↑</span>
-<span class="cm">#     params  colon  expression (auto-returned)</span>
+<!-- SLIDE 11: LAMBDA -->
+<div class="slide" data-title="Lambda Functions">
+  <h2>Lambda Functions — One-Line, Anonymous</h2>
+  <div class="two-col">
+    <div>
+      <div class="dialogue">
+        <p class="dline"><strong>Dev Jaishwal:</strong> Defining a whole named function for something this small feels excessive:</p>
+      </div>
+      <div class="code-block" style="margin:8px 0">
+        <pre><span class="kw">def</span> <span class="fn">add</span>(<span class="var">a</span>, <span class="var">b</span>):
+    <span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span></pre>
+      </div>
+      <div class="dialogue">
+        <p class="dline b"><strong>Swarna Choudhury:</strong> That's exactly what lambdas are for — a one-off function you don't need a name and a whole <code>def</code> block for.</p>
+      </div>
+      <div class="code-block" style="margin-top:9px">
+        <div class="code-head"><span>python</span></div>
+        <pre><span class="var">add</span> = <span class="kw">lambda</span> <span class="var">a</span>, <span class="var">b</span>: <span class="var">a</span> + <span class="var">b</span>
+<span class="fn">add</span>(<span class="nm">5</span>, <span class="nm">6</span>)    <span class="cm"># 11</span>
 
-<span class="cm"># Calling a named lambda</span>
-<span class="var">result</span> = <span class="fn">add</span>(<span class="nm">5</span>, <span class="nm">6</span>)    <span class="cm"># 11</span>
-
-<span class="cm"># Calling without assigning to variable</span>
-(<span class="kw">lambda</span> <span class="var">a</span>, <span class="var">b</span>: <span class="var">a</span> + <span class="var">b</span>)(<span class="nm">5</span>, <span class="nm">6</span>)   <span class="cm"># 11</span></pre>
+<span class="cm"># Or call it immediately, no name needed</span>
+(<span class="kw">lambda</span> <span class="var">a</span>, <span class="var">b</span>: <span class="var">a</span> + <span class="var">b</span>)(<span class="nm">5</span>, <span class="nm">6</span>)  <span class="cm"># 11</span></pre>
+      </div>
     </div>
     <div>
-      <div class="card" style="margin-bottom:12px">
-        <h3 style="font-size:.84rem;margin-bottom:8px">Regular def vs lambda</h3>
+      <div class="card" style="margin-bottom:11px">
+        <h3 style="font-size:.85rem">def vs lambda</h3>
         <table>
-          <tr><th></th><th>def function</th><th>lambda</th></tr>
-          <tr><td style="font-size:.78rem">Lines</td><td style="font-size:.78rem">3+ lines</td><td style="font-size:.78rem">1 line</td></tr>
-          <tr><td style="font-size:.78rem">Name</td><td style="font-size:.78rem">Required</td><td style="font-size:.78rem">Optional (anonymous)</td></tr>
-          <tr><td style="font-size:.78rem">return keyword</td><td class="ok">Needed</td><td style="font-size:.78rem">Auto-returned</td></tr>
-          <tr><td style="font-size:.78rem">Multi-line?</td><td class="ok">Yes</td><td class="no">No (single expression)</td></tr>
-          <tr><td style="font-size:.78rem">Best for</td><td style="font-size:.78rem">Complex logic</td><td style="font-size:.78rem">Simple one-off tasks</td></tr>
+          <tr><th>def</th><th>lambda</th></tr>
+          <tr><td style="font-size:.76rem">Named, reusable</td><td style="font-size:.76rem">Anonymous, throwaway</td></tr>
+          <tr><td style="font-size:.76rem">Multiple statements OK</td><td style="font-size:.76rem">Single expression only</td></tr>
+          <tr><td style="font-size:.76rem">Can have loops, if/else blocks</td><td style="font-size:.76rem">One expression, no statements</td></tr>
         </table>
       </div>
-      <div class="hl yl" style="margin-bottom:10px">
-        <h3 style="color:var(--yellow);font-size:.84rem;margin-bottom:6px">GlobalMart: apply_discount as lambda</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="cm"># Apply 10% discount to any order</span>
-<span class="var">apply_discount</span> = <span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span> * <span class="nm">0.9</span>
+      <div class="highlight-box violet">
+        <p style="font-size:.82rem">💡 Lambdas shine as <strong style="color:var(--ink)">inline arguments</strong> — passed straight into <code>map()</code>, <code>filter()</code>, or <code>sorted(key=...)</code> without ever being named.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
-<span class="var">orders</span> = [<span class="nm">250</span>, <span class="nm">450</span>, <span class="nm">150</span>, <span class="nm">500</span>]
-<span class="var">discounted</span> = [<span class="fn">apply_discount</span>(<span class="var">o</span>) <span class="kw">for</span> <span class="var">o</span> <span class="kw">in</span> <span class="var">orders</span>]
+<!-- SLIDE 12: LAMBDA DEBUGGING PRACTICE -->
+<div class="slide" data-title="Debug the Lambda">
+  <div class="practice-header" style="margin-bottom:12px">
+    <span class="pr-badge">Debug It</span>
+    <div>
+      <div class="pr-title">Find the Bug — GlobalMart Discount Script</div>
+      <div class="pr-sub">This code runs without crashing. It's still wrong. Spot it before revealing.</div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="code-block">
+      <div class="code-head"><span>python — buggy</span></div>
+      <pre><span class="var">orders</span> = [<span class="nm">250</span>, <span class="nm">450</span>, <span class="nm">150</span>, <span class="nm">500</span>]
+<span class="var">apply_discount</span> = <span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span> * <span class="nm">0.9</span>
+<span class="var">discounted_orders</span> = []
+
+<span class="kw">for</span> <span class="var">order</span> <span class="kw">in</span> <span class="var">orders</span>:
+    <span class="var">discounted_orders</span>.<span class="fn">append</span>(<span class="kw">lambda</span> <span class="var">order</span>: <span class="var">apply_discount</span>(<span class="var">order</span>))
+
+<span class="fn">print</span>(<span class="str">"Discounted Orders:"</span>, <span class="var">discounted_orders</span>)
+<span class="cm"># [&lt;function&gt;, &lt;function&gt;, &lt;function&gt;, &lt;function&gt;] ← not prices!</span></pre>
+    </div>
+    <div>
+      <button class="sol-btn" onclick="toggleSol(this, 'sol2')">▶ Show the Fix</button>
+      <div class="solution" id="sol2">
+        <div class="highlight-box warn" style="margin-bottom:9px">
+          <p style="font-size:.8rem">The bug: wrapping <code>apply_discount(order)</code> in <em>another</em> lambda just builds and appends new lambda objects — they're never called. The list fills with function objects, not numbers.</p>
+        </div>
+        <div class="code-block">
+          <div class="code-head"><span>python — fixed</span></div>
+          <pre><span class="var">orders</span> = [<span class="nm">250</span>, <span class="nm">450</span>, <span class="nm">150</span>, <span class="nm">500</span>]
+<span class="var">apply_discount</span> = <span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span> * <span class="nm">0.9</span>
+<span class="var">discounted_orders</span> = []
+
+<span class="kw">for</span> <span class="var">order</span> <span class="kw">in</span> <span class="var">orders</span>:
+    <span class="var">discounted_orders</span>.<span class="fn">append</span>(<span class="var">apply_discount</span>(<span class="var">order</span>))  <span class="cm"># call it directly</span>
+
+<span class="fn">print</span>(<span class="str">"Discounted Orders:"</span>, <span class="var">discounted_orders</span>)
 <span class="cm"># [225.0, 405.0, 135.0, 450.0]</span></pre>
-      </div>
-      <div class="quiz">
-        <p>❓ What does <code>(lambda x: x**2)(5)</code> return?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>25</strong> — the lambda squares x, and it's immediately called with x=5. 5² = 25. This is a lambda defined and called in one shot (no variable assignment).</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 10: LAMBDA DEBUGGING EXERCISE -->
-<div class="slide">
-  <h2>Lambda Debugging Exercise — Find the Bug</h2>
-  <p class="sub" style="margin-bottom:14px">A classic mistake when using lambdas inside a loop. Read carefully before revealing.</p>
-  <div class="two">
-    <div>
-      <div class="hl rd" style="margin-bottom:12px">
-        <h3 style="color:var(--red);font-size:.86rem;margin-bottom:8px">❌ Buggy Code</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="var">orders</span> = [<span class="nm">250</span>, <span class="nm">450</span>, <span class="nm">150</span>, <span class="nm">500</span>]
-
-<span class="var">apply_discount</span> = <span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span> * <span class="nm">0.9</span>
-<span class="var">discounted_orders</span> = []
-
-<span class="kw">for</span> <span class="var">order</span> <span class="kw">in</span> <span class="var">orders</span>:
-    <span class="var">discounted_orders</span>.<span class="fn">append</span>(
-        <span class="kw">lambda</span> <span class="var">order</span>: <span class="fn">apply_discount</span>(<span class="var">order</span>)
-    )
-
-<span class="fn">print</span>(<span class="st">"Discounted Orders:"</span>, <span class="var">discounted_orders</span>)</pre>
-      </div>
-      <div class="quiz">
-        <p>❓ What does the print statement actually output? Why?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ It prints a <strong>list of lambda function objects</strong>, not discounted prices — something like <code>[&lt;function &lt;lambda&gt; at 0x...&gt;, ...]</code>. The code is appending the lambda function itself to the list, not calling it. The lambda takes an argument but it's never invoked!</div>
-      </div>
-    </div>
-    <div>
-      <div class="hl gr">
-        <h3 style="color:var(--green);font-size:.86rem;margin-bottom:8px">✅ Fixed Code</h3>
-        <pre style="background:transparent;border:none;padding:0;font-size:.78rem;"><span class="var">orders</span> = [<span class="nm">250</span>, <span class="nm">450</span>, <span class="nm">150</span>, <span class="nm">500</span>]
-
-<span class="var">apply_discount</span> = <span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span> * <span class="nm">0.9</span>
-<span class="var">discounted_orders</span> = []
-
-<span class="kw">for</span> <span class="var">order</span> <span class="kw">in</span> <span class="var">orders</span>:
-    <span class="var">discounted_orders</span>.<span class="fn">append</span>(
-        <span class="fn">apply_discount</span>(<span class="var">order</span>)  <span class="cm"># ← CALL it!</span>
-    )
-<span class="cm"># [225.0, 405.0, 135.0, 450.0] ✅</span>
-
-<span class="cm"># Even cleaner with list comprehension:</span>
-<span class="var">discounted_orders</span> = [
-    <span class="fn">apply_discount</span>(<span class="var">order</span>)
-    <span class="kw">for</span> <span class="var">order</span> <span class="kw">in</span> <span class="var">orders</span>
-]</pre>
-      </div>
-      <div class="card" style="margin-top:12px">
-        <h3 style="font-size:.84rem;margin-bottom:6px">What went wrong?</h3>
-        <p style="font-size:.83rem;line-height:1.8">The original code passed a new <code>lambda</code> expression to <code>.append()</code>. That appends the function object, not its result.<br><br>The fix: call the lambda (<code>apply_discount(order)</code>) and append its <strong>return value</strong>.</p>
-      </div>
-    </div>
+<!-- SLIDE 13: WRAP UP -->
+<div class="slide" data-title="Wrap-Up">
+  <h2>Wrap-Up</h2>
+  <div class="highlight-box success">
+    <p>✅ Dev refactors all four notebooks down to one <code>apply_discount()</code> function. Next time Robert changes the discount rule, it's a one-line edit — not a scavenger hunt.</p>
   </div>
-</div>
-
-<!-- SLIDE 11: LAMBDA ADVANTAGES -->
-<div class="slide">
-  <h2>Lambda — Advantages and When to Use</h2>
-  <div class="two">
-    <div>
-      <div class="card" style="margin-bottom:12px">
-        <h3 style="font-size:.84rem;margin-bottom:10px">✅ Advantages of Lambda</h3>
-        <div class="step"><div class="num">1</div><p><strong>Concise</strong> — No def, no return keyword, no function name needed. Write and done in one line.</p></div>
-        <div class="step"><div class="num">2</div><p><strong>Inline definition</strong> — Can be written right where it's needed, especially as arguments to other functions.</p></div>
-        <div class="step"><div class="num">3</div><p><strong>Less overhead</strong> — Perfect for simple one-time operations where naming a full function would be overkill.</p></div>
-      </div>
-      <div class="hl rd">
-        <h3 style="color:var(--red);font-size:.84rem;margin-bottom:6px">⚠️ When NOT to use lambda</h3>
-        <p style="font-size:.83rem">If the logic has multiple steps, conditions, or loops — use a proper <code>def</code> function. Lambda is limited to a single expression.</p>
-        <pre style="background:transparent;border:none;padding:4px 0 0 0;font-size:.76rem;"><span class="cm"># ❌ Don't force complex logic into lambda</span>
-<span class="var">f</span> = <span class="kw">lambda</span> <span class="var">x</span>: <span class="st">"Gold"</span> <span class="kw">if</span> <span class="var">x</span> >= <span class="nm">500</span> <span class="kw">else</span> <span class="st">"Silver"</span> <span class="kw">if</span> <span class="var">x</span> >= <span class="nm">200</span> <span class="kw">else</span> <span class="st">"Bronze"</span>
-<span class="cm"># Hard to read — use def for this</span></pre>
-      </div>
-    </div>
-    <div>
-      <h3 style="margin-bottom:10px">Lambda in practice</h3>
-      <pre><span class="cm"># Sorting with lambda — key function</span>
-<span class="var">customers</span> = [
-    {<span class="st">"name"</span>: <span class="st">"Ravi"</span>,  <span class="st">"spending"</span>: <span class="nm">1500</span>},
-    {<span class="st">"name"</span>: <span class="st">"Priya"</span>, <span class="st">"spending"</span>:  <span class="nm">800</span>},
-    {<span class="st">"name"</span>: <span class="st">"Ajay"</span>,  <span class="st">"spending"</span>: <span class="nm">3200</span>},
-]
-<span class="cm"># Sort by spending, highest first</span>
-<span class="fn">sorted</span>(<span class="var">customers</span>, <span class="var">key</span>=<span class="kw">lambda</span> <span class="var">c</span>: <span class="var">c</span>[<span class="st">"spending"</span>], <span class="var">reverse</span>=<span class="kw">True</span>)
-
-<span class="cm"># map() — apply function to every element</span>
-<span class="var">prices</span> = [<span class="nm">100</span>, <span class="nm">200</span>, <span class="nm">300</span>]
-<span class="var">discounted</span> = <span class="fn">list</span>(<span class="fn">map</span>(<span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span> * <span class="nm">0.9</span>, <span class="var">prices</span>))
-<span class="cm"># [90.0, 180.0, 270.0]</span>
-
-<span class="cm"># filter() — keep only matching elements</span>
-<span class="var">high</span> = <span class="fn">list</span>(<span class="fn">filter</span>(<span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span> > <span class="nm">150</span>, <span class="var">prices</span>))
-<span class="cm"># [200, 300]</span></pre>
-      <div class="quiz" style="margin-top:12px">
-        <p>❓ What does <code>list(map(lambda x: x**2, [1,2,3,4]))</code> return?</p>
-        <button class="reveal" onclick="rev(this)">Reveal</button>
-        <div class="ans">✅ <strong>[1, 4, 9, 16]</strong> — map() applies the lambda to every element: 1²=1, 2²=4, 3²=9, 4²=16. map() returns an iterator so we wrap with list() to see the results.</div>
-      </div>
-    </div>
+  <div class="three-col">
+    <div class="card"><h3>def / return</h3><p>Write the logic once. Call it as many times as you need, wherever you need it.</p></div>
+    <div class="card"><h3>Parameters vs arguments</h3><p>Parameters are placeholders in the definition. Arguments are the real values at the call site.</p></div>
+    <div class="card"><h3>lambda</h3><p>For genuinely one-off, single-expression logic — not a replacement for <code>def</code>.</p></div>
   </div>
-</div>
-
-<!-- SLIDE 12: CHEAT SHEET -->
-<div class="slide">
-  <h2>Module Summary — Everything in One Place</h2>
-  <div class="two">
-    <div>
-      <table style="margin-bottom:12px">
-        <tr><th colspan="2">List Comprehension</th></tr>
-        <tr><td style="font-size:.8rem"><code>[expr for x in lst]</code></td><td style="font-size:.78rem">Transform all items</td></tr>
-        <tr><td style="font-size:.8rem"><code>[expr for x in lst if cond]</code></td><td style="font-size:.78rem">Filter + transform</td></tr>
-        <tr><td style="font-size:.8rem">Replaces</td><td style="font-size:.78rem">for loop + .append()</td></tr>
-      </table>
-      <table style="margin-bottom:12px">
-        <tr><th colspan="2">Functions — def</th></tr>
-        <tr><td style="font-size:.8rem"><code>def name(params):</code></td><td style="font-size:.78rem">Define a function</td></tr>
-        <tr><td style="font-size:.8rem"><code>return value</code></td><td style="font-size:.78rem">Send result back to caller</td></tr>
-        <tr><td style="font-size:.8rem">Parameters</td><td style="font-size:.78rem">Placeholders in definition</td></tr>
-        <tr><td style="font-size:.8rem">Arguments</td><td style="font-size:.78rem">Actual values in the call</td></tr>
-      </table>
-      <table>
-        <tr><th colspan="2">Variable Scope</th></tr>
-        <tr><td style="font-size:.8rem">Local variable</td><td style="font-size:.78rem">Created inside fn, dies when fn ends</td></tr>
-        <tr><td style="font-size:.8rem">Global variable</td><td style="font-size:.78rem">Created outside, accessible everywhere</td></tr>
-        <tr><td style="font-size:.8rem">Fix local access</td><td style="font-size:.78rem">return it, catch in a variable</td></tr>
-      </table>
-    </div>
-    <div>
-      <table style="margin-bottom:12px">
-        <tr><th colspan="2">Parameter Types</th></tr>
-        <tr><td style="font-size:.8rem">Positional</td><td style="font-size:.78rem">Order matters: <code>add(10, 30)</code></td></tr>
-        <tr><td style="font-size:.8rem">Keyword</td><td style="font-size:.78rem">By name: <code>add(a=10, b=30)</code></td></tr>
-        <tr><td style="font-size:.8rem">Default</td><td style="font-size:.78rem">Pre-set: <code>def fn(url="https://")</code></td></tr>
-      </table>
-      <table style="margin-bottom:12px">
-        <tr><th colspan="2">Lambda</th></tr>
-        <tr><td style="font-size:.8rem">Syntax</td><td style="font-size:.78rem"><code>lambda params: expression</code></td></tr>
-        <tr><td style="font-size:.8rem">Assign</td><td style="font-size:.78rem"><code>f = lambda x: x * 2</code></td></tr>
-        <tr><td style="font-size:.8rem">Immediate call</td><td style="font-size:.78rem"><code>(lambda x: x*2)(5)</code></td></tr>
-        <tr><td style="font-size:.8rem">Best for</td><td style="font-size:.78rem">Simple one-off, sorted(), map(), filter()</td></tr>
-        <tr><td style="font-size:.8rem">Avoid when</td><td style="font-size:.78rem">Logic needs multiple lines → use def</td></tr>
-      </table>
-      <div class="hl gr">
-        <h3 style="color:var(--green);font-size:.84rem;margin-bottom:6px">Golden Rule</h3>
-        <p style="font-size:.84rem">If you're writing the same logic <strong>more than twice</strong> — it belongs in a function. Functions exist so you <em>don't</em> repeat yourself.</p>
-      </div>
-    </div>
+  <div class="highlight-box violet">
+    <p>🎯 Next up: NumPy and pandas — where these same functions start operating on entire columns of GlobalMart data at once, not just single values.</p>
   </div>
 </div>
 
 </div>
+
+<div class="toc-overlay" id="tocOverlay">
+  <div class="toc-head">
+    <h2>Table of Contents</h2>
+    <button class="toc-close" onclick="toggleTOC()">✕</button>
+  </div>
+  <div class="toc-grid" id="tocGrid"></div>
+</div>
+
 <script>
-let cur=0;
-const slides=document.querySelectorAll('.slide');
-const total=slides.length;
-const ctr=document.getElementById('ctr');
-function show(n){slides[cur].classList.remove('active');cur=(n+total)%total;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+total;}
-function go(d){show(cur+d)}
-function rev(btn){btn.nextElementSibling.style.display='block';btn.style.display='none';}
-document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
-ctr.textContent='1 / '+total;
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+const rail = document.getElementById('rail');
+const tocGrid = document.getElementById('tocGrid');
+
+slides.forEach((s,i)=>{
+  const seg = document.createElement('div');
+  seg.className = 'rail-seg';
+  seg.onclick = ()=>{ cur = i; render(); };
+  rail.appendChild(seg);
+
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="tn">${String(i+1).padStart(2,'0')}</div><div class="tt">${s.dataset.title || 'Slide '+(i+1)}</div>`;
+  item.onclick = ()=>{ cur = i; render(); toggleTOC(); };
+  tocGrid.appendChild(item);
+});
+
+function render(){
+  slides.forEach((s,i)=> s.classList.toggle('active', i===cur));
+  document.getElementById('ctr').textContent = `${cur+1} / ${slides.length}`;
+  document.querySelectorAll('.rail-seg').forEach((seg,i)=> seg.classList.toggle('done', i<=cur));
+}
+function go(dir){
+  cur = Math.min(Math.max(cur+dir,0), slides.length-1);
+  render();
+}
+function toggleTOC(){
+  document.getElementById('tocOverlay').classList.toggle('show');
+}
+function rev(btn){
+  const ans = btn.nextElementSibling;
+  ans.style.display = ans.style.display==='block' ? 'none' : 'block';
+}
+function toggleSol(btn, id){
+  const sol=document.getElementById(id);
+  const open=sol.style.display==='block';
+  sol.style.display=open?'none':'block';
+  btn.textContent=open?(btn.textContent.includes('Fix')?'▶ Show the Fix':'▶ Show Solution'):('▼ Hide '+btn.textContent.replace('▶ Show ',''));
+}
+function mcq(el, verdict, expId){
+  const opts = el.closest('.opts').querySelectorAll('.opt');
+  if(el.classList.contains('correct') || el.classList.contains('wrong')) return;
+  const alreadyAnswered = [...opts].some(o=>o.classList.contains('correct')||o.classList.contains('wrong'));
+  el.classList.add(verdict);
+  if(verdict==='wrong'){
+    opts.forEach(o=>o.classList.add('disabled'));
+    opts.forEach(o=>{ if(o.getAttribute('onclick') && o.getAttribute('onclick').includes("'correct'")) o.classList.add('correct'); });
+    document.getElementById(expId).style.display = 'block';
+    tally(el);
+  } else {
+    // multi-correct question: allow picking remaining correct options, lock once all corrects chosen or a wrong is picked
+    const totalCorrect = [...opts].filter(o=>o.getAttribute('onclick') && o.getAttribute('onclick').includes("'correct'")).length;
+    const pickedCorrect = [...opts].filter(o=>o.classList.contains('correct')).length;
+    if(pickedCorrect >= totalCorrect){
+      opts.forEach(o=>o.classList.add('disabled'));
+      document.getElementById(expId).style.display = 'block';
+      tally(el);
+    }
+  }
+}
+function tally(el){
+  const grid = el.closest('[id^="cp"]');
+  if(grid){
+    const cards = grid.querySelectorAll('.mcq-card');
+    let correct = 0;
+    cards.forEach(c=>{ if(c.querySelector('.opt.correct') && ![...c.querySelectorAll('.opt')].some(o=>o.classList.contains('wrong'))) correct++; });
+    const sEl = document.getElementById(grid.id + '-s');
+    if(sEl) sEl.textContent = correct;
+  }
+}
+function copyCode(btn){
+  const code = btn.closest('.code-block').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code);
+  const orig = btn.textContent;
+  btn.textContent = 'Copied!';
+  setTimeout(()=> btn.textContent = orig, 1200);
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight') go(1);
+  if(e.key==='ArrowLeft') go(-1);
+  if(e.key==='g' || e.key==='G') toggleTOC();
+  if(e.key==='Escape') document.getElementById('tocOverlay').classList.remove('show');
+});
+let touchX=0;
+document.addEventListener('touchstart', e=> touchX = e.touches[0].clientX);
+document.addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - touchX;
+  if(dx > 60) go(-1);
+  if(dx < -60) go(1);
+});
+render();
 </script>
 </body>
 </html>

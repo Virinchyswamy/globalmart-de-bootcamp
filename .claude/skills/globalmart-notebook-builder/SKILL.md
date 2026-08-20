@@ -3,8 +3,9 @@ name: globalmart-notebook-builder
 description: >
   Builds one Databricks .ipynb teaching notebook (an ILT lecture-demo or a HOL
   hands-on lab) for the GlobalMart Azure Databricks Data Engineering bootcamp
-  (Chennai 2026 cohort), for exactly one calendar session at a time, saved into
-  C:\Yvirinchy\tred-alch-adv-dbx\Databricks\Day{N}\. Use this whenever the user asks to build,
+  (content shared across cohorts -- built for Chennai 2026, reused for
+  Hyderabad 2026), for exactly one calendar session at a time, saved into
+  C:\Yvirinchy\DE notebooks\Databricks\Day{N}\. Use this whenever the user asks to build,
   write, draft, continue, or fix a Day N notebook, ILT, HOL, hands-on lab, or
   pipeline-accurate PySpark/Spark SQL session for this bootcamp -- including
   phrasings like "build Day 13's notebook", "write the ILT for DLQ replay",
@@ -40,6 +41,18 @@ Week/Day/Date columns and excludes Lunch/Assessment/Internal rows from the
 count automatically. If the user names a topic instead of a row number
 ("build the DLQ replay one"), match against the Module text the script prints
 rather than asking them to look it up themselves.
+
+**Day numbering is cohort-specific, not the same as the `Databricks/Day{N}/`
+folder number.** The script's default calendar is now Hyderabad 2026, whose
+Databricks track runs Day 9-22 (continuous with its own SQL & Python track,
+Day 1-8) -- NOT 1-13 like the on-disk folders (which were built against the
+original Chennai 2026 calendar and are being reused as-is). Hyderabad Day 9
+= the content in `Databricks/Day1/`, Hyderabad Day 21 = `Databricks/Day12/`,
+etc -- see the mapping table in `scripts/read_calendar.py`'s module docstring.
+Pass `--calendar` with the Chennai path to read calendar rows on the 1-13
+scale directly instead of mentally remapping. Either way, always confirm the
+target on-disk `Day{N}` folder against the real file/topic match (Glob +
+Read), not the raw Day Number alone.
 
 If the user gives you a day but no session, and that day has more than one
 ILT/HOL row, ask which one (or offer to build all of them in sequence) rather

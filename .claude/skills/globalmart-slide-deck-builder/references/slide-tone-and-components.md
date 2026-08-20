@@ -13,8 +13,8 @@ confirm the rhythm this project has settled into.
 ## The non-negotiable rule — read this one first
 
 **Humor and analogy never target a named real learner negatively.** This
-skill rotates real names from the Chennai 2026 roster into worked-example
-slides for realism — "Sneha needs to find last month's top-selling category"
+skill rotates real names from the current cohort's roster (Hyderabad 2026 by
+default) into worked-example slides for realism — "Sneha needs to find last month's top-selling category"
 reads better than "The user needs to find...". But the moment a joke, a
 mistake, a "wrong answer," or any negative framing would land on that name,
 stop and either remove the name (use "a learner" / "you") or reframe the

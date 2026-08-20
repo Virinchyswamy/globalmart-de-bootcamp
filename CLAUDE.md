@@ -1,11 +1,14 @@
 # GlobalMart Data Engineering Bootcamp — Repo Guide
 
 This repo is the full teaching-material build for a Databricks Data
-Engineering bootcamp (Chennai 2026 cohort, "GlobalMart" project), plus a
-parallel SQL & Python track. It is not application code — every file here is
-either a lecture deck, a hands-on notebook, a graded LMS assessment, or
-reference material used to keep those three grounded in what the instructor
-actually built and ran.
+Engineering bootcamp ("GlobalMart" project), plus a parallel SQL & Python
+track. It is not application code — every file here is either a lecture
+deck, a hands-on notebook, a graded LMS assessment, or reference material
+used to keep those three grounded in what the instructor actually built and
+ran. Content was originally built for the Chennai 2026 cohort and is reused
+as-is for the Hyderabad 2026 cohort (started 2026-08-12) — see `calendars/`
+below for how the two cohorts' calendars map onto the same `Databricks/Day{N}`
+folders.
 
 ## Directory map
 
@@ -14,7 +17,7 @@ actually built and ran.
 | `Databricks/Day1` – `Day12` | The Databricks track. One folder per teaching day, each file named `Day{N}_{order}_{TYPE}{x}_Topic.{ipynb,html}` (ILT = lecture-demo, HOL = hands-on lab, DEMO/REF = supplementary). Files also get a matching `.md` (LMS-import hands-on assessment) when the session has a graded lab. |
 | `SQL_Python/Day1` – `Day8` | The SQL & Python track — merged in 2026-07-19 from a previously-separate repo (`Chennai_batch`). Same `DayN_M_TYPE_Title` naming convention, but its own independent Day 1–8 numbering — **do not renumber to align with `Databricks/`**. Per the master calendar the two tracks run sequentially (SQL/Python finishes before Databricks Day 1 starts), not interleaved by date. |
 | `extras/` | Supplementary notebooks not tied to a specific calendar day (cert-prep, deep-dives). |
-| `calendars/` | The master calendar spreadsheets. **Two versions of the main calendar exist** (`tred-alch-adv-dbx-chennai-2026-calendar.xlsx` and one suffixed `(alt-version, Databricks sheet differs - see below)`) with different Databricks-track session wording — unreconciled, flagged not fixed. The SQL & Python sheet is identical between them. |
+| `calendars/` | The master calendar spreadsheets, one pair (calendar + learner list) per cohort. `tred-alch-adv-dbx-chennai-2026-*` is the original cohort the `Databricks/`/`SQL_Python/` content was built against. `tred-alch-adv-dbx-hyderabad-2026-*` (added 2026-08-12) is the current batch reusing that same content — its calendar numbers the Databricks track **9–22** (continuous with its own SQL & Python Day 1–8), not 1–13 like Chennai's; see the mapping note in `globalmart-notebook-builder`'s `scripts/read_calendar.py`. Both skills' scripts default to the Hyderabad files and accept an override flag (`--calendar` / `--learner-list`) to read the Chennai ones instead. |
 | `reference_materials/` | Ground-truth sources used to build/validate course content: real hands-on answer-key `.md` files (`hands_on_answer_keys_through_day9/`), the real executed Bronze/Silver/Gold pipeline notebooks (`working_notebooks_real_executed_pipeline/`), a colleague's read-only-exported account used as grounding (`sayli_account_export_grounding/`), Bronze/Silver build requirement docs, the architecture doc, and a `globalmart_v2_poc_scaffold/` (a separate CDC proof-of-concept, not course content). |
 | `datasets/` | Standalone sample datasets (mostly duplicated inside `SQL_Python/_resources/` too — not yet deduplicated). |
 | `marketing/` | LinkedIn post drafts. Unrelated to course structure. |

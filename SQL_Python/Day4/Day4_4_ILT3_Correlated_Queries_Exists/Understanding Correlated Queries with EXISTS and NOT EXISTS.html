@@ -3,542 +3,660 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Module 16 – EXISTS and NOT EXISTS</title>
+<title>Module 16 – EXISTS and NOT EXISTS | Day 4</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
-*{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d1117;--bg2:#161b22;--border:#21262d;--g:#22c55e;--g2:#86efac;--a:#38bdf8;--text:#e6edf3;--muted:#8b949e}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
-nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100}
-.ntitle{font-size:.82rem;color:var(--muted)}
-.nbadge{font-size:.7rem;font-weight:800;letter-spacing:2px;color:var(--g);text-transform:uppercase}
-.nnav{display:flex;align-items:center;gap:6px}
-.nb{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
-.nb:hover{background:var(--g);color:#000;border-color:var(--g)}
-.nc{font-size:12px;color:var(--muted);min-width:80px;text-align:center}
-.deck{padding-top:52px;height:100vh;overflow-y:auto}
-.slide{display:none;min-height:calc(100vh - 52px);padding:24px 52px 32px;flex-direction:column;gap:14px;animation:fi .2s ease}
-.slide.active{display:flex}
-@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  :root {
+    --void:      #08090f;
+    --surface:   #10131c;
+    --surface-2: #171b28;
+    --line:      rgba(99,102,241,0.16);
+    --line-lit:  rgba(99,102,241,0.38);
 
-/* Type */
-.badge{font-size:.68rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-h1{font-size:2rem;font-weight:900;line-height:1.15;color:var(--g)}
-h2{font-size:1.4rem;font-weight:800;color:var(--g);margin-bottom:2px}
-.bigidea{font-size:1.65rem;font-weight:900;color:var(--text);line-height:1.2}
-.sub{font-size:.9rem;color:var(--muted);margin-top:4px}
-p{font-size:.87rem;color:#c9d1d9;line-height:1.7}
+    --ink:       #f1f3fb;
+    --ink-dim:   #a4a9c4;
+    --ink-faint: #5c6182;
 
-/* Layout */
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
-.card h3{font-size:.85rem;font-weight:700;color:var(--g);margin-bottom:7px}
+    --indigo:    #6366f1;
+    --emerald:   #10b981;
+    --grad:      linear-gradient(120deg, #6366f1 0%, #7c3aed 45%, #10b981 100%);
 
-/* Callout boxes */
-.green{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:12px 16px}
-.blue{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.3);border-radius:10px;padding:12px 16px}
-.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35);border-radius:10px;padding:12px 16px}
-.red{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px}
-.hl{background:rgba(34,197,94,.05);border-left:3px solid var(--g);padding:10px 14px;border-radius:0 8px 8px 0}
+    --amber:     #fbbf24;
+    --rose:      #fb7185;
+    --violet:    #a78bfa;
 
-/* Code */
-pre{background:#090d1a;border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.9;overflow-x:auto;white-space:pre}
-code{font-family:'JetBrains Mono',monospace;font-size:.8rem;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--a)}
-.kw{color:#ff7b72;font-weight:700}
-.fn{color:#d2a8ff}
-.str{color:#a5d6ff}
-.cm{color:#6e7681;font-style:italic}
-.col{color:#79c0ff}
-.tbl{color:#ffa657}
-.hl-green{background:rgba(34,197,94,.2);border-radius:3px;padding:0 3px}
-.hl-blue{background:rgba(56,189,248,.2);border-radius:3px;padding:0 3px}
-.hl-red{background:rgba(239,68,68,.2);border-radius:3px;padding:0 3px}
+    --code-kw:   #a5b4fc;
+    --code-fn:   #6ee7b7;
+    --code-str:  #fcd34d;
+    --code-cm:   #5c6182;
+    --code-col:  #93c5fd;
+    --code-tbl:  #fb923c;
 
-/* Tables */
-table{width:100%;border-collapse:collapse}
-th{background:rgba(34,197,94,.08);color:var(--g2);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:.75rem;font-weight:700}
-td{padding:6px 10px;border-bottom:1px solid var(--border);font-size:.8rem;color:#c9d1d9}
+    --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-body:    -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono:    "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, "SF Mono", Consolas, "Liberation Mono", monospace;
 
-/* Steps */
-.steps{display:flex;flex-direction:column;gap:8px}
-.step{display:flex;gap:12px;align-items:flex-start}
-.snum{background:var(--g);color:#000;font-weight:900;font-size:.75rem;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
-.stxt{font-size:.85rem;color:#c9d1d9;line-height:1.65}
-.stxt strong{color:var(--text)}
+    --ease: cubic-bezier(.16,1,.3,1);
+  }
 
-/* Big visual boxes */
-.vbox{border-radius:12px;padding:16px 20px;text-align:center}
-.vbox .icon{font-size:2.5rem;margin-bottom:8px;display:block}
-.vbox h3{font-size:1rem;font-weight:800;margin-bottom:6px}
-.vbox p{font-size:.82rem;line-height:1.6}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-body); background: var(--void); color: var(--ink); overflow: hidden; height: 100vh; }
+  ::selection { background: var(--indigo); color: #fff; }
+  a { color: var(--emerald); }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--emerald); outline-offset: 3px; border-radius: 4px; }
 
-/* Eval rows */
-.erow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:5px}
-.ename{font-size:.8rem;font-weight:700;min-width:100px;color:var(--text)}
-.earrow{color:var(--muted);font-size:.9rem}
-.echeck{font-size:.8rem;min-width:110px;color:var(--muted)}
-.eresult{font-size:.75rem;font-weight:800;padding:2px 10px;border-radius:100px}
-.yes{background:rgba(34,197,94,.15);color:var(--g)}
-.no{background:rgba(239,68,68,.15);color:#f87171}
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(60% 50% at 15% 10%, rgba(99,102,241,0.16), transparent 60%),
+      radial-gradient(50% 45% at 90% 85%, rgba(16,185,129,0.10), transparent 60%);
+  }
 
-/* Quiz */
-.qbox{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px}
-.qbox p{font-weight:700;color:var(--text);font-size:.9rem;margin-bottom:10px}
-.opts{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
-.opt{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:7px;padding:7px 12px;font-size:.82rem;color:#c9d1d9}
-.qbtn{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--g);padding:5px 14px;border-radius:7px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700}
-.qans{display:none;margin-top:8px;background:rgba(34,197,94,.05);border-left:3px solid var(--g);padding:9px 13px;border-radius:0 7px 7px 0;font-size:.83rem;color:var(--g2);line-height:1.65}
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    display: flex; align-items: center; gap: 20px; padding: 14px 28px;
+    background: rgba(8,9,15,0.72); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar .brand { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .topbar .brand .label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .topbar .brand .title { font-size: 13px; color: var(--ink-dim); font-weight: 500; }
+
+  .rail { flex: 1; display: flex; gap: 6px; align-items: center; height: 28px; }
+  .rail button { flex: 1; height: 6px; border-radius: 4px; border: none; cursor: pointer; background: var(--surface-2); position: relative; padding: 0; transition: transform .25s var(--ease); }
+  .rail button::after { content: ""; position: absolute; inset: 0; border-radius: 4px; background: var(--grad); transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); }
+  .rail button.done::after { transform: scaleX(1); }
+  .rail button.current::after { transform: scaleX(1); }
+  .rail button.current { box-shadow: 0 0 12px rgba(99,102,241,0.6); transform: scaleY(1.6); }
+  .rail button:hover { transform: scaleY(1.6); }
+
+  .topbar .tools { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .counter { font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; }
+  .icon-btn { background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); width: 32px; height: 32px; border-radius: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: background .2s, border-color .2s, transform .2s; }
+  .icon-btn:hover { background: var(--indigo); border-color: var(--indigo); transform: translateY(-1px); }
+
+  .deck { position: relative; z-index: 1; height: 100vh; padding-top: 62px; }
+  .slide { display: none; height: calc(100vh - 62px); padding: 42px 58px; overflow-y: auto; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; animation: rise .5s var(--ease); }
+  @keyframes rise { from { opacity: 0; transform: translateY(22px) scale(.985); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .slide.active { animation: none; } html { scroll-behavior: auto; } }
+
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--emerald); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .eyebrow::before { content: ""; width: 18px; height: 2px; background: var(--grad); border-radius: 2px; }
+
+  .slide-cover { align-items: center; text-align: center; position: relative; }
+  .slide-cover .blob { position: absolute; border-radius: 50%; filter: blur(70px); z-index: -1; opacity: .5; animation: drift 16s ease-in-out infinite alternate; }
+  .slide-cover .blob.b1 { width: 480px; height: 480px; background: var(--indigo); top: -160px; left: -140px; }
+  .slide-cover .blob.b2 { width: 420px; height: 420px; background: var(--emerald); bottom: -180px; right: -120px; animation-delay: 3s; }
+  @keyframes drift { from { transform: translate(0,0) scale(1);} to { transform: translate(30px,-20px) scale(1.08);} }
+  @media (prefers-reduced-motion: reduce) { .slide-cover .blob { animation: none; } }
+
+  .slide-cover .kicker { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 18px; }
+  .slide-cover h1 { font-family: var(--font-display); font-weight: 800; letter-spacing: -1.5px; font-size: clamp(30px, 4.6vw, 48px); line-height: 1.14; text-wrap: balance; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 18px; }
+  .slide-cover .subtitle { font-size: 17px; color: var(--ink-dim); max-width: 720px; line-height: 1.6; }
+  .slide-cover .badge-row { margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .slide-cover .cover-badge { background: var(--surface); border: 1px solid var(--line-lit); padding: 7px 18px; border-radius: 999px; font-size: 13px; color: var(--ink); }
+
+  .slide-section h2 { font-family: var(--font-display); font-size: clamp(24px, 3.2vw, 36px); font-weight: 800; letter-spacing: -0.8px; color: var(--ink); margin-bottom: 10px; text-wrap: balance; }
+
+  .slide-content h3 { font-family: var(--font-display); font-size: 21px; font-weight: 700; color: var(--ink); margin-bottom: 12px; letter-spacing: -.3px; }
+  .slide-content .lede { color: var(--ink-dim); font-size: 13px; margin-bottom: 12px; line-height: 1.6; max-width: 920px; }
+  .slide-content .badge-tag { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+
+  .two-col { display: grid; grid-template-columns: 1.05fr .95fr; gap: 20px; align-items: start; }
+  .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .stack { display: flex; flex-direction: column; gap: 10px; }
+
+  .card { background: linear-gradient(180deg, var(--surface), rgba(16,19,28,0.6)); border: 1px solid var(--line); border-radius: 13px; padding: 14px 16px; backdrop-filter: blur(6px); transition: transform .25s var(--ease), border-color .25s var(--ease); }
+  .card:hover { transform: translateY(-2px); border-color: var(--line-lit); }
+  .card h4 { font-family: var(--font-display); color: var(--ink); margin-bottom: 7px; font-size: 12.5px; font-weight: 700; }
+  .card p, .card li { color: var(--ink-dim); font-size: 11.5px; line-height: 1.62; }
+
+  .highlight-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.35); border-left: 3px solid var(--indigo); border-radius: 10px; padding: 12px 15px; }
+  .highlight-box.warn { background: rgba(251,191,36,0.07); border-color: rgba(251,191,36,0.35); border-left-color: var(--amber); }
+  .highlight-box.success { background: rgba(16,185,129,0.07); border-color: rgba(16,185,129,0.35); border-left-color: var(--emerald); }
+  .highlight-box.danger { background: rgba(251,113,133,0.07); border-color: rgba(251,113,133,0.35); border-left-color: var(--rose); }
+  .highlight-box p { font-size: 12px; line-height: 1.6; color: var(--ink-dim); }
+  .highlight-box strong { color: var(--ink); }
+
+  .code-block { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #08090e; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); }
+  .code-block .code-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 13px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+  .code-head .db-tag { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); display: flex; align-items: center; gap: 7px; }
+  .code-head .db-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 6px var(--emerald); }
+  .copy-btn { background: transparent; border: 1px solid var(--line); color: var(--ink-dim); font-size: 10.5px; padding: 3px 9px; border-radius: 6px; cursor: pointer; transition: all .2s; }
+  .copy-btn:hover { border-color: var(--emerald); color: var(--emerald); }
+  .copy-btn.copied { border-color: var(--emerald); color: var(--emerald); }
+
+  pre { padding: 12px 15px; overflow-x: auto; font-family: var(--font-mono); font-size: 11px; line-height: 1.62; color: var(--ink); }
+  .kw { color: var(--code-kw); font-weight: 600; }
+  .fn { color: var(--code-fn); }
+  .str { color: var(--code-str); }
+  .cm { color: var(--code-cm); font-style: italic; }
+  .col { color: var(--code-col); }
+  .tbl { color: var(--code-tbl); }
+  .hl-i { background: rgba(99,102,241,.22); border-radius: 3px; padding: 0 3px; }
+  .hl-b { background: rgba(56,189,248,.22); border-radius: 3px; padding: 0 3px; }
+  .hl-r { background: rgba(251,113,133,.22); border-radius: 3px; padding: 0 3px; }
+
+  table.sql-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 6px; }
+  table.sql-table th { background: var(--surface-2); color: var(--ink); padding: 6px 9px; text-align: left; font-weight: 700; border-bottom: 1px solid var(--line-lit); }
+  table.sql-table td { border-bottom: 1px solid var(--line); padding: 5px 9px; color: var(--ink-dim); }
+
+  .vbox { border-radius: 13px; padding: 18px 22px; text-align: center; }
+  .vbox .vicon { font-size: 34px; margin-bottom: 6px; display: block; }
+  .vbox h4 { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+  .vbox p { font-size: 12px; line-height: 1.62; }
+  .vbox .use-tag { margin-top: 10px; background: rgba(0,0,0,.2); border-radius: 8px; padding: 8px 10px; font-size: 11px; }
+
+  .order-list { counter-reset: steps; list-style: none; position: relative; }
+  .order-list li { counter-increment: steps; display: flex; align-items: flex-start; gap: 12px; padding: 6px 0; font-size: 11.5px; color: var(--ink-dim); line-height: 1.55; }
+  .order-list li::before { content: counter(steps); background: var(--surface-2); border: 1px solid var(--line-lit); color: var(--ink); min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .order-list li strong { color: var(--ink); }
+
+  .erow { display: flex; align-items: center; gap: 8px; padding: 7px 11px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); margin-bottom: 5px; flex-wrap: wrap; }
+  .ename { font-size: 11.5px; font-weight: 700; min-width: 90px; color: var(--ink); }
+  .earrow { color: var(--ink-faint); font-size: 12px; }
+  .echeck { font-size: 11px; color: var(--ink-dim); }
+  .eresult { font-size: 10.5px; font-weight: 800; padding: 2px 9px; border-radius: 999px; margin-left: auto; }
+  .yes { background: rgba(16,185,129,.15); color: #a7f3d0; }
+  .no { background: rgba(251,113,133,.15); color: #fda4af; }
+
+  .quiz-box { position: relative; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 12px 15px 12px 42px; margin-top: 8px; }
+  .quiz-box::before { content: "?"; position: absolute; left: 12px; top: 12px; width: 19px; height: 19px; border-radius: 50%; background: var(--emerald); color: #062a1e; font-weight: 900; font-size: .72rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(16,185,129,0.5); }
+  .quiz-q { font-size: 12.5px; color: var(--ink); margin-bottom: 8px; line-height: 1.6; }
+  .quiz-options { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+  .opt { background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 6px 11px; font-size: 11.5px; color: var(--ink-dim); }
+  .reveal-btn { background: var(--emerald); color: #062a1e; padding: 6px 15px; border-radius: 6px; cursor: pointer; border: none; font-weight: 700; font-size: 12px; transition: transform .15s; }
+  .reveal-btn:hover { transform: translateY(-1px); }
+  .quiz-answer { margin-top: 8px; color: #86efac; font-size: 12px; line-height: 1.6; display: none; }
+
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--indigo); }
+
+  .toc-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(4,5,9,0.86); backdrop-filter: blur(10px); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px; }
+  .toc-overlay.open { display: flex; }
+  .toc-title { font-family: var(--font-display); font-size: 22px; font-weight: 800; margin-bottom: 22px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; max-width: 1100px; width: 100%; max-height: 62vh; overflow-y: auto; padding: 4px; }
+  .toc-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; text-align: left; color: var(--ink); transition: all .2s var(--ease); }
+  .toc-card:hover { border-color: var(--emerald); transform: translateY(-2px); background: var(--surface-2); }
+  .toc-card .idx { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+  .toc-card .ttl { font-size: 13px; font-weight: 600; margin-top: 4px; line-height: 1.4; }
+  .toc-hint { margin-top: 20px; font-size: 12px; color: var(--ink-faint); font-family: var(--font-mono); }
 </style>
 </head>
 <body>
-<nav>
-  <div style="display:flex;align-items:center;gap:10px">
-    <span class="nbadge">Day 4 · Module 16</span>
-    <span class="ntitle">EXISTS and NOT EXISTS</span>
-  </div>
-  <div class="nnav">
-    <button class="nb" onclick="go(-1)">← Prev</button>
-    <span class="nc" id="ctr">1 / 10</span>
-    <button class="nb" onclick="go(1)">Next →</button>
-  </div>
-</nav>
-<div class="deck">
 
-<!-- SLIDE 1: TITLE -->
-<div class="slide active">
-  <div>
-    <div class="badge">Module 16 · Correlated Queries</div>
-    <h1>EXISTS and NOT EXISTS</h1>
-    <p class="sub">A smarter way to ask: "does related data exist for this row?"</p>
+<div class="topbar">
+  <div class="brand">
+    <div class="label">Day 4 · Module 16</div>
+    <div class="title">EXISTS and NOT EXISTS</div>
   </div>
-  <div class="two">
-    <div class="card">
-      <h3>The Business Problem</h3>
-      <p>Sarah from GlobalMart got three urgent questions from leadership before annual planning:</p>
-      <div class="steps" style="margin-top:10px">
-        <div class="step"><div class="snum">1</div><div class="stxt"><strong>Dormant customers</strong> — signed up but never placed any order</div></div>
-        <div class="step"><div class="snum">2</div><div class="stxt"><strong>VIP customers</strong> — placed more than 20 delivered orders</div></div>
-        <div class="step"><div class="snum">3</div><div class="stxt"><strong>Dead stock products</strong> — never appeared in any delivered sale</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>What We Will Learn</h3>
-      <table>
-        <tr><th>Pattern</th><th>What it does</th></tr>
-        <tr><td><code>NOT EXISTS</code></td><td>Find rows with <strong>zero</strong> related records</td></tr>
-        <tr><td><code>EXISTS</code></td><td>Find rows that <strong>have</strong> related records</td></tr>
-        <tr><td><code>EXISTS + HAVING</code></td><td>Find rows with <strong>more than N</strong> related records</td></tr>
-        <tr><td><code>NOT EXISTS + JOIN</code></td><td>Absence across <strong>multiple</strong> joined tables</td></tr>
-      </table>
-      <div class="hl" style="margin-top:10px">
-        <p style="font-size:.8rem">Tables: <code>ex_customers</code>, <code>ex_orders</code>, <code>ex_transactions</code>, <code>ex_products</code></p>
-      </div>
-    </div>
+  <div class="rail" id="rail" aria-label="Slide progress — click to jump"></div>
+  <div class="tools">
+    <span class="counter" id="counter">1 / 11</span>
+    <button class="icon-btn" id="tocBtn" title="All slides (G)">▦</button>
+    <button class="icon-btn" onclick="changeSlide(-1)" title="Previous (←)">‹</button>
+    <button class="icon-btn" onclick="changeSlide(1)" title="Next (→)">›</button>
   </div>
 </div>
 
-<!-- SLIDE 2: WHAT IS A CORRELATED SUBQUERY? -->
-<div class="slide">
-  <h2>First — What Does "Correlated" Mean?</h2>
-  <div class="green" style="text-align:center;padding:18px">
-    <p style="font-size:1.1rem;font-weight:700;color:var(--g2)">Think of a bouncer at a club.</p>
-    <p style="margin-top:8px;font-size:.9rem;line-height:1.75">For each person in the queue, the bouncer checks the guest list.<br>He checks <strong>one person at a time</strong> — not the whole queue at once.<br>For Person A → check list. For Person B → check list. For Person C → check list.<br><strong>Each check depends on who is standing in front of him.</strong></p>
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active" data-title="Cover">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <div class="kicker">GlobalMart Data Engineering Bootcamp</div>
+    <h1>EXISTS and NOT EXISTS</h1>
+    <p class="subtitle">A smarter way to ask "does related data exist for this row?" Agnik Chakraborty gets three urgent asks from Swarna Choudhury before annual planning — all three turn out to be the same pattern wearing different clothes.</p>
+    <div class="badge-row">
+      <span class="cover-badge">Module 16</span>
+      <span class="cover-badge">Day 4</span>
+      <span class="cover-badge">Trainer-Led Session</span>
+    </div>
   </div>
-  <div class="two" style="margin-top:4px">
-    <div class="card" style="border-color:rgba(56,189,248,.3)">
-      <h3 style="color:var(--a)">Non-Correlated Subquery</h3>
-      <p style="margin-bottom:8px;font-size:.83rem">Runs <strong>once</strong>. Returns a fixed list. Outer query filters against that list.</p>
-      <pre style="font-size:.76rem"><span class="kw">SELECT</span> <span class="col">customer_name</span>
+
+  <!-- SLIDE 2: THE PROBLEM -->
+  <div class="slide slide-section" data-title="Three Urgent Questions">
+    <div class="eyebrow">The Assignment</div>
+    <h2>Three Questions, Same Underlying Pattern 📋</h2>
+    <div class="two-col">
+      <div class="card">
+        <h4>Swarna's Three Asks</h4>
+        <p>All three land in Agnik's inbox within the same hour, each marked "urgent" — a word that has apparently lost all meaning by this point in the quarter.</p>
+        <ol class="order-list" style="margin-top:8px;">
+          <li><strong>Dormant customers</strong> — signed up, but placed zero orders</li>
+          <li><strong>VIP customers</strong> — placed more than 20 delivered orders</li>
+          <li><strong>Dead stock products</strong> — never appeared in any delivered sale</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h4>What We'll Learn</h4>
+        <table class="sql-table">
+          <tr><th>Pattern</th><th>What it does</th></tr>
+          <tr><td>NOT EXISTS</td><td>Find rows with <strong style="color:var(--ink);">zero</strong> related records</td></tr>
+          <tr><td>EXISTS</td><td>Find rows that <strong style="color:var(--ink);">have</strong> related records</td></tr>
+          <tr><td>EXISTS + HAVING</td><td>Find rows with <strong style="color:var(--ink);">more than N</strong> related records</td></tr>
+          <tr><td>NOT EXISTS + JOIN</td><td>Absence across <strong style="color:var(--ink);">multiple</strong> joined tables</td></tr>
+        </table>
+        <div class="highlight-box" style="margin-top:10px;"><p>Tables: <code style="color:var(--code-col);">ex_customers</code>, <code style="color:var(--code-col);">ex_orders</code>, <code style="color:var(--code-col);">ex_transactions</code>, <code style="color:var(--code-col);">ex_products</code></p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: WHAT IS CORRELATED -->
+  <div class="slide slide-content" data-title="What Does Correlated Mean?">
+    <h3>First — What Does "Correlated" Mean?</h3>
+    <div class="highlight-box success" style="text-align:center;padding:16px;margin-bottom:12px;">
+      <p style="font-size:14.5px;font-weight:700;color:var(--ink);">Think of a bouncer at a club.</p>
+      <p style="margin-top:6px;font-size:12.5px;line-height:1.7;">For each person in the queue, the bouncer checks the guest list — one person at a time, never the whole queue at once. For Person A → check list. For Person B → check list. <strong style="color:var(--ink);">Each check depends on who is standing in front of him right now.</strong></p>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h4>Non-Correlated Subquery</h4>
+        <p style="margin-bottom:8px;">Runs <strong style="color:var(--ink);">once</strong>. Returns a fixed list. The outer query filters against that list.</p>
+        <div class="code-block">
+          <pre style="font-size:10.5px;"><span class="kw">SELECT</span> <span class="col">customer_name</span>
 <span class="kw">FROM</span> <span class="tbl">ex_customers</span>
 <span class="kw">WHERE</span> <span class="col">customer_id</span> <span class="kw">IN</span> (
     <span class="kw">SELECT</span> <span class="col">customer_id</span>
     <span class="kw">FROM</span> <span class="tbl">ex_orders</span>
     <span class="cm">-- no reference to outer table</span>
 )</pre>
-      <p style="margin-top:8px;font-size:.8rem;color:var(--a)">Subquery runs once → returns a list of IDs → outer query filters by that list.</p>
-    </div>
-    <div class="card" style="border-color:rgba(34,197,94,.3)">
-      <h3>Correlated Subquery</h3>
-      <p style="margin-bottom:8px;font-size:.83rem">Runs <strong>once per row</strong> in the outer query. It references a column from the outer query.</p>
-      <pre style="font-size:.76rem"><span class="kw">SELECT</span> <span class="col">c</span>.<span class="col">customer_name</span>
+        </div>
+      </div>
+      <div class="card">
+        <h4>Correlated Subquery</h4>
+        <p style="margin-bottom:8px;">Runs <strong style="color:var(--ink);">once per outer row</strong>. References a column from the outer query.</p>
+        <div class="code-block">
+          <pre style="font-size:10.5px;"><span class="kw">SELECT</span> <span class="col">c</span>.<span class="col">customer_name</span>
 <span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="col">c</span>
 <span class="kw">WHERE</span> <span class="kw">EXISTS</span> (
     <span class="kw">SELECT</span> 1
     <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="col">o</span>
-    <span class="kw">WHERE</span> <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col"><span class="hl-green">c.customer_id</span></span>
-    <span class="cm">-- ↑ references outer row!</span>
+    <span class="kw">WHERE</span> <span class="col">o</span>.<span class="col">customer_id</span> = <span class="hl-i"><span class="col">c</span>.<span class="col">customer_id</span></span>
+    <span class="cm">-- ↑ references the outer row</span>
 )</pre>
-      <p style="margin-top:8px;font-size:.8rem;color:var(--g)">For Customer A → run subquery. For Customer B → run subquery. And so on.</p>
+        </div>
+      </div>
     </div>
+    <div class="highlight-box success" style="margin-top:12px;"><p><strong style="color:var(--emerald);">"Correlated" means the inner query is linked to the current row of the outer query.</strong> Change the outer row, the inner query's answer changes with it.</p></div>
   </div>
-  <div class="green">
-    <p style="font-size:.85rem"><strong>The word "correlated" = the inner query is linked to (correlated with) the current row of the outer query.</strong> Change the outer row, the inner query changes too.</p>
-  </div>
-</div>
 
-<!-- SLIDE 3: EXISTS vs NOT EXISTS -->
-<div class="slide">
-  <h2>EXISTS vs NOT EXISTS — In Plain English</h2>
-  <div class="two">
-    <div class="vbox green" style="padding:22px">
-      <span class="icon">✅</span>
-      <h3 style="color:var(--g);font-size:1.1rem">EXISTS</h3>
-      <p style="font-size:.88rem;line-height:1.75;margin-top:6px">"Is there <strong>at least one</strong> matching row in the related table?"<br><br>If YES → include this row<br>If NO → skip this row</p>
-      <div style="margin-top:12px;background:rgba(0,0,0,.2);border-radius:8px;padding:10px;font-size:.8rem;color:var(--g2)">Use when: you want rows that <strong>HAVE</strong> related data</div>
+  <!-- SLIDE 4: EXISTS vs NOT EXISTS -->
+  <div class="slide slide-content" data-title="EXISTS vs NOT EXISTS">
+    <h3>EXISTS vs NOT EXISTS — In Plain English</h3>
+    <div class="two-col">
+      <div class="vbox highlight-box success">
+        <span class="vicon">✅</span>
+        <h4 style="color:var(--emerald);">EXISTS</h4>
+        <p>"Is there <strong style="color:var(--ink);">at least one</strong> matching row in the related table?" YES → include this row. NO → skip it.</p>
+        <div class="use-tag">Use when you want rows that <strong style="color:var(--ink);">HAVE</strong> related data</div>
+      </div>
+      <div class="vbox highlight-box danger">
+        <span class="vicon">🚫</span>
+        <h4 style="color:var(--rose);">NOT EXISTS</h4>
+        <p>"Are there <strong style="color:var(--ink);">zero</strong> matching rows in the related table?" ZERO → include this row. Any found → skip it.</p>
+        <div class="use-tag">Use when you want rows that <strong style="color:var(--ink);">HAVE NO</strong> related data</div>
+      </div>
     </div>
-    <div class="vbox red" style="padding:22px">
-      <span class="icon">🚫</span>
-      <h3 style="color:#f87171;font-size:1.1rem">NOT EXISTS</h3>
-      <p style="font-size:.88rem;line-height:1.75;margin-top:6px">"Are there <strong>zero</strong> matching rows in the related table?"<br><br>If ZERO → include this row<br>If any rows found → skip this row</p>
-      <div style="margin-top:12px;background:rgba(0,0,0,.2);border-radius:8px;padding:10px;font-size:.8rem;color:#fca5a5">Use when: you want rows that <strong>HAVE NO</strong> related data</div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:4px">
-    <h3>The Template — memorise this structure</h3>
-    <pre><span class="kw">SELECT</span> <span class="col">columns</span>
-<span class="kw">FROM</span>   <span class="tbl">outer_table</span> <span class="col">o</span>
-<span class="kw">WHERE</span>  <span class="hl-green"><span class="kw">EXISTS</span></span> (          <span class="cm">-- or NOT EXISTS</span>
-    <span class="kw">SELECT</span> 1           <span class="cm">-- SELECT 1 is standard: we only care if a row exists, not what it contains</span>
-    <span class="kw">FROM</span>   <span class="tbl">inner_table</span> <span class="col">i</span>
-    <span class="kw">WHERE</span>  <span class="hl-green"><span class="col">i</span>.<span class="col">foreign_key</span> = <span class="col">o</span>.<span class="col">primary_key</span></span>  <span class="cm">-- ← this is the correlated link</span>
+    <div class="card" style="margin-top:12px;">
+      <h4>The Template — Memorize This Structure</h4>
+      <div class="code-block" style="margin-top:6px;">
+        <pre><span class="kw">SELECT</span> columns
+<span class="kw">FROM</span>   outer_table <span class="col">o</span>
+<span class="kw">WHERE</span>  <span class="hl-i"><span class="kw">EXISTS</span></span> (          <span class="cm">-- or NOT EXISTS</span>
+    <span class="kw">SELECT</span> 1           <span class="cm">-- SELECT 1: we only care IF a row exists, not what it contains</span>
+    <span class="kw">FROM</span>   inner_table <span class="col">i</span>
+    <span class="kw">WHERE</span>  <span class="hl-i"><span class="col">i</span>.<span class="col">foreign_key</span> = <span class="col">o</span>.<span class="col">primary_key</span></span>  <span class="cm">-- ← the correlated link</span>
 )</pre>
-    <p style="margin-top:8px;font-size:.8rem;color:var(--muted)">Why <code>SELECT 1</code>? — Because we do not need any value from the subquery. We only need to know: did any row come back? The <code>1</code> is a placeholder. You could write <code>SELECT *</code> too — same result.</p>
+      </div>
+      <p style="margin-top:8px;font-size:11px;color:var(--ink-faint);">Why <code style="color:var(--code-col);">SELECT 1</code>? We don't need any value back — just whether a row came back at all. <code style="color:var(--code-col);">1</code> is a placeholder; <code style="color:var(--code-col);">SELECT *</code> would work identically, just slower to type.</p>
+    </div>
   </div>
-</div>
 
-<!-- SLIDE 4: ANALYSIS 1 — DORMANT CUSTOMERS -->
-<div class="slide">
-  <div><div class="badge">Analysis 1</div>
-  <h2>NOT EXISTS — Find Dormant Customers</h2>
-  <p class="sub" style="margin-top:2px"><strong>Business ask:</strong> Find all customers who signed up but placed <strong>zero orders</strong> — re-engagement email campaign targets.</p></div>
-  <pre><span class="kw">SELECT</span>
+  <!-- SLIDE 5: ANALYSIS 1 - DORMANT CUSTOMERS -->
+  <div class="slide slide-content" data-title="Analysis 1 — Dormant Customers">
+    <div class="badge-tag">Analysis 1</div>
+    <h3>NOT EXISTS — Find Dormant Customers</h3>
+    <p class="lede"><strong style="color:var(--ink);">The ask:</strong> customers who signed up but placed zero orders — re-engagement email campaign targets.</p>
+    <div class="two-col">
+      <div class="code-block">
+        <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
     <span class="col">c</span>.<span class="col">customer_id</span>,
     <span class="col">c</span>.<span class="col">customer_name</span>,
     <span class="col">c</span>.<span class="col">postal_code</span>
-<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="col">c</span>                         <span class="cm">-- outer table: every customer</span>
-<span class="kw">WHERE</span> <span class="hl-green"><span class="kw">NOT EXISTS</span></span> (                             <span class="cm">-- only keep customers where subquery finds ZERO rows</span>
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="col">c</span>                    <span class="cm">-- outer: every customer</span>
+<span class="kw">WHERE</span> <span class="hl-i"><span class="kw">NOT EXISTS</span></span> (                        <span class="cm">-- keep only where subquery finds ZERO rows</span>
     <span class="kw">SELECT</span> 1
     <span class="kw">FROM</span>   <span class="tbl">ex_orders</span> <span class="col">o</span>
-    <span class="kw">WHERE</span>  <span class="hl-green"><span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span></span>    <span class="cm">-- ← correlated link: ties order to THIS customer</span>
+    <span class="kw">WHERE</span>  <span class="hl-i"><span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span></span>  <span class="cm">-- correlated link</span>
 )</pre>
-  <div class="two">
-    <div>
-      <p style="font-weight:700;font-size:.85rem;margin-bottom:8px">In plain English — what SQL does per customer:</p>
-      <div class="steps">
-        <div class="step"><div class="snum">1</div><div class="stxt">Take Customer A from <code>ex_customers</code></div></div>
-        <div class="step"><div class="snum">2</div><div class="stxt">Run the subquery: "Go to <code>ex_orders</code> and count orders where <code>customer_id = A</code>"</div></div>
-        <div class="step"><div class="snum">3</div><div class="stxt"><strong>If zero orders found</strong> → NOT EXISTS = TRUE → include Customer A in results</div></div>
-        <div class="step"><div class="snum">4</div><div class="stxt"><strong>If any orders found</strong> → NOT EXISTS = FALSE → skip Customer A</div></div>
-        <div class="step"><div class="snum">5</div><div class="stxt">Repeat for Customer B, C, D … for every customer in the table</div></div>
       </div>
-    </div>
-    <div class="green">
-      <p style="font-weight:700;margin-bottom:8px;color:var(--g)">Why NOT LEFT JOIN + IS NULL?</p>
-      <p style="font-size:.82rem;line-height:1.7">You could also find dormant customers using <code>LEFT JOIN + WHERE order_id IS NULL</code>. Both work. But NOT EXISTS is:</p>
-      <ul style="font-size:.82rem;color:#c9d1d9;padding-left:16px;margin-top:6px;line-height:1.9">
-        <li>Cleaner to read ("does NOT exist")</li>
-        <li>NULL-safe (no accidental silent failures)</li>
-        <li>Can stop as soon as one match is found (efficient)</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 5: ROW BY ROW WALKTHROUGH -->
-<div class="slide">
-  <h2>How NOT EXISTS Evaluates — Row by Row</h2>
-  <p style="margin-bottom:12px">SQL processes each customer in <code>ex_customers</code> one at a time, runs the subquery for each, and decides:</p>
-  <div class="two">
-    <div>
-      <p style="font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:1px">EVALUATION PER ROW:</p>
-      <div class="erow">
-        <span class="ename">CUST-0023</span>
-        <span class="earrow">→</span>
-        <span class="echeck">0 orders in ex_orders</span>
-        <span class="earrow">→</span>
-        <span class="eresult yes">NOT EXISTS = TRUE → INCLUDE ✓</span>
-      </div>
-      <div class="erow">
-        <span class="ename">CUST-0041</span>
-        <span class="earrow">→</span>
-        <span class="echeck">5 orders found</span>
-        <span class="earrow">→</span>
-        <span class="eresult no">NOT EXISTS = FALSE → SKIP ✗</span>
-      </div>
-      <div class="erow">
-        <span class="ename">CUST-0100</span>
-        <span class="earrow">→</span>
-        <span class="echeck">0 orders in ex_orders</span>
-        <span class="earrow">→</span>
-        <span class="eresult yes">NOT EXISTS = TRUE → INCLUDE ✓</span>
-      </div>
-      <div class="erow">
-        <span class="ename">CUST-0156</span>
-        <span class="earrow">→</span>
-        <span class="echeck">12 orders found</span>
-        <span class="earrow">→</span>
-        <span class="eresult no">NOT EXISTS = FALSE → SKIP ✗</span>
-      </div>
-      <div class="erow">
-        <span class="ename">CUST-0200</span>
-        <span class="earrow">→</span>
-        <span class="echeck">0 orders in ex_orders</span>
-        <span class="earrow">→</span>
-        <span class="eresult yes">NOT EXISTS = TRUE → INCLUDE ✓</span>
-      </div>
-    </div>
-    <div>
-      <div class="green" style="margin-bottom:10px">
-        <p style="font-weight:700;color:var(--g);margin-bottom:6px">Key insight: "stops early"</p>
-        <p style="font-size:.82rem;line-height:1.7">For NOT EXISTS: SQL only needs to find <strong>one matching row to stop</strong> and return FALSE. It does not count all orders. As soon as one order is found → done → skip this customer. This makes NOT EXISTS very efficient.</p>
-      </div>
-      <div class="card">
-        <h3>What the final output looks like:</h3>
-        <table>
-          <tr><th>customer_id</th><th>customer_name</th><th>postal_code</th></tr>
-          <tr><td>CUST-0023</td><td>Priya Mehta</td><td>400001</td></tr>
-          <tr><td>CUST-0100</td><td>Ravi Shankar</td><td>600001</td></tr>
-          <tr><td>CUST-0200</td><td>Anita Rao</td><td>500001</td></tr>
-          <tr><td colspan="3" style="color:var(--muted);font-style:italic">... (all dormant customers)</td></tr>
-        </table>
+      <div>
+        <div class="card" style="margin-bottom:10px;">
+          <h4>What SQL does per customer</h4>
+          <ol class="order-list">
+            <li>Take Customer A from ex_customers</li>
+            <li>Run subquery: "any orders in ex_orders where customer_id = A?"</li>
+            <li><strong>Zero found</strong> → NOT EXISTS = TRUE → include A</li>
+            <li><strong>Any found</strong> → NOT EXISTS = FALSE → skip A</li>
+            <li>Repeat for every customer in the table</li>
+          </ol>
+        </div>
+        <div class="highlight-box success">
+          <p><strong style="color:var(--emerald);">Why not LEFT JOIN + IS NULL instead?</strong> Both work. NOT EXISTS is cleaner to read ("does NOT exist"), NULL-safe, and can stop scanning the moment one match is found — genuinely faster on a wide orders table, not just prettier syntax.</p>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- SLIDE 6: CORRELATED vs NON-CORRELATED -->
-<div class="slide">
-  <h2>Correlated vs Non-Correlated — Side by Side</h2>
-  <div class="two">
-    <div>
-      <div class="blue" style="margin-bottom:10px">
-        <p style="font-weight:800;color:var(--a);font-size:.9rem">NON-CORRELATED — runs ONCE</p>
+  <!-- SLIDE 6: ROW BY ROW WALKTHROUGH -->
+  <div class="slide slide-demo" data-title="Row-by-Row Walkthrough">
+    <div class="eyebrow">Live Demo</div>
+    <h3>How NOT EXISTS Evaluates, Row by Row</h3>
+    <div class="demo-label">SQL processes each customer one at a time, runs the subquery, decides</div>
+    <div class="two-col">
+      <div>
+        <div class="erow"><span class="ename">CUST-0023</span><span class="earrow">→</span><span class="echeck">0 orders</span><span class="eresult yes">INCLUDE ✓</span></div>
+        <div class="erow"><span class="ename">CUST-0041</span><span class="earrow">→</span><span class="echeck">5 orders found</span><span class="eresult no">SKIP ✗</span></div>
+        <div class="erow"><span class="ename">CUST-0100</span><span class="earrow">→</span><span class="echeck">0 orders</span><span class="eresult yes">INCLUDE ✓</span></div>
+        <div class="erow"><span class="ename">CUST-0156</span><span class="earrow">→</span><span class="echeck">12 orders found</span><span class="eresult no">SKIP ✗</span></div>
+        <div class="erow"><span class="ename">CUST-0200</span><span class="earrow">→</span><span class="echeck">0 orders</span><span class="eresult yes">INCLUDE ✓</span></div>
       </div>
-      <pre style="font-size:.78rem"><span class="kw">SELECT</span> <span class="col">customer_name</span>
-<span class="kw">FROM</span> <span class="tbl">ex_customers</span>
-<span class="kw">WHERE</span> <span class="col">customer_id</span> <span class="kw">IN</span> (
-    <span class="kw">SELECT</span> <span class="col">customer_id</span>
-    <span class="kw">FROM</span> <span class="tbl">ex_orders</span>
-    <span class="cm">-- no outer table reference</span>
-)</pre>
-      <div class="steps" style="margin-top:10px">
-        <div class="step"><div class="snum" style="background:var(--a)">1</div><div class="stxt">SQL runs subquery <strong>once</strong></div></div>
-        <div class="step"><div class="snum" style="background:var(--a)">2</div><div class="stxt">Gets a static list: <code>[101, 102, 105, 109...]</code></div></div>
-        <div class="step"><div class="snum" style="background:var(--a)">3</div><div class="stxt">Outer query filters using that fixed list</div></div>
-      </div>
-    </div>
-    <div>
-      <div class="green" style="margin-bottom:10px">
-        <p style="font-weight:800;color:var(--g);font-size:.9rem">CORRELATED — runs PER OUTER ROW</p>
-      </div>
-      <pre style="font-size:.78rem"><span class="kw">SELECT</span> <span class="col">c</span>.<span class="col">customer_name</span>
-<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="col">c</span>
-<span class="kw">WHERE</span> <span class="kw">EXISTS</span> (
-    <span class="kw">SELECT</span> 1
-    <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="col">o</span>
-    <span class="kw">WHERE</span> <span class="hl-green"><span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span></span>
-    <span class="cm">-- references outer c ↑</span>
-)</pre>
-      <div class="steps" style="margin-top:10px">
-        <div class="step"><div class="snum">1</div><div class="stxt">Take Customer A → run subquery for A</div></div>
-        <div class="step"><div class="snum">2</div><div class="stxt">Take Customer B → run subquery for B</div></div>
-        <div class="step"><div class="snum">3</div><div class="stxt">Repeat for every customer row</div></div>
+      <div class="stack">
+        <div class="highlight-box success">
+          <p><strong style="color:var(--emerald);">Key insight — it stops early:</strong> for NOT EXISTS, SQL only needs to find <em>one</em> matching row to return FALSE. It doesn't count every order — the instant one shows up, it's done and moves to the next customer.</p>
+        </div>
+        <div class="card">
+          <h4>Final output shape</h4>
+          <table class="sql-table">
+            <tr><th>customer_id</th><th>customer_name</th><th>postal_code</th></tr>
+            <tr><td>CUST-0023</td><td>Priya Mehta</td><td>400001</td></tr>
+            <tr><td>CUST-0100</td><td>Ravi Shankar</td><td>600001</td></tr>
+            <tr><td>CUST-0200</td><td>Anita Rao</td><td>500001</td></tr>
+            <tr><td colspan="3" style="color:var(--ink-faint);font-style:italic;">... all dormant customers</td></tr>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-  <table style="margin-top:8px">
-    <tr><th>Feature</th><th>Non-Correlated</th><th>Correlated</th></tr>
-    <tr><td>Execution count</td><td>Once</td><td>Once per outer row</td></tr>
-    <tr><td>References outer table?</td><td>No</td><td>Yes</td></tr>
-    <tr><td>Typical operators</td><td><code>IN</code>, <code>NOT IN</code></td><td><code>EXISTS</code>, <code>NOT EXISTS</code></td></tr>
-    <tr><td>Best for</td><td>Simple value matching</td><td>Row-specific existence checks</td></tr>
-  </table>
-</div>
 
-<!-- SLIDE 7: ANALYSIS 2 — VIP CUSTOMERS -->
-<div class="slide">
-  <div><div class="badge">Analysis 2</div>
-  <h2>EXISTS + HAVING — Find VIP Customers</h2>
-  <p class="sub" style="margin-top:2px"><strong>Business ask:</strong> Find customers with <strong>more than 20 delivered orders</strong> — candidates for the VIP Loyalty Program.</p></div>
-  <pre><span class="kw">SELECT</span>
+  <!-- SLIDE 7: ANALYSIS 2 - VIP CUSTOMERS -->
+  <div class="slide slide-content" data-title="Analysis 2 — VIP Customers">
+    <div class="badge-tag">Analysis 2</div>
+    <h3>EXISTS + HAVING — Find VIP Customers</h3>
+    <p class="lede"><strong style="color:var(--ink);">The ask:</strong> customers with more than 20 delivered orders — candidates for the VIP Loyalty Program.</p>
+    <div class="two-col">
+      <div class="code-block">
+        <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
     <span class="col">c</span>.<span class="col">customer_id</span>,
     <span class="col">c</span>.<span class="col">customer_name</span>
 <span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="col">c</span>
-<span class="kw">WHERE</span> <span class="hl-green"><span class="kw">EXISTS</span></span> (
+<span class="kw">WHERE</span> <span class="hl-i"><span class="kw">EXISTS</span></span> (
     <span class="kw">SELECT</span> 1
     <span class="kw">FROM</span>   <span class="tbl">ex_orders</span> <span class="col">o</span>
-    <span class="kw">WHERE</span>  <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span>  <span class="cm">-- correlated link</span>
+    <span class="kw">WHERE</span>  <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span>
     <span class="kw">AND</span>    <span class="col">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
-    <span class="hl-green"><span class="kw">GROUP BY</span> <span class="col">o</span>.<span class="col">customer_id</span>
-    <span class="kw">HAVING</span>   <span class="fn">COUNT</span>(<span class="col">o</span>.<span class="col">order_id</span>) &gt; 20</span>     <span class="cm">-- ← aggregate check INSIDE the subquery</span>
+    <span class="hl-i"><span class="kw">GROUP BY</span> <span class="col">o</span>.<span class="col">customer_id</span>
+    <span class="kw">HAVING</span>   <span class="fn">COUNT</span>(<span class="col">o</span>.<span class="col">order_id</span>) &gt; 20</span>  <span class="cm">-- aggregate check INSIDE the subquery</span>
 )</pre>
-  <div class="two">
-    <div>
-      <p style="font-size:.85rem;font-weight:700;margin-bottom:8px">Row-by-row evaluation:</p>
-      <div class="erow" style="flex-wrap:wrap;gap:4px">
-        <span class="ename">CUST-0041</span>
-        <span class="echeck">25 delivered orders → HAVING 25 &gt; 20 = TRUE</span>
-        <span class="eresult yes">EXISTS = TRUE ✓ VIP</span>
       </div>
-      <div class="erow" style="flex-wrap:wrap;gap:4px">
-        <span class="ename">CUST-0100</span>
-        <span class="echeck">15 delivered orders → HAVING 15 &gt; 20 = FALSE</span>
-        <span class="eresult no">EXISTS = FALSE ✗ Skip</span>
+      <div>
+        <div class="erow"><span class="ename">CUST-0041</span><span class="echeck">25 delivered → 25 &gt; 20</span><span class="eresult yes">VIP ✓</span></div>
+        <div class="erow"><span class="ename">CUST-0100</span><span class="echeck">15 delivered → 15 &gt; 20 false</span><span class="eresult no">Skip ✗</span></div>
+        <div class="erow"><span class="ename">CUST-0089</span><span class="echeck">32 delivered → 32 &gt; 20</span><span class="eresult yes">VIP ✓</span></div>
+        <div class="highlight-box warn" style="margin-top:10px;">
+          <p><strong style="color:var(--amber);">Common mistake — where does HAVING go?</strong> GROUP BY and HAVING must be <em>inside</em> the subquery. The outer query runs over ex_customers — one row per customer, no aggregation. Only the subquery has a COUNT to compare against. Put HAVING in the outer query and SQL has nothing to check it against.</p>
+        </div>
       </div>
-      <div class="erow" style="flex-wrap:wrap;gap:4px">
-        <span class="ename">CUST-0089</span>
-        <span class="echeck">32 delivered orders → HAVING 32 &gt; 20 = TRUE</span>
-        <span class="eresult yes">EXISTS = TRUE ✓ VIP</span>
-      </div>
-    </div>
-    <div class="warn">
-      <p style="font-weight:800;color:#f59e0b;margin-bottom:8px">⚠ Common Mistake — WHERE Does HAVING Go?</p>
-      <p style="font-size:.83rem;line-height:1.7;color:#fcd34d">GROUP BY and HAVING <strong>must be inside the subquery</strong>.</p>
-      <p style="font-size:.83rem;line-height:1.7;margin-top:8px;color:#c9d1d9">Why? The <strong>outer query</strong> operates on <code>ex_customers</code> — one row per customer. It has no aggregate data. Only the <strong>subquery</strong> has the COUNT of orders per customer.</p>
-      <p style="font-size:.83rem;line-height:1.7;margin-top:8px;color:#c9d1d9">If you put HAVING in the outer query, SQL cannot find a COUNT to compare against.</p>
     </div>
   </div>
-</div>
 
-<!-- SLIDE 8: ANALYSIS 3 — DEAD STOCK -->
-<div class="slide">
-  <div><div class="badge">Analysis 3</div>
-  <h2>NOT EXISTS + JOIN Inside — Dead Stock Products</h2>
-  <p class="sub" style="margin-top:2px"><strong>Business ask:</strong> Find products that have <strong>never appeared in a delivered sale</strong>.<br>The challenge: <code>ex_transactions</code> has product_id, but <code>order_status</code> is in <code>ex_orders</code>.</p></div>
-  <pre><span class="kw">SELECT</span>
+  <!-- SLIDE 8: ANALYSIS 3 - DEAD STOCK -->
+  <div class="slide slide-content" data-title="Analysis 3 — Dead Stock">
+    <div class="badge-tag">Analysis 3</div>
+    <h3>NOT EXISTS + JOIN Inside — Dead Stock Products</h3>
+    <p class="lede"><strong style="color:var(--ink);">The ask:</strong> products that have never appeared in a delivered sale. The wrinkle: ex_transactions has product_id, but order_status lives in ex_orders — two tables, one existence check.</p>
+    <div class="two-col">
+      <div class="code-block">
+        <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
     <span class="col">p</span>.<span class="col">product_id</span>,
     <span class="col">p</span>.<span class="col">product_name</span>,
     <span class="col">p</span>.<span class="col">category</span>
-<span class="kw">FROM</span> <span class="tbl">ex_products</span> <span class="col">p</span>                          <span class="cm">-- outer: every product</span>
-<span class="kw">WHERE</span> <span class="hl-green"><span class="kw">NOT EXISTS</span></span> (
+<span class="kw">FROM</span> <span class="tbl">ex_products</span> <span class="col">p</span>                     <span class="cm">-- outer: every product</span>
+<span class="kw">WHERE</span> <span class="hl-i"><span class="kw">NOT EXISTS</span></span> (
     <span class="kw">SELECT</span> 1
     <span class="kw">FROM</span>   <span class="tbl">ex_transactions</span> <span class="col">t</span>
-    <span class="hl-blue"><span class="kw">JOIN</span>   <span class="tbl">ex_orders</span> <span class="col">o</span>  <span class="kw">ON</span>  <span class="col">t</span>.<span class="col">Order_ID</span> = <span class="col">o</span>.<span class="col">order_id</span></span>  <span class="cm">-- ← JOIN inside the subquery!</span>
-    <span class="kw">WHERE</span>  <span class="hl-green"><span class="col">t</span>.<span class="col">Product_ID</span>  = <span class="col">p</span>.<span class="col">product_id</span></span>            <span class="cm">-- correlated link</span>
-    <span class="kw">AND</span>    <span class="col">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>              <span class="cm">-- only count delivered sales</span>
+    <span class="hl-b"><span class="kw">JOIN</span>   <span class="tbl">ex_orders</span> <span class="col">o</span>  <span class="kw">ON</span>  <span class="col">t</span>.<span class="col">Order_ID</span> = <span class="col">o</span>.<span class="col">order_id</span></span>  <span class="cm">-- ← JOIN inside the subquery</span>
+    <span class="kw">WHERE</span>  <span class="hl-i"><span class="col">t</span>.<span class="col">Product_ID</span>  = <span class="col">p</span>.<span class="col">product_id</span></span>       <span class="cm">-- correlated link</span>
+    <span class="kw">AND</span>    <span class="col">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>         <span class="cm">-- only delivered sales count</span>
 )</pre>
-  <div class="two">
-    <div>
-      <p style="font-size:.85rem;font-weight:700;margin-bottom:8px">Why is the JOIN inside the subquery?</p>
-      <div class="steps">
-        <div class="step"><div class="snum">1</div><div class="stxt"><code>ex_transactions</code> has <code>Product_ID</code> — needed to link to the current product <strong>(correlation)</strong></div></div>
-        <div class="step"><div class="snum">2</div><div class="stxt"><code>ex_orders</code> has <code>order_status</code> — needed to check if the sale was delivered <strong>(filter)</strong></div></div>
-        <div class="step"><div class="snum">3</div><div class="stxt">We need <strong>both</strong> tables inside the subquery to answer: "Was this product ever in a delivered order?"</div></div>
-        <div class="step"><div class="snum">4</div><div class="stxt">Joining them inside the subquery lets us check this in a single, clean NOT EXISTS</div></div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:10px;">
+          <h4>Why is the JOIN inside the subquery?</h4>
+          <ol class="order-list">
+            <li>ex_transactions has Product_ID — needed to correlate to the current product</li>
+            <li>ex_orders has order_status — needed to check the sale was actually delivered</li>
+            <li>Both tables are needed to answer one question, so both live inside the same NOT EXISTS</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h4>Per-product evaluation</h4>
+          <div class="code-block">
+            <pre style="font-size:10.5px;"><span class="cm">Product P001: 3 delivered transactions found
+ → NOT EXISTS = FALSE → SKIP (it was sold)
+
+Product P099: 0 delivered transactions found
+ → NOT EXISTS = TRUE → INCLUDE (dead stock)
+
+Product P202: 0 delivered transactions found
+ → NOT EXISTS = TRUE → INCLUDE (dead stock)</span></pre>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="card">
-      <h3>Per-product evaluation:</h3>
-      <pre style="font-size:.76rem"><span class="cm">Product P001:</span>
-<span class="cm"> → subquery finds 3 delivered transactions</span>
-<span class="cm"> → NOT EXISTS = FALSE → SKIP (it was sold)</span>
-
-<span class="cm">Product P099:</span>
-<span class="cm"> → subquery finds 0 delivered transactions</span>
-<span class="cm"> → NOT EXISTS = TRUE → INCLUDE (dead stock!)</span>
-
-<span class="cm">Product P202:</span>
-<span class="cm"> → subquery finds 0 delivered transactions</span>
-<span class="cm"> → NOT EXISTS = TRUE → INCLUDE (dead stock!)</span></pre>
-    </div>
   </div>
-</div>
 
-<!-- SLIDE 9: NOT IN NULL TRAP -->
-<div class="slide">
-  <h2>The NOT IN NULL Trap — Why NOT EXISTS is Safer</h2>
-  <div class="red" style="margin-bottom:10px">
-    <p style="font-weight:800;color:#f87171;font-size:.9rem;margin-bottom:6px">Warning: NOT IN silently returns 0 rows if the subquery contains any NULL</p>
-    <p style="font-size:.83rem;color:#fca5a5">No error. No warning. Just wrong results. This is one of SQL's most dangerous traps.</p>
-  </div>
-  <div class="two">
-    <div>
-      <p style="font-size:.82rem;font-weight:700;margin-bottom:8px;color:#f87171">NOT IN — breaks with NULLs:</p>
-      <pre style="font-size:.76rem"><span class="cm">-- Suppose ex_orders has:</span>
-<span class="cm">-- customer_id: 101, 102, NULL, 105</span>
+  <!-- SLIDE 9: NOT IN NULL TRAP -->
+  <div class="slide slide-content" data-title="The NOT IN NULL Trap">
+    <h3>⚠️ The NOT IN NULL Trap — Why NOT EXISTS Is Safer</h3>
+    <div class="highlight-box danger" style="margin-bottom:10px;"><p><strong style="color:var(--rose);">Warning:</strong> NOT IN silently returns 0 rows the moment its subquery contains even one NULL. No error. No warning. Just quietly, confidently wrong results — one of SQL's most dangerous traps, precisely because it fails silently instead of loudly.</p></div>
+    <div class="two-col">
+      <div>
+        <p style="font-size:11.5px;font-weight:700;color:var(--rose);margin-bottom:6px;">NOT IN — breaks with NULLs:</p>
+        <div class="code-block">
+          <pre style="font-size:10.5px;"><span class="cm">-- Suppose ex_orders has customer_id: 101, 102, NULL, 105</span>
 
 <span class="kw">WHERE</span> <span class="col">customer_id</span> <span class="kw">NOT IN</span> (101, 102, <span class="kw">NULL</span>, 105)
 
 <span class="cm">-- SQL expands this to:</span>
 <span class="kw">WHERE</span> <span class="col">customer_id</span> != 101
   <span class="kw">AND</span> <span class="col">customer_id</span> != 102
-  <span class="kw">AND</span> <span class="col"><span class="hl-red">customer_id != NULL</span></span>   <span class="cm">← UNKNOWN!</span>
+  <span class="kw">AND</span> <span class="hl-r"><span class="col">customer_id</span> != <span class="kw">NULL</span></span>   <span class="cm">← UNKNOWN!</span>
   <span class="kw">AND</span> <span class="col">customer_id</span> != 105
 
-<span class="cm">-- Any comparison with NULL = UNKNOWN</span>
-<span class="cm">-- UNKNOWN makes the whole WHERE = UNKNOWN</span>
-<span class="cm">-- Result: 0 rows returned!</span></pre>
-      <div class="red" style="margin-top:8px">
-        <p style="font-size:.82rem">Even though many customers are genuinely absent from the orders table — NOT IN returns nothing because of one NULL in the subquery.</p>
+<span class="cm">-- Any comparison with NULL = UNKNOWN
+-- UNKNOWN anywhere in an AND chain = whole thing UNKNOWN
+-- Result: 0 rows returned. Every time. Silently.</span></pre>
+        </div>
       </div>
-    </div>
-    <div>
-      <p style="font-size:.82rem;font-weight:700;margin-bottom:8px;color:var(--g)">NOT EXISTS — NULL-safe:</p>
-      <pre style="font-size:.76rem"><span class="kw">SELECT</span> <span class="col">c</span>.<span class="col">customer_id</span>
+      <div>
+        <p style="font-size:11.5px;font-weight:700;color:var(--emerald);margin-bottom:6px;">NOT EXISTS — NULL-safe:</p>
+        <div class="code-block">
+          <pre style="font-size:10.5px;"><span class="kw">SELECT</span> <span class="col">c</span>.<span class="col">customer_id</span>
 <span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="col">c</span>
 <span class="kw">WHERE</span> <span class="kw">NOT EXISTS</span> (
     <span class="kw">SELECT</span> 1
     <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="col">o</span>
     <span class="kw">WHERE</span> <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span>
 )
-<span class="cm">-- Checks ROW EXISTENCE, not value equality</span>
-<span class="cm">-- NULL rows in ex_orders do NOT affect this</span>
-<span class="cm">-- Works correctly every time</span></pre>
-      <div class="green" style="margin-top:8px">
-        <p style="font-size:.82rem;font-weight:700;color:var(--g)">Rule to memorise:</p>
-        <p style="font-size:.82rem;margin-top:4px;color:#c9d1d9">When checking for <strong>absence</strong> of related records, <strong>always use NOT EXISTS</strong> instead of NOT IN. It is NULL-safe, clear to read, and often faster.</p>
+<span class="cm">-- Checks ROW EXISTENCE, not value equality
+-- NULL rows in ex_orders don't affect this at all</span></pre>
+        </div>
+        <div class="highlight-box success" style="margin-top:8px;"><p><strong style="color:var(--emerald);">Rule to memorize:</strong> checking for <em>absence</em> of related records → always NOT EXISTS, never NOT IN. NULL-safe, clearer to read, and often faster.</p></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- SLIDE 10: QUIZ + SUMMARY -->
-<div class="slide">
-  <h2>Quiz + Summary</h2>
-  <div class="two" style="margin-bottom:10px">
-    <div class="qbox">
-      <p>Q1 — What is the key difference between a correlated and a non-correlated subquery?</p>
-      <div class="opts">
-        <div class="opt">A — A correlated subquery executes once; non-correlated executes once per outer row</div>
-        <div class="opt">B — A correlated subquery references the outer query's row; non-correlated does not</div>
-        <div class="opt">C — A correlated subquery always uses EXISTS; non-correlated always uses IN</div>
-        <div class="opt">D — A correlated subquery is always faster</div>
+  <!-- SLIDE 10: BONUS - EXISTS AS A FLAG -->
+  <div class="slide slide-demo" data-title="Bonus — EXISTS as a Flag Column">
+    <div class="eyebrow">Live Demo — Bonus Round</div>
+    <h3>EXISTS Doesn't Only Belong in WHERE</h3>
+    <div class="demo-label">A pattern nobody teaches until someone actually needs it · Agnik, mildly proud of this one</div>
+    <div class="two-col">
+      <div class="code-block">
+        <div class="code-head"><span class="db-tag">mskl-masterclass</span><button class="copy-btn">Copy</button></div>
+        <pre><span class="cm">-- Swarna's actual next question: "can you just add a
+-- column that flags VIPs, instead of a separate list?"</span>
+<span class="kw">SELECT</span>
+    <span class="col">c</span>.<span class="col">customer_id</span>,
+    <span class="col">c</span>.<span class="col">customer_name</span>,
+    <span class="kw">CASE WHEN</span> <span class="kw">EXISTS</span> (
+        <span class="kw">SELECT</span> 1 <span class="kw">FROM</span> <span class="tbl">ex_orders</span> <span class="col">o</span>
+        <span class="kw">WHERE</span> <span class="col">o</span>.<span class="col">customer_id</span> = <span class="col">c</span>.<span class="col">customer_id</span>
+          <span class="kw">AND</span> <span class="col">o</span>.<span class="col">order_status</span> = <span class="str">'delivered'</span>
+        <span class="kw">GROUP BY</span> <span class="col">o</span>.<span class="col">customer_id</span>
+        <span class="kw">HAVING</span> <span class="fn">COUNT</span>(<span class="col">o</span>.<span class="col">order_id</span>) &gt; 20
+    ) <span class="kw">THEN</span> <span class="str">'VIP'</span> <span class="kw">ELSE</span> <span class="str">'Regular'</span> <span class="kw">END</span> <span class="kw">AS</span> customer_tier
+<span class="kw">FROM</span> <span class="tbl">ex_customers</span> <span class="col">c</span>;</pre>
       </div>
-      <button class="qbtn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
-      <div class="qans"><strong>B is correct.</strong> A correlated subquery references a column from the outer query (e.g. <code>WHERE o.customer_id = c.customer_id</code>). This makes it re-run for every outer row. A non-correlated subquery is independent — it runs once and returns a fixed result.</div>
-    </div>
-    <div class="qbox">
-      <p>Q2 — In the VIP customer query, why must GROUP BY and HAVING go INSIDE the subquery?</p>
-      <div class="opts">
-        <div class="opt">A — SQL Server does not allow HAVING in outer queries</div>
-        <div class="opt">B — The outer query has no aggregate data — only the subquery has COUNT per customer</div>
-        <div class="opt">C — HAVING only works with EXISTS, not in outer queries</div>
-        <div class="opt">D — It makes the query run faster</div>
+      <div>
+        <table class="sql-table">
+          <tr><th>customer_id</th><th>customer_name</th><th>customer_tier</th></tr>
+          <tr><td>CUST-0041</td><td>Rohan Iyer</td><td style="color:var(--emerald);">VIP</td></tr>
+          <tr><td>CUST-0100</td><td>Meera Nair</td><td>Regular</td></tr>
+          <tr><td>CUST-0023</td><td>Priya Mehta</td><td>Regular</td></tr>
+        </table>
+        <div class="highlight-box success" style="margin-top:10px;"><p><strong style="color:var(--emerald);">Same EXISTS subquery, different job:</strong> instead of filtering rows out with WHERE, it's now a boolean check feeding a CASE WHEN — every customer stays in the result, just labeled. One tiny change in placement, one new use case unlocked.</p></div>
       </div>
-      <button class="qbtn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal Answer</button>
-      <div class="qans"><strong>B is correct.</strong> The outer query operates on <code>ex_customers</code> — one row per customer, no aggregations. Only the subquery knows how many orders each customer has (via COUNT). HAVING must be where the COUNT happens.</div>
     </div>
   </div>
-  <table>
-    <tr><th>Business Question</th><th>Pattern to Use</th></tr>
-    <tr><td>Customers with NO orders</td><td><code>NOT EXISTS</code> (simple)</td></tr>
-    <tr><td>Customers WITH at least one order</td><td><code>EXISTS</code> (simple)</td></tr>
-    <tr><td>Customers with MORE THAN N orders</td><td><code>EXISTS + GROUP BY + HAVING</code> inside subquery</td></tr>
-    <tr><td>Products never in a delivered sale</td><td><code>NOT EXISTS + JOIN</code> inside subquery</td></tr>
-    <tr><td>Any "not in" check with possible NULLs</td><td>Always <code>NOT EXISTS</code> — never <code>NOT IN</code></td></tr>
-  </table>
+
+  <!-- SLIDE 11: QUIZ + SUMMARY -->
+  <div class="slide slide-section" data-title="Quiz + Summary" style="text-align:left;">
+    <div class="eyebrow">Recap &amp; Quiz</div>
+    <h2>Pattern Reference ⚡</h2>
+    <div class="two-col" style="margin-bottom:12px;">
+      <div class="quiz-box">
+        <p class="quiz-q">What's the key difference between a correlated and a non-correlated subquery?</p>
+        <div class="quiz-options">
+          <div class="opt">A — Correlated runs once; non-correlated runs once per outer row</div>
+          <div class="opt">B — Correlated references the outer query's row; non-correlated does not</div>
+          <div class="opt">C — Correlated always uses EXISTS; non-correlated always uses IN</div>
+          <div class="opt">D — Correlated is always faster</div>
+        </div>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+        <div class="quiz-answer">✅ <strong>B.</strong> A correlated subquery references a column from the outer query (e.g. <code style="color:var(--code-col);">o.customer_id = c.customer_id</code>), so it re-runs per outer row. A non-correlated subquery is independent — runs once, returns a fixed result.</div>
+      </div>
+      <div class="quiz-box">
+        <p class="quiz-q">In the VIP query, why must GROUP BY / HAVING sit inside the subquery?</p>
+        <div class="quiz-options">
+          <div class="opt">A — SQL Server forbids HAVING in outer queries</div>
+          <div class="opt">B — The outer query has no aggregate data — only the subquery has a per-customer COUNT</div>
+          <div class="opt">C — HAVING only works with EXISTS</div>
+          <div class="opt">D — It makes the query run faster</div>
+        </div>
+        <button class="reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Reveal</button>
+        <div class="quiz-answer">✅ <strong>B.</strong> The outer query runs over ex_customers, one row per customer, no aggregation happening there. Only the subquery has computed a COUNT to compare against 20.</div>
+      </div>
+    </div>
+    <table class="sql-table">
+      <tr><th>Business Question</th><th>Pattern to Use</th></tr>
+      <tr><td>Customers with NO orders</td><td>NOT EXISTS (simple)</td></tr>
+      <tr><td>Customers WITH at least one order</td><td>EXISTS (simple)</td></tr>
+      <tr><td>Customers with MORE THAN N orders</td><td>EXISTS + GROUP BY + HAVING inside subquery</td></tr>
+      <tr><td>Products never in a delivered sale</td><td>NOT EXISTS + JOIN inside subquery</td></tr>
+      <tr><td>Any "not in" check with possible NULLs</td><td>Always NOT EXISTS — never NOT IN</td></tr>
+    </table>
+  </div>
+
+</div><!-- /deck -->
+
+<div class="toc-overlay" id="tocOverlay">
+  <div class="toc-title">All Slides</div>
+  <div class="toc-grid" id="tocGrid"></div>
+  <div class="toc-hint">← → navigate · G toggle grid · Esc close · swipe on touch</div>
 </div>
 
-</div>
 <script>
-let cur=0;
-const slides=document.querySelectorAll('.slide');
-const N=slides.length;
-const ctr=document.getElementById('ctr');
-function show(n){slides[cur].classList.remove('active');cur=(n+N)%N;slides[cur].classList.add('active');ctr.textContent=(cur+1)+' / '+N;document.querySelector('.deck').scrollTop=0;}
-function go(d){show(cur+d);}
-document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);});
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const rail = document.getElementById('rail');
+  const tocOverlay = document.getElementById('tocOverlay');
+  const tocGrid = document.getElementById('tocGrid');
+  let current = 0;
+
+  slides.forEach((s, i) => {
+    const seg = document.createElement('button');
+    seg.setAttribute('aria-label', 'Go to slide ' + (i + 1) + ': ' + s.dataset.title);
+    seg.addEventListener('click', () => showSlide(i));
+    rail.appendChild(seg);
+
+    const card = document.createElement('button');
+    card.className = 'toc-card';
+    card.innerHTML = '<div class="idx">' + String(i + 1).padStart(2, '0') + '</div><div class="ttl">' + s.dataset.title + '</div>';
+    card.addEventListener('click', () => { showSlide(i); closeToc(); });
+    tocGrid.appendChild(card);
+  });
+  const railSegs = Array.from(rail.children);
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    slides[current].scrollTop = 0;
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+    railSegs.forEach((seg, i) => {
+      seg.classList.toggle('done', i < current);
+      seg.classList.toggle('current', i === current);
+    });
+  }
+  function changeSlide(dir) { showSlide(current + dir); }
+  showSlide(0);
+
+  function openToc() { tocOverlay.classList.add('open'); }
+  function closeToc() { tocOverlay.classList.remove('open'); }
+  document.getElementById('tocBtn').addEventListener('click', () => {
+    tocOverlay.classList.contains('open') ? closeToc() : openToc();
+  });
+  tocOverlay.addEventListener('click', e => { if (e.target === tocOverlay) closeToc(); });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeToc(); return; }
+    if (e.key.toLowerCase() === 'g') { tocOverlay.classList.contains('open') ? closeToc() : openToc(); return; }
+    if (tocOverlay.classList.contains('open')) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp') { e.preventDefault(); changeSlide(-1); }
+  });
+
+  let touchX = null;
+  document.addEventListener('touchstart', e => { touchX = e.changedTouches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 60) changeSlide(dx < 0 ? 1 : -1);
+    touchX = null;
+  });
+
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pre = btn.closest('.code-block').querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1400);
+      });
+    });
+  });
 </script>
 </body>
 </html>

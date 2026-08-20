@@ -14,7 +14,7 @@ them). If you find yourself typing `#####` anywhere in a new hands-on `.md`,
 stop — that is the wrong file's shape leaking in.
 
 Source files (read for tone, in
-`C:\Yvirinchy\tred-alch-adv-dbx\reference_materials\reference_data_for_hands_on_docs\`):
+`C:\Yvirinchy\DE notebooks\reference_materials\reference_data_for_hands_on_docs\`):
 - `5425554a-...salescategoryanalysisreportofglobalmart.md`
 - `539d04c1-...vendorperformanceanalysisandrankingframework.md`
 - (others in the same folder follow the same two patterns below)

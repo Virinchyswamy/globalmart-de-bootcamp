@@ -1,8 +1,25 @@
 #!/usr/bin/env python3
 """
-read_calendar.py -- read one calendar day out of the GlobalMart Chennai 2026
-cohort calendar and compute the {order}/{type}/{x} naming fields for its
-ILT/Hands-on rows.
+read_calendar.py -- read one calendar day out of a GlobalMart cohort calendar
+and compute the {order}/{type}/{x} naming fields for its ILT/Hands-on rows.
+
+Default cohort is Hyderabad 2026 (the operative batch as of 2026-08-12).
+Pass --calendar to point at a different cohort's calendar file, e.g. the
+original Chennai 2026 one (calendars/tred-alch-adv-dbx-chennai-2026-calendar.xlsx).
+
+IMPORTANT: "Day Number" is NOT on the same scale across cohorts. Chennai's
+calendar numbers the Databricks track 1-13 (matching the Databricks/Day{N}/
+folders on disk). Hyderabad's calendar numbers the SAME Databricks track
+9-22 (continuous with its SQL & Python track, which occupies 1-8) -- e.g.
+Hyderabad Day 9 = Chennai Day 1 (GlobalMart Problem Statement/Medallion),
+Hyderabad Day 21 = Chennai Day 12 (UC Governance/Genie), etc, with one extra
+Hyderabad-only day (16: Z-order vs Liquid Clustering + "Design Your Own
+Architecture") that has no Chennai equivalent. This script does NOT remap
+Hyderabad day numbers onto the existing Day1-13 folders -- if you're using
+this script's output to name/save a file, you must decide by hand which
+on-disk Day{N} folder a given Hyderabad --day maps to (or whether it needs
+a new folder), the same way you'd reconcile order numbers per the CAVEAT
+below.
 
 Why this exists: the calendar workbook only fills in Week Number / Day Number /
 Date / Day-name on the FIRST row of each session block (everything else is
@@ -68,18 +85,22 @@ try:
 except AttributeError:
     pass
 
-# 2026-07-19: calendar moved from repo root into calendars/. There are now
-# TWO calendar files there with different Databricks-track wording (SQL &
-# Python sheet is identical between them, only "Databricks (DE)" differs) --
-# neither has been reconciled against the other, and neither's session
-# titles match the real built notebooks verbatim (e.g. this file's own
-# session titles use "Problem Statement & GlobalMart Architecture", which
-# matches neither calendar's Day-1 title exactly). Treat this script's
-# {order}/{x} output as a strong hint, not gospel -- always cross-check
-# with Glob against the real Day{N} folder before finalizing a filename,
-# same as the existing REMINDER at the bottom of this script already says.
-CALENDAR_PATH = Path(__file__).resolve().parents[4] / "calendars" / "tred-alch-adv-dbx-chennai-2026-calendar.xlsx"
-ALT_CALENDAR_PATH = Path(__file__).resolve().parents[4] / "calendars" / "tred-alch-adv-dbx-chennai-2026-calendar (alt-version, Databricks sheet differs - see below).xlsx"
+# 2026-07-19: calendar moved from repo root into calendars/. The Chennai
+# calendar's session titles don't match the real built notebooks verbatim
+# (e.g. this file's own session titles use "Problem Statement & GlobalMart
+# Architecture", which matches neither calendar's Day-1 title exactly).
+# Treat this script's {order}/{x} output as a strong hint, not gospel --
+# always cross-check with Glob against the real Day{N} folder before
+# finalizing a filename, same as the existing REMINDER at the bottom of
+# this script already says.
+#
+# 2026-08-12: default cohort switched to Hyderabad 2026. The Chennai
+# alt-version calendar file this used to also point at has since been
+# deleted from the repo (git status showed it removed) -- pass --calendar
+# explicitly if you need to read a specific cohort's file instead of the
+# default.
+CALENDAR_PATH = Path(__file__).resolve().parents[4] / "calendars" / "tred-alch-adv-dbx-hyderabad-2026-calendar.xlsx"
+CHENNAI_CALENDAR_PATH = Path(__file__).resolve().parents[4] / "calendars" / "tred-alch-adv-dbx-chennai-2026-calendar.xlsx"
 SHEET_NAME = "Databricks (DE)"
 
 # Activity Type values that actually become a notebook file. Everything else
@@ -214,9 +235,14 @@ def compute_naming(session_rows):
 
 def main():
     ap = argparse.ArgumentParser(description="Read one Day's calendar rows and compute naming fields.")
-    ap.add_argument("--day", type=int, required=True, help="Day Number (1-13, matches Day{N} folder)")
+    ap.add_argument("--day", type=int, required=True,
+                     help="Day Number as it appears in the calendar's 'Day Number' column. "
+                          "Hyderabad (default calendar): 9-22. Chennai (--calendar override): 1-13, "
+                          "matches Databricks/Day{N} folder -- see module docstring for the mapping "
+                          "between the two.")
     ap.add_argument("--all-rows", action="store_true", help="Show every row for that day, not just ILT/Hands-on")
-    ap.add_argument("--calendar", type=str, default=None, help="Override path to the calendar .xlsx")
+    ap.add_argument("--calendar", type=str, default=None,
+                     help="Override path to the calendar .xlsx (e.g. the Chennai calendar path)")
     args = ap.parse_args()
 
     path = Path(args.calendar) if args.calendar else CALENDAR_PATH
@@ -227,7 +253,8 @@ def main():
     all_rows = load_rows(path)
     day_rows_raw = rows_for_day(all_rows, args.day)
     if not day_rows_raw:
-        print(f"No rows found for Day {args.day}. Valid Day Numbers run 1-13 (weekends have none).")
+        print(f"No rows found for Day {args.day}. Valid Day Numbers depend on the calendar in use: "
+              f"Hyderabad (default) runs 9-22, Chennai runs 1-13 (weekends have none either way).")
         sys.exit(1)
 
     date_val = day_rows_raw[0]["date"]

@@ -1,0 +1,217 @@
+HOW TO USE THIS FILE
+=====================
+In Wayground, choose "Create with prompt or text" (not "Upload"). Paste the
+PROMPT line below into the prompt/instruction box if there is one. Then
+paste the QUESTION TEXT block into the text box, and generate.
+
+This quiz is deliberately NOT grouped into a "tech round" then a "funny
+round" then a "riddle round" — the 5 riddles and 5 jokes are woven in
+between the 20 tech questions throughout, roughly every third question, so
+the fun stays mixed in rather than piling up at the end. Keep that order
+when you generate — don't let Wayground's AI re-sort or group them.
+
+If Wayground's AI rewrites or invents new questions instead of using these
+exact ones, it's almost certainly hitting a length limit on one pass —
+paste PART 1 and PART 2 as two separate generations instead of all 30 at
+once (each part is clearly marked below, 15 questions each, and preserves
+the same mixed tech/riddle/joke order — do not reorder or regroup them).
+
+=====================
+PROMPT (paste this first, if there's a separate prompt box)
+=====================
+Create a multiple-choice quiz using EXACTLY the questions, options, and
+correct answers given below — do not invent new questions, do not change
+the wording, do not change which option is correct, and do not reorder or
+regroup the questions by topic. Each question has exactly 4 options and
+exactly one correct answer, marked with an asterisk (*) at the start of the
+correct option. Keep the questions in the exact order given — the mix of
+technical questions, riddles, and jokes is intentional. Use the time limit
+noted in parentheses after each question number (in seconds).
+
+=====================
+QUESTION TEXT — PART 1 of 2 (Questions 1-15)
+=====================
+
+1. (30s) Which clause removes duplicate rows from a SELECT result?
+A) WHERE
+B) UNIQUE
+*C) DISTINCT
+D) FILTER
+
+2. (30s) SQL's real execution order doesn't start with SELECT. What does it actually start with?
+A) SELECT
+B) ORDER BY
+C) WHERE
+*D) FROM
+
+3. (35s) [RIDDLE] I have no fixed number of rows until I actually run. Ask me to find every manager above a manager above a manager, and I'll keep going until nobody's left to ask. What am I?
+A) A window function
+*B) A recursive CTE
+C) A GROUP BY
+D) A subquery
+
+4. (30s) WHERE customer_id NOT IN (1, 2, NULL) can silently return zero rows. Why?
+*A) NULL comparisons evaluate to UNKNOWN, poisoning the whole condition
+B) It's a syntax error
+C) IN doesn't support NULL
+D) NOT IN always returns all rows
+
+5. (30s) Which window function assigns the SAME rank to tied rows but still leaves a gap in the numbers afterward (1, 2, 2, 4)?
+A) ROW_NUMBER()
+B) DENSE_RANK()
+*C) RANK()
+D) NTILE()
+
+6. (15s) [JOKE] Why did the SQL query stay single forever?
+*A) It couldn't find the right JOIN
+B) It kept ORDER BY-ing alone
+C) It had trust issues with NULL
+D) It refused to ever COMMIT
+
+7. (30s) SUM(sales) OVER (PARTITION BY region ORDER BY date), with no frame clause specified, computes what by default?
+A) The total for the whole partition
+*B) A running total up to the current row
+C) A simple average
+D) It throws an error
+
+8. (30s) Kriti Tiwari wants 2017 and 2018 monthly revenue laid out as two side-by-side columns. Which operator reshapes rows that way?
+A) ROLLUP
+B) UNPIVOT
+C) CUBE
+*D) PIVOT
+
+9. (35s) [RIDDLE] I turn your rows into columns. Say my name backwards, in spirit, and I turn them right back into rows. What operator pair am I part of?
+A) ROLLUP / CUBE
+B) WHERE / HAVING
+*C) PIVOT / UNPIVOT
+D) UNION / UNION ALL
+
+10. (30s) In a PIVOT's IN() list, why must a value like 2017 be wrapped in square brackets — [2017]?
+A) It's just a style preference
+B) SQL requires brackets on every clause
+*C) Without brackets, it would be parsed as a bare numeric literal, not an identifier
+D) Brackets are optional but recommended
+
+11. (30s) What's the single biggest reason SELECT * hurts performance on a wide table?
+A) It's harder to read
+B) It silently changes column order
+C) It disables indexes permanently
+*D) It drags unnecessary columns across disk and network
+
+12. (15s) [JOKE] Why did the database administrator file for divorce?
+A) His spouse kept dropping hints
+B) They couldn't agree on a primary key
+*C) He found out it was a one-to-many relationship
+D) She left without a COMMIT
+
+13. (30s) Which pattern is NULL-safe for "find customers with zero orders"?
+A) NOT IN
+B) != ALL
+*C) NOT EXISTS
+D) EXCEPT ALL
+
+14. (30s) GROUP BY ROLLUP(region, state, city) — 3 columns — produces how many grouping levels?
+A) 3
+B) 6
+C) 8
+*D) 4
+
+15. (35s) [RIDDLE] I check whether something exists, never what it equals — and unlike my cousin, one stray NULL in the crowd never confuses me. Who am I?
+A) IN
+*B) NOT EXISTS
+C) BETWEEN
+D) LIKE
+
+=====================
+QUESTION TEXT — PART 2 of 2 (Questions 16-30)
+=====================
+
+16. (30s) GROUP BY CUBE(region, state) — 2 columns — produces how many groupings?
+A) 2
+B) 3
+*C) 4
+D) 8
+
+17. (30s) Which operator lets you specify exactly which subtotal combinations to compute — no more, no less?
+A) ROLLUP
+B) UNION ALL
+C) CUBE
+*D) GROUPING SETS
+
+18. (15s) [JOKE] What do you call a recursive CTE with no exit plan?
+A) A subquery
+B) A GROUP BY
+C) A view
+*D) A permanent resident of your query plan
+
+19. (30s) In a recursive CTE, what does the base case (anchor member) NEVER do?
+A) Run exactly once
+B) Produce the starting rows
+*C) Reference the CTE itself
+D) Use a SELECT statement
+
+20. (30s) What connector MUST join a recursive CTE's base case and its recursive case?
+A) UNION
+B) JOIN
+C) INTERSECT
+*D) UNION ALL
+
+21. (35s) [RIDDLE] Give me n columns and I'll hand you back 2 to the power of n groupings — greedy, but thorough about it. What operator am I?
+A) ROLLUP
+B) GROUPING SETS
+*C) CUBE
+D) HAVING
+
+22. (30s) A recursive CTE will loop forever on cyclic data unless you add what?
+A) An ORDER BY
+B) A GROUP BY
+*C) A termination guard — like hop_count < N
+D) A DISTINCT
+
+23. (30s) A recursive CTE returns a truncated path string once chains get long. What's the most likely fix?
+A) Add an ORDER BY
+*B) CAST the path column to VARCHAR(MAX) in the base case
+C) Add a GROUP BY
+D) Use UNION instead of UNION ALL
+
+24. (15s) [JOKE] Why don't SQL developers trust NULL?
+A) It's too slow
+B) It only works on Tuesdays
+*C) It's never equal to anything, not even itself
+D) It breaks every JOIN on sight
+
+25. (30s) What's the real difference between EXISTS and IN when checking against a subquery?
+A) They behave identically in every case
+*B) EXISTS is correlated and checks row existence; IN checks membership in a static list
+C) IN is always faster with no exceptions
+D) EXISTS can never be negated
+
+26. (30s) Which clause filters rows BEFORE grouping, and which filters groups AFTER aggregation?
+A) GROUP BY / ORDER BY
+*B) WHERE / HAVING
+C) HAVING / WHERE
+D) FROM / SELECT
+
+27. (35s) [RIDDLE] I sit right between WHERE and ORDER BY in a query, but I only ever judge groups — never a single row on its own. What clause am I?
+*A) HAVING
+B) GROUP BY
+C) DISTINCT
+D) OVER
+
+28. (30s) For Bhaskar's dashboard, every row needs a unique sequential number — even when two values tie exactly. Which function?
+A) RANK()
+B) DENSE_RANK()
+*C) ROW_NUMBER()
+D) NTILE(2)
+
+29. (15s) [JOKE] What did one recursive CTE say to the other on its way out?
+A) SELECT you later
+B) Let's never JOIN again
+C) I've hit MAXRECURSION with you
+*D) I'll see myself out. Eventually.
+
+30. (30s) Across all four SQL days, which single habit did nearly every optimization lesson circle back to?
+A) Always use SELECT * to be safe
+*B) Filter early, and only select what you actually need
+C) Avoid JOINs wherever possible
+D) Never use window functions
